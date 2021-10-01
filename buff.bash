@@ -11,5 +11,5 @@ export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buffvision"
 
 #		Setup python tools
-export PATH="${PROJECT_DIR}/buffpy:${PATH}"
-export PYTHONPATH="${PROJECT_DIR}/buffpy/bin:${PYTHONPATH}"
+export PATH="${PROJECT_ROOT}/buffpy:${PATH}"
+export PYTHONPATH="${PROJECT_ROOT}/buffpy/bin:${PYTHONPATH}"
