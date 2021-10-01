@@ -20,7 +20,7 @@ def main():
 	path = os.path.dirname(file)
 	
 	print('Launching BuffVision standby...')
-	sb.run([f'{path}/../buffpy/buffvision.py'], shell=True)
+	sb.run([f'{path}/../buffpy/bin/buffvision.py'], shell=True)
 
 
 if __name__ == '__main__':

@@ -49,7 +49,7 @@ def parseArgs():
 	parser.add_argument('--launch', 
 		nargs=1,
 		metavar='LOCATION',
-		default='False',
+		default=False,
 		help='Launch the robots software locally (True, 1) or on the bot (bot)')
 	parser.add_argument('--botPull', 
 		action='store_true',
@@ -57,7 +57,7 @@ def parseArgs():
 	parser.add_argument('--build', 
 		nargs=1,
 		metavar='LOCATION',
-		default='False',
+		default=False,
 		help='Builds the workspace locally (True, 1) or to the robot_ip (install)')
 	parser.add_argument('--clean',
 		action='store_true',

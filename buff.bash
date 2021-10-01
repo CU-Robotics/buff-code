@@ -11,5 +11,5 @@ export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buffvision"
 
 #		Setup python tools
-export PATH="${PROJECT_ROOT}/buffpy:${PATH}"
+export PATH="${PROJECT_ROOT}/buffpy:${PROJECT_ROOT}/buffpy/arduino-cli_0.19.2_Linux_64bit:${PATH}"
 export PYTHONPATH="${PROJECT_ROOT}/buffpy/bin:${PYTHONPATH}"
