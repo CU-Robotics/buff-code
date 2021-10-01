@@ -28,8 +28,8 @@ The majority of functionality is based in the buffpy package. This package is se
 
 ## CHANGES
  - Version 0.0
-  - Date: October 1, 2021
-  - Editor: Mitchell D Scott
-  - Status: Untested
-  - Notes: brought the project into existence
+ -- Date: October 1, 2021
+ -- Editor: Mitchell D Scott
+ -- Status: Untested
+ -- Notes: brought the project into existence
 
