@@ -130,7 +130,7 @@ def main(ap):
 		buildWorkspace(ap.build)
 
 	if not ap.flash is None:
-		result = subprocess.run(f'arduino-cli compile --fqbn {ap.flash[0]} {os.getenv("PROJECT_ROOT")}/src/Arduino/{ap.flash[1]} && arduino-cli upload -p /dev/ttyACM0 --fqbn {ap.flash[0]} {os.getenv("PROJECT_ROOT")}/src/Arduino/{ap.flash[1]}')
+		result = subprocess.run(f'arduino-cli compile --fqbn {ap.flash[0]} {os.getenv("PROJECT_ROOT")}/src/Arduino/{ap.flash[1]} && arduino-cli upload -p /dev/ttyACM0 --fqbn {ap.flash[0]} {os.getenv("PROJECT_ROOT")}/src/Arduino/{ap.flash[1]}', shell=True)
 
 	if ap.sshBot:
 		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")}', shell=True)
