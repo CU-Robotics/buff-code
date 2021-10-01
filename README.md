@@ -1,7 +1,7 @@
 # BuffBotics
 CU Robotics' development repo
 
-This project is desinged to run in an Ubuntu20 environment or on a Jetson device. This repo provide a python3 package buffpy that is meant to aid in the development of robot software. The package contains a command line tool 'buff'. This tool helps streamline managing data, building locally or to devices, flashing firmware and hopefully soon running regressions on the developed subsystems.
+This project is desinged to run in an Ubuntu20 environment or on a Jetson device. This repo provides a python3 package buffpy that is meant to aid in the development of robot software. The package contains a command line tool 'buff'. This tool helps streamline managing data, building locally or to devices, flashing firmware and hopefully soon running regressions on the developed subsystems.
 
 First always load the environment variables, if you're not sure if you did just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo.
 
@@ -18,7 +18,7 @@ The majority of functionality is based in the buffpy package. This package is se
 	  --sshBot              SSH into the bot at the ROBOT_IP env variable
 	  --setBot ROBOT_IP     Set the IP of the robot in development
 	  --GDrive ACTION FOLDER_ID
-							Pull or push a batch from google drive, requires batch folder id
+				Pull or push a batch from google drive, requires batch folder id
 	  --installKeys         Push local sshkeys to the robot at ROBOT_IP
 	  --launch LOCATION     Launch the robots software locally (True, 1) or on the bot (bot)
 	  --botPull             Pull data from the robot at ROBOT_IP
