@@ -1,5 +1,5 @@
-#! /usr/bin/env bash
-if [[ "${PWD}" != */buffbotics ]]; then
+#! /usr/bin/bash
+if [[ "${PWD}" != */BuffBotics ]]; then
 	echo -e "running from ${PWD}, is this your project root?"
 	exit 0
 fi
