@@ -8,7 +8,7 @@ export PROJECT_ROOT=${PWD}
 export USER_IP='192.168.0.9'
 export ROBOT_IP='192.168.0.13'
 export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
-export ROBOT_ROOT="/home/cu-robotics/buffvision"
+export ROBOT_ROOT="/home/cu-robotics/buff-code"
 
 #		Setup python tools
 export PATH="${PROJECT_ROOT}/buffpy:${PROJECT_ROOT}/buffpy/arduino-cli_0.19.2_Linux_64bit:${PATH}"
