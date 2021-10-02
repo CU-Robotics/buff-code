@@ -28,7 +28,7 @@ The majority of functionality is based in the buffpy package. This package is se
 
 ## Install
 
-Clone the repo to machine
+Clone the repo to your machine
 
 	git clone git@github.com:/CU-Robotics/buff-code.git
 
