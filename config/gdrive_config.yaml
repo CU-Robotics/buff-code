@@ -2,5 +2,13 @@ TEAM_DRIVE_ID:
   '1MQrW871lFB-j0ZkCRYmug9NMWbkBBE9k'
 UNLABELED_DATA_FOLDER_ID:
   '1fwwvRmqJbnv6zqRw_5MhmmmWbVM6AEcs'
+Batch20-Unlabeled:
+  '1Z1xyeuBfTJI4mOlWFyGVQb4HxD8fU1oh'
+Batch19-Unlabeled:
+  '1ayE3XAbqIZraYPod0AsU4TC7OchfsmG6'
+Batch20:
+  '1GRfBkk7SycV7xFELDaz8ANeXo2yZ9BaR'
+Batch19:
+  '1uJakhDTk5mvcrqetFDyedhLPbzL2jDJe'
 SECRETS:
   'config/client_secrets.json'

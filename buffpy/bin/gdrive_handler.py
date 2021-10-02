@@ -40,6 +40,8 @@ class GD_Handler:
 
 		if batch is None:
 			batch = self.handle['UNLABELED_DATA_FOLDER_ID']
+		else:
+			batch = self.handle[batch]
 		# iterating thought all the files/folder
 		# of the desired directory
 		for file in os.listdir(path):
@@ -80,6 +82,11 @@ class GD_Handler:
 		"""
 			Use this function to pull data from GDrive
 		"""
+		if batch is None:
+			batch = self.handle['UNLABELED_DATA_FOLDER_ID']
+		else:
+			batch = self.handle[batch]
+		
 		file_list = self.drive.ListFile({'q': f'\'{batch}\' in parents and trashed=false'}).GetList()
 		print(f'GDrive handler Downloading from {batch}')
 

@@ -1,3 +1,5 @@
-data
-config/slient_secrets.json
+data/*
+config/client_secrets.json
 buffpy/bin/__pycache__
+buffpy/arduino*
+dev/.ipynb_checkpoints
