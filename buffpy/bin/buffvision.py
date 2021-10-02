@@ -27,7 +27,7 @@ def single_image_capture_cv():
 	camera.release()
 
 def capture_video(duration=10):
-	# Will record videos but they are empty?
+	
 	ext = 'avi'
 	cap = cv2.VideoCapture(0)
 	size=(int(cap.get(3)), int(cap.get(4)))

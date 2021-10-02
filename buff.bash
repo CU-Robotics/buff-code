@@ -1,7 +1,7 @@
 #! /usr/bin/bash
-if [[ "${PWD}" != */BuffBotics ]]; then
+if [[ "${PWD}" != */buff-code ]]; then
 	echo -e "running from ${PWD}, is this your project root?"
-	exit 0
+	return
 fi
 #		Setup robot params
 export PROJECT_ROOT=${PWD}
