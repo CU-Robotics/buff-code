@@ -63,14 +63,13 @@ you should see the output from above.
 ## Dev Notes
 
 When working on this project
-	- Document all install and setup procedures
-	- Test changes and document the tests and changes
-	- Make sure to push when you finish working, otherwise no one else sees your code
-	- Do not push broken changes, this will break things for everyone
-	- CV is done in the buffpy package
-	- Controls are developed in src
-	- The more documentation the better
-	- 
+  - Document all install and setup procedures
+  - Test changes and document the tests and changes
+  - Make sure to push when you finish working, otherwise no one else sees your code
+  - Do not push broken changes, this will break things for everyone
+  - CV is done in the buffpy package
+  - Controls are developed in src
+  - The more documentation the better 
 
 ## CHANGES
  - Version 0.0
