@@ -1,3 +1,4 @@
 data
 config/slient_secrets.json
 buffpy/bin/__pycache__
+buffpy/arduino*
