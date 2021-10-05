@@ -36,14 +36,6 @@ or if you don't have ssh keys setup
 
 	git clone https://github.com/CU-Robotics/buff-code.git
 
-Now download the arduino_cli tar and extract it to buffpy. Make sure to rename the file arduino-cli_0.19.2 (this is the version we will use). Your directory should look like (excluding other files to condense the manual)
-
-	buff-code
-	 - buffpy
-	 	- arduino-cli_0.19.2	 
-
-The arduino executable should be in the arduino-cli_0.19.2 folder. If you use a different version of arduino-cli the name in buff.bash will need to be updated. It is not essential to use the arduino-cli, if you like the IDE better feel free to use that (this means you don't need to instal arduino-cli and you can ignore errrs related to that).
-
 Load environment variables
 
 	source buff.bash
@@ -59,6 +51,24 @@ To test the install run
 	buff -h
 
 you should see the output from above.
+
+## Architecture
+buff-code
+	- buffpy: A python package to handle the ugly backend
+		- bin: binaries (buff, arduino-cli)
+		- lib: python3 modules
+	- config: A place for any and all setup/configuration/secret files
+		- install: Files containing install info
+		- lib: File containing misc info
+		- sensitive: shhh... it a secret
+	- data: a Temporary folder for handling data (should get cleared regularly, if missing will cause issues)
+	- dev: python3 notebooks displaying our dev process
+	- docs: A better verion of this document
+	- scripts: arbitrary scripts
+	- src: The source code for our controllers
+	- buff.bash: a setup script (needs to be run every session)
+	- README.md: you're reading it
+	- .gitignore: keeps the secrets safe
 
 ## Dev Notes
 
