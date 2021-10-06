@@ -10,7 +10,7 @@ from pydrive.drive import GoogleDrive
 class GD_Handler:
 
 	def __init__(self):
-		self.config = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'gdrive_config.yaml')
+		self.config = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', 'gdrive_config.yaml')
 
 		with open(self.config, 'r') as f:
 			self.handle = yaml.safe_load(f)

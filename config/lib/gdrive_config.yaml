@@ -11,4 +11,4 @@ Batch20:
 Batch19:
   '1uJakhDTk5mvcrqetFDyedhLPbzL2jDJe'
 SECRETS:
-  'config/client_secrets.json'
+  'config/sensitive/client_secrets.json'
