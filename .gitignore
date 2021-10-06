@@ -1,4 +1,5 @@
 data/*
 config/sensitive
-buffpy/lib/arduino-cli
+buffpy/bin/__pycache__
+buffpy/arduino-cli
 dev/.ipynb_checkpoints

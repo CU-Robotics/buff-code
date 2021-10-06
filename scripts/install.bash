@@ -14,7 +14,6 @@ echo -e "\n\tInstalling Dependencies...\n"
 xargs sudo apt install <${PROJECT_ROOT}/config/dependencies.txt -y
 pip3 install -r ${PROJECT_ROOT}/config/python3_requirements.txt
 
-export PATH="${PROJECT_ROOT}/buffpy:${PROJECT_ROOT}/buffpy/arduino-cli_0.19.2_Linux_64bit:${PATH}"
-export PYTHONPATH="${PROJECT_ROOT}/buffpy/bin:${PYTHONPATH}"
+curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=${DIR}/buffpy/bin sh
 
 arduino-cli core install arduino:samd
