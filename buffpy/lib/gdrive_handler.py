@@ -9,13 +9,13 @@ from pydrive.drive import GoogleDrive
 
 class GD_Handler:
 
-	def __init__(self):
-		self.config = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', 'gdrive_config.yaml')
+	def __init__(self, config='config/lib/gdrive.yaml'):
+		self.config = os.path.join(os.getenv('PROJECT_ROOT'), config)
 
 		with open(self.config, 'r') as f:
 			self.handle = yaml.safe_load(f)
 
-		GoogleAuth.DEFAULT_SETTINGS['client_config_file'] = self.handle['SECRETS']
+		GoogleAuth.DEFAULT_SETTINGS['client_config_file'] = os.path.join(os.getenv('PROJECT_ROOT'), self.handle['SECRETS'])
 
 		self.drive = self.authenticate()
 
