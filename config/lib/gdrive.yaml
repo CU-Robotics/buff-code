@@ -10,5 +10,7 @@ Batch20:
   '1GRfBkk7SycV7xFELDaz8ANeXo2yZ9BaR'
 Batch19:
   '1uJakhDTk5mvcrqetFDyedhLPbzL2jDJe'
+Yogi:
+  '1wAyKEnpN08ye2Qgb4MXyWNpu0xXzHI-Y'
 SECRETS:
-  'config/client_secrets.json'
+  'config/sensitive/client_secrets.json'
