@@ -54,21 +54,21 @@ you should see the output from above.
 
 ## Architecture
 buff-code
-	- buffpy: A python package to handle the ugly backend
-		- bin: binaries (buff, arduino-cli)
-		- lib: python3 modules
-	- config: A place for any and all setup/configuration/secret files
-		- install: Files containing install info
-		- lib: File containing misc info
-		- sensitive: shhh... it a secret
-	- data: a Temporary folder for handling data (should get cleared regularly, if missing will cause issues)
-	- dev: python3 notebooks displaying our dev process
-	- docs: A better verion of this document
-	- scripts: arbitrary scripts
-	- src: The source code for our controllers
-	- buff.bash: a setup script (needs to be run every session)
-	- README.md: you're reading it
-	- .gitignore: keeps the secrets safe
+  - buffpy: A python package to handle the ugly backend
+    - bin: binaries (buff, arduino-cli)
+    - lib: python3 modules
+  - config: A place for any and all setup/configuration/secret files
+    - install: Files containing install info
+    - lib: File containing misc info
+    - sensitive: shhh... it a secret
+  - data: a Temporary folder for handling data (should get cleared regularly, if missing will cause issues)
+  - dev: python3 notebooks displaying our dev process
+  - docs: A better verion of this document
+  - scripts: arbitrary scripts
+  - src: The source code for our controllers
+  - buff.bash: a setup script (needs to be run every session)
+  - README.md: you're reading it
+  - .gitignore: keeps the secrets safe
 
 ## Dev Notes
 
