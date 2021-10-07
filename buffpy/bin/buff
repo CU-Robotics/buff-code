@@ -76,13 +76,9 @@ def cleanWorkspace():
 		will also remove any generate binaries and configs
 	"""
 	data_path=os.path.join(os.getenv('PROJECT_ROOT'), 'data')
-#	bin_path=os.path.join(os.getenv('PROJECT_ROOT'), 'bin')
 
 	if os.path.exists(data_path):
 		os.remove(os.path.join(data_path, '*'))
-
-#	if os.path.exists(bin_path):
-#		os.remove(os.path.join(bin_path, '*'))
 
 def buildWorkspace(build):
 	"""
@@ -114,10 +110,7 @@ def buildWorkspace(build):
 def main(ap):
 
 	if ap.clean:
-		try:
-			cleanWorkspace()
-		except:
-			print('Error, workspace might already be clean')
+		cleanWorkspace()
 
 	if not ap.setBot is None:
 		os.environ['ROBOT_IP'] = ap.setBot
