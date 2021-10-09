@@ -12,10 +12,10 @@ brew upgrade
 
 echo -e "\n\tInstalling Dependencies...\n"
 
-xargs brew install <${PROJECT_ROOT}/config/dependencies.txt 
+xargs brew install <${PROJECT_ROOT}/config/install/dependencies.txt 
 brew install arduino-cli
 
-pip3 install -r ${PROJECT_ROOT}/config/python3_requirements.txt
+pip3 install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
 
-export PATH="${PROJECT_ROOT}/buffpy:${PROJECT_ROOT}/buffpy/arduino-cli"
-export PYTHONPATH="${PROJECT_ROOT}/buffpy/bin:${PYTHONPATH}"
+export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
+export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}"
