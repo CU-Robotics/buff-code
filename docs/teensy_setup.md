@@ -11,4 +11,12 @@ If lost refer to: https://www.pjrc.com/teensy/loader.html
 
 now you can run the program: 
 
-    ./teensy &
+    ./teensy
+    
+If you put the teensy object (and the objects that come with it: libpng12.so.0, libusb-0.1.so.4) on your PATH (or move it into buffpy/bin which is already on the path) you can call it like this from any directory:
+
+    teensy
+    
+Now because we want to keep using our terminal we run it as a background process:
+
+    teensy &
