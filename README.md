@@ -1,7 +1,7 @@
 # Buff-Code
 CU Robotics' development repo
 
-This project is desinged to run in an Ubuntu20 environment or on a Jetson device. This repo provides a python3 package buffpy that is meant to aid in the development of robot software. The package contains a command line tool 'buff'. This tool helps streamline managing data, building locally or to devices, flashing firmware and hopefully soon running regressions on the developed subsystems.
+This project is desinged to run in an Ubuntu20 environment or on a Jetson device (Windows support coming eventually). This repo provides a python3 package buffpy that is meant to aid in the development of robot software. The package contains a command line tool 'buff'. This tool helps streamline managing data, building locally or to devices, flashing firmware and hopefully soon running regressions on the developed subsystems.
 
 First always load the environment variables, if you're not sure if you did just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo.
 
