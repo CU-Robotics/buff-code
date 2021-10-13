@@ -82,7 +82,12 @@ When working on this project
   - The more documentation the better 
 
 ## CHANGES
- - Version 0.0
+ - Version 0.01
+   - Date: October 7, 2021
+   - Editor: Mitchell D Scott
+   - Status: Stable
+   - Description: added sub-directories to the config folder and moved buff and firmware binaries to bin and moved python files to lib
+ - Version 0.00
    - Date: October 1, 2021
    - Editor: Mitchell D Scott
    - Status: Untested
