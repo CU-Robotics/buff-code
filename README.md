@@ -82,6 +82,7 @@ When working on this project
   - The more documentation the better 
 
 ## CHANGES
+*Changes include all PRs that modify the directory structure, the installed binaries and any changes that will effect workspace usage*
  - Version 0.01
    - Date: October 7, 2021
    - Editor: Mitchell D Scott
