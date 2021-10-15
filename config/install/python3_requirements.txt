@@ -1,2 +1,5 @@
 pydrive
+numpy==1.19.2
 matplotlib
+tensorflow>=2.2
+opencv_python
