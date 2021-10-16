@@ -10,15 +10,15 @@ echo -e "\n\tbrew updating...\n"
 brew update
 brew upgrade
 
-#echo -e "\n\tInstalling Dependencies...\n"
+echo -e "\n\tInstalling Dependencies...\n"
 
-#xargs brew install <${PWD}/config/install/dependencies.txt 
-#curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=${DIR}/buffpy/bin sh
+xargs brew install <${PWD}/config/install/dependencies.txt 
+# curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=${DIR}/buffpy/bin sh
 
-#pip3 install -r ${PWD}/config/install/python3_requirements.txt
+pip3 install -r ${PWD}/config/install/python3_requirements.txt
 
-#export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
-#export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}"
+export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
+export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}"
 
 curl https://www.pjrc.com/teensy/teensy_linux64.tar.gz -O
 # teensy rules file
