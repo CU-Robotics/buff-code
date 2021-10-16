@@ -1,5 +1,8 @@
 data/*
+buffpy/bin/teensy
 config/sensitive/*
-buffpy/bin/__pycache__
 buffpy/arduino-cli
+buffpy/bin/__pycache__
 dev/.ipynb_checkpoints
+buffpy/bin/libpng12.so.0
+buffpy/bin/libusb-0.1.so.4
