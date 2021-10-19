@@ -26,6 +26,8 @@ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main
 # setup ROS keys
 curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
 
+sudo apt update
+
 # Install ROS
 sudo apt install ros-noetic-desktop-full ros-noetic-catkin python3-catkin-tools python3-rosinstall python3-rosinstall-generator
 echo -e "\n\tFinishing ROS setup...\n"
