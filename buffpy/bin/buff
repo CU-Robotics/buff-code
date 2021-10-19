@@ -56,9 +56,9 @@ def parseArgs():
 		help='Pull data from the robot at ROBOT_IP')
 	parser.add_argument('--build', 
 		nargs=1,
-		metavar='LOCATION',
+		metavar='PROFILE',
 		default=False,
-		help='Builds the workspace locally (True, 1) or to the robot_ip (install)')
+		help='Builds the workspace locally (debug) or to the robot_ip (install)')
 	parser.add_argument('--clean',
 		action='store_true',
 		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
@@ -77,8 +77,11 @@ def cleanWorkspace():
 	"""
 	data_path=os.path.join(os.getenv('PROJECT_ROOT'), 'data')
 
-	if os.path.exists(data_path):
-		os.remove(os.path.join(data_path, '*'))
+	result = subprocess.run(f'catkin clean -y', shell=True)
+
+	for file in os.listdir(data_path):
+
+		os.remove(os.path.join(data_path, file))
 
 def buildWorkspace(build):
 	"""
@@ -89,9 +92,12 @@ def buildWorkspace(build):
 	bot = os.getenv('ROBOT_ADDRESS')
 	bot_root = os.getenv('ROBOT_ROOT')
 	project_root = os.getenv('PROJECT_ROOT')
-	dirs = ['buffpy', 'config', 'scripts', 'buff.bash']
+	source_dirs = ['buffpy', 'config', 'scripts', 'buff.bash']
 
-	if build == 'install':
+	if build[0]:
+		result = subprocess.run(f'catkin build --profile={build[0]}', shell=True)
+
+	if build[0] == 'install':
 		# if root does not exist create it
 		result = subprocess.run(f'ssh {bot} "if [[ -n {bot_root} ]]; then mkdir {bot_root}; fi"', shell=True)
 
