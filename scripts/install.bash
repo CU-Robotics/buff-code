@@ -10,6 +10,13 @@ echo -e "\n\tapt updating...\n"
 #	update the apt package manager
 sudo apt update
 
+echo -e "\n\tInstalling Dependencies...\n"
+
+#	Using apt and pip install all the dependencies for the project
+xargs sudo apt install <${PROJECT_ROOT}/config/install/dependencies.txt -y
+pip3 install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
+
+
 echo -e "\n\tSetting up ROS noetic\n"
 
 # ROS installation
@@ -19,12 +26,8 @@ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main
 # setup ROS keys
 curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
 
-echo -e "\n\tInstalling Dependencies...\n"
-
-#	Using apt and pip install all the dependencies for the project
-xargs sudo apt install <${PROJECT_ROOT}/config/install/dependencies.txt -y
-pip3 install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
-
+# Install ROS
+sudo apt install ros-noetic-desktop-full ros-noetic-catkin python3-catkin-tools python3-rosinstall python3-rosinstall-generator
 echo -e "\n\tFinishing ROS setup...\n"
 
 sudo rosdep init
