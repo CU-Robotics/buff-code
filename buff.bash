@@ -9,16 +9,16 @@ export PROJECT_ROOT=${PWD}
 export ROBOT_IP='192.168.0.13'
 export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buff-code"
-export USER_IP=$(/sbin/ip -o -4 addr list wlp3s0 | awk '{print $4}' | cut -d/ -f1) # Needs testing
+#export USER_IP=$(/sbin/ip -o -4 addr list wlp3s0 | awk '{print $4}' | cut -d/ -f1) # Needs testing
 
 # If ROS is installed source the setup file
 if [[ -d /opt/ros/noetic ]]; then
 	source /opt/ros/noetic/setup.bash
 fi
 
-if [[ -d ${PROJECT_ROOT}/install ]]; then
-	source {PROJECT_ROOT}/install/setup.bash
-fi
+# if [[ -d ${PROJECT_ROOT}/install ]]; then
+# 	source {PROJECT_ROOT}/install/setup.bash
+# fi
 
 #		Setup python tools
 export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
