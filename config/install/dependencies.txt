@@ -3,7 +3,6 @@ curl
 jupyter
 python3.8
 python3-pip
-python3-rosdep
-python3-testresources
 python3-wstool
 build-essential
+python3-testresources
