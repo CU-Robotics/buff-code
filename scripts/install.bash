@@ -29,9 +29,16 @@ curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo ap
 sudo apt update
 
 # Install ROS
-sudo apt install ros-noetic-desktop-full ros-noetic-catkin python3-catkin-tools python3-rosinstall python3-rosinstall-generator
+sudo apt install ros-noetic-desktop-full 
+
+# Source the ros/setup.bash
+source /opt/ros/noetic/setup.bash
+
+# Install ROS dependencies
+sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-catkin-tools
 echo -e "\n\tFinishing ROS setup...\n"
 
+# Init rosdep
 sudo rosdep init
 rosdep update
 
