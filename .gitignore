@@ -1,4 +1,8 @@
+logs
 data/*
+devel
+build
+install
 buffpy/lib
 buffpy/bin/teensy
 config/sensitive/*
