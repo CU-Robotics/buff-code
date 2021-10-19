@@ -1,4 +1,5 @@
 data/*
+buffpy/lib
 buffpy/bin/teensy
 config/sensitive/*
 buffpy/arduino-cli

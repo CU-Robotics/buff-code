@@ -1,0 +1,6 @@
+CMake Error at cmake_install.cmake:155 (file):
+  file cannot create directory: /buffpy/lib.  Maybe need administrative
+  privileges.
+
+
+make: *** [Makefile:86: install] Error 1

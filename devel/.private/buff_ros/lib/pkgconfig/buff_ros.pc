@@ -1,0 +1,8 @@
+prefix=/home/m-dyse/buff-code/devel/.private/buff_ros
+
+Name: buff_ros
+Description: Description of buff_ros
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
