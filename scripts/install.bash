@@ -35,7 +35,7 @@ sudo apt install ros-noetic-desktop-full
 source /opt/ros/noetic/setup.bash
 
 # Install ROS dependencies
-sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
+sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools
 
 echo -e "\n\tFinishing ROS setup...\n"
 
