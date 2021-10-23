@@ -32,7 +32,7 @@ curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo ap
 sudo apt update
 
 # Install ROS
-sudo apt install ros-noetic-desktop-full -y
+sudo apt install ros-melodic-desktop-full -y
 
 # Source the ros/setup.bash
 source /opt/ros/noetic/setup.bash
