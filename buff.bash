@@ -12,8 +12,8 @@ export ROBOT_ROOT="/home/cu-robotics/buff-code"
 #export USER_IP=$(/sbin/ip -o -4 addr list wlp3s0 | awk '{print $4}' | cut -d/ -f1) # Needs testing
 
 # If ROS is installed source the setup file
-if [[ -d /opt/ros/noetic ]]; then
-	source /opt/ros/noetic/setup.bash
+if [[ -d /opt/ros/melodic ]]; then
+	source /opt/ros/melodic/setup.bash
 fi
 
 # if [[ -d ${PROJECT_ROOT}/install ]]; then
