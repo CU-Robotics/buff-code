@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+i#! /usr/bin/env bash
 
 #  run this script with 'source scripts/install.bash'
 
@@ -39,7 +39,7 @@ sudo apt update
 sudo apt install ros-melodic-desktop-full -y
 
 # Source the ros/setup.bash
-source /opt/ros/noetic/setup.bash
+source /opt/ros/melodic/setup.bash
 
 # Install ROS dependencies
 sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools python3-catkin-pkg python3-rospkg
