@@ -1,6 +1,0 @@
-devel_space: /home/m-dyse/buff-code/devel
-install: true
-install_space: /home/m-dyse/buff-code/install
-profile: debug
-source_space: /home/m-dyse/buff-code/src
-workspace: /home/m-dyse/buff-code

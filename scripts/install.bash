@@ -16,6 +16,9 @@ echo -e "\n\tInstalling Dependencies...\n"
 xargs sudo apt install <${PROJECT_ROOT}/config/install/dependencies.txt -y
 pip3 install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
 
+echo -e "\n\tSetting python alternatives"
+sudo update-alternaitves --set python3 /usr/bin/python3.8 1
+
 
 echo -e "\n\tSetting up ROS noetic\n"
 
@@ -29,7 +32,7 @@ curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo ap
 sudo apt update
 
 # Install ROS
-sudo apt install ros-noetic-desktop-full 
+sudo apt install ros-noetic-desktop-full -y
 
 # Source the ros/setup.bash
 source /opt/ros/noetic/setup.bash
