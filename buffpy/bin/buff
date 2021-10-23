@@ -89,6 +89,8 @@ def buildWorkspace(build):
 		Currently there is no need to build locally but 
 		this will need to copy python files to the robot.
 	"""
+	result = subprocess.run(f'catkin clean -y', shell=True)
+
 	bot = os.getenv('ROBOT_ADDRESS')
 	bot_root = os.getenv('ROBOT_ROOT')
 	project_root = os.getenv('PROJECT_ROOT')
@@ -98,6 +100,9 @@ def buildWorkspace(build):
 		result = subprocess.run(f'catkin build --profile={build[0]}', shell=True)
 
 	if build[0] == 'install':
+		# if root does exist remove it
+		result = subprocess.run(f'ssh {bot} "if [[ -d {bot_root} ]]; then rm -rf {bot_root}; fi"', shell=True)
+
 		# if root does not exist create it
 		result = subprocess.run(f'ssh {bot} "if [[ -n {bot_root} ]]; then mkdir {bot_root}; fi"', shell=True)
 
@@ -145,7 +150,7 @@ def main(ap):
 			gd_handle.uploadFolder(batch=ap.GDrive[1])
 
 	if ap.launch == 'bot':
-		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")} "cd buffbotics && source buff.bash && ./scripts/main.py"', shell=True)
+		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")} "cd buff-code && source buff.bash && ./scripts/main.py"', shell=True)
 		# need to handle result
 	elif ap.launch:
 		result = subprocess.run('./scripts/main.py')
