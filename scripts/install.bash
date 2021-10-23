@@ -41,7 +41,7 @@ sudo apt install ros-melodic-desktop-full -y
 source /opt/ros/noetic/setup.bash
 
 # Install ROS dependencies
-sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools
+sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools python3-catkin-pkg python3-rospkg
 
 echo -e "\n\tFinishing ROS setup...\n"
 
