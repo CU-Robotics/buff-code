@@ -14,13 +14,16 @@ echo -e "\n\tInstalling Dependencies...\n"
 
 #	Using apt and pip install all the dependencies for the project
 xargs sudo apt install <${PROJECT_ROOT}/config/install/dependencies.txt -y
+
+echo -e "\n\tUpgrading pip3\n"
+
 pip3 install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
 
-echo -e "\n\tSetting python alternatives"
-sudo update-alternaitves --set python3 /usr/bin/python3.8 1
+# echo -e "\n\tSetting python alternatives\n"
+# sudo update-alternaitves --set python3 /usr/bin/python3.8 1
 
 
-echo -e "\n\tSetting up ROS noetic\n"
+echo -e "\n\tSetting up ROS melodic\n"
 
 # ROS installation
 # add repositories
