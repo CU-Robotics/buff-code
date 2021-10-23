@@ -16,8 +16,9 @@ echo -e "\n\tInstalling Dependencies...\n"
 xargs sudo apt install <${PROJECT_ROOT}/config/install/dependencies.txt -y
 
 echo -e "\n\tUpgrading pip3\n"
+python3 -m pip install --upgrade pip
 
-pip3 install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
+python3 -m pip install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
 
 # echo -e "\n\tSetting python alternatives\n"
 # sudo update-alternaitves --set python3 /usr/bin/python3.8 1
