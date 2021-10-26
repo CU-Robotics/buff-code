@@ -1,6 +1,6 @@
 class posPID {
     public:
-    posPID();
+    posPID(int range, float p, float i, float d);
     int calculate(int currPos);
     private:
 
