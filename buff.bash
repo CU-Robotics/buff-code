@@ -6,7 +6,7 @@ fi
 
 #		Setup robot params
 export PROJECT_ROOT=${PWD}
-export ROBOT_IP='10.42.1.189'
+export ROBOT_IP='10.0.0.21'
 export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buff-code"
 #export USER_IP=$(/sbin/ip -o -4 addr list wlp3s0 | awk '{print $4}' | cut -d/ -f1) # Needs testing
