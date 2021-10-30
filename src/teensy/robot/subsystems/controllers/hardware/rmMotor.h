@@ -2,7 +2,7 @@
 #include "../../../libraries/FlexCAN_T4-master/FlexCAN_T4.h"
 #endif
 #ifndef CONSTANTS_H
-#include
+#include "../../../constants.h"
 #endif
 
 class rmMotor {
