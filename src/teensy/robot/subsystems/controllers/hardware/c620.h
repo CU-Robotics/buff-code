@@ -2,5 +2,5 @@
 
 class c620 : rmMotor {
     public:
-        void set(float power);
+        void setPower(float power);
 };
