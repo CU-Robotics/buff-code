@@ -9,23 +9,23 @@ First always load the environment variables, if you're not sure if you did just 
 	
 The majority of functionality is based in the buffpy package. This package is setup as a command line tool in buff.bash. All you need to utilize this package is call 'buff' from the command line.
 
-  usage: buff [-h] [--sshBot] [--setBot ROBOT_IP] [--GDrive ACTION FOLDER_ID] [--installKeys] [--launch LOCATION]
-                                                [--botPull] [--build PROFILE] [--clean] [--flash FQBN FW]
+	usage: buff [-h] [--sshBot] [--setBot ROBOT_IP] [--GDrive ACTION FOLDER_ID] [--installKeys] [--launch LOCATION]
+						[--botPull] [--build PROFILE] [--clean] [--flash FQBN FW]
 
-  CU-Robotics Digital House-Keeper
+	CU-Robotics Digital House-Keeper
 
-  optional arguments:
-    -h, --help            show this help message and exit
-    --sshBot              SSH into the bot at the ROBOT_IP env variable
-    --setBot ROBOT_IP     Set the IP of the robot in development
-    --GDrive ACTION FOLDER_ID
-                          Pull or push a batch from google drive, requires batch folder id
-    --installKeys         Push local sshkeys to the robot at ROBOT_IP
-    --launch LOCATION     Launch the robots software locally (True, 1) or on the bot (bot)
-    --botPull             Pull data from the robot at ROBOT_IP
-    --build PROFILE       Builds the workspace locally (debug) or to the robot_ip (install)
-    --clean               Clean the current bin and data, NOT recoverable; only run this if you are sure you want to
-    --flash FQBN FW       Flashes the given board with the target FW (expected port is ACM0)
+	optional arguments:
+	-h, --help            show this help message and exit
+	--sshBot              SSH into the bot at the ROBOT_IP env variable
+	--setBot ROBOT_IP     Set the IP of the robot in development
+	--GDrive ACTION FOLDER_ID
+			  Pull or push a batch from google drive, requires batch folder id
+	--installKeys         Push local sshkeys to the robot at ROBOT_IP
+	--launch LOCATION     Launch the robots software locally (True, 1) or on the bot (bot)
+	--botPull             Pull data from the robot at ROBOT_IP
+	--build PROFILE       Builds the workspace locally (debug) or to the robot_ip (install)
+	--clean               Clean the current bin and data, NOT recoverable; only run this if you are sure you want to
+	--flash FQBN FW       Flashes the given board with the target FW (expected port is ACM0)
 
 ## Install
 
@@ -53,6 +53,7 @@ After this installs the dependencies you will have full functionality.
 
 To test the install run
 
+	source buff.bash
 	buff -h
 
 you should see the output from above.
