@@ -45,6 +45,10 @@ Now run the install from the root of the project
 
 	source scripts/install.bash 
 
+  *the install has a bug that may require this additional command*
+
+    sudo apt install --reinstall ros-melodic-desktop-full
+
 After this installs the dependencies you will have full functionality.
 
 To test the install run
