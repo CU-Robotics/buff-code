@@ -1,4 +1,4 @@
-i#! /usr/bin/env bash
+#! /usr/bin/env bash
 
 #  run this script with 'source scripts/install.bash'
 
@@ -42,7 +42,7 @@ sudo apt install ros-melodic-desktop-full -y
 source /opt/ros/melodic/setup.bash
 
 # Install ROS dependencies
-sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools python3-catkin-pkg python3-rospkg
+sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools python3-catkin-pkg python3-rospkg -y
 
 echo -e "\n\tFinishing ROS setup...\n"
 
@@ -59,7 +59,7 @@ rosdep update
 
 echo -e "\n\tInstalling Teensy loader...\n"
 
-#	Pull teensy files
+#	Pull teensy files from pjrc.com
 # teensy binary and objects
 curl https://www.pjrc.com/teensy/teensy_linux64.tar.gz -O
 # teensy rules file
