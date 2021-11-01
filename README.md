@@ -60,12 +60,12 @@ you should see the output from above.
 ## Architecture
 buff-code
   - buffpy: A python package to handle the ugly backend
-    - bin: binaries (buff, arduino-cli)
-    - lib: python3 installs
+    - bin: binaries (buff, teensy)
+    - lib: installed files
   - config: A place for any and all setup/configuration/secret files
     - install: Files containing install info
     - lib: File containing misc info
-    - sensitive: shhh... it a secret
+    - sensitive: shhh... it's a secret
   - data: a Temporary folder for handling data (should get cleared regularly, if missing will cause issues)
   - dev: python3 notebooks displaying our dev process
   - docs: A better verion of this document
@@ -96,7 +96,9 @@ When working on this project
    - Date: October 19, 2021
    - Editor: Mitchell D Scott
    - Status: Only debug build and clean were tested
-   - Description: Converted to a catkin workspace now requires ROS installed
+   - Description: 
+      - Converted to a catkin workspace now installs ROS. 
+      - The python lib files now live in src/buff_ros and get installed to buffpy/lib
  - Version 0.01
    - Date: October 7, 2021
    - Editor: Mitchell D Scott
