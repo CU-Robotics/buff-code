@@ -555,7 +555,7 @@ FCTP_CLASS class FlexCAN_T4 : public FlexCAN_T4_Base {
     void mbCallbacks(const FLEXCAN_MAILBOX &mb_num, const CAN_message_t &msg);
 };
 
-#include "FlexCAN_T4.tpp"
+#include "./libraries/FlexCAN_T4-master/FlexCAN_T4.tpp"
 
 #if defined(__IMXRT1062__)
 #include "FlexCAN_T4FD.tpp"
