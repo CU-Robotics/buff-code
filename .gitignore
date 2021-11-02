@@ -1,7 +1,11 @@
+logs
 data/*
+devel
+build
+install
+buffpy/lib
 buffpy/bin/teensy
 config/sensitive/*
-buffpy/arduino-cli
 buffpy/bin/__pycache__
 dev/.ipynb_checkpoints
 buffpy/bin/libpng12.so.0
