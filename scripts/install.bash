@@ -16,13 +16,12 @@ echo -e "\n\tInstalling Dependencies...\n"
 xargs sudo apt install <${PROJECT_ROOT}/config/install/dependencies.txt -y
 
 echo -e "\n\tUpgrading pip3\n"
-python3 -m pip install --upgrade pip
+python3.6 -m pip install --upgrade pip
 
-python3 -m pip install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
+python3.6 -m pip install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
 
 # echo -e "\n\tSetting python alternatives\n"
 # sudo update-alternaitves --set python3 /usr/bin/python3.8 1
-
 
 echo -e "\n\tSetting up ROS melodic\n"
 
@@ -36,7 +35,11 @@ curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo ap
 sudo apt update
 
 # Install ROS
-sudo apt install ros-melodic-desktop-full -y
+if [[ "${HOSTNAME}" == "edge"* ]]; then
+	sudo apt install ros-melodic-desktop -y
+else
+	sudo apt install ros-melodic-desktop-full -y
+fi
 
 # Source the ros/setup.bash
 source /opt/ros/melodic/setup.bash
@@ -57,19 +60,22 @@ rosdep update
 #	Install SamD boards (subject to change, need to know the teensy's fqbn)
 # arduino-cli core install arduino:samd
 
-echo -e "\n\tInstalling Teensy loader...\n"
 
-#	Pull teensy files from pjrc.com
-# teensy binary and objects
-curl https://www.pjrc.com/teensy/teensy_linux64.tar.gz -O
-# teensy rules file
-curl https://www.pjrc.com/teensy/00-teensy.rules -O
+if [[ "${HOSTNAME}" != "edge"* ]]; then
+	echo -e "\n\tInstalling Teensy loader...\n"
 
-# mv rules into rules.d and set the proper file permissions
-sudo mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
-sudo chmod 0644 /etc/udev/rules.d/00-teensy.rules
+	#	Pull teensy files from pjrc.com
+	# teensy binary and objects
+	curl https://www.pjrc.com/teensy/teensy_linux64.tar.gz -O
+	# teensy rules file
+	curl https://www.pjrc.com/teensy/00-teensy.rules -O
 
-# extract the tar to buffpy/bin
-tar -xvsf teensy_linux64.tar.gz -C ${PROJECT_ROOT}/buffpy/bin
-# remove unecessary tar.gz 
-rm teensy_linux64.tar.gz
+	# mv rules into rules.d and set the proper file permissions
+	sudo mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
+	sudo chmod 0644 /etc/udev/rules.d/00-teensy.rules
+
+	# extract the tar to buffpy/bin
+	tar -xvsf teensy_linux64.tar.gz -C ${PROJECT_ROOT}/buffpy/bin
+	# remove unecessary tar.gz 
+	rm teensy_linux64.tar.gz
+fi

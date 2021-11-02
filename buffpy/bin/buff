@@ -130,7 +130,7 @@ def main(ap):
 		os.environ['ROBOT_ADRESS'] = f'cu-robotics@{ap.setBot}'
 
 	if ap.installKeys:
-		result = subprocess.run(f'ssh-copy-id -i ~/.ssh/id_rsa.pub {os.getenv("ROBOT_ADDRESS")}', shell=True)
+		result = subprocess.run(f'ssh-copy-id -i ~/.ssh/id_ed25519.pub {os.getenv("ROBOT_ADDRESS")}', shell=True)
 
 	if ap.build:
 		buildWorkspace(ap.build)

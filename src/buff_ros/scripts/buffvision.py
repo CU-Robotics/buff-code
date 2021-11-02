@@ -16,6 +16,7 @@ import cv2
 import sys
 import time
 import glob
+import rospy
 import datetime
 import traceback
 import numpy as np
