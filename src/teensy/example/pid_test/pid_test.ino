@@ -49,9 +49,9 @@ void setup() {
 
 void loop() {
   if(can1.read(recMsg)) {
-    measuredAngle = recMsg.buf[0];
-    measuredAngle = measuredAngle << 8;
-    measuredAngle = measuredAngle | recMsg.buf[1];
+    measuredAngle = recMsg.buf[0];  //get second byte and put into firstt byte of measured angle
+    measuredAngle = measuredAngle << 8;   //move second byte into second byte of measured angle
+    measuredAngle = measuredAngle | recMsg.buf[1];  //stick the second byte into second byte of measured angle
 
     voltage = anglePID.Run(measuredAngle);
     Serial.print("Voltage: ");
