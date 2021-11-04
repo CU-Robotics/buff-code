@@ -126,7 +126,8 @@ def main(ap):
 		cleanWorkspace()
 
 	if not ap.setBot is None:
-		os.environ['ROBOT_IP'] = ap.setBot
+		# Does not work the way I want
+		os.environ['ROBOT_IP'] = f'{ap.setBot}' # os.environ will only set the vars for this process and its subprocesses
 		os.environ['ROBOT_ADRESS'] = f'cu-robotics@{ap.setBot}'
 
 	if ap.installKeys:
