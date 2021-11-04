@@ -95,7 +95,7 @@ def save_image(image, filepath=None):
 	if not filepath is None:
 		cv2.imwrite(filepath, image)
 	else:
-		cv2.imwrite(datefilledPath('images'), image)
+		cv2.imwrite(datefilledPath('data'), image)
 
 def single_image_capture_cv():
 	camera = cv2.VideoCapture(0)
@@ -127,5 +127,5 @@ def capture_video(duration=10):
 
 
 if __name__=='__main__':
-	#single_image_capture_cv()
-	capture_video()
+	single_image_capture_cv()
+	#capture_video()
