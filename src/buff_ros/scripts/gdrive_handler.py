@@ -26,7 +26,10 @@ class GD_Handler:
 		gauth = GoogleAuth()
 		# Creates local webserver and auto
 		# handles authentication.
-		gauth.LocalWebserverAuth() # gauth.CommandLineAuth()       
+		if 'edge' in os.getenv('HOSTNAME'):
+			gauth.CommandLineAuth()   # use cmdline on jetson in case of headless session
+		else:
+			gauth.LocalWebserverAuth()
 		drive = GoogleDrive(gauth)
 		return drive
 

@@ -7,6 +7,7 @@ fi
 
 #		Setup robot params
 export PROJECT_ROOT=${PWD}
+export HOSTNAME=$HOSTNAME
 export ROBOT_IP='10.0.0.161' # '128.138.157.251' #'10.0.0.160' for mitchell's home network
 export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buff-code"
@@ -22,16 +23,24 @@ fi
 # fi
 
 #		Setup python tools
-export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
-export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}"
+if [[ "${PATH}" != *"buffpy"* ]]; then
+	export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
+fi 
+
+# Only export if if not already in path
+if [[ "${PYTHONPATH}" != *"buffpy"* ]]; then	
+	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}"
+fi
 
 # Not totally clear but this solves an 
 # illegal instruction error with rospy.
-# Only on Jetson
+# Only for Jetson
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
 	export USER_IP= # Should find a way to get the users IP from the robot
 else
+	# if not on jetson set the user IP
+	# should figure out how to set it if it is on the jetson
 	export USER_IP=$(/sbin/ip -o -4 addr list wlp3s0 | awk '{print $4}' | cut -d/ -f1) # Needs testing
 
 fi
