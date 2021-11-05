@@ -90,6 +90,10 @@ def buildWorkspace(build):
 		Builds the current workspace locally or to a robot.
 		Currently there is no need to build locally but 
 		this will need to copy python files to the robot.
+		@PARAMS:
+			build: the profile to build
+		@RETURNS:
+			None
 	"""
 	result = subprocess.run(f'catkin clean -y', shell=True)
 
@@ -127,9 +131,10 @@ def main(ap):
 
 	if not ap.setBot is None:
 		# Does not work the way I want
-		os.environ['ROBOT_IP'] = f'{ap.setBot}' # os.environ will only set the vars for this process and its subprocesses
-		os.environ['ROBOT_ADRESS'] = f'cu-robotics@{ap.setBot}'
-
+		# os.environ['ROBOT_IP'] = f'{ap.setBot}' # os.environ will only set the vars for this process and its subprocesses
+		# os.environ['ROBOT_ADRESS'] = f'cu-robotics@{ap.setBot}'
+		# result = subprocess.run(f'ROBOT_IP={ap.setBot} && ROBOT_ADDRESS=cu-robotics@{ap.setBot}', shell=True)
+		print('NotImplemented: ERROR')
 	if ap.installKeys:
 		result = subprocess.run(f'ssh-copy-id -i ~/.ssh/id_ed25519.pub {os.getenv("ROBOT_ADDRESS")}', shell=True)
 
