@@ -5,7 +5,7 @@
 	Description:
 	  This is a python3 command line tool from CU-Robotics
 	It is meant to simplify development of robotics software.
-	Think of buffbotics as a python3 app that handles the backend
+	Think of buff-code as a python3 app that handles the backend
 	of software development:
 	 - installing/setting up devices
 	 - handling data
@@ -29,6 +29,13 @@ import subprocess
 from gdrive_handler import GD_Handler
 
 def parseArgs():
+	"""
+		Handles parsing all inputs to buff
+		@PARAMS
+			None
+		@RETURNS
+			parsedargs: argparse args object
+	"""
 	parser = argparse.ArgumentParser(prog=sys.argv[0],
 	description='CU-Robotics Digital House-Keeper')
 	parser.add_argument('--sshBot',
@@ -73,7 +80,7 @@ def parseArgs():
 def cleanWorkspace():
 	"""
 		Removes the data folder, and when it becomes necesary
-		will also remove any generate binaries and configs
+		will also remove any generated binaries and configs
 	"""
 	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
 
@@ -88,8 +95,7 @@ def cleanWorkspace():
 def buildWorkspace(build):
 	"""
 		Builds the current workspace locally or to a robot.
-		Currently there is no need to build locally but 
-		this will need to copy python files to the robot.
+		this will need to copy python files and binaries to the robot.
 		@PARAMS:
 			build: the profile to build
 		@RETURNS:

@@ -8,7 +8,7 @@ fi
 #		Setup robot params
 export PROJECT_ROOT=${PWD}
 export HOSTNAME=$HOSTNAME
-export ROBOT_IP='10.0.0.161' # '128.138.157.251' #'10.0.0.160' for mitchell's home network
+export ROBOT_IP='128.138.157.140' #'10.0.0.161' # '128.138.157.251' #'10.0.0.160' for mitchell's home network
 export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buff-code"
 
@@ -37,7 +37,7 @@ fi
 # Only for Jetson
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
-	export USER_IP= # Should find a way to get the users IP from the robot
+	export USER_IP= # Should find a way to get the users IP from the robot, ssh env variable?
 else
 	# if not on jetson set the user IP
 	# should figure out how to set it if it is on the jetson
