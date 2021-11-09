@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 """
 	Project:
 			BuffVision
@@ -24,7 +24,7 @@ from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
 from sensor_msgs.msg import Image
 import xml.etree.ElementTree as ET
-from gdrive_handler import GD_Handler
+#from gdrive_handler import GD_Handler
 
 
 def buffshow(title, image, wait=0):
@@ -145,7 +145,7 @@ def display_annotated(data):
 		
 	buffshow('annotated', image)
 
-def dateFilledPath(ext='.png'):
+def dateFilledPath(fileExt='.png'):
 	"""
 		create a date and time stamped filepath. Root is always PROJECT_ROOT/data
 		@PARAMS
@@ -197,7 +197,7 @@ def capture_video(duration=10):
 	ext = 'avi'
 	cap = cv2.VideoCapture(0)
 	size=(int(cap.get(3)), int(cap.get(4)))
-	out = cv2.VideoWriter(datefilledPath('video', ext=f'.{ext}'), cv2.VideoWriter_fourcc('M','J','P','G'), 30, size)
+	out = cv2.VideoWriter(datefilledPath('video', fileExt='.{}'.format(ext)), cv2.VideoWriter_fourcc('M','J','P','G'), 30, size)
 
 	if cap.isOpened():
 		start = time.time()
@@ -260,7 +260,7 @@ if __name__=='__main__':
 	#single_image_capture_cv()
 	#capture_video()
 
-	#ROS_cv2_publisher()
+	ROS_cv2_publisher()
 
 	
 		
