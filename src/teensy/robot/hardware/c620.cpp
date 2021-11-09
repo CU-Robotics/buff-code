@@ -1,8 +1,13 @@
+#ifndef CONSTANTS_H
+#include "../../../constants.h"
+#endif
+
 #include "c620.h"
 
-c620::rmMotor(short tempID, CAN_message_t &msg) {
+
+c620::c620(short tempID, CAN_message_t *msg) {
     id = tempID;
-    &sendMsg = msg;
+    *sendMsg = msg;
     byteNum = id - 1;
     if(byteNum > 3) {
         byteNum -= 4;
