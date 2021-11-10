@@ -7,8 +7,8 @@ fi
 
 #		Setup robot params
 export PROJECT_ROOT=${PWD}
-export HOSTNAME=$HOSTNAME
-export ROBOT_IP='128.138.157.240' # '128.138.157.140' #'10.0.0.161' # '128.138.157.251' #'10.0.0.160' for mitchell's home network
+export HOSTNAME=$HOSTNAME		#	Idea Forge	#	Idea Forge		# John-Os		# Idea Forge		# Mitchells
+export ROBOT_IP='10.0.0.162' #'128.138.157.240' # '128.138.157.140' #'10.0.0.161' # '128.138.157.251' #'10.0.0.160'
 export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buff-code"
 
