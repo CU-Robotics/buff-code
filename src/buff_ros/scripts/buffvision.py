@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 """
 	Project:
 			BuffVision
@@ -24,15 +24,34 @@ from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
 from sensor_msgs.msg import Image
 import xml.etree.ElementTree as ET
-from gdrive_handler import GD_Handler
+#from gdrive_handler import GD_Handler
 
 
 def buffshow(title, image, wait=0):
+	"""
+		Uses the openCV imshow and waitKey to display an image
+		@PARAMS
+			title: Title of the image
+			image: openCV image or numpy nd-array
+			wait: preference for the wait key
+		@RETURNS
+			None
+		@DISPLAYS
+			openCV window, awaits user input
+	"""
 	cv2.imshow(title, image)
 	cv2.waitKey(wait)
 	cv2.destroyAllWindows()
 
 def get_bounding_from_label(label):
+	"""
+		Gets the bounding box from the label obj.
+		@PARAMS
+			label: The label object (a dict like)
+		@RETURNS
+			bounding: [(Xmin, Ymin), (Xmax, Ymax)], intergers between (0, 0) and Image.Size.
+				These define the pixel coords of the bounding box.
+	"""
 	bounds = []
 	boundingboxes = label.findall('object')
 	for boundary in boundingboxes:
@@ -45,6 +64,13 @@ def get_bounding_from_label(label):
 	return bounds
 
 def display_annotated_raw(data_point):
+	"""
+		Uses buffshow to display an image with its annotation
+		@PARAMS
+			data_point: a touple of The label object (a dict like) and the image
+		@RETURNS
+			None
+	"""
 	image, label = data_point
 	bounds = get_bounding_from_label(label)
 	for bound in bounds:
@@ -60,13 +86,35 @@ def load_images(path):
 	return [(file.split('/')[-1], cv2.imread(file)) for file in filenames] # by saving the image with its filename we can properly match it to the data
 
 def load_labels(path):
+	"""
+		Load all labels from a directory.
+		@PARAMS
+			path: Path to the directory with labels
+		@RETURNS
+			labels: array of the label objects (see ElementTree docs)
+	"""
 	filenames = glob.glob(path)
 	return [ET.parse(file) for file in filenames]
 
 def get_image_file_from_label(label):
+	"""
+		Gets the file name from the label obj.
+		@PARAMS
+			label: The label object (a dict like)
+		@RETURNS
+			filename: the name of the image file (string)
+	"""
 	return label.find('filename').text
 	
-def load_data(path='../data'): # default path only works in jupyter notebook
+def load_data(path='../data'): # default path only works in jupyter notebook or from project root
+	"""
+		Loads all images and labels in the given directory.
+		Assumes paired file structure (XXX.xml, XXX.jpg)
+		@PARAMS
+			path: file to the directory with data
+		@RETURNS
+			None
+	"""
 	# images = load_images(os.path.join(path, '*.jpg'))
 	labels = load_labels(os.path.join(path, '*.xml'))
 	# if len(images) - len(labels):
@@ -83,13 +131,21 @@ def load_data(path='../data'): # default path only works in jupyter notebook
 	return data
 
 def display_annotated(data):
+	"""
+		Displays an image with its annotation using buffshow.
+		@PARAMS
+			data: a touple (image, bounds)
+		@RETURNS
+			None
+	"""
 	image, bounds = data
 	for bound in bounds:
+		# Draw a rectangle on the image, green 2px thick
 		image = cv2.rectangle(image, bound[0], bound[1], (0,255,0), 2)
 		
 	buffshow('annotated', image)
 
-def dateFilledPath(ext='.png'):
+def dateFilledPath(fileExt='.png'):
 	"""
 		create a date and time stamped filepath. Root is always PROJECT_ROOT/data
 		@PARAMS
@@ -101,7 +157,7 @@ def dateFilledPath(ext='.png'):
 
 def save_image(image, filepath=None):
 	"""
-		Use cv2 to save an image.
+		Use openCV to save an image.
 		@PARAMS
 			image: the image to save (np array, cv2.mat... etc)
 			filepath: place to save the image, if None will become a date
@@ -116,7 +172,7 @@ def save_image(image, filepath=None):
 
 def single_image_capture_cv():
 	"""
-		Use cv2 to create a stream to a camera and capture a single image.
+		Use openCV to create a stream to a camera and capture a single image.
 		@PARAMS
 			None
 		@RETURNS
@@ -132,7 +188,7 @@ def single_image_capture_cv():
 
 def capture_video(duration=10):
 	"""
-		Use cv2 to create a stream to a camera and record a video.
+		Use openCV to create a stream to a camera and record a video.
 		@PARAMS
 			duration: length in seconds of the video (not exact)
 		@RETURNS
@@ -141,7 +197,7 @@ def capture_video(duration=10):
 	ext = 'avi'
 	cap = cv2.VideoCapture(0)
 	size=(int(cap.get(3)), int(cap.get(4)))
-	out = cv2.VideoWriter(datefilledPath('video', ext=f'.{ext}'), cv2.VideoWriter_fourcc('M','J','P','G'), 30, size)
+	out = cv2.VideoWriter(datefilledPath('video', fileExt='.{}'.format(ext)), cv2.VideoWriter_fourcc('M','J','P','G'), 30, size)
 
 	if cap.isOpened():
 		start = time.time()
@@ -157,7 +213,7 @@ def capture_video(duration=10):
 
 def ROS_cv2_publisher(topic='image_raw'):
 	"""
-		Use cv2 to create a stream to a camera and publish the images
+		Use openCV to create a stream to a camera and publish the images
 		to a ROS topic.
 		@PARAMS
 			topic: the name of the topic the image will publish to
@@ -198,9 +254,13 @@ def ROS_cv2_publisher(topic='image_raw'):
 
 
 if __name__=='__main__':
+	"""
+		Spawn vision nodes here
+	"""
 	#single_image_capture_cv()
 	#capture_video()
 
 	ROS_cv2_publisher()
+
 	
 		
