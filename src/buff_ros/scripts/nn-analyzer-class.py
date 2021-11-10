@@ -16,6 +16,7 @@ class Analyzer:
             self.imagePaths.append(imagePath)
             self.imagesBGR.append(imageBGR)
             self.imagesHSV.append(cv2.cvtColor(imageBGR, cv2.COLOR_BGR2HSV))
+
     def loadImages(self, loadFromFilePath):
         """
         Function: loads additional single image or a batch of images from a given filepath, DOES NOT SHOW IMAGE
@@ -29,6 +30,7 @@ class Analyzer:
             imageBGR = cv2.imread(self.imagePaths[index])
             self.imagesBGR.append(imageBGR)
             self.imagesHSV.append(cv2.cvtColor(imageBGR, cv2.COLOR_BGR2HSV))
+
     def saveImages(self, images, saveToFilePath="../data/"):
         """
         Function: saves a single or a batch of images to a given filepath
@@ -37,11 +39,12 @@ class Analyzer:
         """
         for image in images:
             cv2.imwrite(saveToFilePath+"Copy"+image, image)
+
     def analyzeImageHSV(self, imageName):
         """
         Function: analyzes images using HSV, generally better than BGR for lights, adds to processed image array
-        Parameters: 
-            @string imageName = name of the image, including filetype
+        @PARAMS: 
+            string imageName = name of the image, including filetype
                 Ex: "exampleImage.jpg"
 
         """
@@ -73,6 +76,7 @@ class Analyzer:
         #cv2.imshow("HSV red detection: " + imagePath, red_output)
         #cv2.imshow("HSV blue detection: " + imagePath, blue_output)
         #cv2.waitKey(0)
+
     def analyzeImageBGR(self, imageName):
         """
         Function: analyzes images using BGR, adds to processed image array
@@ -90,8 +94,8 @@ class Analyzer:
             return
         imagePath = self.imagePaths[index]
         imageBGR = self.imagesBGR[index]
-        red_lower = (0,0,100) #bgr for red, lower boundary
-        red_upper = (80,80,255) #bgr for red, upper boundary
+        red_lower = (0,0,100) #bgr for red, lower boundary # Define these as attributes of the class not local variables.
+        red_upper = (80,80,255) #bgr for red, upper boundary # That way we can define them on initilization.
         blue_lower = (100,0,0) #bgr for blue, lower boundary
         blue_upper = (255,80,80) #bgr for blue, upper boundary
         red_mask = cv2.inRange(imageBGR, red_lower, red_upper)
@@ -104,6 +108,10 @@ class Analyzer:
         #cv2.imshow("BGR red detection: " + imagePath, red_output)
         #cv2.imshow("BGR blue detection: " + imagePath, blue_output)
         #cv2.waitKey(0)
+
+    def detect(self, image, display=False):
+
+
     def display(self):
         """
         Function: displays all images by batch, BGR, HSV, and then all processed images
