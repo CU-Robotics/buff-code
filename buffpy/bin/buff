@@ -20,13 +20,17 @@
 		and will likely brake, even with standard input).
 
 		make functionality more robust to erraneous input and general brake downs.
+
+	NOTES:
+		This program only really works once the workspace has been built.
+		Which happens with the install. -- Removed GDrive_handler to fix this
 """
 
 import os
 import sys
+import shutil
 import argparse
 import subprocess
-from gdrive_handler import GD_Handler
 
 def parseArgs():
 	"""
@@ -45,11 +49,6 @@ def parseArgs():
 		nargs=1,
 		metavar='ROBOT_IP',
 		help='Set the IP of the robot in development')
-	parser.add_argument('--GDrive', 
-		nargs=2,
-		metavar=('ACTION', 'FOLDER_ID'),
-		default=None,
-		help='Pull or push a batch from google drive, requires batch folder id')
 	parser.add_argument('--installKeys',
 		action='store_true',
 		help='Push local sshkeys to the robot at ROBOT_IP')
@@ -91,6 +90,18 @@ def cleanWorkspace():
 
 	result = subprocess.run(f'catkin clean -y', shell=True)
 
+	# Idoit Security
+	# this function could wipe the entire disk
+	# if not used with caution. (its also very easy for an attacker to change an environment variable)
+	if len(lib_path.split('/')) < 3:
+		print(f'Illegal Directory: cannot remove {lib_path}')
+		return
+
+	if len(data_path.split('/')) < 3:
+		print(f'Illegal Directory: cannot remove {data_path}')
+		return
+
+
 	# Remove all data and or replace the directory with an empty one
 	if os.path.exists(data_path):
 		for file in os.listdir(data_path):
@@ -99,10 +110,15 @@ def cleanWorkspace():
 		os.mkdir(data_path)
 
 	# Remove all lib files, these are installed by catkin
+	# By walking through each dir and removing its files
+	# we can then delete the directories
 	if os.path.exists(lib_path):
-		os.rmdir(os.path.join(lib_path, '__pycache__'))
-		for file in os.listdir(lib_path):
-			os.remove(os.path.join(lib_path, file))
+		for root, dirs,files in os.walk(lib_path):
+			for file in files:
+				os.remove(os.path.join(root, file))
+			for directory in dirs:
+				shutil.rmtree(os.path.join(root, directory))
+			break
 	else:
 		os.mkdir(lib_path)
 
@@ -175,16 +191,6 @@ def main(ap):
 
 	if ap.sshBot:
 		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")}', shell=True)
-
-	if not ap.GDrive is None:
-
-		gd_handle = GD_Handler()
-
-		if ap.GDrive[0] =='pull':
-			gd_handle.downloadBatch(ap.GDrive[1])
-
-		elif ap.GDrive[0] == 'push':
-			gd_handle.uploadFolder(batch=ap.GDrive[1])
 
 	if ap.launch == 'bot':
 		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")} "cd buff-code && source buff.bash && ./scripts/main.py"', shell=True)
