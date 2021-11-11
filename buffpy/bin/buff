@@ -97,6 +97,7 @@ def cleanWorkspace():
 		print(f'Illegal Directory: cannot remove {lib_path}')
 		return
 
+	# Best to make sure someone didn't pass in root
 	if len(data_path.split('/')) < 3:
 		print(f'Illegal Directory: cannot remove {data_path}')
 		return

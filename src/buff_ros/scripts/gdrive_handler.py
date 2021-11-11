@@ -5,8 +5,9 @@ import yaml
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
-## this script needs major work 
-## for now we will upload data manually
+# This script is not used much and as result has not been adequately tested.
+# The use cases seem only like people in notebooks need it, might be helpful when
+# we start collecting lots of data.
 
 class GD_Handler:
 
