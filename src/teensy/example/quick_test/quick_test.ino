@@ -4,8 +4,10 @@ FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 
 short spe = 2000;   //change this to anything between -30000 and 30000 (gm6020) or set in serial
 
-byte bOne = highByte(spe);
-byte bTwo = lowByte(spe);
+byte bOne = highByte(16384);
+byte bTwo = lowByte(16384);
+
+
 
 int del = 5;
 
@@ -30,35 +32,20 @@ void setup() {
 void loop() {
   msg.id = 0x200;    //Modify id if not using gm6020
   
-  msg.buf[0] = bOne; //set high order byte
-  msg.buf[1] = bTwo; //set low order byte
+  msg.buf[0] = highByte(16384); //set high order byte
+  msg.buf[1] = lowByte(16384); //set low order byte
   
-  msg.buf[2] = bOne; //set high order byte
-  msg.buf[3] = bTwo; //set low order byte
+  msg.buf[2] = highByte(16384); //set high order byte
+  msg.buf[3] = lowByte(16384); //set low order byte
 
-  msg.buf[4] = bOne; //set high order byte
-  msg.buf[5] = bTwo; //set low order byte
+  msg.buf[4] = highByte(16384); //set high order byte
+  msg.buf[5] = lowByte(16384); //set low order byte
 
   msg.buf[6] = bOne; //set high order byte
   msg.buf[7] = bTwo; //set low order byte
 
   can1.write(msg);
-  
-  msg.id = 0x2FF;    //Modify id if not using gm6020
-  
-  msg.buf[0] = bOne; //set high order byte
-  msg.buf[1] = bTwo; //set low order byte
-  
-  msg.buf[2] = bOne; //set high order byte
-  msg.buf[3] = bTwo; //set low order byte
 
-  msg.buf[4] = bOne; //set high order byte
-  msg.buf[5] = bTwo; //set low order byte
-
-  msg.buf[6] = bOne; //set high order byte
-  msg.buf[7] = bTwo; //set low order byte
-
-  can1.write(msg);
 
 
 //  Serial.println("Sent CAN data");
