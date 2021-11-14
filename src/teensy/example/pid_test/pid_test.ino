@@ -8,7 +8,7 @@ short voltage = 0;   //value that will be sent to the motor
 
 PID_v2 anglePID(6, 5, .75, PID::Direct);  //first value is P, Second is I, third is D, fourth vallue does something important I presume
 
-
+PID_v2 rpmPID(.5, 0, 0, PID::Direct);  //first value is P, Second is I, third is D, fourth vallue does something important I presume
 
 
 //breaking the voltage value into two discrete bytes
@@ -17,6 +17,7 @@ byte bTwo = lowByte(voltage);
 
 //target values
 short targetAngle = 4000; //initial target angle in the middle so roll over isn't a big problem
+short targetRPM = 6000;
 
 //values to be recieved from motor
 int measuredAngle = 0;
@@ -39,12 +40,23 @@ void setup() {
   measuredAngle = measuredAngle << 8;   //move the high byte into the high position
   measuredAngle = measuredAngle | recMsg.buf[1];  //get the low byte into the variable
 
+  measuredRPM = recMsg.buf[2];  //get the high byte into the variable
+  measuredRPM = measuredRPM << 8;   //move the high byte into the high position
+  measuredRPM = measuredRPM | recMsg.buf[3];  //get the low byte into the variable
+
   anglePID.SetOutputLimits(-10000, 10000);   //currently limited to 10000 for testing
   anglePID.SetSampleTime(10);   //drop sample time down to 10ms from the default 100ms, 1ms seems to make it jittery
+
+  rpmPID.SetOutputLimits(-16000, 16000);   //currently limited to 10000 for testing
+  rpmPID.SetSampleTime(10);   //drop sample time down to 10ms from the default 100ms, 1ms seems to make it jittery
 
   anglePID.Start(measuredAngle, //input
                  0,             //current output
                  targetAngle);  //setpoint
+                 
+  rpmPID.Start(measuredRPM, //input
+                 0,             //current output
+                 targetRPM);  //setpoint
 }
 
 void loop() {
@@ -53,16 +65,22 @@ void loop() {
     measuredAngle = measuredAngle << 8;   //move second byte into second byte of measured angle
     measuredAngle = measuredAngle | recMsg.buf[1];  //stick the second byte into second byte of measured angle
 
-    voltage = anglePID.Run(measuredAngle);
+    measuredRPM = recMsg.buf[2];  //get the high byte into the variable
+    measuredRPM = measuredRPM << 8;   //move the high byte into the high position
+    measuredRPM = measuredRPM | recMsg.buf[3];  //get the low byte into the variable
+
+    voltage = rpmPID.Run(measuredRPM);
     Serial.print("Voltage: ");
     Serial.print(voltage);
     Serial.print(", angle: ");
-    Serial.println(measuredAngle);
+    Serial.print(measuredAngle);
+    Serial.print(", rpm: ");
+    Serial.println(measuredRPM);
   }
 
-  anglePID.Compute();   //must be run to recalculate the PID output, maybe should be moved to just before anglePID.run()
+  rpmPID.Compute();   //must be run to recalculate the PID output, maybe should be moved to just before anglePID.run()
   
-  sendMsg.id = 0x1FF;    //ID for first 4 GM6020 motors or second 4 C620 ESCs
+  sendMsg.id = 0x200;    //ID for first 4 GM6020 motors or second 4 C620 ESCs
 
   byte bOne = highByte(voltage);
   byte bTwo = lowByte(voltage);
