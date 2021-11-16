@@ -211,6 +211,36 @@ def capture_video(duration=10):
 	cap.release()
 	out.release()
 
+def cv2_stream_test():
+	"""
+		Use openCV to create a stream to a camera and display fps
+		Crucial to use while not rospy.is_shutdown
+		@PARAMS
+			None
+		@RETURNS
+			None
+	"""
+
+	# Create the image stream
+	cap = cv2.VideoCapture(0)
+	# Set a size variable (resolution)
+	size=(int(cap.get(3)), int(cap.get(4)))
+
+	# used to count frames and print FPS
+	n = 0
+	start = time.time()
+	# If the stream is open and ROS is running
+	if cap.isOpened():
+		while not rospy.is_shutdown():
+
+			# Capture frame
+			ret, frame = cap.read()
+
+			# Run stats
+			n += 1
+			elapsed = time.time() - start 
+			print('elapsed time: {}, n frames: {}, FPS: {}'.format(elapsed, n, n / elapsed))
+
 def ROS_cv2_publisher(topic='image_raw'):
 	"""
 		Use openCV to create a stream to a camera and publish the images
@@ -221,8 +251,8 @@ def ROS_cv2_publisher(topic='image_raw'):
 			None
 	"""
 
-	# Create the image stream
-	cap = cv2.VideoCapture(0)
+	# Create the image stream and set its capture rate to 30 FPS
+	cap = cv2.VideoCapture(0).set(cv2.CV_CAP_PROP_FPS, 30)
 	# Set a size variable (resolution)
 	size=(int(cap.get(3)), int(cap.get(4)))
 
@@ -249,7 +279,11 @@ def ROS_cv2_publisher(topic='image_raw'):
 			# Publish the message
 			pub.publish(imgMsg)
 
-
+def ROS_cv2_pipeline(debug=False):
+	"""
+		includes a camera capture
+	"""
+	pass
 
 
 
@@ -257,10 +291,12 @@ if __name__=='__main__':
 	"""
 		Spawn vision nodes here
 	"""
-	#single_image_capture_cv()
-	#capture_video()
+	# single_image_capture_cv()
+	# capture_video()
 
 	ROS_cv2_publisher()
+
+	#cv2_stream_test()
 
 	
 		

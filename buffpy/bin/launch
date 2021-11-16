@@ -17,6 +17,7 @@ import os
 import sys
 import time
 import rospy
+import signal
 import subprocess as sb
 
 ######## Main ########
@@ -35,16 +36,26 @@ def main():
 	bvExecutable = os.path.join(projectRoot, 'buffpy', 'lib', 'buffvision.py')
 
 	# Start ROS-Core
-	sb.Popen(['roscore'])
+	roscore_p = sb.Popen(['roscore'])
 	
 	# launch the vision program
-	sb.Popen([bvExecutable])
+	vision_p = sb.Popen([bvExecutable])
 
+	#	Important
 	# Wait for rospy to shutdown before exiting
 	# when it gets implemented this will help kill
-	# running processes.
-	while not rospy.is_shutdown():
-		time.sleep(1)
+	# running processes. Will kill ROScore when ^c
+	# recieved. Other processes need to terminate 
+	# themselves (by polling roscore.is_shutdown).
+	try:
+		while not rospy.is_shutdown():
+			time.sleep(1)
+
+	except KeyboardInterrupt as e:
+		print(e)
+		print(f'Terminate Recieved:...')
+		os.kill(roscore_p.pid, signal.SIGTERM)
+
 
 	print('roscore shutdown exiting:...')
 
