@@ -21,11 +21,8 @@ import datetime
 import traceback
 import numpy as np
 from cv_bridge import CvBridge
-import matplotlib.pyplot as plt
 from sensor_msgs.msg import Image
 import xml.etree.ElementTree as ET
-#from gdrive_handler import GD_Handler
-
 
 def buffshow(title, image, wait=0):
 	"""
@@ -125,7 +122,7 @@ def load_data(path='../data'): # default path only works in jupyter notebook or 
 		imfile = get_image_file_from_label(label)
 		impath = os.path.join(path, imfile)
 		if os.path.exists(impath):
-			image = cv2.imread(impath)
+			image = cv2.cvtColor(cv2.imread(impath), cv2.COLOR_BGR2RGB)
 			data.append((image, get_bounding_from_label(label)))
 				
 	return data
