@@ -17,14 +17,17 @@ void setup() {
   can1.begin();
   can1.setBaudRate(1000000);
   Serial.begin(9600);
-  Serial.println("test");
-  Serial.println(msg.id);
-  delay(1000);
-  //myMotor.setPower
+  myMotor.setPower(.5);
 }
 
 void loop() {
   Serial.print("id: ");
-  Serial.println(msg.id);
-  delay(500);
+  Serial.println(msg.id, HEX);
+  Serial.print("power: ");
+  short temp = msg.buf[0];
+  temp = temp << 8;
+  temp = temp | msg.buf[1];
+  Serial.println(temp);
+  Serial.println(myMotor.getTemp());
+  delay(1000);
 }
