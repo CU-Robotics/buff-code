@@ -88,7 +88,8 @@ def cleanWorkspace():
 
 	lib_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy/lib')
 
-	result = subprocess.run(f'catkin clean -y', shell=True)
+	if not 'edge' in os.getenv('HOSTNAME'):
+		result = subprocess.run(f'catkin clean -y', shell=True)
 
 	# Idoit Security
 	# this function could wipe the entire disk
@@ -132,8 +133,10 @@ def buildWorkspace(build):
 		@RETURNS:
 			None
 	"""
+	# use catkin to clean the workspace if it was already built
 	result = subprocess.run(f'catkin clean -y', shell=True)
 
+	# Rebuild the workspace with catkin build
 	if build[0]:
 		result = subprocess.run(f'catkin build --profile={build[0]}', shell=True)
 
@@ -187,17 +190,21 @@ def main(ap):
 	if ap.install:
 		install()
 
+	# Deprecated
 	if not ap.flash is None:
 		result = subprocess.run(f'arduino-cli compile --fqbn {ap.flash[0]} {os.getenv("PROJECT_ROOT")}/src/Arduino/{ap.flash[1]} && arduino-cli upload -p /dev/ttyACM0 --fqbn {ap.flash[0]} {os.getenv("PROJECT_ROOT")}/src/Arduino/{ap.flash[1]}', shell=True)
 
+	# SSH into the robot at ROBOT_IP using X11 forwarding
 	if ap.sshBot:
-		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")}', shell=True)
+		result = subprocess.run(f'ssh -X {os.getenv("ROBOT_ADDRESS")}', shell=True)
 
+
+		# Will be Deprecated
 	if ap.launch == 'bot':
-		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")} "cd buff-code && source buff.bash && ./scripts/main.py"', shell=True)
+		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")} "cd buff-code && source buff.bash && launch"', shell=True)
 		# need to handle result
 	elif ap.launch:
-		result = subprocess.run('./scripts/main.py')
+		result = subprocess.run('launch')
 
 	if ap.botPull:
 		result = subprocess.run(f'scp {os.getenv("ROBOT_ADDRESS")}:{os.getenv("ROBOT_ROOT")}/data {os.getenv("PROJECT_ROOT")}/data', shell=True)
