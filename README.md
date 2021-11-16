@@ -62,15 +62,15 @@ you should see the output from above.
 
 Now that we know buff works we can build the workspace. 
 
-  buff --build debug
+	buff --build debug
 
 You can change the build by specifying a different profile.
 
-  buff --build release
+	buff --build release
 
 If you have issues building the workspace you probably need to source buff.bash or you can clean the workspace.
 
-  buff --clean
+	buff --clean
 
 Be careful with this command because it can remove things you don't want it too. This function will remove whatever is at $PROJECT_ROOT/data and $PROJECT_ROOT/buffpy/lib. By changing the PROJECT_ROOT variable from bash or in buff.bash you will change what gets removed.
 
@@ -78,7 +78,7 @@ Be careful with this command because it can remove things you don't want it too.
 
 The buff executable supports installing the workspace to a Jetson Nano (this is how you should always install). After building the workspace run:
 
-  buff --install
+	buff --install
 
 This will copy all of the lib and binary files as well as install scripts, buff.bash and config files. Make sure the $ROBOT_IP variable points to the machine you want or you might end up pushing to the work device. Adjust this variable in buff.bash if necessary.
 
@@ -86,7 +86,7 @@ This will copy all of the lib and binary files as well as install scripts, buff.
 
 To launch the main cognition program use the launch binary (which is already on your path).
 
-  launch
+	launch
 
 This script spawns the necessary threads for the vision pipeline (roscore, buffvision and other debug nodes)
 
