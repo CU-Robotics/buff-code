@@ -198,11 +198,11 @@ def main(ap):
 	if ap.sshBot:
 		result = subprocess.run(f'ssh -X {os.getenv("ROBOT_ADDRESS")}', shell=True)
 
-
-		# Will be Deprecated
+		# May be Deprecated
 	if ap.launch == 'bot':
 		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")} "cd buff-code && source buff.bash && launch"', shell=True)
 		# need to handle result
+		
 	elif ap.launch:
 		result = subprocess.run('launch')
 
