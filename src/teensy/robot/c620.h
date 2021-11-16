@@ -18,5 +18,4 @@ class c620 : public rmMotor {
     public:
         c620(short tempID, CAN_message_t* msg);
         void setPower(float power);
-        void updateMotor();     //this will need to have information passed to it in some way, either by accepting each variable or by taking in a can message object
 };
