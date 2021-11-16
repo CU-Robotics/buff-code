@@ -1,5 +1,5 @@
+cython
 pydrive
-numpy==1.19.2
+numpy
 matplotlib
-tensorflow>=2.2
 opencv_python
