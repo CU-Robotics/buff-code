@@ -8,7 +8,7 @@ devel_space: devel
 extend_path: null
 extends: null
 install: true
-install_space: /home/m-dyse/buff-code/install
+install_space: install
 isolate_install: false
 jobs_args: []
 licenses:
