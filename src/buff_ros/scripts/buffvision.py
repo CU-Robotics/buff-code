@@ -21,11 +21,8 @@ import datetime
 import traceback
 import numpy as np
 from cv_bridge import CvBridge
-import matplotlib.pyplot as plt
 from sensor_msgs.msg import Image
 import xml.etree.ElementTree as ET
-#from gdrive_handler import GD_Handler
-
 
 def buffshow(title, image, wait=0):
 	"""
@@ -125,7 +122,7 @@ def load_data(path='../data'): # default path only works in jupyter notebook or 
 		imfile = get_image_file_from_label(label)
 		impath = os.path.join(path, imfile)
 		if os.path.exists(impath):
-			image = cv2.imread(impath)
+			image = cv2.cvtColor(cv2.imread(impath), cv2.COLOR_BGR2RGB)
 			data.append((image, get_bounding_from_label(label)))
 				
 	return data
@@ -211,6 +208,36 @@ def capture_video(duration=10):
 	cap.release()
 	out.release()
 
+def cv2_stream_test():
+	"""
+		Use openCV to create a stream to a camera and display fps
+		Crucial to use while not rospy.is_shutdown
+		@PARAMS
+			None
+		@RETURNS
+			None
+	"""
+
+	# Create the image stream
+	cap = cv2.VideoCapture(0)
+	# Set a size variable (resolution)
+	size=(int(cap.get(3)), int(cap.get(4)))
+
+	# used to count frames and print FPS
+	n = 0
+	start = time.time()
+	# If the stream is open and ROS is running
+	if cap.isOpened():
+		while not rospy.is_shutdown():
+
+			# Capture frame
+			ret, frame = cap.read()
+
+			# Run stats
+			n += 1
+			elapsed = time.time() - start 
+			print('elapsed time: {}, n frames: {}, FPS: {}'.format(elapsed, n, n / elapsed))
+
 def ROS_cv2_publisher(topic='image_raw'):
 	"""
 		Use openCV to create a stream to a camera and publish the images
@@ -221,8 +248,8 @@ def ROS_cv2_publisher(topic='image_raw'):
 			None
 	"""
 
-	# Create the image stream
-	cap = cv2.VideoCapture(0)
+	# Create the image stream and set its capture rate to 30 FPS
+	cap = cv2.VideoCapture(0).set(cv2.CV_CAP_PROP_FPS, 30)
 	# Set a size variable (resolution)
 	size=(int(cap.get(3)), int(cap.get(4)))
 
@@ -249,7 +276,11 @@ def ROS_cv2_publisher(topic='image_raw'):
 			# Publish the message
 			pub.publish(imgMsg)
 
-
+def ROS_cv2_pipeline(debug=False):
+	"""
+		includes a camera capture
+	"""
+	pass
 
 
 
@@ -257,10 +288,12 @@ if __name__=='__main__':
 	"""
 		Spawn vision nodes here
 	"""
-	#single_image_capture_cv()
-	#capture_video()
+	# single_image_capture_cv()
+	# capture_video()
 
 	ROS_cv2_publisher()
+
+	#cv2_stream_test()
 
 	
 		
