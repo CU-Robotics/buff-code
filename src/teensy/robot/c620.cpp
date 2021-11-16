@@ -10,15 +10,15 @@
 
 
 
-c620::c620(short tempID, CAN_message_t* msg) : sendMsg(*msg) {
-  //c620::sendMsg;
-//  sendMsg = *msg;
-  id = tempID;
+c620::c620(short motorId, CAN_message_t* msg) : sendMsg(*msg) {
+  id = motorId;
   byteNum = id - 1;
   if(byteNum > 3) {
-      byteNum -= 4;
+    byteNum -= 4;
+    sendMsg.id = 0x1FF;   //ID for all c620s 4-7
+  } else {
+  sendMsg.id = 0x200;   //ID for all c620s 0-3
   }
-  sendMsg.id = 2;
 }
 
 void c620::setPower(float power) {
