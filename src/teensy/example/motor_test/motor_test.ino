@@ -28,7 +28,7 @@ void setup() {
 }
 
 void loop() {
-  msg.id = 0x1FF;    //Modify id if not using gm6020
+  msg.id = 0x200;    //Modify id if not using gm6020
   
   msg.buf[0] = bOne; //set high order byte
   msg.buf[1] = bTwo; //set low order byte
