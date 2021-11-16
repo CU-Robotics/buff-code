@@ -25,3 +25,14 @@ short rmMotor::getAngle() {
 byte rmMotor::getTemp() {
     return temp;
 }
+
+void rmMotor::updateMotor(CAN_message_t* recMsg) {
+
+}
+
+void rmMotor::updateMotor(short newTorque, short newRpm, short newAngle, byte newTemp) {
+    torque = newTorque;
+    rpm = newRpm;
+    angle = newAngle;
+    temp = newTemp;
+}

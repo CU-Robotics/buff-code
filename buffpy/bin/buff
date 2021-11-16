@@ -5,7 +5,7 @@
 	Description:
 	  This is a python3 command line tool from CU-Robotics
 	It is meant to simplify development of robotics software.
-	Think of buffbotics as a python3 app that handles the backend
+	Think of buff-code as a python3 app that handles the backend
 	of software development:
 	 - installing/setting up devices
 	 - handling data
@@ -20,15 +20,26 @@
 		and will likely brake, even with standard input).
 
 		make functionality more robust to erraneous input and general brake downs.
+
+	NOTES:
+		This program only really works once the workspace has been built.
+		Which happens with the install. -- Removed GDrive_handler to fix this
 """
 
 import os
 import sys
+import shutil
 import argparse
 import subprocess
-from gdrive_handler import GD_Handler
 
 def parseArgs():
+	"""
+		Handles parsing all inputs to buff
+		@PARAMS
+			None
+		@RETURNS
+			parsedargs: argparse args object
+	"""
 	parser = argparse.ArgumentParser(prog=sys.argv[0],
 	description='CU-Robotics Digital House-Keeper')
 	parser.add_argument('--sshBot',
@@ -38,11 +49,6 @@ def parseArgs():
 		nargs=1,
 		metavar='ROBOT_IP',
 		help='Set the IP of the robot in development')
-	parser.add_argument('--GDrive', 
-		nargs=2,
-		metavar=('ACTION', 'FOLDER_ID'),
-		default=None,
-		help='Pull or push a batch from google drive, requires batch folder id')
 	parser.add_argument('--installKeys',
 		action='store_true',
 		help='Push local sshkeys to the robot at ROBOT_IP')
@@ -59,6 +65,9 @@ def parseArgs():
 		metavar='PROFILE',
 		default=False,
 		help='Builds the workspace locally (debug) or to the robot_ip (install)')
+	parser.add_argument('--install', 
+		action='store_true',
+		help='Builds the workspace locally (debug) or to the robot_ip (install)')
 	parser.add_argument('--clean',
 		action='store_true',
 		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
@@ -73,52 +82,93 @@ def parseArgs():
 def cleanWorkspace():
 	"""
 		Removes the data folder, and when it becomes necesary
-		will also remove any generate binaries and configs
+		will also remove any generated binaries and configs
 	"""
 	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
 
-	result = subprocess.run(f'catkin clean -y', shell=True)
+	lib_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy/lib')
 
+	if not 'edge' in os.getenv('HOSTNAME'):
+		result = subprocess.run(f'catkin clean -y', shell=True)
+
+	# Idoit Security
+	# this function could wipe the entire disk
+	# if not used with caution. (its also very easy for an attacker to change an environment variable)
+	if len(lib_path.split('/')) < 3:
+		print(f'Illegal Directory: cannot remove {lib_path}')
+		return
+
+	# Best to make sure someone didn't pass in root
+	if len(data_path.split('/')) < 3:
+		print(f'Illegal Directory: cannot remove {data_path}')
+		return
+
+
+	# Remove all data and or replace the directory with an empty one
 	if os.path.exists(data_path):
 		for file in os.listdir(data_path):
 			os.remove(os.path.join(data_path, file))
 	else:
 		os.mkdir(data_path)
 
+	# Remove all lib files, these are installed by catkin
+	# By walking through each dir and removing its files
+	# we can then delete the directories
+	if os.path.exists(lib_path):
+		for root, dirs,files in os.walk(lib_path):
+			for file in files:
+				os.remove(os.path.join(root, file))
+			for directory in dirs:
+				shutil.rmtree(os.path.join(root, directory))
+			break
+	else:
+		os.mkdir(lib_path)
+
 def buildWorkspace(build):
 	"""
 		Builds the current workspace locally or to a robot.
-		Currently there is no need to build locally but 
-		this will need to copy python files to the robot.
+		this will need to copy python files and binaries to the robot.
+		@PARAMS:
+			build: the profile to build
+		@RETURNS:
+			None
 	"""
+	# use catkin to clean the workspace if it was already built
 	result = subprocess.run(f'catkin clean -y', shell=True)
 
+	# Rebuild the workspace with catkin build
+	if build[0]:
+		result = subprocess.run(f'catkin build --profile={build[0]}', shell=True)
+
+	else:
+		print('No profile specified exiting:...')
+
+def install():
+	"""
+		Install all built code to the robot
+	"""
+	if 'edge' in os.getenv('HOSTNAME'):
+		return
+	
 	bot = os.getenv('ROBOT_ADDRESS')
 	bot_root = os.getenv('ROBOT_ROOT')
 	project_root = os.getenv('PROJECT_ROOT')
 	source_dirs = ['buffpy', 'config', 'scripts', 'buff.bash']
 
-	if build[0]:
-		result = subprocess.run(f'catkin build --profile={build[0]}', shell=True)
+	# if root does exist remove it
+	result = subprocess.run(f'ssh {bot} "if [[ -d {bot_root} ]]; then rm -rf {bot_root}; fi"', shell=True)
 
-	if build[0] == 'install':
-		# if root does exist remove it
-		result = subprocess.run(f'ssh {bot} "if [[ -d {bot_root} ]]; then rm -rf {bot_root}; fi"', shell=True)
+	# if root does not exist create it
+	result = subprocess.run(f'ssh {bot} "if [[ -n {bot_root} ]]; then mkdir {bot_root}; fi"', shell=True)
 
-		# if root does not exist create it
-		result = subprocess.run(f'ssh {bot} "if [[ -n {bot_root} ]]; then mkdir {bot_root}; fi"', shell=True)
+	# handle result errors
 
+	for dir in source_dirs:
+		# copy files
+		source = os.path.join(project_root, dir)
+		target = os.path.join(f'{bot}:{bot_root}', dir)
+		result = subprocess.run(f'scp -r {source} {target}', shell=True)
 		# handle result errors
-
-		for dir in source_dirs:
-			# copy files
-			source = os.path.join(project_root, dir)
-			target = os.path.join(f'{bot}:{bot_root}', dir)
-			result = subprocess.run(f'scp -r {source} {target}', shell=True)
-			# handle result errors
-
-	else:
-		print('Building Workspace')
 
 def main(ap):
 
@@ -126,36 +176,35 @@ def main(ap):
 		cleanWorkspace()
 
 	if not ap.setBot is None:
-		os.environ['ROBOT_IP'] = ap.setBot
-		os.environ['ROBOT_ADRESS'] = f'cu-robotics@{ap.setBot}'
-
+		# Does not work the way I want
+		# os.environ['ROBOT_IP'] = f'{ap.setBot}' # os.environ will only set the vars for this process and its subprocesses
+		# os.environ['ROBOT_ADRESS'] = f'cu-robotics@{ap.setBot}'
+		# result = subprocess.run(f'ROBOT_IP={ap.setBot} && ROBOT_ADDRESS=cu-robotics@{ap.setBot}', shell=True)
+		print('NotImplemented: ERROR')
 	if ap.installKeys:
 		result = subprocess.run(f'ssh-copy-id -i ~/.ssh/id_ed25519.pub {os.getenv("ROBOT_ADDRESS")}', shell=True)
 
 	if ap.build:
 		buildWorkspace(ap.build)
 
+	if ap.install:
+		install()
+
+	# Deprecated
 	if not ap.flash is None:
 		result = subprocess.run(f'arduino-cli compile --fqbn {ap.flash[0]} {os.getenv("PROJECT_ROOT")}/src/Arduino/{ap.flash[1]} && arduino-cli upload -p /dev/ttyACM0 --fqbn {ap.flash[0]} {os.getenv("PROJECT_ROOT")}/src/Arduino/{ap.flash[1]}', shell=True)
 
+	# SSH into the robot at ROBOT_IP using X11 forwarding
 	if ap.sshBot:
-		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")}', shell=True)
+		result = subprocess.run(f'ssh -X {os.getenv("ROBOT_ADDRESS")}', shell=True)
 
-	if not ap.GDrive is None:
-
-		gd_handle = GD_Handler()
-
-		if ap.GDrive[0] =='pull':
-			gd_handle.downloadBatch(ap.GDrive[1])
-
-		elif ap.GDrive[0] == 'push':
-			gd_handle.uploadFolder(batch=ap.GDrive[1])
-
+		# May be Deprecated
 	if ap.launch == 'bot':
-		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")} "cd buff-code && source buff.bash && ./scripts/main.py"', shell=True)
+		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")} "cd buff-code && source buff.bash && launch"', shell=True)
 		# need to handle result
+		
 	elif ap.launch:
-		result = subprocess.run('./scripts/main.py')
+		result = subprocess.run('launch')
 
 	if ap.botPull:
 		result = subprocess.run(f'scp {os.getenv("ROBOT_ADDRESS")}:{os.getenv("ROBOT_ROOT")}/data {os.getenv("PROJECT_ROOT")}/data', shell=True)

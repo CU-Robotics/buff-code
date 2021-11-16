@@ -58,6 +58,38 @@ To test the install run
 
 you should see the output from above.
 
+## Building
+
+Now that we know buff works we can build the workspace. 
+
+  buff --build debug
+
+You can change the build by specifying a different profile.
+
+  buff --build release
+
+If you have issues building the workspace you probably need to source buff.bash or you can clean the workspace.
+
+  buff --clean
+
+Be careful with this command because it can remove things you don't want it too. This function will remove whatever is at $PROJECT_ROOT/data and $PROJECT_ROOT/buffpy/lib. By changing the PROJECT_ROOT variable from bash or in buff.bash you will change what gets removed.
+
+## Installing to the robot
+
+The buff executable supports installing the workspace to a Jetson Nano (this is how you should always install). After building the workspace run:
+
+  buff --install
+
+This will copy all of the lib and binary files as well as install scripts, buff.bash and config files. Make sure the $ROBOT_IP variable points to the machine you want or you might end up pushing to the work device. Adjust this variable in buff.bash if necessary.
+
+# Launching
+
+To launch the main cognition program use the launch binary (which is already on your path).
+
+  launch
+
+This script spawns the necessary threads for the vision pipeline (roscore, buffvision and other debug nodes)
+
 ## Architecture
 buff-code
   - buffpy: A python package to handle the ugly backend
@@ -68,15 +100,15 @@ buff-code
     - lib: File containing misc info
     - sensitive: shhh... it's a secret
   - data: a Temporary folder for handling data (should get cleared regularly, if missing will cause issues)
-  - dev: python3 notebooks displaying our dev process
+  - dev: python3 notebooks displaying our dev process (will be moved to google drive)
   - docs: A better verion of this document
-  - scripts: arbitrary scripts
+  - scripts: arbitrary scripts (mostly install)
   - src: The source code for our controllers
     - buff_ros
-      - Our ros package
+      - Our ros package (Not Used)
     - teensy
       - teensy build files
-  - buff.bash: a setup script (needs to be run every session)
+  - buff.bash: a setup script (needs to be run every development session)
   - README.md: you're reading it
   - .gitignore: keeps the secrets safe
 
@@ -93,6 +125,14 @@ When working on this project
 
 ## CHANGES
 *Changes include all PRs that modify the directory structure, the installed binaries and any changes that will effect workspace usage*
+ - Version 0.03
+   - Date: November 10, 2021
+   - Editor: Mitchell D Scott
+   - Status: Install, Build and Clean have been tested with standard input
+   - Description: 
+      - Removed google drive functionailty from buff so now buff works without building
+      - BuffVision now runs python2 to support cv_bridge
+      - Moved scripts/main.py to buffpy/bin/launch
  - Version 0.02
    - Date: October 19, 2021
    - Editor: Mitchell D Scott
