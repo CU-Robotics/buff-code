@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+####################
+#		Launcher 
+#  	This is the main script for all CV 
+#	operations. The script launches the 
+#	camera stream, models and the serial
+#	communications.
+#	
+#	TODO:
+#		Create a manager for all spawned processes.
+#	The manager will need to print a runtime state every so
+#	often and kill processes when necesary.
+###################
+
+######## Imports ########
+import os 
+import sys
+import time
+import rospy
+import signal
+import subprocess as sb
+
+######## Main ########
+
+def main():
+	"""
+		Launch all relevant processes. (could be replaced with roslaunch)
+	"""
+
+	# Get the program file name and directory
+	fileName = sys.argv[0]
+	path = os.path.dirname(fileName)
+
+	# Get the project root and create a path to buffvision.py
+	projectRoot = os.getenv('PROJECT_ROOT')
+	bvExecutable = os.path.join(projectRoot, 'buffpy', 'lib', 'buffvision.py')
+
+	# Start ROS-Core
+	roscore_p = sb.Popen(['roscore'])
+	
+	# launch the vision program
+	vision_p = sb.Popen([bvExecutable])
+
+	#	Important
+	# Wait for rospy to shutdown before exiting
+	# when it gets implemented this will help kill
+	# running processes. Will kill ROScore when ^c
+	# recieved. Other processes need to terminate 
+	# themselves (by polling roscore.is_shutdown).
+	try:
+		while not rospy.is_shutdown():
+			time.sleep(1)
+
+	except KeyboardInterrupt as e:
+		print(e)
+		print(f'Terminate Recieved:...')
+		os.kill(roscore_p.pid, signal.SIGTERM)
+
+
+	print('roscore shutdown exiting:...')
+
+if __name__ == '__main__':
+	main()
