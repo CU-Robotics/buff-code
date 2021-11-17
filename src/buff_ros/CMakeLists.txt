@@ -161,6 +161,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/__init__.py
   scripts/buffvision.py
+  scripts/mds_detector.py
   scripts/nn-analytical.py
   scripts/gdrive_handler.py
   DESTINATION $ENV{PROJECT_ROOT}/buffpy/lib
