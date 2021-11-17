@@ -9,7 +9,7 @@ First always load the environment variables, if you're not sure if you did just 
 	
 The majority of functionality is based in the buffpy package. This package is setup as a command line tool in buff.bash. All you need to utilize this package is call 'buff' from the command line.
 
-	usage: buff [-h] [--sshBot] [--setBot ROBOT_IP] [--GDrive ACTION FOLDER_ID] [--installKeys] [--launch LOCATION]
+	usage: buffpy [-h] [--sshBot] [--setBot ROBOT_IP] [--GDrive ACTION FOLDER_ID] [--installKeys] [--launch LOCATION]
 						[--botPull] [--build PROFILE] [--clean] [--flash FQBN FW]
 
 	CU-Robotics Digital House-Keeper
@@ -18,8 +18,6 @@ The majority of functionality is based in the buffpy package. This package is se
 	-h, --help            show this help message and exit
 	--sshBot              SSH into the bot at the ROBOT_IP env variable
 	--setBot ROBOT_IP     Set the IP of the robot in development
-	--GDrive ACTION FOLDER_ID
-			  Pull or push a batch from google drive, requires batch folder id
 	--installKeys         Push local sshkeys to the robot at ROBOT_IP
 	--launch LOCATION     Launch the robots software locally (True, 1) or on the bot (bot)
 	--botPull             Pull data from the robot at ROBOT_IP
@@ -54,7 +52,7 @@ After this installs the dependencies you will have full functionality.
 To test the install run
 
 	source buff.bash
-	buff -h
+	buffpy -h
 
 you should see the output from above.
 
@@ -62,15 +60,15 @@ you should see the output from above.
 
 Now that we know buff works we can build the workspace. 
 
-  buff --build debug
+  buffpy --build debug
 
 You can change the build by specifying a different profile.
 
-  buff --build release
+  buffpy --build release
 
 If you have issues building the workspace you probably need to source buff.bash or you can clean the workspace.
 
-  buff --clean
+  buffpy --clean
 
 Be careful with this command because it can remove things you don't want it too. This function will remove whatever is at $PROJECT_ROOT/data and $PROJECT_ROOT/buffpy/lib. By changing the PROJECT_ROOT variable from bash or in buff.bash you will change what gets removed.
 
@@ -78,7 +76,7 @@ Be careful with this command because it can remove things you don't want it too.
 
 The buff executable supports installing the workspace to a Jetson Nano (this is how you should always install). After building the workspace run:
 
-  buff --install
+  buffpy --install
 
 This will copy all of the lib and binary files as well as install scripts, buff.bash and config files. Make sure the $ROBOT_IP variable points to the machine you want or you might end up pushing to the work device. Adjust this variable in buff.bash if necessary.
 
@@ -86,14 +84,14 @@ This will copy all of the lib and binary files as well as install scripts, buff.
 
 To launch the main cognition program use the launch binary (which is already on your path).
 
-  launch
+  run
 
 This script spawns the necessary threads for the vision pipeline (roscore, buffvision and other debug nodes)
 
 ## Architecture
 buff-code
   - buffpy: A python package to handle the ugly backend
-    - bin: binaries (buff, teensy)
+    - bin: binaries (buffpy, teensy, run)
     - lib: installed files
   - config: A place for any and all setup/configuration/secret files
     - install: Files containing install info
@@ -132,7 +130,8 @@ When working on this project
    - Description: 
       - Removed google drive functionailty from buff so now buff works without building
       - BuffVision now runs python2 to support cv_bridge
-      - Moved scripts/main.py to buffpy/bin/launch
+      - Moved scripts/main.py to buffpy/bin/run
+      - Moved buffpy/bin/buff to buffpy/bin/buffpy
  - Version 0.02
    - Date: October 19, 2021
    - Editor: Mitchell D Scott

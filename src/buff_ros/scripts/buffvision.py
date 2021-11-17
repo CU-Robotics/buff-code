@@ -114,6 +114,8 @@ def load_data(path='../data'): # default path only works in jupyter notebook or 
 	"""
 	# images = load_images(os.path.join(path, '*.jpg'))
 	labels = load_labels(os.path.join(path, '*.xml'))
+	if labels is None:
+		print('couldn\'t find any labels')
 	# if len(images) - len(labels):
 	# 	print(f'mismatched: images {len(images)} != labels {len(labels)}')
 		

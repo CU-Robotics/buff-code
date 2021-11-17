@@ -53,7 +53,17 @@ class MDS_Detector:
 			contour = image
 			for cnt in contours:
 				if len(cnt) > 20:
-					contour = cv2.drawContours(contour, [cnt], -1, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+					#contour = cv2.drawContours(contour, [cnt], -1, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+					# line = cv2.fitLine(cnt, cv2.DIST_L2, 0, 1, 1)
+					# # find two points on the line
+					# m = int(line[3] / line[2] * 5)
+					# x = int(line[0])
+					# y = int(line[1])
+					# p1 = (x, y)
+					# p2 = (x + m, y + m)
+					# contour = cv2.line(contour, p1, p2, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+					ellipse = cv2.fitEllipse(cnt)
+					contour = cv2.ellipse(contour, ellipse, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS, cv2.LINE_AA)
 			mostly_raw = np.concatenate([source, hsv], axis=1)
 			not_so_raw = np.concatenate([thresh, contour], axis=1)
 			self.steps = np.concatenate([mostly_raw, not_so_raw])
@@ -87,12 +97,13 @@ class MDS_Detector:
 		
 
 def main():
-	idx = [5, 10]
-	data = bv.load_data(path='/home/mdyse/buff-code/data')
-	red_hsv_low = (122,120,150)  # hsv for red, lower boundary
-	red_hsv_high = (128,140,215) # hsv for red, upper boundary
-	blue_hsv_low = (0,40,80) # hsv for blue, lower boundary tuned on cold data
-	blue_hsv_high = (20,70,250) # hsv for blue, upper boundary tuned on cold data
+	idx = [20, 21, 22, 23]
+	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
+	data = bv.load_data(path=data_path)
+	red_hsv_low = (120,108,180)  # hsv for red, lower boundary
+	red_hsv_high = (128,145,240) # hsv for red, upper boundary
+	blue_hsv_low = (0,45,165) # hsv for blue, lower boundary tuned on cold data
+	blue_hsv_high = (175,100,250) # hsv for blue, upper boundary tuned on cold data
 
 	blue_det = MDS_Detector(blue_hsv_low, blue_hsv_high)
 
