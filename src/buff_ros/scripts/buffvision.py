@@ -122,7 +122,7 @@ def load_data(path='../data'): # default path only works in jupyter notebook or 
 		imfile = get_image_file_from_label(label)
 		impath = os.path.join(path, imfile)
 		if os.path.exists(impath):
-			image = cv2.cvtColor(cv2.imread(impath), cv2.COLOR_BGR2RGB)
+			image = cv2.imread(impath)# cv2.cvtColor(cv2.imread(impath), cv2.COLOR_BGR2RGB)
 			data.append((image, get_bounding_from_label(label)))
 				
 	return data
