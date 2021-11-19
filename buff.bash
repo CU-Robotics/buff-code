@@ -32,6 +32,11 @@ if [[ "${PYTHONPATH}" != *"buffpy"* ]]; then
 	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}"
 fi
 
+# set ROS package path to buff-code so it can see buffpy
+if [[ "${ROS_PACKAGE_PATH}" != *"buff-code"* ]]; then
+	export ROS_PACKAGE_PATH="${PROJECT_ROOT}:${ROS_PACKAGE_PATH}"
+fi
+
 # Not totally clear but this solves an 
 # illegal instruction error with rospy.
 # Only for Jetson
