@@ -113,5 +113,5 @@ def main(action, data=None):
 if __name__=='__main__':
 	if len(sys.argv) > 2:
 		main(sys.argv[1], sys.argv[2])
-	if len(sys.argv) > 1:
+	elif len(sys.argv) > 1:
 		main(sys.argv[1])
