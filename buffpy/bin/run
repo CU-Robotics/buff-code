@@ -62,8 +62,6 @@ def main(args):
 	for p in programs:
 		print(f'spawning: {p}')
 		processes.append(sb.Popen(p, stdout=sb.PIPE, stderr=sb.PIPE))
-		if p == 'roscore':
-			rospy.init_node('buff_spawner', anonymous=True)
 
 	#	Important # DEPRECATED now kills all spawned processes
 	# Wait for rospy to shutdown before exiting
@@ -72,7 +70,7 @@ def main(args):
 	# recieved. Other processes need to terminate 
 	# themselves (by polling roscore.is_shutdown).
 	try:
-		print(f'Running live')
+		print('Buffpy is running:...')
 		# while any process is running stay alive
 		is_alive = True
 		while is_alive:
@@ -95,7 +93,7 @@ def main(args):
 		for proc in processes:
 			os.kill(proc.pid, signal.SIGTERM)
 
-	print('RUN finished:...')
+	print('RUN finished')
 
 if __name__ == '__main__':
 	main(sys.argv)

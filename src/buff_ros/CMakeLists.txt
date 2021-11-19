@@ -163,7 +163,7 @@ catkin_install_python(PROGRAMS
   scripts/buffvision.py
   scripts/mds_detector.py
   scripts/gdrive_handler.py
-  DESTINATION $ENV{PROJECT_ROOT}/buffpy/lib
+  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION} # $ENV{PROJECT_ROOT}/buffpy/lib
 )
 
 ## Mark executables for installation
