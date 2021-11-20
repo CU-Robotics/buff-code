@@ -103,7 +103,7 @@ buff-code
   - scripts: arbitrary scripts (mostly install)
   - src: The source code for our controllers
     - buff_ros
-      - Our ros package (Not Used)
+      - Our ros package
     - teensy
       - teensy build files
   - buff.bash: a setup script (needs to be run every development session)
