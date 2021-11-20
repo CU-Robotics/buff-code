@@ -1,0 +1,14 @@
+LOW:
+  - 0
+  - 45
+  - 165
+HIGH:
+  - 175
+  - 100
+  - 250
+INTOPIC:
+  'image_raw'
+OUTTOPIC:
+  'detected_boundary'
+CORE:
+  True
