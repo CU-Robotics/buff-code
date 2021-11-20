@@ -23,6 +23,7 @@ import numpy as np
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 import xml.etree.ElementTree as ET
+from mds_detector import MDS_Detector
 
 def buffshow(title, image, wait=0):
 	"""
@@ -251,7 +252,9 @@ def ROS_cv2_publisher(topic='image_raw'):
 	"""
 
 	# Create the image stream and set its capture rate to 30 FPS
-	cap = cv2.VideoCapture(0).set(cv2.CV_CAP_PROP_FPS, 30)
+	cap = cv2.VideoCapture(0)
+	cap.set(cv2.CAP_PROP_FPS, 30)
+
 	# Set a size variable (resolution)
 	size=(int(cap.get(3)), int(cap.get(4)))
 
@@ -265,6 +268,7 @@ def ROS_cv2_publisher(topic='image_raw'):
 	# CvBridge is used to conver cv images to sensor_msgs/Image
 	bridge = CvBridge()
 
+	rospy.loginfo('Streaming camera')
 	# If the stream is open and ROS is running
 	if cap.isOpened():
 		while not rospy.is_shutdown():
@@ -277,14 +281,6 @@ def ROS_cv2_publisher(topic='image_raw'):
 
 			# Publish the message
 			pub.publish(imgMsg)
-
-def ROS_cv2_pipeline(debug=False):
-	"""
-		includes a camera capture
-	"""
-	pass
-
-
 
 if __name__=='__main__':
 	"""
