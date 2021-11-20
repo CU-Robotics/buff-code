@@ -147,6 +147,7 @@ def install():
 	"""
 		Install all built code to the robot
 	"""
+	# Don't build on edge devices (robot)
 	if 'edge' in os.getenv('HOSTNAME'):
 		return
 	
@@ -167,7 +168,7 @@ def install():
 		# copy files
 		source = os.path.join(project_root, dir)
 		target = os.path.join(f'{bot}:{bot_root}', dir)
-		result = subprocess.run(f'scp -r {source} {target}', shell=True)
+		result = subprocess.run(['scp', '-r', source, target])
 		# handle result errors
 
 def main(ap):

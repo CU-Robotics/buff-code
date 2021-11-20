@@ -103,7 +103,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES buff_ros
+#  LIBRARIES buffpy
 #  CATKIN_DEPENDS rospy std_msgs
 #  DEPENDS system_lib
 )
@@ -121,7 +121,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/buff_ros.cpp
+#   src/${PROJECT_NAME}/buffpy.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -132,7 +132,9 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/buff_ros_node.cpp)
+# add_executable(buffpy scripts/buffpy.py)
+
+# add_executable(run scripts/run.py)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -163,13 +165,17 @@ catkin_install_python(PROGRAMS
   scripts/buffvision.py
   scripts/mds_detector.py
   scripts/gdrive_handler.py
-  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION} # $ENV{PROJECT_ROOT}/buffpy/lib
+  DESTINATION $ENV{PROJECT_ROOT}/buffpy/lib
 )
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
-# install(TARGETS ${PROJECT_NAME}_node
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# install(TARGETS buffpy
+#   RUNTIME DESTINATION $ENV{PROJECT_ROOT}/buffpy/bin
+#)
+
+# install(TARGETS run
+#   RUNTIME DESTINATION $ENV{PROJECT_ROOT}/buffpy/bin
 # )
 
 ## Mark libraries for installation
@@ -188,18 +194,18 @@ catkin_install_python(PROGRAMS
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(FILES
+  launch/main.launch
+  # myfile2
+  DESTINATION $ENV{PROJECT_ROOT}/buffpy/launch
+)
 
 #############
 ## Testing ##
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_buff_ros.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_buffpy.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
