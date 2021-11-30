@@ -20,6 +20,8 @@ class swerveKinematics : chassis {
         double rlWheelAngle();
         double rrWheelAngle();
 
+        void optimize(double flPID, double frPID, double rlPID, double rrPID);
+
     private:
         double flWSpd;
         double frWSpd;
