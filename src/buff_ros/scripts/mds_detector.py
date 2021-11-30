@@ -150,7 +150,7 @@ class MDS_Detector:
 		"""
 		
 		if self.debug:
-			self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg), True) # Not tested
+			self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg), steps=True) # Not tested
 			self.annotate_pub.publish(self.bridge.cv2_to_imgmsg(self.steps, encoding='bgr8'))
 
 		else:
