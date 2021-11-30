@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-//#include <FlexCAN_T4.h>
-#include "./libraries/FlexCAN_T4-master/FlexCAN_T4.h"
-=======
 #ifndef _FLEXCAN_T4_H_
 #include <FlexCAN_T4.h>
 #endif
->>>>>>> 271e6de3c568cb81be56fc9e807b85d9e091d922
 
 #include "c620.h"
 
