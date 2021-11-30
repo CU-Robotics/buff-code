@@ -1,5 +1,6 @@
 #include "swerveKinematics.h"
 #include <math.h>
+#include "constants.h"
 
 #define _USE_MATH_DEFINES
 
@@ -54,10 +55,10 @@ double swerveKinematics::rrWheelAngle(){
 }
 
 void swerveKinematics::calculate(double x, double y, double angle){
-    double A = x - angle * (wheelBaseLength / SWERVE_R); //define constants
-    double B = x + angle * (wheelBaseLength / SWERVE_R);
-    double C = y - angle * (wheelBaseLength / SWERVE_R);
-    double D = y + angle * (wheelBaseLength / SWERVE_R);
+    double A = x - angle * (WHEEL_BASE_LENGTH / SWERVE_R); //define constant
+    double B = x + angle * (WHEEL_BASE_LENGTH / SWERVE_R);
+    double C = y - angle * (WHEEL_BASE_LENGTH / SWERVE_R);
+    double D = y + angle * (WHEEL_BASE_LENGTH / SWERVE_R);
 
 
     //WHeel Speed
@@ -66,19 +67,45 @@ void swerveKinematics::calculate(double x, double y, double angle){
     rlWSpd = sqrt((A * A) + (C * C));
     rrWSpd = sqrt((A * A) + (D * D));
 
-    WheelSpd[0] = flWSpd;
-    WheelSpd[1] = frWSpd;
-    WheelSpd[2] = rlWSpd;
-    WheelSpd[3] = rrWSpd;
+    
 
     //Wheel Angle
     flWAgl = atan2(B, C)*180/M_PI;
     frWAgl = atan2(B, D)*180/M_PI;
     rlWAgl = atan2(A, D)*180/M_PI;
     rrWAgl = atan2(A, C)*180/M_PI;
+    
+
+    WheelSpd[0] = flWSpd;
+    WheelSpd[1] = frWSpd;
+    WheelSpd[2] = rlWSpd;
+    WheelSpd[3] = rrWSpd;
 
     WheelAgl[0] = flWAgl;
     WheelAgl[1] = frWAgl;
     WheelAgl[2] = rlWAgl;
     WheelAgl[3] = rrWAgl;
+}
+
+void swerveKinematics::optimize(double flPID, double frPID, double rlPID, double rrPID){
+    //Optimizes motor rotation for obtuse angles
+    if (flWAgl >= 180) {
+        flWAgl -= 180;
+        flWSpd *= -1;
+    }
+    
+    if (frWAgl >= 180) {
+        frWAgl -= 180;
+        frWSpd *= -1;
+    }
+
+    if (rlWAgl >= 180) {
+        rrWAgl -= 180;
+        rrWSpd *= -1;
+    }
+
+    if (rrWAgl >= 180) {
+        rrWAgl -= 180;
+        rrWSpd *= -1;
+    }
 }
