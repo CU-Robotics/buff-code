@@ -14,7 +14,7 @@ short torque;
 short rpm;
 
 
-c620 myMotor(3, &msg);
+c620 myMotor(1, &msg);
 // c620 myMotor();
 
 void setup() {
@@ -23,27 +23,20 @@ void setup() {
   can1.begin();
   can1.setBaudRate(1000000);
   Serial.begin(9600);
-  myMotor.setPower(0.5);
+  // myMotor.setPower(0.5);
 }
 
 void loop() {
   // Serial.print("id: ");
   // Serial.println(msg.id, HEX);
-  myMotor.setPower(0.5);
+  myMotor.setPower(1);
   Serial.print("send id: ");
   Serial.println(msg.id, HEX);
   Serial.println("send power: ");
-  // short temp = msg.buf[4];
-  // temp = temp << 8;
-  // temp = temp | msg.buf[1];
-  Serial.println(msg.buf[0], BIN);
-  Serial.println(msg.buf[1], BIN);
-  Serial.println(msg.buf[2], BIN);
-  Serial.println(msg.buf[3], BIN);
-  Serial.println(msg.buf[4], BIN);
-  Serial.println(msg.buf[5], BIN);
-  Serial.println(msg.buf[6], BIN);
-  Serial.println(msg.buf[7], BIN);
+  short temp = msg.buf[4];
+  temp = temp << 8;
+  temp = temp | msg.buf[5];
+  Serial.println(temp);
   // Serial.println(myMotor.getTemp());
   can1.write(msg);
 
