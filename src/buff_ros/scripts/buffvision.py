@@ -16,6 +16,7 @@ import cv2
 import sys
 import time
 import glob
+import yaml
 import rospy
 import datetime
 import traceback
@@ -23,7 +24,6 @@ import numpy as np
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 import xml.etree.ElementTree as ET
-from mds_detector import MDS_Detector
 
 def buffshow(title, image, wait=0):
 	"""
@@ -281,6 +281,23 @@ def ROS_cv2_publisher(topic='image_raw'):
 
 			# Publish the message
 			pub.publish(imgMsg)
+
+def load_config(file, program):
+	file = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', file)
+	with open(file, 'r') as f:
+		config = yaml.safe_load(f)
+		debug = config['DEBUG']
+		topics = config['TOPICS']
+		if program in config['CONFIGS']:
+			configFile = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', config['CONFIGS'][program])
+		else:
+			return debug, topics, None
+
+	with open(configFile, 'r') as f:
+		config = yaml.safe_load(f)
+
+	return debug, topics, config
+		
 
 if __name__=='__main__':
 	"""

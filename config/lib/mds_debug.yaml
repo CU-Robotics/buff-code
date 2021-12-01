@@ -1,0 +1,21 @@
+DEBUG:
+  True
+TOPICS:
+  RAW_IMG:
+    'image_raw'
+  BOUNDARY:
+    'detected_boundary'
+  TARGET:
+    'detected_targets'
+PACKAGE:
+  'buffpy'
+NODES:
+  DETECTOR:
+    'debug_viewer.py'
+  TRACKER:
+    'mds_tracker.py'
+  SERIAL:
+    'serial_handler.py'
+CONFIGS:
+  DETECTOR:
+    'mds_hsv_blue.yaml'

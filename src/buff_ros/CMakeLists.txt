@@ -162,10 +162,13 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/__init__.py
+  scripts/cv_stream.py
   scripts/buffvision.py
+  scripts/mds_tracker.py
   scripts/mds_detector.py
   scripts/debug_viewer.py
   scripts/gdrive_handler.py
+  scripts/serial_handler.py
   DESTINATION $ENV{PROJECT_ROOT}/buffpy/lib
 )
 
