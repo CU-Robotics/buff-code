@@ -1,99 +1,93 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 """
 		Launcher 
  	This is the main script for all CV 
-	operations. The script launches the 
-	camera stream, models and the serial
-	communications.
-	
-	TODO:
-		Create a manager for all spawned processes.
-	The manager will need to print a runtime state every so
-	often and kill processes when necesary.
+	operations. The script reads in a
+	config file that describes the pipeline
+	and then launches the defined targets.
+
 """
 
 import os 
 import sys
 import time
+import yaml
 import rospy
 import signal
+import roslaunch
 import subprocess as sb
 
+def load_config(file='mds_pipeline'):
+	if not os.path.exists(file):
+		print('Could not find config: Exiting...')
+		return None
+	with open(file, 'r') as f:
+		return yaml.safe_load(f)
 
 def main(args):
 	"""
 		Launch all relevant processes. (could be replaced with roslaunch)
 	"""
 
+	# Initialize config as None
+	config = None
+
 	# Get the program file name and directory
 	fileName = args[0]
-	path = os.path.dirname(fileName)
-
-	# Get the project root and create a path to buffvision.py
+	binPath = os.path.dirname(fileName)
 	projectRoot = os.getenv('PROJECT_ROOT')
-	bvScript = os.path.join(projectRoot, 'buffpy', 'lib', 'buffvision.py')
 
-	# list of the programs to launch
-	programs = ['roscore', bvScript]
-
-	# parse the args
 	if len(args) > 1:
-		for arg in args[1:]:
-			cmd = arg.split(':')
-			script = cmd[0]
-			# if .py is in the name its a python script
-			if script[-3:] == '.py':
-				# combine script and args into command for Popen
-				command = [os.path.join(projectRoot, 'buffpy', 'lib', script)]
-				for param in cmd[1:]:
-					command.append(param)
+		configFile = os.path.join(projectRoot, 'config', 'lib', '{}.yaml'.format(args[1]))
+		print('Loading {}'.format(configFile))
+		config = load_config(configFile)
+	else:
+		print('No config file: Exiting...')
+		exit(0)
 
-				programs.append(command)
-			# if no-core don't launch the core
-			if script == 'no-core':
-				if len(programs) > 1:
-					programs = programs[2:]
+	if config is None:
+		exit(0)
 
-				else:
-					programs = []
+	coreProc = sb.Popen('roscore', stdout=sb.PIPE, stderr=sb.PIPE)
+
+	launch = roslaunch.scriptapi.ROSLaunch()
+	launch.start()
 
 	processes = []
+	nodes = config['NODES']
+	package = config['PACKAGE']
 
-	for p in programs:
-		print(f'spawning: {p}')
-		processes.append(sb.Popen(p, stdout=sb.PIPE, stderr=sb.PIPE))
-
-	#	Important # DEPRECATED now kills all spawned processes
-	# Wait for rospy to shutdown before exiting
-	# when it gets implemented this will help kill
-	# running processes. Will kill ROScore when ^c
-	# recieved. Other processes need to terminate 
-	# themselves (by polling roscore.is_shutdown).
 	try:
-		print('Buffpy is running:...')
-		# while any process is running stay alive
-		is_alive = True
-		while is_alive:
-			is_alive = False
-			for proc in processes:
-				# poll all processes
-				ret_code = proc.poll()
-				if ret_code is None:
-					# check the process for errors
-					mesg = proc.communicate()
-					if mesg[0]:
-						print(mesg[0].decode('utf-8'))
-					if mesg[1]:
-						print(mesg[1].decode('utf-8'))
-					is_alive = True
+		# load and launch each node in the config
+		for node in nodes:
+			process = roslaunch.core.Node(package, nodes[node], args=configFile)
+			processes.append(launch.launch(process))
+
+		# wait for core process to finish or err out
+		while coreProc.poll() is None:
+			# if output/errors print them
+			mesg = coreProc.communicate()
+			if mesg[0]:
+				print(mesg[0].decode('utf-8'))
+			if mesg[1]:
+				print(mesg[1].decode('utf-8'))
+
+		# core finished so kill any other processes
+		for proc in processes:
+			proc.stop()
 
 	except KeyboardInterrupt as e:
 		print(e)
-		print(f'Terminate Recieved:...')
+		print('Terminate Recieved:...')
+		# Kill all launched processes
 		for proc in processes:
-			os.kill(proc.pid, signal.SIGTERM)
+			proc.stop()
+
+		# Kill roscore
+		os.kill(coreProc.pid, signal.SIGTERM)
 
 	print('RUN finished')
+		
 
 if __name__ == '__main__':
 	main(sys.argv)

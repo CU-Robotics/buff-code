@@ -1,12 +1,18 @@
 <launch>
 
-	<arg name="det_model" default="mds_detector.py"/>
 	<arg name="det_config" default="mds_hsv_red"/>
+	<arg name="tracker" default="mds_tracker.py"/>
+	<arg name="det_model" default="mds_detector.py"/>
+	<arg name="serial_pipe" default="serial_handler.py"/>	
 
 	<node name="buffvision" pkg="buffpy" type="buffvision.py" respawn="false" output="screen"/>
 
 	<node name="detector" pkg="buffpy" type="$(arg det_model)" 
 		respawn="false" output="screen"
 		args="$(arg det_config)"/>
+
+	<node name="tracker" pkg="buffpy" type="$(arg tracker)" respawn="false" output="screen"/>
+
+	<node name="serial_pipe" pkg="buffpy" type="$(arg serial_pipe)" respawn="false" output="screen"/>
 
 </launch>
