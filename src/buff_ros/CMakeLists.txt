@@ -169,6 +169,7 @@ catkin_install_python(PROGRAMS
   scripts/debug_viewer.py
   scripts/gdrive_handler.py
   scripts/serial_handler.py
+  scripts/interactive_thresholder.py
   DESTINATION $ENV{PROJECT_ROOT}/buffpy/lib
 )
 

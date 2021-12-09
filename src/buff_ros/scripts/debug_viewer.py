@@ -6,7 +6,6 @@ import buffvision as bv
 from sensor_msgs.msg import Image
 from mds_detector import MDS_Detector
 
-
 def displayCallback(image_msg):
 	rospy.loginfo('image_recieved')
 	detector = MDS_Detector(config="nn_hsv_red")
@@ -19,6 +18,7 @@ def main(config):
 	#sub = rospy.Subscriber('image_raw', Image, displayCallback, queue_size=1)
 
 	#rospy.spin()
+
 	data = bv.load_data(os.path.join(os.getenv('PROJECT_ROOT'), 'data'))
 
 	detector = MDS_Detector(config=config)
