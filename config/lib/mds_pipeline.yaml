@@ -1,0 +1,23 @@
+DEBUG:
+  True
+TOPICS:
+  RAW_IMG:
+    'image_raw'
+  BOUNDARY:
+    'detected_boundary'
+  TARGET:
+    'detected_targets'
+PACKAGE:
+  'buffpy'
+NODES:
+  CAMERA:
+    'cv_stream.py'
+  DETECTOR:
+    'mds_detector.py'
+  TRACKER:
+    'mds_tracker.py'
+  SERIAL:
+    'serial_handler.py'
+CONFIGS:
+  DETECTOR:
+    'mds_hsv_blue.yaml'

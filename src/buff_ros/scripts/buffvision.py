@@ -16,6 +16,7 @@ import cv2
 import sys
 import time
 import glob
+import yaml
 import rospy
 import datetime
 import traceback
@@ -23,7 +24,6 @@ import numpy as np
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 import xml.etree.ElementTree as ET
-from mds_detector import MDS_Detector
 
 def buffshow(title, image, wait=0):
 	"""
@@ -125,8 +125,8 @@ def load_data(path='../data'): # default path only works in jupyter notebook or 
 		imfile = get_image_file_from_label(label)
 		impath = os.path.join(path, imfile)
 		if os.path.exists(impath):
-			image = cv2.imread(impath)# cv2.cvtColor(cv2.imread(impath), cv2.COLOR_BGR2RGB)
-			data.append((image, get_bounding_from_label(label)))
+			image = cv2.cvtColor(cv2.imread(impath), cv2.COLOR_BGR2RGB)
+			data.append((image, get_bounding_from_label(label), imfile, ))
 				
 	return data
 
@@ -281,6 +281,23 @@ def ROS_cv2_publisher(topic='image_raw'):
 
 			# Publish the message
 			pub.publish(imgMsg)
+
+def load_config(file, program):
+	file = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', file)
+	with open(file, 'r') as f:
+		config = yaml.safe_load(f)
+		debug = config['DEBUG']
+		topics = config['TOPICS']
+		if program in config['CONFIGS']:
+			configFile = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', config['CONFIGS'][program])
+		else:
+			return debug, topics, None
+
+	with open(configFile, 'r') as f:
+		config = yaml.safe_load(f)
+
+	return debug, topics, config
+		
 
 if __name__=='__main__':
 	"""

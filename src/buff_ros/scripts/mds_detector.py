@@ -12,6 +12,7 @@ import cv2
 import yaml
 import rospy
 import numpy as np
+import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
@@ -25,6 +26,10 @@ class MDS_Detector:
 			Define all the parameters of the model here.
 			No need to save images or results
 		"""
+		self.debug = False
+		self.in_topic = None 
+		self.out_topic = None
+
 		if config is None:
 			if low is None or high is None:
 				# exit if no bounds or config
@@ -33,30 +38,20 @@ class MDS_Detector:
 			self.high = high #  Upper boundary of threshold
 		else:
 			# read config params
-			file = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', '{}.yaml'.format(config))
-			with open(file, 'r') as f:
-				bounds = yaml.safe_load(f)
-				self.low = np.array(bounds['LOW'])
-				self.high = np.array(bounds['HIGH'])
-				if 'INTOPIC' in bounds:
-					in_topic = bounds['INTOPIC']
-				if 'OUTOPIC' in bounds:
-					out_topic = bounds['OUTTOPIC']
-				if 'CORE' in bounds:
-					with_core = bounds['CORE']
-				if 'DEBUG' in bounds:
-					debug = bounds['DEBUG']
+			debug, topics, config = bv.load_config(config, 'DETECTOR')
+			self.debug = debug
+			self.in_topic = topics['RAW_IMG']
+			self.out_topic = topics['BOUNDARY']
+
+			self.low = np.array(config['LOW'])
+			self.high = np.array(config['HIGH'])
 
 		self.steps = None
 		self.ANNOTATION_COLOR = color
 		self.ANNOTATION_THICKNESS = thickness
 
 		# Only spin up image sub if core is running
-		if with_core:
-
-			self.debug = debug
-			self.in_topic = in_topic
-			self.out_topic = out_topic
+		if self.in_topic:
 
 			self.bridge = CvBridge()
 
@@ -102,11 +97,19 @@ class MDS_Detector:
 
 		if steps:
 			annotated = image
-			for cnt in contours:
-				if len(cnt) > 20:
+			for i, cnt in enumerate(contours):
+				a1 = cv2.contourArea(cnt)
+				if a1 > 20:
 					#annotated = cv2.drawContours(annotated, [cnt], -1, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-					annotated = self.drawEllipse(annotated, cnt)
-					
+					#annotated = self.drawEllipse(annotated, cnt)
+				
+
+					rect = cv2.minAreaRect(cnt)
+					box = np.int0(cv2.boxPoints(rect))
+					m1 = np.abs(box[1][0] - box[0][0]) / np.abs(box[1][1] - box[0][1]) 
+					#cv2.drawContours(annotated, [box], 0, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+					cv2.line(annotated, (box[0][0], box[0][1]), (box[3][0], box[3][1]), self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+		
 			mostly_raw = np.concatenate([source, hsv], axis=1)
 			not_so_raw = np.concatenate([thresh, annotated], axis=1)
 			self.steps = np.concatenate([mostly_raw, not_so_raw])
@@ -138,7 +141,9 @@ class MDS_Detector:
 		results = self.detect(image, steps=steps)
 		mesg = Float64MultiArray()
 		mesg.data = results
-		self.bound_pub.publish(mesg)
+		
+		if not results is None:
+			self.bound_pub.publish(mesg)
 
 	def imageCallBack(self, img_msg):
 		"""
@@ -150,13 +155,14 @@ class MDS_Detector:
 		"""
 		
 		if self.debug:
-			self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg), True) # Not tested
+			self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg), steps=True) # Not tested
 			self.annotate_pub.publish(self.bridge.cv2_to_imgmsg(self.steps, encoding='bgr8'))
 
 		else:
 			self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg))
 
 def main():
+
 	detector = MDS_Detector(config=sys.argv[1])
 
 	rospy.spin()
