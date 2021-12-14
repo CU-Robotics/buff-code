@@ -8,49 +8,49 @@ echo -e "Running Install from ${PWD}"
 echo -e "\n\tapt updating...\n"
 
 #	update the apt package manager
-sudo apt update
+apt-get update
 
 echo -e "\n\tInstalling Dependencies...\n"
 
 #	Using apt and pip install all the dependencies for the project
-xargs sudo apt install -y <${PROJECT_ROOT}/config/install/dependencies.txt
+xargs apt-get install <${PROJECT_ROOT}/config/install/dependencies.txt -y
 
 echo -e "\n\tUpgrading pip3\n"
-python3.6 -m pip install --upgrade pip
+python3.6 -m pip install --upgrade -U pip
 
-python3.6 -m pip install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
+python3.6 -m pip install -U -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
 
 # echo -e "\n\tSetting python alternatives\n"
-# sudo update-alternaitves --set python3 /usr/bin/python3.8 1
+# update-alternaitves --set python3 /usr/bin/python3.8 1
 
 echo -e "\n\tSetting up ROS melodic\n"
 
 # ROS installation
 # add repositories
-sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 
 # setup ROS keys
-curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
 
-sudo apt update
+apt-get update -y
 
 # Install ROS
 if [[ "${HOSTNAME}" == "edge"* ]]; then
-	sudo apt install -y ros-melodic-desktop
+	apt-get install ros-melodic-desktop -y
 else
-	sudo apt install -y ros-melodic-desktop-full
+	apt-get install ros-melodic-desktop-full -y
 fi
 
 # Source the ros/setup.bash
 source /opt/ros/melodic/setup.bash
 
 # Install ROS dependencies
-xargs sudo apt install -y <${PROJECT_ROOT}/config/install/ros_python_deps.txt
+apt-get install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools python3-catkin-pkg python3-rospkg -y
 
 echo -e "\n\tFinishing ROS setup...\n"
 
 # Init rosdep
-sudo rosdep init
+rosdep init
 rosdep update
 
 # DEPRECATED
@@ -71,8 +71,8 @@ if [[ "${HOSTNAME}" != "edge"* ]]; then
 	curl https://www.pjrc.com/teensy/00-teensy.rules -O
 
 	# mv rules into rules.d and set the proper file permissions
-	sudo mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
-	sudo chmod 0644 /etc/udev/rules.d/00-teensy.rules
+	mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
+	chmod 0644 /etc/udev/rules.d/00-teensy.rules
 
 	# extract the tar to buffpy/bin
 	tar -xvsf teensy_linux64.tar.gz -C ${PROJECT_ROOT}/buffpy/bin

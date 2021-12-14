@@ -1,7 +1,10 @@
 vim
 curl
+cmake
+gnupg2
 jupyter
-python3.6
 python3-pip
-libpython3-dev
-python3-testresources
+lsb-release
+build-essential
+ca-certificates
+python3-setuptools
