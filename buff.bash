@@ -44,9 +44,9 @@ fi
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
 	export USER_IP= # Should find a way to get the users IP from the robot, ssh env variable?
-else
+# else
 	# if not on jetson set the user IP
 	# should figure out how to set it if it is on the jetson
-	export USER_IP=$(/sbin/ip -o -4 addr list wlp3s0 | awk '{print $4}' | cut -d/ -f1) # Needs testing
+	# export USER_IP=$(/sbin/ip -o -4 addr list wlp3s0 | awk '{print $4}' | cut -d/ -f1) # Needs testing
 
 fi
