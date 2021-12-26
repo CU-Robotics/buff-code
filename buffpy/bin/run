@@ -19,7 +19,7 @@ import subprocess as sb
 
 def load_config(file='mds_pipeline'):
 	if not os.path.exists(file):
-		print('Could not find config: Exiting...')
+		print('Could not find config: checking for scripts...')
 		return None
 	with open(file, 'r') as f:
 		return yaml.safe_load(f)
@@ -31,22 +31,33 @@ def main(args):
 
 	# Initialize config as None
 	config = None
+	# Initialize the script mode as false
+	from_script = False
 
 	# Get the program file name and directory
+	target = args[1]
 	fileName = args[0]
 	binPath = os.path.dirname(fileName)
 	projectRoot = os.getenv('PROJECT_ROOT')
 
 	if len(args) > 1:
-		configFile = os.path.join(projectRoot, 'config', 'lib', '{}.yaml'.format(args[1]))
+		configFile = os.path.join(projectRoot, 'config', 'lib', '{}.yaml'.format(target))
 		print('Loading {}'.format(configFile))
 		config = load_config(configFile)
 	else:
-		print('No config file: Exiting...')
+		print('No args: Exiting...')
 		exit(0)
 
 	if config is None:
+		# add functionality to run a single script without a config
+
+		# scripts = glob.glob(os.path.join(projectRoot, 'buffpy', 'lib'))
+		# for script in scripts:
+		# 	if script == target:
+		# 		from_script = os.path.join(projectRoot, 'buffpy', 'lib', script)
+		# just exit for now
 		exit(0)
+
 
 	coreProc = sb.Popen('roscore', stdout=sb.PIPE, stderr=sb.PIPE)
 

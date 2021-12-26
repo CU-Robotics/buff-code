@@ -26,8 +26,8 @@ RUN useradd -ms /bin/bash cu-robotics
 RUN apt-get update
 
 
-# 		Add our configs for setup
-ADD config ${PROJECT_ROOT}/config
+# 		Add our code for setup
+ADD . ${PROJECT_ROOT}
 
 
 # 		Run apt install for general dependencies
@@ -76,6 +76,7 @@ RUN apt-get update && \
   apt-get clean -y
 
 
-# 		Set Working Dir and Run Bash
+# 		Set User, Working Dir and Run Bash
+USER cu-robotics
 WORKDIR /home/cu-robotics/buff-code
 CMD ["bash"]
