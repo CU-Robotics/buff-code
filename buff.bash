@@ -13,6 +13,15 @@ export ROBOT_IP='10.0.0.160' # '128.138.157.122' # '10.0.0.162' #'128.138.157.24
 export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buff-code"
 
+alias spinup="docker run -it -e DISPLAY \
+	-v /tmp/.X11-unix:/tmp/.X11-unix \
+	-v ${HOME}/buff-code:/home/cu-robotics/buff-code \
+	-v ${HOME}/.Xauthority:/home/developer/.Xauthority \
+	--net=host \
+	--device /dev/video0 \
+	--device /dev/video1 \
+	buffbox"
+
 # If ROS is installed source the setup file
 if [[ -d /opt/ros/melodic ]]; then
 	source /opt/ros/melodic/setup.bash
