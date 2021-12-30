@@ -1,82 +1,66 @@
-# Base image to build in
-FROM ubuntu:18.04
+#
+# this dockerfile roughly follows the 'Ubuntu install of ROS Melodic' from:
+#   http://wiki.ros.org/melodic/Installation/Ubuntu
+#
+ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1
+FROM ${BASE_IMAGE}
 
+ARG ROS_PKG=desktop
+ENV ROS_DISTRO=melodic
+ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
+ENV PROJECT_ROOT=/home/cu-robotics/buff-code
 
-# 		Set project root var
-ARG PROJECT_ROOT=/home/cu-robotics/buff-code
+ENV DEBIAN_FRONTEND=noninteractive
 
-
-# 		Author
-MAINTAINER Mitchell D Scott <misc4432@colorado.edu>
-
-
-# 		Use bash to install
-CMD ["bash"]
-
-
-# 		Disable interactve front-end
-ARG DEBIAN_FRONTEND=non-interactive
-
-
-# 		Create a new user
+#
+# Create a new user
+#
 RUN useradd -ms /bin/bash cu-robotics
 
 
-# 		Update APT
-RUN apt-get update
+#
+# Add your code
+#
+ADD . /home/cu-robotics/buff-code
 
 
-# 		Add our code for setup
-ADD . ${PROJECT_ROOT}
-
-
-# 		Run apt install for general dependencies
+#
+# Install base dependencies
+#
 RUN apt-get update && \
     xargs apt-get install -y --no-install-recommends <${PROJECT_ROOT}/config/install/dependencies.txt && \
-	rm -rf /var/lib/apt/lists/*
+  rm -rf /var/lib/apt/lists/*
 
 
-#		ROS Install
-
-# Setup Ros keys
-RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
-
-# Install ROS deps
-RUN apt-get update && \
-    xargs apt-get install -y --no-install-recommends <${PROJECT_ROOT}/config/install/ros_python_deps.txt && \
-	rm -rf /var/lib/apt/lists/*
-
-# Init rosdep
-RUN apt-get update && \
-    rosdep init && \
-    rm -rf /var/lib/apt/lists/*
-
-# Switch user to avoid pip/rosdep error
-USER cu-robotics
-RUN rosdep update
+# 
+# Install ROS packages
+#
+RUN .${PROJECT_ROOT}/scripts/install_ros_melodic.bash ${ROS_DISTRO} ${ROS_PKG}
 
 
-#		Python Requirements Install
-
-RUN pip3 install --upgrade -U pip && \
-	pip3 install -U -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
-
-
-# Switch back to root to use apt and curl
-USER root
-
-#		Teensy Loader Install
+#
+# Install sublime text
+#
+RUN .${PROJECT_ROOT}/scripts/install_sublime.bash
 
 
+#
+#	Teensy Loader Install
+#   Excluded for now, requires device access which is not currently available
 
-#		Clean APT/Cache
+
+#
+#	Clean APT/Cache
+#
 RUN apt-get update && \
   apt-get autoremove --purge -y && \
   apt-get clean -y
 
 
-# 		Set User, Working Dir and Run Bash
-USER cu-robotics
-WORKDIR /home/cu-robotics/buff-code
+#
+# Set up the environment
+#
+RUN echo "source ${PROJECT_ROOT}/buff.bash" >> /root/.bashrc
 CMD ["bash"]
+ENTRYPOINT ["${PROJECT_ROOT}/scripts/buff_entrypoint.sh"]
+WORKDIR ${PROJECT_ROOT}
