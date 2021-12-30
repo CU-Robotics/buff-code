@@ -18,8 +18,6 @@ alias spinup="docker run -it -e DISPLAY \
 	-v ${HOME}/buff-code:/home/cu-robotics/buff-code \
 	-v ${HOME}/.Xauthority:/home/developer/.Xauthority \
 	--net=host \
-	--device /dev/video0 \
-	--device /dev/video1 \
 	buffbox"
 
 # If ROS is installed source the setup file

@@ -13,12 +13,12 @@ echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sou
 sudo apt update
 
 # Install dependencies
-sudo apt install apt-transport-https
+sudo apt install -y apt-transport-https
 
 # Update apt again
 sudo apt update
 
 # Install Sublime
-sudo apt install sublime-text
+sudo apt install -y sublime-text
 
 

@@ -1,4 +1,5 @@
 vim
+wget
 curl
 cmake
 gnupg2

@@ -1,0 +1,5 @@
+python-wstool
+python-rosdep
+python-rosinstall
+python-catkin-tools
+python-rosinstall-generator
