@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /bin/bash
 
 # This install was taken from
 # https://www.sublimetext.com/docs/linux_repositories.html

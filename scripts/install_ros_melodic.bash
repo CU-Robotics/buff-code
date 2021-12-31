@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /bin/bash
 
 ROS_PKG=$2
 ROS_DISTRO=$1 

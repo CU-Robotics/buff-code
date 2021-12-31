@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#! /bin/bash
 
 #  run this script with 'source scripts/install.bash'
 
