@@ -19,69 +19,115 @@ import subprocess as sb
 
 def load_config(file='mds_pipeline'):
 	if not os.path.exists(file):
-		print('Could not find config: checking for scripts...')
+		print('Could not find config: Exiting ...')
 		return None
+
 	with open(file, 'r') as f:
 		return yaml.safe_load(f)
 
-def main(args):
+def parse_target(args, projectRoot):
+	""" 
+		get target_path and config if they exist
+		@PARAMS:
+			args: list of strings, [file, args] args can be None
+			projectRoot: filepath, root of the project
+		@RETURN:
+			target_path: filepath, the target (yaml or py)
+			target_args: args for a python script
+			config: config data (dict), config for a system
 	"""
-		Launch all relevant processes. (could be replaced with roslaunch)
+	config = None 
+	target_args = []
+	target_path = None
+
+	if len(args) > 1: 	# make sure theres at least 2 args
+		target = args[1]
+
+		if target[-3:] == '.py':	# if arg1 is a python script set the target path
+			print('Loading script:...')
+			config = None
+			target_path = os.path.join(projectRoot, 'buffpy', 'lib', target)
+			
+			if len(args) > 2:
+				target_args = args[2:]
+				print('Found args {}'.format(target_args))
+
+		if target[-5:] == '.yaml':	# if target is a yaml file set config
+			print('Loading system:...')
+			target_path = os.path.join(projectRoot, 'config', 'lib', '{}'.format(target))
+			config = load_config(target_path)	# None if no config
+
+			if config is None:
+				print('No config data in {}'.format(target_path))
+
+	if not os.path.exists(target_path):
+		print('Target path empty')
+		return None, [], None
+
+	print('Targeting: {}, {}'.format(target_path, target_args))
+
+	return target_path, target_args, config
+
+def launch(target_path, target_args, config):
 	"""
-
-	# Initialize config as None
-	config = None
-	# Initialize the script mode as false
-	from_script = False
-
-	# Get the program file name and directory
-	target = args[1]
-	fileName = args[0]
-	binPath = os.path.dirname(fileName)
-	projectRoot = os.getenv('PROJECT_ROOT')
-
-	if len(args) > 1:
-		configFile = os.path.join(projectRoot, 'config', 'lib', '{}.yaml'.format(target))
-		print('Loading {}'.format(configFile))
-		config = load_config(configFile)
-	else:
-		print('No args: Exiting...')
-		exit(0)
-
-	if config is None:
-		# add functionality to run a single script without a config
-
-		# scripts = glob.glob(os.path.join(projectRoot, 'buffpy', 'lib'))
-		# for script in scripts:
-		# 	if script == target:
-		# 		from_script = os.path.join(projectRoot, 'buffpy', 'lib', script)
-		# just exit for now
-		exit(0)
-
-
-	coreProc = sb.Popen('roscore', stdout=sb.PIPE, stderr=sb.PIPE)
-
-	launch = roslaunch.scriptapi.ROSLaunch()
-	launch.start()
-
+		this wil launch all of our nodes or our script
+		starts by building a cmd for the core process and
+		then runs the command with subprocess
+		@PARAMS:
+			target_path: filepath, to yaml or python script
+			target_args: list of strings, args for the command
+			config: load configuration (dict)
+		@RETURNS:
+			coreProc: subprocess obj, the core process
+			processes: list of roslaunch processes
+	"""
+	cmd = 'roscore'
+	coreProc = None
 	processes = []
-	nodes = config['NODES']
-	package = config['PACKAGE']
 
-	try:
-		# load and launch each node in the config
-		for node in nodes:
-			process = roslaunch.core.Node(package, nodes[node], args=configFile)
-			processes.append(launch.launch(process))
+	if target_path is None:
+		cmd = None
+		print('Failed to load target: {}'.format(target_path))
+	elif config is None:
+		# run a single script without a config
+		cmd = ['python', target_path] + target_args
 
-		# wait for core process to finish or err out
+	# launch core if it exists
+	if not cmd is None:
+		coreProc = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
+
+		if not config is None:
+			launch = roslaunch.scriptapi.ROSLaunch()
+			launch.start()
+
+			nodes = config['NODES']
+			package = config['PACKAGE']
+
+			# load and launch each node in the config
+			for node in nodes:
+				print('Initializing {} {}'.format(package, nodes[node]))
+				process = roslaunch.core.Node(package, nodes[node], args=' '.join([node, target_path]))
+				processes.append(launch.launch(process))
+
+	return coreProc, processes
+
+def spin(coreProc, processes):
+	"""
+		loop and wait for user kill or core to finish
+		@PARAMS:
+			coreProc: subprocess obj, the core process running
+			processes: roslaunch obj, the sub-processes running
+	"""
+	try: 
+		# this hanldes user kill (available after spawn & in the run space below)
+		# this will loop until an interrupt or the core dies.
 		while coreProc.poll() is None:
 			# if output/errors print them
 			mesg = coreProc.communicate()
 			if mesg[0]:
-				print(mesg[0].decode('utf-8'))
+				print(mesg[0].decode('utf-8')) # this will force us to use rospy.log to print info 
 			if mesg[1]:
-				print(mesg[1].decode('utf-8'))
+				print(mesg[1].decode('utf-8')) # output is sent from program to roscore then printed here
 
 		# core finished so kill any other processes
 		for proc in processes:
@@ -94,8 +140,34 @@ def main(args):
 		for proc in processes:
 			proc.stop()
 
-		# Kill roscore
+		# Kill core
 		os.kill(coreProc.pid, signal.SIGTERM)
+
+def main(args):
+	"""
+		Launch all relevant processes. (could be replaced with roslaunch)
+		See wiki for args usage
+	"""
+
+	# Initialize config as None
+	config = None
+	processes = []	# list of roslaunch processes
+	fileName = args[0]	# program file name is always the first arg
+	binPath = os.path.dirname(fileName) # path to buffpy/bin
+	projectRoot = os.getenv('PROJECT_ROOT')	# path to project root
+
+	# parse the input 
+	target_path, target_args, config = parse_target(args, projectRoot)
+
+	# launch the processes
+	coreProc, processes = launch(target_path, target_args, config)
+
+	if coreProc is None: # coreProc is the core process we are trying to spawn (python script or roscore)
+		print('Launching target core failed :(')
+		exit(0)
+
+	# spin till finished
+	spin(coreProc, processes) 
 
 	print('RUN finished')
 		
