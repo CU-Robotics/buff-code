@@ -19,7 +19,7 @@ sudo apt update
 sudo apt install -y ros-${ROS_DISTRO}-${ROS_PKG}
 
 # Install ROS dependencies
-xargs sudo apt install -y <${PROJECT_ROOT}/config/install/ros_dependencies.txt
+pip3 install -r -y ${PROJECT_ROOT}/config/install/ros_dependencies.txt
 
 # clean the apt cache
 rm -rf /var/lib/apt/lists/*

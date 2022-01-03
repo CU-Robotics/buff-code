@@ -1,5 +1,6 @@
-python-wstool
-python-rosdep
-python-rosinstall
-python-catkin-tools
-python-rosinstall-generator
+rosdep==0.21.0
+wstool==0.1.17
+rosinstall==0.7.8
+defusedxml==0.7.1
+catkin-tools==0.8.2
+rosinstall-generator==0.1.22

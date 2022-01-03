@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 	Project:
 			Mitch detector
@@ -18,29 +18,36 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
 
 class MDS_Detector:
-	def __init__(self, config=None, low=None, high=None, 
+	def __init__(self, node='DETECTOR', config=None, configData=None,
+					low=None, high=None, 
 					color=(0, 255, 0), thickness=2, 
 					in_topic='image_raw', out_topic='detected_boundary', 
 					with_core=False, debug=False):
 		"""
 			Define all the parameters of the model here.
-			No need to save images or results
+			Can be initialized with a config file, a system launch
+			or manually from a terminal. will exit if not enough params
+			exist.
 		"""
-		self.debug = False
-		self.in_topic = None 
-		self.out_topic = None
+		self.debug = debug
+		self.in_topic = in_topic 
+		self.out_topic = out_topic
 
 		if config is None:
-			if low is None or high is None:
-				# exit if no bounds or config
-				return None
-			self.low = low #  Lower boundary of threshold
-			self.high = high #  Upper boundary of threshold
+			if configData is None:
+				if low is None or high is None:
+					# exit if no bounds or config
+					return None
+				self.low = low #  Lower boundary of threshold
+				self.high = high #  Upper boundary of threshold
+			else:
+				self.low = configData['LOW']
+				self.high = configData['HIGH']
 		else:
 			# read config params
-			debug, topics, config = bv.load_config(config, 'DETECTOR')
+			debug, topics, config = bv.load_config(config, node)
 			self.debug = debug
-			self.in_topic = topics['RAW_IMG']
+			self.in_topic = topics['RAW_IMG'] # manually selects topics from a master conf (DEPRECATED)
 			self.out_topic = topics['BOUNDARY']
 
 			self.low = np.array(config['LOW'])
@@ -168,4 +175,15 @@ def main():
 	rospy.spin()
 
 if __name__=='__main__':
-	main()
+	if sys.argv[1] == 'sys-launch':
+		program, debug, config, topics = bv.load_config_from_system_launch(sys.argv)
+		main(debug=debug, configData=config, in_topic=topics[0], out_topic=topics[1])
+	else:
+		main()
+
+
+
+
+
+
+
