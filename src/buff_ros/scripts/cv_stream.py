@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import os
 import sys
 import cv2
@@ -7,19 +7,17 @@ import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
-def main(config):
-
-	debug, topics, config = bv.load_config(config, 'CAMERA')
+def main(debug='False', config=None, topic='image_raw'):
 
 	# Create the image stream and set its capture rate to 30 FPS
 	cap = cv2.VideoCapture(0)
 	cap.set(cv2.CAP_PROP_FPS, 30)
 
 	# Set a size variable (resolution)
-	size=(int(cap.get(3)), int(cap.get(4)))
+	size = (int(cap.get(3)), int(cap.get(4)))
 
 	# Create the image publisher
-	pub = rospy.Publisher(topics['RAW_IMG'], Image, queue_size=1)
+	pub = rospy.Publisher(topic, Image, queue_size=1)
 	# Init this program as a ROS node
 	# anonymous sets a unique node ID
 	rospy.init_node('image_streamer', anonymous=True)
@@ -44,5 +42,18 @@ def main(config):
 
 
 if __name__=='__main__':
-	if len(sys.argv) > 1:
-		main(sys.argv[1])
+	if sys.argv[1] == 'sys-launch':
+		program, debug, config, topics = bv.load_config_from_system_launch(sys.argv)
+		main(debug=debug, config=config, topic=topics[0])
+	else:
+		main()
+
+
+
+
+
+
+
+
+
+

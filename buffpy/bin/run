@@ -27,7 +27,8 @@ def load_config(file='mds_pipeline'):
 
 def parse_target(args, projectRoot):
 	""" 
-		get target_path and config if they exist
+		get target_path and config if they exist, all
+		input checking debugging gets done here before launch
 		@PARAMS:
 			args: list of strings, [file, args] args can be None
 			projectRoot: filepath, root of the project
@@ -45,7 +46,7 @@ def parse_target(args, projectRoot):
 
 		if target[-3:] == '.py':	# if arg1 is a python script set the target path
 			print('Loading script:...')
-			config = None
+			config = 'python'		# so we know its python
 			target_path = os.path.join(projectRoot, 'buffpy', 'lib', target)
 			
 			if len(args) > 2:
@@ -61,21 +62,21 @@ def parse_target(args, projectRoot):
 				print('No config data in {}'.format(target_path))
 
 	if not os.path.exists(target_path):
-		print('Target path empty')
+		print('Target path not found {}'.format(target_path))
 		return None, [], None
 
 	print('Targeting: {}, {}'.format(target_path, target_args))
 
 	return target_path, target_args, config
 
-def launch(target_path, target_args, config):
+def launch_system(target_path, config):
 	"""
-		this wil launch all of our nodes or our script
-		starts by building a cmd for the core process and
-		then runs the command with subprocess
+		This wil launch all of our nodes and roscore. 
+		launches core process with subprocess.Popen 
+		systems are launched with the usage below
+		rosrun package program args=[debug, config, topics...]
 		@PARAMS:
-			target_path: filepath, to yaml or python script
-			target_args: list of strings, args for the command
+			target_path: filepath, to yaml
 			config: load configuration (dict)
 		@RETURNS:
 			coreProc: subprocess obj, the core process
@@ -85,31 +86,68 @@ def launch(target_path, target_args, config):
 	coreProc = None
 	processes = []
 
-	if target_path is None:
-		cmd = None
-		print('Failed to load target: {}'.format(target_path))
-	elif config is None:
-		# run a single script without a config
-		cmd = ['python', target_path] + target_args
+		
+	# Set nodes and package
+	nodes = config['NODES']
+	package = config['PACKAGE']
 
-	# launch core if it exists
-	if not cmd is None:
+	print('Nodes: {}'.format(nodes))
+
+	# Cant spawn processes without nodes and a package
+	if nodes is None:
+		print('Missing NODES in config file {}'.format(target))
+
+	elif package is None:
+		print('Missing PACKAGE in config file {}')
+
+	else:
+
+		# launch core
 		coreProc = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
 
-		if not config is None:
-			launch = roslaunch.scriptapi.ROSLaunch()
-			launch.start()
+		launch = roslaunch.scriptapi.ROSLaunch()
+		launch.start()
 
-			nodes = config['NODES']
-			package = config['PACKAGE']
+		debug = 'False'
 
-			# load and launch each node in the config
-			for node in nodes:
-				print('Initializing {} {}'.format(package, nodes[node]))
-				process = roslaunch.core.Node(package, nodes[node], args=' '.join([node, target_path]))
-				processes.append(launch.launch(process))
+		if 'DEBUG' in config and config['DEBUG']:
+			debug = 'True'
+
+		# load and launch each node in the config
+		for node in nodes:
+			node = nodes[node]
+			
+			program = node['FILE']
+			configStr = 'None'
+			if 'CONFIG' in node:
+				configStr = node['CONFIG']
+
+			topics = ' '.join([config['TOPICS'][topic] for topic in node['TOPICS']])
+			args = ' '.join(['sys-launch', debug, configStr, topics])
+
+			process = roslaunch.core.Node(package, program, args=args)
+			processes.append(launch.launch(process))
 
 	return coreProc, processes
+
+def launch_python(target_path, target_args):
+	"""
+		Runs a python script It starts by building a 
+		cmd for the core process and then runs the 
+		command with subprocess.Popen 
+		@PARAMS:
+			target_path: filepath, to python script
+			target_args: list of strings, args for the command (can be empty)
+		@RETURNS:
+			coreProc: subprocess obj, the core process
+			processes: empty list
+	"""
+
+	# run a single script without a config
+	cmd = ['python', target_path] + target_args
+	coreProc = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
+
+	return coreProc, []
 
 def spin(coreProc, processes):
 	"""
@@ -130,6 +168,7 @@ def spin(coreProc, processes):
 				print(mesg[1].decode('utf-8')) # output is sent from program to roscore then printed here
 
 		# core finished so kill any other processes
+		# supposedly handled by roslaunch but I wanted to be safe
 		for proc in processes:
 			proc.stop()
 
@@ -145,13 +184,13 @@ def spin(coreProc, processes):
 
 def main(args):
 	"""
-		Launch all relevant processes. (could be replaced with roslaunch)
-		See wiki for args usage
+		Launch all relevant processes.
+		See wiki for input usage
 	"""
 
 	# Initialize config as None
 	config = None
-	processes = []	# list of roslaunch processes
+	processes = []	# list of roslaunch processes, empty when running python
 	fileName = args[0]	# program file name is always the first arg
 	binPath = os.path.dirname(fileName) # path to buffpy/bin
 	projectRoot = os.getenv('PROJECT_ROOT')	# path to project root
@@ -159,10 +198,23 @@ def main(args):
 	# parse the input 
 	target_path, target_args, config = parse_target(args, projectRoot)
 
-	# launch the processes
-	coreProc, processes = launch(target_path, target_args, config)
+	# target path is essential for launching. If it is empty
+	# there was an error and the program should exit
+	if target_path is None:
+		print('Failed to load target: {}'.format(target_path))
+		exit(0)
 
-	if coreProc is None: # coreProc is the core process we are trying to spawn (python script or roscore)
+	# launch the processes
+	if config == 'python':
+		coreProc = launch_python(target_path, target_args)
+	elif not config is None:
+		coreProc, processes = launch_system(target_path, config)
+	else:
+		print('Config Empty: Exiting...')
+
+	# coreProc is the core process we are trying to spawn (python script or roscore)
+	# if it fails there is no point in spinning
+	if coreProc is None: 
 		print('Launching target core failed :(')
 		exit(0)
 

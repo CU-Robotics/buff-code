@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import os
 import sys
 import rospy
@@ -11,7 +11,7 @@ def displayCallback(image_msg):
 	detector = MDS_Detector(config="nn_hsv_red")
 	detector.detect_and_annotate(CVbridge().imgmsg_to_cv2(image_msg))
 
-def main(config):
+def main(node, config):
 
 	#rospy.init_node('debugger_view', anonymous=True)
 
@@ -19,13 +19,14 @@ def main(config):
 
 	#rospy.spin()
 
+	# loads from data
 	data = bv.load_data(os.path.join(os.getenv('PROJECT_ROOT'), 'data'))
 
-	detector = MDS_Detector(config=config)
+	detector = MDS_Detector(node=node, config=config)
 
 	for image, labels in data[0:5]:
 		detector.detect_and_annotate(image)
 
 if __name__=='__main__':
-	if len(sys.argv) > 1:
-		main(sys.argv[1])
+	if len(sys.argv) > 2:
+		main(sys.argv[1], sys.argv[2])
