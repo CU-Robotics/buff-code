@@ -18,7 +18,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
 
 class MDS_Detector:
-	def __init__(self, node='DETECTOR', config=None, configData=None,
+	def __init__(self, config=None, configData=None,
 					low=None, high=None, 
 					color=(0, 255, 0), thickness=2, 
 					in_topic='image_raw', out_topic='detected_boundary', 
@@ -170,14 +170,16 @@ class MDS_Detector:
 
 def main():
 
-	detector = MDS_Detector(config=sys.argv[1])
-
+	# eventually need arg parser
+	detector = MDS_Detector()
 	rospy.spin()
+
 
 if __name__=='__main__':
 	if sys.argv[1] == 'sys-launch':
 		program, debug, config, topics = bv.load_config_from_system_launch(sys.argv)
-		main(debug=debug, configData=config, in_topic=topics[0], out_topic=topics[1])
+		detector = MDS_Detector(configData=config, in_topic=topics[0], out_topic=topics[1], debug=debug)
+		rospy.spin()
 	else:
 		main()
 

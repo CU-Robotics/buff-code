@@ -20,13 +20,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 #
 RUN useradd -ms /bin/bash cu-robotics
 
-
 #
 # Add your code
 #
 ADD . /home/cu-robotics/buff-code
-
-
 
 #
 #	Clean APT/Cache
@@ -34,7 +31,6 @@ ADD . /home/cu-robotics/buff-code
 RUN apt-get update && \
 	apt-get autoremove --purge -y && \
 	apt-get clean -y
-
 
 #
 # Set up the environment

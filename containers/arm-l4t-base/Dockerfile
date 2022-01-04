@@ -3,8 +3,7 @@
 #   http://wiki.ros.org/melodic/Installation/Ubuntu
 #
 
-#   Set as Ubuntu 18.04 AMD64 / l4t base is ARM64
-ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04 # 
+ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1 
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop
@@ -21,19 +20,19 @@ ENV DEBIAN_FRONTEND=noninteractive
 #
 RUN apt-get update && \
 		apt-get install -y --no-install-recommends \
-		vim \
-		git \
-		curl \
-		wget \
-		cmake \
-		gnupg2 \
-		jupyter \
+		vim=2:8.0.1453-1ubuntu1.7 \
+		git=1:2.17.1-1ubuntu0.9 \
+		curl=7.58.0-2ubuntu3.16 \
+		wget=1.19.4-1ubuntu2.2 \
+		cmake=3.10.2-1ubuntu2.18.04.2 \ 
+		gnupg2=2.2.4-1ubuntu1.4 \
+		jupyter=4.4.0-2 \
 		python3-pip \
-		lsb-release \
-		python3-opencv \
-		build-essential \
-		ca-certificates \
-		python3-setuptools \
+		lsb-release=9.20170808ubuntu1 \ 
+		python3-opencv=3.2.0+dfsg-4ubuntu0.1 \ 
+		build-essential=12.4ubuntu1 \
+		ca-certificates=20210119~18.04.2 \
+		python3-setuptools=39.0.1-2 && \
 		&& rm -rf /var/lib/apt/lists/*
 
 # 

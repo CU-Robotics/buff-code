@@ -5,7 +5,7 @@ wget=1.19.4-1ubuntu2.2
 cmake=3.10.2-1ubuntu2.18.04.2 
 gnupg2=2.2.4-1ubuntu1.4 
 jupyter=4.4.0-2 
-python3-pip 
+python3-pip
 lsb-release=9.20170808ubuntu1 
 python3-opencv=3.2.0+dfsg-4ubuntu0.1 
 build-essential=12.4ubuntu1 

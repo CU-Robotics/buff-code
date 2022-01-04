@@ -309,10 +309,17 @@ def load_config_from_system_launch(args):
 	"""
 	program, _, debug, config = args[:4]
 
-	filepath = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', program)
+	if debug == 'True':
+		debug = True
 
-	with open(filepath, 'r') as f:
-		data = yaml.safe_load(f)
+	filepath = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', config)
+
+	if os.path.exists(filepath):
+		with open(filepath, 'r') as f:
+			data = yaml.safe_load(f)
+
+	else:
+		data = None
 
 	return program, debug, data, args[4:]
 
