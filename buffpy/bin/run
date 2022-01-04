@@ -144,10 +144,10 @@ def launch_python(target_path, target_args):
 	"""
 
 	# run a single script without a config
-	cmd = ['python', target_path] + target_args
+	cmd = ['python3', target_path] + target_args
 	coreProc = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
 
-	return coreProc, []
+	return coreProc
 
 def spin(coreProc, processes):
 	"""
@@ -163,21 +163,21 @@ def spin(coreProc, processes):
 			# if output/errors print them
 			mesg = coreProc.communicate()
 			if mesg[0]:
-				print(mesg[0].decode('utf-8')) # this will force us to use rospy.log to print info 
+				print(mesg[0].decode('utf-8')) # this will force us to use rospy.log to print info I think
 			if mesg[1]:
 				print(mesg[1].decode('utf-8')) # output is sent from program to roscore then printed here
 
 		# core finished so kill any other processes
-		# supposedly handled by roslaunch but I wanted to be safe
-		for proc in processes:
-			proc.stop()
+		# # supposedly handled by roslaunch but I wanted to be safe
+		# for proc in processes:
+		# 	proc.stop()
 
 	except KeyboardInterrupt as e:
 		print(e)
 		print('Terminate Recieved:...')
 		# Kill all launched processes
-		for proc in processes:
-			proc.stop()
+		# for proc in processes:
+		# 	proc.stop()
 
 		# Kill core
 		os.kill(coreProc.pid, signal.SIGTERM)

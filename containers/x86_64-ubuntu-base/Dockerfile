@@ -3,8 +3,7 @@
 #   http://wiki.ros.org/melodic/Installation/Ubuntu
 #
 
-#   Set as Ubuntu 18.04 AMD64 / l4t base is ARM64
-ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04 # 
+ARG BASE_IMAGE=ubuntu:18.04 # 
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop

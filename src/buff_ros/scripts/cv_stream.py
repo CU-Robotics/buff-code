@@ -7,7 +7,7 @@ import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
-def main(debug='False', config=None, topic='image_raw'):
+def main(debug=False, config=None, topic='image_raw'):
 
 	# Create the image stream and set its capture rate to 30 FPS
 	cap = cv2.VideoCapture(0)
@@ -39,6 +39,8 @@ def main(debug='False', config=None, topic='image_raw'):
 
 			# Publish the message
 			pub.publish(imgMsg)
+	else:
+		rospy.logerr('Could\'nt open camera: Exiting...')
 
 
 if __name__=='__main__':
