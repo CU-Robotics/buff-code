@@ -46,6 +46,7 @@ fi
 # Not totally clear but this solves an 
 # illegal instruction error with rospy.
 # Only for Jetson
+# the status of this issue needs to be double checked
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
 	export USER_IP= # Should find a way to get the users IP from the robot, ssh env variable?

@@ -33,7 +33,7 @@ if [[ $ROS_DISTRO == "" ]]; then
 fi
 
 # Also install Sublime Text-editor
-.${PROJECT_ROOT}/scripts/install_sublime.bash"
+".${PROJECT_ROOT}/scripts/install_sublime.bash"
 
 
 # DEPRECATED
