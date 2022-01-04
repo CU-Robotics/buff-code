@@ -5,6 +5,8 @@ import sys
 import numpy as np
 import buffvision as bv
 
+# Someday will become its own project
+
 pixels = []
 
 

@@ -168,11 +168,15 @@ class MDS_Detector:
 		else:
 			self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg))
 
-def main():
 
-	# eventually need arg parser
-	detector = MDS_Detector()
-	rospy.spin()
+def main(config='mds_hsv_blue.yaml'):
+
+	data = bv.load_data(path=os.path.join(os.get_env('PROJECT_ROOT'), 'data'))
+
+	detector = MDS_Detector(config=config)
+
+	for image, labels in data[0:5]:
+		detector.detect_and_annotate(image)
 
 
 if __name__=='__main__':
@@ -180,6 +184,8 @@ if __name__=='__main__':
 		program, debug, config, topics = bv.load_config_from_system_launch(sys.argv)
 		detector = MDS_Detector(configData=config, in_topic=topics[0], out_topic=topics[1], debug=debug)
 		rospy.spin()
+	elif len(sys.argv) == 2:
+		main(config=sys.argv[1])
 	else:
 		main()
 

@@ -15,9 +15,11 @@ PACKAGE:
 NODES:
   CAMERA:
     FILE:
-      'cv_stream.py'
+      'visual_spawner.py'
     TOPICS:
       - 'RAW_IMG'
+    CONFIG:
+      'default_camera.yaml'
   DETECTOR:
     FILE:
       'mds_detector.py'

@@ -3,7 +3,7 @@
 set -e
 
 buffbash="/home/cu-robotics/buff-code/buff.bash"
-echo "sourcing   $buffbash"
+echo "sourcing   	$buffbash"
 source "$buffbash"
 
 echo "Host 		$HOSTNAME"

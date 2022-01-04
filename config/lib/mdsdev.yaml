@@ -1,0 +1,41 @@
+DEBUG:
+  'False'
+  
+TOPICS:
+  RAW_IMG:
+    'image_raw'
+  BOUNDARY:
+    'detected_boundary'
+  TARGET:
+    'detected_targets'
+
+PACKAGE:
+  'buffpy'
+
+NODES:
+  CAMERA:
+    FILE:
+      'visual_spawner.py'
+    TOPICS:
+      - 'RAW_IMG'
+    CONFIG:
+      'default_camera.yaml'
+  DETECTOR:
+    FILE:
+      'mds_detector.py'
+    TOPICS:
+      - 'RAW_IMG'
+      - 'BOUNDARY'
+    CONFIG:
+      'mds_hsv_blue.yaml'
+  TRACKER:
+    FILE:
+      'mds_tracker.py'
+    TOPICS:
+      - 'BOUNDARY'
+      - 'TARGET'
+  SERIAL:
+    FILE:
+      'serial_handler.py'
+    TOPICS:
+      - 'TARGET'

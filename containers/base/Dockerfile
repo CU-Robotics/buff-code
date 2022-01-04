@@ -3,7 +3,8 @@
 #   http://wiki.ros.org/melodic/Installation/Ubuntu
 #
 
-ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1 
+# change this to select ARM or x86_64
+ARG BASE_IMAGE=ubunut:18.04 #nvcr.io/nvidia/l4t-base:r32.6.1 # 
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop
@@ -33,20 +34,24 @@ RUN apt-get update && \
 		build-essential=12.4ubuntu1 \
 		ca-certificates=20210119~18.04.2 \
 		python3-setuptools=39.0.1-2 && \
-		&& rm -rf /var/lib/apt/lists/*
+		rm -rf /var/lib/apt/lists/*
 
 # 
 # Install ROS 
 #   see ros install script for more info
+#	Also installs our python reqs
  RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
 	curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
 	apt-get update && \
 	apt-get install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} && \
 	python3 -m pip install --upgrade pip==21.3.1 && \
-	apt remove -y python3-pip && \
+	apt-get remove -y python3-pip && \
 	python3 -m pip install \
+		cython==0.29.26 \
 		rosdep==0.21.0 \
 		wstool==0.1.17 \
+		pydrive==1.3.1 \
+#		matplotlib==3.3.4 \ # is not working for arm
 		rosinstall==0.7.8 \
 		defusedxml==0.7.1 \
 		catkin-tools==0.8.2 \
