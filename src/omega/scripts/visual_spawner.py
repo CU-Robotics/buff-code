@@ -8,7 +8,7 @@ from camera import cv2_Camera
 from gdrive_handler import GD_Handler
 
 def scan_for_video():
-	data_path = os.path.join(os.get_env('PROJECT_ROOT'), 'data')
+	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
 	for root, dirs, files in os.walk(data_path):
 		for f in files:
 			if f[-4:] == '.mp4':
@@ -36,14 +36,14 @@ def main(debug, config, topic):
 	# create the video stream
 	camera = cv2_Camera(device, topic, fps=fps, debug=debug)
 	# Stream the video
-	ret = camera.spin()
+	ret = camera.stream()
 
 	if ret == 1:
 		video_file = scan_for_video()
 		if video_file:
 			camera = cv2_Camera(video_file, topic, fps=fps, debug=debug)
 			# Stream the video
-			ret = camera.spin()
+			ret = camera.stream()
 
 
 

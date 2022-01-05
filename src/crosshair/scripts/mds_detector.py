@@ -41,8 +41,8 @@ class MDS_Detector:
 				self.low = low #  Lower boundary of threshold
 				self.high = high #  Upper boundary of threshold
 			else:
-				self.low = configData['LOW']
-				self.high = configData['HIGH']
+				self.low = np.array(configData['LOW'])
+				self.high = np.array(configData['HIGH'])
 		else:
 			# read config params
 			debug, topics, config = bv.load_config(config, node)
@@ -108,14 +108,14 @@ class MDS_Detector:
 				a1 = cv2.contourArea(cnt)
 				if a1 > 20:
 					#annotated = cv2.drawContours(annotated, [cnt], -1, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-					#annotated = self.drawEllipse(annotated, cnt)
+					annotated = self.drawEllipse(annotated, cnt)
 				
 
 					rect = cv2.minAreaRect(cnt)
 					box = np.int0(cv2.boxPoints(rect))
-					m1 = np.abs(box[1][0] - box[0][0]) / np.abs(box[1][1] - box[0][1]) 
-					#cv2.drawContours(annotated, [box], 0, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-					cv2.line(annotated, (box[0][0], box[0][1]), (box[3][0], box[3][1]), self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+					# m1 = np.abs(box[1][0] - box[0][0]) / np.abs(box[1][1] - box[0][1]) 
+					cv2.drawContours(annotated, [box], 0, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+					#cv2.line(annotated, (box[0][0], box[0][1]), (box[3][0], box[3][1]), self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
 		
 			mostly_raw = np.concatenate([source, hsv], axis=1)
 			not_so_raw = np.concatenate([thresh, annotated], axis=1)
@@ -182,6 +182,7 @@ def main(config='mds_hsv_blue.yaml'):
 if __name__=='__main__':
 	if sys.argv[1] == 'sys-launch':
 		program, debug, config, topics = bv.load_config_from_system_launch(sys.argv)
+		rospy.logerr(config)
 		detector = MDS_Detector(configData=config, in_topic=topics[0], out_topic=topics[1], debug=debug)
 		rospy.spin()
 	elif len(sys.argv) == 2:

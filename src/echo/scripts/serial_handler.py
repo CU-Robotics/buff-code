@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
+import sys
 import rospy
 import buffvision as bv
-from std_msgs.msg import String
+from std_msgs.msg import Float64MultiArray
 
 
 def callback(mesg, publisher):
@@ -14,7 +15,7 @@ def main(debug=False, config=None, topic='serial_out'):
 
 	rospy.init_node('target_tracker', anonymous=True)
 
-	sub = rospy.Subscriber(topic, String, callback, queue_size=5)
+	sub = rospy.Subscriber(topic, Float64MultiArray, callback, queue_size=5)
 
 	rospy.spin()
 	

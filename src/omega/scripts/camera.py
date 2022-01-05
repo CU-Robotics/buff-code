@@ -11,8 +11,10 @@ class cv2_Camera:
 	def __init__(self, device, topic, fps=30, debug=False):
 		# init camera
 		self.camera = cv2.VideoCapture(device)
+		self.device = device
 		# set fps
 		self.camera.set(cv2.CAP_PROP_FPS, fps)
+		self.fps = fps
 
 		# set image resolution
 		self.resolution = (int(self.camera.get(3)), int(self.camera.get(4)))
@@ -29,28 +31,41 @@ class cv2_Camera:
 
 		# set the debug mode
 		self.debug = debug
+
+		self.lives = 9
 		
 		if debug:
 			rospy.loginfo('Camera and publisher Initialized: {} {} {}'.format(device, topic, fps))
 
 	def stream(self):
 		# If the stream is open and ROS is running
-		if cap.isOpened():
+		if self.camera.isOpened():
 			if self.debug:
 				rospy.loginfo('Camera is open and the stream is starting: ...')
-			while not rospy.is_shutdown():
+				rate = rospy.Rate(self.fps)
+			while not rospy.is_shutdown() and self.lives > 0:
 
 				# Capture frame
-				ret, frame = cap.read()
+				ret, frame = self.camera.read()
 
 				if ret:
 					# Convert the cv frame to a ROS message
-					imgMsg = bridge.cv2_to_imgmsg(frame, "bgr8")
+					imgMsg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
 					# Publish the message
-					pub.publish(imgMsg)
+					self.pub.publish(imgMsg)
+					rate.sleep()
+
+				else:
+					self.lives -= 1
+					if self.debug:
+						rospy.logerr('Camera reseting after return: {}'.format(ret))
+					rospy.sleep(2)
+					self.camera = cv2.VideoCapture(self.device)
+					self.camera.set(cv2.CAP_PROP_FPS, self.fps)
+
 			# use this return code so we can know if it should respawn
+			# with a different device
 			return 0
 
-		else:
-			rospy.logerr('Could\'nt open camera: Exiting...')
-			return 1
+		rospy.logerr('Could\'nt open camera: Exiting...')
+		return 1

@@ -18,6 +18,8 @@ alias spinup="docker run -it \
 	-v $HOME/buff-code:/home/cu-robotics/buff-code \
 	--net=host "
 
+PYTHONPATH=
+
 # If ROS is installed source the setup file
 if [[ -f /opt/ros/melodic/setup.bash ]]; then
 	source /opt/ros/melodic/setup.bash
@@ -33,9 +35,15 @@ if [[ "${PATH}" != *"buffpy"* ]]; then
 	export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
 fi 
 
+
 # Only export if if not already in path
 if [[ "${PYTHONPATH}" != *"buffpy"* ]]; then	
-	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}"
+	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}" 
+fi
+
+# Only export if if not already in path
+if [[ "${PYTHONPATH}" != *"/usr/lib/python3"* ]]; then	
+	export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH}" 
 fi
 
 # set ROS package path to buff-code so it can see buffpy

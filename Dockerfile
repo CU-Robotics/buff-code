@@ -4,7 +4,7 @@
 #
 
 #   Select base image here (ARM64 or AMD64)
-ARG BASE_IMAGE=mdsdev0/buffbox:x86_64-ubuntu-base
+ARG BASE_IMAGE=mdsdev0/buffbox:aarch64-base
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop
@@ -13,17 +13,11 @@ ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
 
 ENV PROJECT_ROOT=/home/cu-robotics/buff-code
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-#
-# Create a new user
-#
-RUN useradd -ms /bin/bash cu-robotics
-
 #
 # Add your code
 #
 ADD . /home/cu-robotics/buff-code
+
 
 #
 #	Clean APT/Cache

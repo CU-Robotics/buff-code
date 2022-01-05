@@ -1,0 +1,10 @@
+vision_opencv/cv_bridge
+/home/cu-robotics/buff-code/devel/.private/cv_bridge/cmake.lock /home/cu-robotics/buff-code/devel/./cmake.lock
+/home/cu-robotics/buff-code/devel/.private/cv_bridge/lib/libcv_bridge.so /home/cu-robotics/buff-code/devel/lib/libcv_bridge.so
+/home/cu-robotics/buff-code/devel/.private/cv_bridge/lib/pkgconfig/cv_bridge.pc /home/cu-robotics/buff-code/devel/lib/pkgconfig/cv_bridge.pc
+/home/cu-robotics/buff-code/devel/.private/cv_bridge/lib/python3/dist-packages/cv_bridge/__init__.py /home/cu-robotics/buff-code/devel/lib/python3/dist-packages/cv_bridge/__init__.py
+/home/cu-robotics/buff-code/devel/.private/cv_bridge/lib/python3/dist-packages/cv_bridge/boost/__init__.py /home/cu-robotics/buff-code/devel/lib/python3/dist-packages/cv_bridge/boost/__init__.py
+/home/cu-robotics/buff-code/devel/.private/cv_bridge/lib/python3/dist-packages/cv_bridge/boost/cv_bridge_boost.so /home/cu-robotics/buff-code/devel/lib/python3/dist-packages/cv_bridge/boost/cv_bridge_boost.so
+/home/cu-robotics/buff-code/devel/.private/cv_bridge/share/cv_bridge/cmake/cv_bridge-extras.cmake /home/cu-robotics/buff-code/devel/share/cv_bridge/cmake/cv_bridge-extras.cmake
+/home/cu-robotics/buff-code/devel/.private/cv_bridge/share/cv_bridge/cmake/cv_bridgeConfig-version.cmake /home/cu-robotics/buff-code/devel/share/cv_bridge/cmake/cv_bridgeConfig-version.cmake
+/home/cu-robotics/buff-code/devel/.private/cv_bridge/share/cv_bridge/cmake/cv_bridgeConfig.cmake /home/cu-robotics/buff-code/devel/share/cv_bridge/cmake/cv_bridgeConfig.cmake
