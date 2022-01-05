@@ -1,6 +1,7 @@
 #! /bin/bash
 
 set -e
+export PYTHONPATH=
 
 buffbash="/home/cu-robotics/buff-code/buff.bash"
 echo "sourcing   	$buffbash"

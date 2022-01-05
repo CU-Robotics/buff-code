@@ -110,8 +110,8 @@ def launch_system(target_path, config):
 
 		debug = 'False'
 
-		if 'DEBUG' in config and config['DEBUG']:
-			debug = 'True'
+		if 'DEBUG' in config:
+			debug = config['DEBUG']
 
 		# load and launch each node in the config
 		for node in nodes:
@@ -125,10 +125,10 @@ def launch_system(target_path, config):
 			topics = ' '.join([config['TOPICS'][topic] for topic in node['TOPICS']])
 			args = ' '.join(['sys-launch', debug, configStr, topics])
 
-			process = roslaunch.core.Node(package, program, args=args)
+			process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=False)
 			processes.append(launch.launch(process))
 
-	return coreProc, processes
+	return coreProc, processes, launch
 
 def launch_python(target_path, target_args):
 	"""
@@ -149,12 +149,13 @@ def launch_python(target_path, target_args):
 
 	return coreProc
 
-def spin(coreProc, processes):
+def spin(coreProc, processes, launch):
 	"""
 		loop and wait for user kill or core to finish
 		@PARAMS:
 			coreProc: subprocess obj, the core process running
-			processes: roslaunch obj, the sub-processes running
+			processes: roslaunch objs, the spawned processes
+			launch: roslaunch obj, the launch running
 	"""
 	try: 
 		# this hanldes user kill (available after spawn & in the run space below)
@@ -190,6 +191,7 @@ def main(args):
 
 	# Initialize config as None
 	config = None
+	launch = None
 	processes = []	# list of roslaunch processes, empty when running python
 	fileName = args[0]	# program file name is always the first arg
 	binPath = os.path.dirname(fileName) # path to buffpy/bin
@@ -208,7 +210,7 @@ def main(args):
 	if config == 'python':
 		coreProc = launch_python(target_path, target_args)
 	elif not config is None:
-		coreProc, processes = launch_system(target_path, config)
+		coreProc, processes, launch = launch_system(target_path, config)
 	else:
 		print('Config Empty: Exiting...')
 
@@ -219,7 +221,7 @@ def main(args):
 		exit(0)
 
 	# spin till finished
-	spin(coreProc, processes) 
+	spin(coreProc, processes, launch) 
 
 	print('RUN finished')
 		

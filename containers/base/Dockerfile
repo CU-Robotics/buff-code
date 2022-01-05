@@ -4,7 +4,7 @@
 #
 
 # change this to select ARM or x86_64
-ARG BASE_IMAGE=ubunut:18.04 #nvcr.io/nvidia/l4t-base:r32.6.1 # 
+ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04  # 
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop
@@ -15,6 +15,11 @@ ENV PROJECT_ROOT=/home/cu-robotics/buff-code
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+
+#
+# Create a new user
+#
+RUN useradd -ms /bin/bash cu-robotics
 
 #
 # Install Dependencies
@@ -64,6 +69,21 @@ RUN apt-get update && \
 	rm -rf /var/lib/apt/lists/*
 
 #
+# setup catkin and cv_bridge
+#
+RUN apt update && \
+	cd /home/cu-robotics && mkdir opencv_ws && cd opencv_ws && \
+	git clone https://github.com/ros-perception/vision_opencv.git src/vision_opencv && \
+	cd src/vision_opencv && git checkout 1.13.0 && cd ../.. && \
+	bash /opt/ros/melodic/setup.sh && \
+	catkin init && \
+	catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
+	catkin build cv_bridge && \
+	cp -r install/lib/python3/dist-packages/* /usr/lib/python3/dist-packages/ && \
+	cd /home/cu-robotics && rm -rf opencv_ws
+
+
+#
 # Install sublime text
 #   see install script for more info
 #   sublime in docker is slow when using ARM64
@@ -90,6 +110,5 @@ RUN apt-get update && \
 # 
 # setup entrypoint
 #
-RUN echo 'source /opt/ros/${ROS_DISTRO}/setup.bash' >> /root/.bashrc
 CMD ["bash"]
-WORKDIR /home
+WORKDIR /home/cu-robotics

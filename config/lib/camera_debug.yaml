@@ -1,0 +1,18 @@
+DEBUG:
+  'True'
+  
+TOPICS:
+  RAW_IMG:
+    'image_raw'
+
+PACKAGE:
+  'buffpy'
+
+NODES:
+  CAMERA:
+    FILE:
+      'visual_spawner.py'
+    TOPICS:
+      - 'RAW_IMG'
+    CONFIG:
+      'default_camera.yaml'

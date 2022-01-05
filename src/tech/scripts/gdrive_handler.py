@@ -28,7 +28,7 @@ class GD_Handler:
 		gauth = GoogleAuth()
 		# Creates local webserver and auto
 		# handles authentication.
-		if 'edge' in os.getenv('HOSTNAME'):
+		if 'edge' in os.getenv('HOSTNAME') or 'docker' in os.getenv('HOSTNAME'):
 			gauth.CommandLineAuth()   # use cmdline on jetson in case of headless session
 		else:
 			gauth.LocalWebserverAuth()

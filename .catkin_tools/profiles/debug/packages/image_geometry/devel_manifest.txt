@@ -1,0 +1,7 @@
+vision_opencv/image_geometry
+/home/cu-robotics/buff-code/devel/.private/image_geometry/cmake.lock /home/cu-robotics/buff-code/devel/./cmake.lock
+/home/cu-robotics/buff-code/devel/.private/image_geometry/lib/libimage_geometry.so /home/cu-robotics/buff-code/devel/lib/libimage_geometry.so
+/home/cu-robotics/buff-code/devel/.private/image_geometry/lib/pkgconfig/image_geometry.pc /home/cu-robotics/buff-code/devel/lib/pkgconfig/image_geometry.pc
+/home/cu-robotics/buff-code/devel/.private/image_geometry/lib/python3/dist-packages/image_geometry/__init__.py /home/cu-robotics/buff-code/devel/lib/python3/dist-packages/image_geometry/__init__.py
+/home/cu-robotics/buff-code/devel/.private/image_geometry/share/image_geometry/cmake/image_geometryConfig-version.cmake /home/cu-robotics/buff-code/devel/share/image_geometry/cmake/image_geometryConfig-version.cmake
+/home/cu-robotics/buff-code/devel/.private/image_geometry/share/image_geometry/cmake/image_geometryConfig.cmake /home/cu-robotics/buff-code/devel/share/image_geometry/cmake/image_geometryConfig.cmake
