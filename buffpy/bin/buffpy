@@ -79,50 +79,41 @@ def parseArgs():
 
 	return parser.parse_args(sys.argv[1:])
 
-def cleanWorkspace():
-	"""
-		Removes the data folder, and when it becomes necesary
-		will also remove any generated binaries and configs
-	"""
-	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
-
-	lib_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy/lib')
-
-	if not 'edge' in os.getenv('HOSTNAME'):
-		result = subprocess.run(f'catkin clean -y', shell=True)
+def clear_directory(path):
 
 	# Idoit Security
 	# this function could wipe the entire disk
 	# if not used with caution. (its also very easy for an attacker to change an environment variable)
-	if len(lib_path.split('/')) < 3:
-		print(f'Illegal Directory: cannot remove {lib_path}')
+	if len(path.split('/')) < 3:
+		print(f'Illegal Directory: cannot remove {path}')
 		return
-
-	# Best to make sure someone didn't pass in root
-	if len(data_path.split('/')) < 3:
-		print(f'Illegal Directory: cannot remove {data_path}')
-		return
-
-
-	# Remove all data and or replace the directory with an empty one
-	if os.path.exists(data_path):
-		for file in os.listdir(data_path):
-			os.remove(os.path.join(data_path, file))
-	else:
-		os.mkdir(data_path)
 
 	# Remove all lib files, these are installed by catkin
 	# By walking through each dir and removing its files
 	# we can then delete the directories
-	if os.path.exists(lib_path):
-		for root, dirs,files in os.walk(lib_path):
+	if os.path.exists(path):
+		for root, dirs, files in os.walk(path):
 			for file in files:
 				os.remove(os.path.join(root, file))
 			for directory in dirs:
 				shutil.rmtree(os.path.join(root, directory))
 			break
 	else:
-		os.mkdir(lib_path)
+		os.mkdir(path)
+
+def cleanWorkspace():
+	"""
+		Removes the data folder, and when it becomes necesary
+		will also remove any generated binaries and configs
+	"""
+	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
+	lib_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy/lib')
+
+	if not 'edge' in os.getenv('HOSTNAME'):
+		result = subprocess.run(f'catkin clean -y', shell=True)
+
+	clear_directory(data_path)
+	clear_directory(lib_path)
 
 def buildWorkspace(build):
 	"""
@@ -135,6 +126,8 @@ def buildWorkspace(build):
 	"""
 	# use catkin to clean the workspace if it was already built
 	result = subprocess.run(f'catkin clean -y', shell=True)
+	# clean the lib when building
+	clear_directory(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy/lib'))
 
 	# Rebuild the workspace with catkin build
 	if build[0]:

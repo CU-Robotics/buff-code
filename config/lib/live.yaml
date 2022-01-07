@@ -1,0 +1,62 @@
+DEBUG:
+  False
+  
+TOPICS:
+  RAW_IMG:
+    'image_raw'
+  BOUNDARY:
+    'detected_boundary'
+  TARGET:
+    'detected_targets'
+
+    
+
+NODES:
+  DEBUG_VIEW:
+    FILE:
+      'rqt_image_view'
+    PACKAGE:
+      'rqt_image_view'
+  RQT_GRAPH:
+    FILE:
+      'rqt_graph'
+    PACKAGE:
+      'rqt_graph'
+  CAMERA:
+    FILE:
+      'visual_spawner.py'
+    TOPICS:
+      - 'RAW_IMG'
+    CONFIG:
+      'default_camera.yaml'
+    PACKAGE:
+      'buffpy'
+  DETECTOR:
+    FILE:
+      'mds_detector.py'
+    TOPICS:
+      - 'RAW_IMG'
+      - 'BOUNDARY'
+      - 'IMG_PROCESS_STEP1'
+      - 'IMG_PROCESS_STEP2'
+      - 'IMG_PROCESS_STEP3'
+      - 'IMG_PROCESS_STEP4'
+    CONFIG:
+      'bouncing_ball.yaml'
+    PACKAGE:
+      'buffpy'
+  TRACKER:
+    FILE:
+      'mds_tracker.py'
+    TOPICS:
+      - 'BOUNDARY'
+      - 'TARGET'
+    PACKAGE:
+      'buffpy'
+  SERIAL:
+    FILE:
+      'serial_handler.py'
+    TOPICS:
+      - 'TARGET'
+    PACKAGE:
+      'buffpy'

@@ -1,0 +1,5 @@
+vision_opencv/opencv_tests
+/home/cu-robotics/buff-code/devel/.private/opencv_tests/cmake.lock /home/cu-robotics/buff-code/devel/./cmake.lock
+/home/cu-robotics/buff-code/devel/.private/opencv_tests/lib/pkgconfig/opencv_tests.pc /home/cu-robotics/buff-code/devel/lib/pkgconfig/opencv_tests.pc
+/home/cu-robotics/buff-code/devel/.private/opencv_tests/share/opencv_tests/cmake/opencv_testsConfig-version.cmake /home/cu-robotics/buff-code/devel/share/opencv_tests/cmake/opencv_testsConfig-version.cmake
+/home/cu-robotics/buff-code/devel/.private/opencv_tests/share/opencv_tests/cmake/opencv_testsConfig.cmake /home/cu-robotics/buff-code/devel/share/opencv_tests/cmake/opencv_testsConfig.cmake

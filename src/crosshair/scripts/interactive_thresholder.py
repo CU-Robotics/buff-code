@@ -1,9 +1,11 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import os
 import cv2
 import sys
 import numpy as np
 import buffvision as bv
+
+# Someday will become its own project
 
 pixels = []
 

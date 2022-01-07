@@ -1,14 +1,12 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 	Project:
 			BuffVision
 	Author: Mitchell D Scott
 	Description:
-		This file contains tools for doing cv. This is where we
-	will call our predicition model from. Think of this as 
-	the crows nest the model sits in while looking for land (or whales).
-	This design will allow us to spontaneously switch models
-	or even spin up two instances on competing machines.
+		This file contains tools for doing cv. there are functions
+		that will be used in many programs, they can be imported to 
+		any scripts from here. (as long as buffpy/lib is on PYTHONPATH)
 
 """
 import os
@@ -282,22 +280,39 @@ def ROS_cv2_publisher(topic='image_raw'):
 			# Publish the message
 			pub.publish(imgMsg)
 
-def load_config(file, program):
-	file = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', file)
-	with open(file, 'r') as f:
-		config = yaml.safe_load(f)
-		debug = config['DEBUG']
-		topics = config['TOPICS']
-		if program in config['CONFIGS']:
-			configFile = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', config['CONFIGS'][program])
-		else:
-			return debug, topics, None
 
-	with open(configFile, 'r') as f:
-		config = yaml.safe_load(f)
+def load_config_from_system_launch(args):
+	"""
+		Used to handle input from a system launch
+		PARAMS:
+			args: list of args from system launch ([Program, Debug, Config, Topics...])
+		RETURNS:
+			program: filename of program
+			debug: T/F debug or naaa
+			data: dict of config data
+			topics: dict of ros topics (name : type)
+	"""
+	program, _, debug, config = args[:4]
 
-	return debug, topics, config
-		
+	if debug == 'True':
+		debug = True
+
+	filepath = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', config)
+
+	if os.path.exists(filepath):
+		with open(filepath, 'r') as f:
+			data = yaml.safe_load(f)
+
+	else:
+		data = None
+
+	topics = []
+	for arg in args[4:-2]:
+		name, kind = arg.split('=')
+		topics.append((name, kind))
+
+	# exclude node names and logs for now
+	return program, debug, data, topics
 
 if __name__=='__main__':
 	"""
