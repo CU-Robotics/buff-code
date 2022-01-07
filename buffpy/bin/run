@@ -80,27 +80,24 @@ def launch_system(target_path, config):
 			config: load configuration (dict)
 		@RETURNS:
 			coreProc: subprocess obj, the core process
-			processes: list of roslaunch processes
+			pool: list of roslaunch pool
 	"""
 	cmd = 'roscore'
 	coreProc = None
-	processes = []
+	pool = []
 
 		
 	# Set nodes and package
 	nodes = config['NODES']
-	package = config['PACKAGE']
 
 	print('Nodes: {}'.format(nodes))
 
-	# Cant spawn processes without nodes and a package
+	# Cant spawn pool without nodes
 	if nodes is None:
 		print('Missing NODES in config file {}'.format(target))
 
-	elif package is None:
-		print('Missing PACKAGE in config file {}')
-
 	else:
+		namespace = '/buffbot'
 
 		# launch core
 		coreProc = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
@@ -108,27 +105,50 @@ def launch_system(target_path, config):
 		launch = roslaunch.scriptapi.ROSLaunch()
 		launch.start()
 
-		debug = 'False'
-
-		if 'DEBUG' in config:
-			debug = config['DEBUG']
+		rospy.set_param('{}/DEBUG'.format(namespace), config['DEBUG'])
+		rospy.set_param('{}/TOPICS'.format(namespace), config['TOPICS'])
 
 		# load and launch each node in the config
-		for node in nodes:
-			node = nodes[node]
-			
+		for name in nodes:
+			node = config['NODES'][name]
+
+			# If missing package type or filename skip
+			if not 'PACKAGE' in node or not 'FILE' in node:
+				rospy.logerr('{} Has an invalid definition'.format(node))
+				continue
+
 			program = node['FILE']
-			configStr = 'None'
-			if 'CONFIG' in node:
-				configStr = node['CONFIG']
+			package = node['PACKAGE']
 
-			topics = ' '.join([config['TOPICS'][topic] for topic in node['TOPICS']])
-			args = ' '.join(['sys-launch', debug, configStr, topics])
+			# Not all packages handle our launch params
+			if package == 'buffpy':
+				# only arg needed is the node name, everything else is under the node name on the param server
+				args = '{}/{}'.format(namespace, name)
 
+				if 'CONFIG' in node and not node['CONFIG'] is None:
+					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', node['CONFIG']), 'r') as f:
+						data =yaml.safe_load(f)
+						if not data is None:
+							node.update(data)
+
+				elif 'CONFIG' in node:
+					node.pop('CONFIG')
+
+				rospy.set_param(args, node)
+
+			elif 'ARGS' in node:
+				# can use args tag to send args to non-buffpy packages
+				args = ' '.join(node['ARGS'])
+
+			else:
+				# no args passed
+				args = ''
+
+			# launch the process and add it to the pool
 			process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=False)
-			processes.append(launch.launch(process))
+			pool.append(launch.launch(process))
 
-	return coreProc, processes, launch
+	return coreProc, pool, launch
 
 def launch_python(target_path, target_args):
 	"""
@@ -140,7 +160,7 @@ def launch_python(target_path, target_args):
 			target_args: list of strings, args for the command (can be empty)
 		@RETURNS:
 			coreProc: subprocess obj, the core process
-			processes: empty list
+			pool: empty list
 	"""
 
 	# run a single script without a config
@@ -149,12 +169,12 @@ def launch_python(target_path, target_args):
 
 	return coreProc
 
-def spin(coreProc, processes, launch):
+def spin(coreProc, pool, launch):
 	"""
 		loop and wait for user kill or core to finish
 		@PARAMS:
 			coreProc: subprocess obj, the core process running
-			processes: roslaunch objs, the spawned processes
+			pool: roslaunch objs, the spawned pool
 			launch: roslaunch obj, the launch running
 	"""
 	try: 
@@ -168,16 +188,16 @@ def spin(coreProc, processes, launch):
 			if mesg[1]:
 				print(mesg[1].decode('utf-8')) # output is sent from program to roscore then printed here
 
-		# core finished so kill any other processes
+		# core finished so kill any other pool
 		# # supposedly handled by roslaunch but I wanted to be safe
-		# for proc in processes:
+		# for proc in pool:
 		# 	proc.stop()
 
 	except KeyboardInterrupt as e:
 		print(e)
 		print('Terminate Recieved:...')
-		# Kill all launched processes
-		# for proc in processes:
+		# Kill all launched pool
+		# for proc in pool:
 		# 	proc.stop()
 
 		# Kill core
@@ -185,14 +205,14 @@ def spin(coreProc, processes, launch):
 
 def main(args):
 	"""
-		Launch all relevant processes.
+		Launch all relevant pool.
 		See wiki for input usage
 	"""
 
 	# Initialize config as None
 	config = None
 	launch = None
-	processes = []	# list of roslaunch processes, empty when running python
+	pool = []	# list of roslaunch pool, empty when running python
 	fileName = args[0]	# program file name is always the first arg
 	binPath = os.path.dirname(fileName) # path to buffpy/bin
 	projectRoot = os.getenv('PROJECT_ROOT')	# path to project root
@@ -206,11 +226,11 @@ def main(args):
 		print('Failed to load target: {}'.format(target_path))
 		exit(0)
 
-	# launch the processes
+	# launch the pool
 	if config == 'python':
 		coreProc = launch_python(target_path, target_args)
 	elif not config is None:
-		coreProc, processes, launch = launch_system(target_path, config)
+		coreProc, pool, launch = launch_system(target_path, config)
 	else:
 		print('Config Empty: Exiting...')
 
@@ -221,7 +241,7 @@ def main(args):
 		exit(0)
 
 	# spin till finished
-	spin(coreProc, processes, launch) 
+	spin(coreProc, pool, launch) 
 
 	print('RUN finished')
 		

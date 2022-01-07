@@ -18,55 +18,49 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
 
 class MDS_Detector:
-	def __init__(self, config=None, configData=None,
-					low=None, high=None, 
-					color=(0, 255, 0), thickness=2, 
-					in_topic='image_raw', out_topic='detected_boundary', 
-					with_core=False, debug=False):
+	def __init__(self, configData=None):
 		"""
 			Define all the parameters of the model here.
 			Can be initialized with a config file, a system launch
 			or manually from a terminal. will exit if not enough params
 			exist.
 		"""
-		self.debug = debug
-		self.in_topic = in_topic 
-		self.out_topic = out_topic
+		self.debug = rospy.get_param('/buffbot/DEBUG')
+		topics = rospy.get_param('/buffbot/TOPICS')
 
-		if config is None:
-			if configData is None:
-				if low is None or high is None:
-					# exit if no bounds or config
-					return None
-				self.low = low #  Lower boundary of threshold
-				self.high = high #  Upper boundary of threshold
-			else:
-				self.low = np.array(configData['LOW'])
-				self.high = np.array(configData['HIGH'])
-		else:
-			# read config params
-			debug, topics, config = bv.load_config(config, node)
-			self.debug = debug
-			self.in_topic = topics['RAW_IMG'] # manually selects topics from a master conf (DEPRECATED)
-			self.out_topic = topics['BOUNDARY']
+		self.topics = [topics[t] for t in configData['TOPICS']]
 
-			self.low = np.array(config['LOW'])
-			self.high = np.array(config['HIGH'])
+		if configData is None:
+			# there is no config for the model to load from
+			return None
 
 		self.steps = None
-		self.ANNOTATION_COLOR = color
-		self.ANNOTATION_THICKNESS = thickness
+		if 'LOW' in configData:
+			self.low = np.array(configData['LOW'])
+		if 'HIGH' in configData:
+			self.high = np.array(configData['HIGH'])
+		if 'ANNOTATION_COLOR' in configData:
+			self.ANNOTATION_COLOR = configData['ANNOTATION_COLOR']
+		if 'ANNOTATION_THICKNESS' in configData:
+			self.ANNOTATION_THICKNESS = configData['ANNOTATION_THICKNESS']
+
 
 		# Only spin up image sub if core is running
-		if self.in_topic:
+		if len(self.topics) > 0:
 
 			self.bridge = CvBridge()
 
 			rospy.init_node('mds_detector', anonymous=True)
 
-			self.bound_pub = rospy.Publisher(out_topic, Float64MultiArray, queue_size=1)
-			self.annotate_pub = rospy.Publisher('annotated_image', Image, queue_size=1)
-			self.im_subscriber = rospy.Subscriber(in_topic, Image, self.imageCallBack, queue_size=1)
+			self.debug_pubs = []
+			self.bound_pub = rospy.Publisher(self.topics[1], Float64MultiArray, queue_size=1)
+
+			if self.debug and len(self.topics) == 6:
+				for topic in topics[2:]:
+						self.debug_pubs.append(rospy.Publisher(topic, Image, queue_size=1))
+
+			self.im_subscriber = rospy.Subscriber(self.topics[0], Image, self.imageCallBack, queue_size=1)
+
 
 	def drawLines(self, image, contour):
 		line = cv2.fitLine(contour, cv2.DIST_L2, 0, 1, 1)
@@ -82,16 +76,15 @@ class MDS_Detector:
 		ellipse = cv2.fitEllipse(contour)
 		return cv2.ellipse(image, ellipse, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
 
-	def detect(self, image, steps=False):
+	def detect(self, image):
 		"""
 			Define all image processing operations here
 			@PARAMS:
 				image: an RGB image 
-				steps: T/F record steps for debuging
 			@RETURNS:
 				bounds: bounding box of the detected object [(x1,y1), (x2,y2)]
 		"""
-		bounds = None
+		bounds = []
 		source = image.copy()
 		blurred = cv2.bilateralFilter(image, 15, 150, 45)
 		hsv = cv2.cvtColor(blurred, cv2.COLOR_RGB2HSV)
@@ -102,24 +95,22 @@ class MDS_Detector:
 		# you need to go read the docs
 		_, contours, _ = cv2.findContours(image=mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)	
 
-		if steps:
-			annotated = image
-			for i, cnt in enumerate(contours):
-				a1 = cv2.contourArea(cnt)
-				if a1 > 20:
-					#annotated = cv2.drawContours(annotated, [cnt], -1, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-					annotated = self.drawEllipse(annotated, cnt)
-				
+		annotated = image
+		for i, cnt in enumerate(contours):
+			a1 = cv2.contourArea(cnt)
+			if a1 > 20:
+				#annotated = cv2.drawContours(annotated, [cnt], -1, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+				annotated = self.drawEllipse(annotated, cnt)
+			
 
-					rect = cv2.minAreaRect(cnt)
-					box = np.int0(cv2.boxPoints(rect))
-					# m1 = np.abs(box[1][0] - box[0][0]) / np.abs(box[1][1] - box[0][1]) 
-					cv2.drawContours(annotated, [box], 0, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-					#cv2.line(annotated, (box[0][0], box[0][1]), (box[3][0], box[3][1]), self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+				rect = cv2.minAreaRect(cnt)
+				box = np.int0(cv2.boxPoints(rect))
+				# m1 = np.abs(box[1][0] - box[0][0]) / np.abs(box[1][1] - box[0][1]) 
+				cv2.drawContours(annotated, [box], 0, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+				#cv2.line(annotated, (box[0][0], box[0][1]), (box[3][0], box[3][1]), self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+				bounds = np.array([rect[0][0], rect[0][1], rect[1][0], rect[1][1], rect[2]])
 		
-			mostly_raw = np.concatenate([source, hsv], axis=1)
-			not_so_raw = np.concatenate([thresh, annotated], axis=1)
-			self.steps = np.concatenate([mostly_raw, not_so_raw])
+		self.steps = [blurred, hsv, thresh, annotated]
 
 		return bounds
 
@@ -131,11 +122,20 @@ class MDS_Detector:
 			@RETURNS:
 				None
 		"""
-		results = self.detect(image, steps=True)
-		bv.buffshow('Steps', self.steps)
+		results = self.detect(image)
+		mostly_raw = np.concatenate(steps[:2], axis=1)
+		not_so_raw = np.concatenate(steps[2:], axis=1)
+		collage = np.concatenate([mostly_raw, not_so_raw])
+		bv.buffshow('Steps', collage)
 
+	def publish_steps(self):
+		"""
+			Images processing steps are saved, this will publish them
+		"""
+		for i, pub in enumerate(self.debug_pubs):
+				pub.publish(self.bridge.cv2_to_imgmsg(self.steps[i], encoding='bgr8'))
 
-	def detect_and_publish(self, image, steps=False):
+	def detect_and_publish(self, image):
 		"""
 			Define all image processing operations here.
 			Publishes the bounds to topic instead of returning.
@@ -145,50 +145,55 @@ class MDS_Detector:
 			@RETURNS:
 				None
 		"""
-		results = self.detect(image, steps=steps)
+		results = self.detect(image)
 		mesg = Float64MultiArray()
 		mesg.data = results
 		
 		if not results is None:
 			self.bound_pub.publish(mesg)
 
+		if self.debug:
+			self.publish_steps()
+
 	def imageCallBack(self, img_msg):
 		"""
-			Callback for image_raw
+			Callback for in_topic
 			@PARAMS:
 				img_msg: the incoming message
 			@RETURNS:
 				None
 		"""
-		
-		if self.debug:
-			self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg), steps=True) # Not tested
-			self.annotate_pub.publish(self.bridge.cv2_to_imgmsg(self.steps, encoding='bgr8'))
-
-		else:
-			self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg))
+		self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg))
 
 
-def main(config='mds_hsv_blue.yaml'):
+def main(configData):
 
-	data = bv.load_data(path=os.path.join(os.get_env('PROJECT_ROOT'), 'data'))
+	if configData is None:
+		return
 
-	detector = MDS_Detector(config=config)
+	MDS_Detector(configData=configData)
 
-	for image, labels in data[0:5]:
-		detector.detect_and_annotate(image)
+	if 'TOPICS' in configData:
+		rospy.spin()
+
+	if 'DATA' in configData:	
+		# run independantly
+		data = bv.load_data(path=os.path.join(os.get_env('PROJECT_ROOT'), 'data', configData['DATA']))
+
+		for image, labels in data[0:5]:
+			detector.detect_and_annotate(image)
 
 
 if __name__=='__main__':
-	if sys.argv[1] == 'sys-launch':
-		program, debug, config, topics = bv.load_config_from_system_launch(sys.argv)
-		rospy.logerr(config)
-		detector = MDS_Detector(configData=config, in_topic=topics[0], out_topic=topics[1], debug=debug)
-		rospy.spin()
-	elif len(sys.argv) == 2:
-		main(config=sys.argv[1])
+	if '/buffbot' in sys.argv[1]:
+		main(rospy.get_param(sys.argv[1]))
+	elif sys.argv[1][-5:] == '.yaml':
+		path = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', sys.argv[1])
+		with open(path, 'r') as f:
+			data = yaml.safe_load(f)
+		main(data)
 	else:
-		main()
+		rospy.logerr('Unsupported call: call this with a rosparam component name or a yaml config')
 
 
 

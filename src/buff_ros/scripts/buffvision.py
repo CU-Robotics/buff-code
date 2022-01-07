@@ -280,21 +280,6 @@ def ROS_cv2_publisher(topic='image_raw'):
 			# Publish the message
 			pub.publish(imgMsg)
 
-def load_config(file, program):
-	file = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', file)
-	with open(file, 'r') as f:
-		config = yaml.safe_load(f)
-		debug = config['DEBUG']
-		topics = config['TOPICS']
-		if program in config['CONFIGS']:
-			configFile = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', config['CONFIGS'][program])
-		else:
-			return debug, topics, None
-
-	with open(configFile, 'r') as f:
-		config = yaml.safe_load(f)
-
-	return debug, topics, config
 
 def load_config_from_system_launch(args):
 	"""
@@ -305,7 +290,7 @@ def load_config_from_system_launch(args):
 			program: filename of program
 			debug: T/F debug or naaa
 			data: dict of config data
-			topics: list of ros topics
+			topics: dict of ros topics (name : type)
 	"""
 	program, _, debug, config = args[:4]
 
@@ -321,7 +306,13 @@ def load_config_from_system_launch(args):
 	else:
 		data = None
 
-	return program, debug, data, args[4:]
+	topics = []
+	for arg in args[4:-2]:
+		name, kind = arg.split('=')
+		topics.append((name, kind))
+
+	# exclude node names and logs for now
+	return program, debug, data, topics
 
 if __name__=='__main__':
 	"""
