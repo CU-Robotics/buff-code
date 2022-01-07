@@ -4,7 +4,7 @@
 #
 
 # change this to select ARM or x86_64
-ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04  # 
+ARG BASE_IMAGE=ubuntu:18.04  # nvcr.io/nvidia/l4t-base:r32.6.1 #
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop
@@ -52,11 +52,12 @@ RUN apt-get update && \
 	python3 -m pip install --upgrade pip==21.3.1 && \
 	apt-get remove -y python3-pip && \
 	python3 -m pip install \
+		bagpy==0.4.7 \
 		cython==0.29.26 \
 		rosdep==0.21.0 \
 		wstool==0.1.17 \
 		pydrive==1.3.1 \
-#		matplotlib==3.3.4 \ # is not working for arm
+		matplotlib==3.2.1 \
 		rosinstall==0.7.8 \
 		defusedxml==0.7.1 \
 		catkin-tools==0.8.2 \

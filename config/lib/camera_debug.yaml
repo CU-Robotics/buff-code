@@ -1,12 +1,9 @@
 DEBUG:
-  'True'
+  True
   
 TOPICS:
   RAW_IMG:
     'image_raw'
-
-PACKAGE:
-  'buffpy'
 
 NODES:
   CAMERA:
@@ -16,3 +13,5 @@ NODES:
       - 'RAW_IMG'
     CONFIG:
       'default_camera.yaml'
+    PACKAGE:
+      'buffpy'
