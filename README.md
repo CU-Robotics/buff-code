@@ -1,15 +1,24 @@
 # Buff-Code
 CU Robotics' development repo
 
-This project is desinged to run in an Ubuntu20 environment or on a Jetson device (Windows support coming eventually). This repo provides a python3 package buffpy that is meant to aid in the development of robot software. The package contains a command line tool 'buff'. This tool helps streamline managing data, building locally or to devices, flashing firmware and hopefully soon running regressions on the developed subsystems.
+This project is a workspace with tools for building, installing and analyzing code on a robot. buff-code is desinged to run in an Ubuntu18 environment or on a Jetson device (you can also launch it in a docker container). This repo provides a few tools that users should become familiar with. The tools are in the python3 package buffpy in the project's root. The two most useful tools are buffpy and run. buffpy is used to build/clean, install to a robot, ssh to a robot and hopefully soon flash a microcontroller. buffpy has been refered to as a digital house keeper. It's really just a collection of frequently used commands, calling buffpy is faster than typing out long commands. Although, the arguments might not fit your needs, sometimes you will have to type things out. run is another tool but run is used to... run code. run will read in a system config yaml or a python script and launch all the necessary programs. The wiki has much more documentation on these so be sure to check it out. 
 
-First always load the environment variables, if you're not sure if you did just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo.
+## Quick start
+checkout the [Getting started wiki](https://github.com/CU-Robotics/buff-code/wiki/Getting-Started) for more details.
+
+### Ubuntu
+
+Clone this repo into your home directory (/home/$USER/buff-code).
+
+    git clone git@github.com:CU-Robotics/buff-code.git
+
+First always load the environment variables, if you're not sure if you did just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo (usually /home/$USER/buff-code).
 
 	source buff.bash
 	
-The majority of functionality is based in the buffpy package. This package is setup as a command line tool in buff.bash. All you need to utilize this package is call 'buff' from the command line.
+The majority of functionality is based in the buffpy package. This package is setup as a command line tool in buff.bash. All you need to utilize this package is call 'buffpy' from the command line.
 
-	usage: buffpy [-h] [--sshBot] [--setBot ROBOT_IP] [--GDrive ACTION FOLDER_ID] [--installKeys] [--launch LOCATION]
+	usage: buffpy [-h] [--sshBot] [--GDrive ACTION FOLDER_ID] [--installKeys] [--launch LOCATION]
 						[--botPull] [--build PROFILE] [--clean] [--flash FQBN FW]
 
 	CU-Robotics Digital House-Keeper
@@ -24,89 +33,45 @@ The majority of functionality is based in the buffpy package. This package is se
 	--build PROFILE       Builds the workspace locally (debug) or to the robot_ip (install)
 	--clean               Clean the current bin and data, NOT recoverable; only run this if you are sure you want to
 	--flash FQBN FW       Flashes the given board with the target FW (expected port is ACM0)
+	
+To launch a system use the run command:
 
-## Install
+    run <name_of_config>.yaml
+  
+run will spawn all of the nodes defined in the config as well as uploading any config files to the rosparam  server.
 
-Clone the repo to your machine
+run can also be used to spawn a python script (the script must be in buffpy/lib):
 
-	git clone git@github.com:/CU-Robotics/buff-code.git
-
-or if you don't have ssh keys setup
-
-	git clone https://github.com/CU-Robotics/buff-code.git
-
-Load environment variables
-
-	source buff.bash
-
-Now run the install from the root of the project
-
-	source scripts/install.bash 
-
-  *the install has a bug that may require this additional command*
-
-    sudo apt install --reinstall ros-melodic-desktop-full
-
-After this installs the dependencies you will have full functionality.
-
-To test the install run
-
-	source buff.bash
-	buffpy -h
-
-you should see the output from above.
-
-## Building
-
-Now that we know buff works we can build the workspace. 
-
-	buffpy --build debug
-
-You can change the build by specifying a different profile.
-
-	buffpy --build release
-
-If you have issues building the workspace you probably need to source buff.bash or you can clean the workspace.
-
-  	buffpy --clean
-
-Be careful with this command because it can remove things you don't want it too. This function will remove whatever is at $PROJECT_ROOT/data and $PROJECT_ROOT/buffpy/lib. By changing the PROJECT_ROOT variable from bash or in buff.bash you will change what gets removed.
-
-## Installing to the robot
-
-The buff executable supports installing the workspace to a Jetson Nano (this is how you should always install). After building the workspace run:
-
-  	buffpy --install
-
-This will copy all of the lib and binary files as well as install scripts, buff.bash and config files. Make sure the $ROBOT_IP variable points to the machine you want or you might end up pushing to the work device. Adjust this variable in buff.bash if necessary.
-
-# Launching
-
-To launch the main cognition program use the launch binary (which is already on your path).
-
-  	run
-
-This script spawns the necessary threads for the vision pipeline (roscore, buffvision and other debug nodes)
+    run <python_script>.py
 
 ## Architecture
 buff-code
   - buffpy: A python package to handle the ugly backend
     - bin: binaries (buffpy, teensy, run)
-    - lib: installed files
+    - lib: installed files (only python3 atm)
   - config: A place for any and all setup/configuration/secret files
     - install: Files containing install info
     - lib: File containing misc info
     - sensitive: shhh... it's a secret
   - data: a Temporary folder for handling data (should get cleared regularly, if missing will cause issues)
-  - dev: python3 notebooks displaying our dev process (will be moved to google drive)
-  - docs: A better verion of this document
-  - scripts: arbitrary scripts (mostly install)
+  - docs: A better verion of this document (moving to wiki)
+  - scripts: arbitrary scripts (installs & entrypoints)
   - src: The source code for our controllers
     - buff_ros
-      - Our ros package
-    - teensy
-      - teensy build files
-  - buff.bash: a setup script (needs to be run every development session)
+      - Our misc ros package
+    - omega
+      - Camera node src
+    - crosshair
+      - Detector node src
+    - hunter
+      - Tracker node src
+    - wrecker
+      - Controls src
+    - echo
+      - Serial node src (python)
+    - tech
+      - N/A
+  - buff.bash: a setup script (needs to be run every development session, docker runs this automatically)
   - README.md: you're reading it
   - .gitignore: keeps the secrets safe
 
@@ -117,12 +82,20 @@ When working on this project
   - Test changes and document the tests and changes
   - Make sure to push when you finish working, otherwise no one else sees your code
   - Do not push broken changes, this will break things for everyone
-  - CV is done in the buffpy package
-  - Controls are developed in src
   - The more documentation the better 
 
 ## CHANGES
 *Changes include all PRs that modify the directory structure, the installed binaries and any changes that will effect workspace usage*
+ - Version 0.04
+   - Date: January 11, 2022
+   - Editor: Mitchell D Scott
+   - Status: Mostly tested (docker, run, some sub-systems)
+   - Description: 
+      - The source for different projects was moved into their own ros packages
+      - cv_bridge python3 fix in docker (not regular install)
+      - run uploads params to the rosparam server (now its is the only program that reads configs, it will read all of them, see run wiki)
+      - Everything python3 seems to work...
+      - Teensy src path change may have unpredicted affects
  - Version 0.03
    - Date: November 10, 2021
    - Editor: Mitchell D Scott
