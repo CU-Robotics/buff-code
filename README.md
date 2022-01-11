@@ -11,6 +11,14 @@ checkout the [Getting started wiki](https://github.com/CU-Robotics/buff-code/wik
 Clone this repo into your home directory (/home/$USER/buff-code).
 
     git clone git@github.com:CU-Robotics/buff-code.git
+    
+Now run the install from the root of the project
+
+	source scripts/install.bash 
+
+  *the install has a bug that may require this additional command*
+
+    sudo apt install --reinstall ros-melodic-desktop-full
 
 First always load the environment variables, if you're not sure if you did just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo (usually /home/$USER/buff-code).
 
