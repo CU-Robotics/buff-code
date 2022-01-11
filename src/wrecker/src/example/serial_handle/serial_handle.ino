@@ -1,64 +1,116 @@
 /* serial handle sample. this is the teensy side (duh)
  *  This example will read an input msg and reply with
- *  a coordinated response.
+ *  a coordinated response. It will also run a simulation
+ *  of summing changes compared with a continous function.
 */
 #define WHOAMI "Teensy4.1"
 
-float simVal = 0.0;
-float phaseScalar = 0.0;
-float periodScalar = 0.2;
-float amplitudeScalar = 1;
+IntervalTimer simUpdateTmr;
+IntervalTimer serialDumpTmr;
+IntervalTimer serialReadTmr;
+
+float simVal;                                                     // Sim state is set in setup and on reset
+float simErr;
+float simdActual;
+float simdUpdate;
+float simActual;
+float phaseScalar = 0.0;                                          // These only update on request (no setup)
+float periodScalar = PI / 50;                                      // default period of 100us
+float amplitudeScalar = 1.0;
 
 unsigned long loopDur;
 unsigned long loopStart;
-unsigned long dumpRate = 0.0;
-unsigned long cycleSim = 1.0;                                   // this needs to stay under 1 period (best is 0.2 * period)
+unsigned long serialRate = 15000.0;                              // rate to read serial (half of what targets will publish at)
+unsigned long dumpRate = 1000000.0;                               // dumpRate is set to 1 million us or 1 second
+unsigned long simRate = 5.0;                                     // this needs to stay under 1 period (us)
+                                                                  //  period = 2pi / periodScalar, if period is less than update
+                                                                  //  the updates will be too infrequent to be accurate (lots of change between update)
 unsigned long simStart = 0.0;
-unsigned long cycleBig = 10.0;
 unsigned long last_dump = 0.0;
 unsigned long last_update = 0.0;
 
+unsigned long sim_timer = 0.0;
+unsigned long dump_timer = 0.0;
+unsigned long serial_timer = 0.0;
+
+int dumpOn = 0;
 
 void updateSim() {
   /*
-   * This function is used to demonstrate setting run params
-   * on the teensy. (periodScalar will get updated)
+   * This function is used to demonstrate setting run params on the teensy. This function will update the variable
+   * simVal using its derivative. The function simVal follows is y = c * cos((a * t) + b). Then, dy = -ac * sin((a * t) + b).
+   * The derivative tells us at some time t the change is dy. This example shows how using a discrete summation of dy's
+   * will create error in our y. The error is calculated with
+   * yActual = c * cos((a * T) + b), yEstimate = sum(c * sin((a * t) + b)) for t in 0:T
+   * yError = abs(yActual - yEstimate)
    */
-  unsigned long t = millis();                                     // get new time
+  unsigned long t = micros();                                     // get new time
 
-  float dur = (float)(t - simStart);                            // get duration since start of sim
-  simVal += amplitudeScalar * cos((dur * periodScalar) + phaseScalar);  // update simVal, dx = b * cos(a * t) where a determines the period,
-                                                                //   t is the time alive and b is an amplitude scalar.
+  float sim_run_time = t - simStart;                              // get duration since start of sim
+  //float last_update_sim = last_update - simStart;
+
+  simdUpdate = (-periodScalar * amplitudeScalar * sin((sim_run_time * periodScalar) + phaseScalar));  
+                                                                  // update simVal, dx = b * sin((a * t) - c) / a 
+  float simMeasure = amplitudeScalar * cos((sim_run_time * periodScalar) + phaseScalar);
+
+  simVal += (simdUpdate) * (t - last_update);
+  simErr = abs(simMeasure - simVal);
+  simdActual = (simMeasure - simActual); 
+  simActual = simMeasure;
+  last_update = t;
+  sim_timer = micros() - t;
+  
 }
 
 void serialDump() {
-  Serial.print('@'); Serial.print(WHOAMI);
-  Serial.print(','); Serial.print(simVal);
-  Serial.print(','); Serial.print(phaseScalar);
-  Serial.print(','); Serial.print(periodScalar);
-  Serial.print(','); Serial.print(amplitudeScalar);
-  Serial.print(','); Serial.print(loopDur);
-  Serial.print(','); Serial.print(cycleSim);
-  Serial.print(','); Serial.print(simStart);
-  Serial.print(','); Serial.print(cycleBig);
-  Serial.print(','); Serial.println(last_update);
-  Serial.print(','); Serial.println(last_dump);
+  if (!dumpOn)
+    return;
+  Serial.print('@'); Serial.print(WHOAMI); // 10 bytes
+  Serial.print(','); Serial.print(simVal); // 15 bytes
+  Serial.print(','); Serial.print(simActual); // 20 bytes
+  Serial.print(','); Serial.print(simErr);  // 25 bytes
+  Serial.print(','); Serial.print(simdUpdate); // 30 bytes
+  Serial.print(','); Serial.print(simdActual); // 35 bytes
+  Serial.print(','); Serial.print(phaseScalar); // 40 bytes
+  Serial.print(','); Serial.print(periodScalar); // 45 bytes
+  Serial.print(','); Serial.print(amplitudeScalar); // 50 bytes
+  Serial.print(','); Serial.print(loopDur); // 55 bytes
+  Serial.print(','); Serial.println(last_update); // 60 bytes
+  Serial.print(','); Serial.println(sim_timer); // 65 bytes
+  Serial.print(','); Serial.println(serial_timer); // 70 bytes
+  Serial.print(','); Serial.println(loopStart); // 75 bytes
 }
 
 void verbose_serialDump() {
+  if (!dumpOn) 
+    return;
+  noInterrupts();
   Serial.print('@'); Serial.print(WHOAMI);
-  Serial.print(",\n\tsimVal="); Serial.print(simVal);
-  Serial.print(",\n\tphaseScale="); Serial.print(phaseScalar);
-  Serial.print(",\n\tperiodScale="); Serial.print(periodScalar);
-  Serial.print(",\n\tamplitudeScale="); Serial.print(amplitudeScalar);
+  Serial.print(",\n\tsimVal="); Serial.print(simVal, 5);
+  Serial.print(",\n\tsimActual="); Serial.print(simActual, 5);
+  Serial.print(",\n\tsimErr="); Serial.print(simErr, 5);
+  interrupts();
+
+  noInterrupts();
+  Serial.print(",\n\tsimdUpdate="); Serial.print(simdUpdate, 5);
+  Serial.print(",\n\tsimdActual="); Serial.print(simdActual, 5);
+  Serial.print(",\n\tphaseScale="); Serial.print(phaseScalar, 5);
+  Serial.print(",\n\tperiodScale="); Serial.print(periodScalar, 5);
+  Serial.print(",\n\tamplitudeScale="); Serial.print(amplitudeScalar, 5);
+  interrupts();
+
+  noInterrupts();
   Serial.print(",\n\tloopDur="); Serial.print(loopDur);
-  Serial.print("us,\n\tcycleSim="); Serial.print(cycleSim);
-  Serial.print("ms,\n\tsimStart="); Serial.print(simStart);
-  Serial.print("ms,\n\tcycleBig="); Serial.print(cycleBig);
+  Serial.print("us,\n\tsimStart="); Serial.print(simStart);
   Serial.print("us,\n\tlast_update="); Serial.print(last_update);
-  Serial.print("ms,\n\tlast_dump="); Serial.print(last_dump);
-  Serial.print("ms,\n\tloopStart="); Serial.print(loopStart);
-  Serial.println("ms");
+  Serial.print("us,\n\tsim_timer="); Serial.print(sim_timer);
+  interrupts();
+
+  noInterrupts();
+  Serial.print("us,\n\tserial_timer="); Serial.print(serial_timer);
+  Serial.print("us,\n\tloopStart="); Serial.print(loopStart);
+  Serial.println("us");
+  interrupts();
 }
 
 void parse_cmd(char incomingByte) {
@@ -68,7 +120,8 @@ void parse_cmd(char incomingByte) {
    * 1 will set the periodScale
    * 2 will set the amplitudeScale
    * 3 will set the phase shift
-   * d will dump the state
+   * d/D will dump the state
+   * r will set an auto-state dump (every n milliseconds)
    * should switch this to some kind of lookup
    */
   if (incomingByte == '1')
@@ -82,10 +135,9 @@ void parse_cmd(char incomingByte) {
   else if (incomingByte == 'D')
     verbose_serialDump();
   else if (incomingByte == 'r')
-    dumpRate = Serial.parseFloat();
+    dumpOn = !dumpOn;
   else if (incomingByte == '0'){
-    simStart = millis();
-    simVal = 0.0;
+    reset_sim();
   }
 }
 
@@ -101,37 +153,43 @@ void serial_event() {
   byteCount++;
   incomingByte = Serial.read();
   while (Serial.available()) {
-    if (incomingByte == '@')                                        // if start char is read start parsing message
+    if (incomingByte == '@')                                      // if start char is read start parsing message
       parse_cmd(Serial.read());
   }
 }
 
+void reset_sim() {
+  simVal = 1.0;
+  simErr = 0.0;
+  simActual = 1.0;
+  simdUpdate = 0.0;
+  simdActual = 0.0;
+  simStart = micros();
+  last_update = micros();
+}
+
 void setup() {
   Serial.begin(9600);
-  simStart = millis();
+  reset_sim();
+  serialDumpTmr.priority(1);
+  serialDumpTmr.begin(verbose_serialDump, dumpRate);
+
+  serialReadTmr.priority(1);
+  serialReadTmr.begin(serial_event, serialRate);
+
+  //simUpdateTmr.priority(0);
+  //simUpdateTmr.begin(updateSim, simRate); 
 }
 
 void loop() {
   loopStart = micros();
-
-  if ((loopStart / 100) - last_update > cycleSim) {               // sorta like a debounce but prevents repeats of t 
-    updateSim();                                                  // sim runs on the ordr of milli and the rest on micro
-    last_update = loopStart;
-  }
-
-  if ((loopStart / 100) - last_dump > dumpRate && dumpRate > 0) { // The rates are a minimum duration of time (wait to reach this)
-    verbose_serialDump(); 
-    last_dump = loopStart / 100;
-  }
+  updateSim();                                                        // we want to update this as much as possible
+  loopDur = micros()  - loopStart;
   
-  if (Serial.available())
-    serial_event();
-
-  loopDur = micros() - loopStart;
-  if (loopDur <= cycleBig)                                         // normalize the loop time to help develop timing reqs
-    delay(cycleBig - loopDur);
-  else {
-    Serial.print("loop cycled in longer time than expected: ");
-    Serial.println(loopDur / 100);
-  }
+//  if (loopDur <= cycleBig)                                          // normalize the loop time to help develop timing reqs
+//    delayMicroseconds(cycleBig - loopDur);
+//  else {
+//    Serial.print("loop cycled in longer time than expected: ");
+//    Serial.print(loopDur); Serial.println("us");
+//  }
 }
