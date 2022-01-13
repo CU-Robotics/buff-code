@@ -1,0 +1,10 @@
+<launch>
+
+	<arg name="det_config" default="mds_hsv_red"/>
+
+	<node name="buffvision" pkg="buffpy" type="buffvision.py" respawn="false" output="screen"/>
+
+	<node name="debugger" pkg="buffpy" type="debug_viewer.py" 
+		respawn="false" output="screen"/>
+
+</launch>
