@@ -1,5 +1,0 @@
-cython
-pydrive
-numpy
-matplotlib
-opencv_python

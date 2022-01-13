@@ -1,7 +1,0 @@
-vim
-curl
-jupyter
-python3.6
-python3-pip
-libpython3-dev
-python3-testresources
