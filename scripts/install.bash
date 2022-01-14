@@ -22,14 +22,16 @@ xargs sudo apt install -y <${PROJECT_ROOT}/config/install/dependencies.txt
 
 echo -e "\n\tUpgrading pip3\n"
 # upgrade pip before installing dependencies
-python3.6 -m pip install --upgrade pip
+python3.6 -m pip install --upgrade pip==21.3.1
+
+echo -e "\n\tInstalling python3 requirements\n"
 python3.6 -m pip install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
 
 
 
 # If no ROS install it
 if [[ $ROS_DISTRO == "" ]]; then
-	.${PROJECT_ROOT}/scritps/install_ros_melodic.bash
+	.${PROJECT_ROOT}/scritps/install_ros_melodic.bash melodic desktop
 fi
 
 # Also install Sublime Text-editor
