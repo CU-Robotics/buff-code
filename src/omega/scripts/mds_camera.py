@@ -71,7 +71,6 @@ class cv2_Camera:
 			self.camera.close()
 			return 0
 
-		rospy.logerr('Couldn\'t open camera: Exiting...')
 		return 1
 
 def scan_for_video():
@@ -109,11 +108,15 @@ def main(configData):
 	ret = camera.stream()
 
 	if ret == 1:
+		rospy.logerr('Couldn\'t open camera: Checking for video file...')
 		video_file = scan_for_video()
 		if video_file:
+			rospy.loginfo('Running {} as {}'.format(video_file, raw_img_topic))
 			camera = cv2_Camera(video_file, raw_img_topic, fps=fps, debug=debug)
 			# Stream the video
 			ret = camera.stream()
+			if ret == 1:
+				rospy.logerr('Failed to play video: Exiting...')
 
 
 if __name__=='__main__':
