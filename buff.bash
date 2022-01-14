@@ -9,7 +9,7 @@ fi
 export PROJECT_ROOT=${PWD}
 export HOSTNAME=$HOSTNAME 
 				#	John-Os		# Idea Forge 		# John-Os 2		# Idea Forge	# Idea Forge		# John-Os		# Idea Forge		# Mitchells
-export ROBOT_IP='10.0.0.160' # '128.138.157.122' # '10.0.0.162' #'128.138.157.240' # '128.138.157.140' #'10.0.0.161' # '128.138.157.251' #'10.0.0.160'
+export ROBOT_IP='128.138.157.151' #'10.0.0.160' # '128.138.157.122' # '10.0.0.162' #'128.138.157.240' # '128.138.157.140' #'10.0.0.161' # '128.138.157.251' #'10.0.0.160'
 export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buff-code"
 
@@ -35,15 +35,14 @@ if [[ "${PATH}" != *"buffpy"* ]]; then
 	export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
 fi 
 
+# Only export if if not already in path
+if [[ "${PYTHONPATH}" != *"/usr/lib/python3"* ]]; then	
+	export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH}" 
+fi
 
 # Only export if if not already in path
 if [[ "${PYTHONPATH}" != *"buffpy"* ]]; then	
 	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}" 
-fi
-
-# Only export if if not already in path
-if [[ "${PYTHONPATH}" != *"/usr/lib/python3"* ]]; then	
-	export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH}" 
 fi
 
 # set ROS package path to buff-code so it can see buffpy
