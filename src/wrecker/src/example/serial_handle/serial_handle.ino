@@ -75,9 +75,9 @@ void serialDump() {
   Serial.print(','); Serial.print(periodScalar); // 45 bytes
   Serial.print(','); Serial.print(amplitudeScalar); // 50 bytes
   Serial.print(','); Serial.print(loopDur); // 55 bytes
-  Serial.print(','); Serial.println(last_update); // 60 bytes
-  Serial.print(','); Serial.println(sim_timer); // 65 bytes
-  Serial.print(','); Serial.println(serial_timer); // 70 bytes
+  Serial.print(','); Serial.print(last_update); // 60 bytes
+  Serial.print(','); Serial.print(sim_timer); // 65 bytes
+  Serial.print(','); Serial.print(serial_timer); // 70 bytes
   Serial.print(','); Serial.println(loopStart); // 75 bytes
 }
 
