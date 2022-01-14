@@ -56,11 +56,10 @@ class MDS_Detector:
 			self.bound_pub = rospy.Publisher(self.topics[1], Float64MultiArray, queue_size=1)
 
 			if self.debug and len(self.topics) == 6:
-				for topic in topics[2:]:
+				for topic in self.topics[2:]:
 						self.debug_pubs.append(rospy.Publisher(topic, Image, queue_size=1))
 
 			self.im_subscriber = rospy.Subscriber(self.topics[0], Image, self.imageCallBack, queue_size=1)
-
 
 	def drawLines(self, image, contour):
 		line = cv2.fitLine(contour, cv2.DIST_L2, 0, 1, 1)

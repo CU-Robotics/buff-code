@@ -16,7 +16,8 @@ TOPICS:
     'detected_boundary'
   TARGET:
     'detected_targets'
-    
+  TARGET_ERR:
+    'detected_error'
 
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
@@ -40,7 +41,7 @@ NODES:
       'rqt_graph'
   CAMERA:     # spawns our camera streamer
     FILE:
-      'visual_spawner.py'
+      'mds_camera.py'
     TOPICS:
       - 'RAW_IMG'
     CONFIG:
@@ -67,6 +68,7 @@ NODES:
     TOPICS:
       - 'BOUNDARY'
       - 'TARGET'
+      - 'TARGET_ERR'
     PACKAGE:
       'buffpy'
   SERIAL:   # spawns our serial node
