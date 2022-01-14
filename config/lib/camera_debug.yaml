@@ -8,7 +8,7 @@ TOPICS:
 NODES:
   CAMERA:
     FILE:
-      'visual_spawner.py'
+      'mds_camera.py'
     TOPICS:
       - 'RAW_IMG'
     CONFIG:
