@@ -1,18 +1,22 @@
-#include <PWMServo.h>
-
-PWMServo myServo;
-
+int newValue = 0;
 
 void setup() {
-  Serial.begin(9600);
-  myServo.attach(1, 1050, 1950);
-  myServo.write(90);
-  pinMode(0, OUTPUT);
-  digitalWrite(0, HIGH);
+  Serial.begin(115200);
+  analogWriteFrequency(4, 500000);
+  analogWrite(4,128);
 }
 
 void loop() {
-  myServo.write(90);
-  delay(15);
-  Serial.println("test");
+  if(Serial.available() > 1) {
+    newValue = Serial.parseInt();
+    if(newValue >= 0 && newValue <= 256) {
+      analogWrite(4, newValue);
+      Serial.print("Success: ");
+      Serial.println(newValue);
+    } else {
+      Serial.print("error: ");
+      Serial.println(newValue);
+    }
+  }
+  
 }
