@@ -44,7 +44,8 @@ class cv2_Camera:
 		if self.camera.isOpened():
 			if self.debug:
 				rospy.loginfo('Camera is open and the stream is starting: ...')
-				rate = rospy.Rate(self.fps)
+			
+			rate = rospy.Rate(self.fps)
 			while not rospy.is_shutdown() and self.lives > 0:
 
 				# Capture frame
@@ -67,9 +68,9 @@ class cv2_Camera:
 
 			# use this return code so we can know if it should respawn
 			# with a different device
+			self.camera.close()
 			return 0
 
-		rospy.logerr('Couldn\'t open camera: Exiting...')
 		return 1
 
 def scan_for_video():
@@ -84,7 +85,7 @@ def scan_for_video():
 	gdrive = GD_Handler()
 	gdrive.downloadBatch('Bouncing_Ball')
 
-	return os.path.join(os.get_env('PROJECT_ROOT'), 'data', 'bouncing_ball.mp4')
+	return os.path.join(os.getenv('PROJECT_ROOT'), 'data', 'bouncing_ball.mp4')
 
 
 def main(configData):
@@ -107,11 +108,15 @@ def main(configData):
 	ret = camera.stream()
 
 	if ret == 1:
+		rospy.logerr('Couldn\'t open camera: Checking for video file...')
 		video_file = scan_for_video()
 		if video_file:
+			rospy.loginfo('Running {} as {}'.format(video_file, raw_img_topic))
 			camera = cv2_Camera(video_file, raw_img_topic, fps=fps, debug=debug)
 			# Stream the video
 			ret = camera.stream()
+			if ret == 1:
+				rospy.logerr('Failed to play video: Exiting...')
 
 
 if __name__=='__main__':

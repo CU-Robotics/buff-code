@@ -192,12 +192,12 @@ catkin_install_python(PROGRAMS
 # )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES
-  launch/main.launch
-  launch/detector_debug.launch
-  # myfile2
-  DESTINATION $ENV{PROJECT_ROOT}/buffpy/launch
-)
+# install(FILES
+#  launch/main.launch
+#  launch/detector_debug.launch
+#  # myfile2
+#  DESTINATION $ENV{PROJECT_ROOT}/buffpy/launch
+#)
 
 #############
 ## Testing ##

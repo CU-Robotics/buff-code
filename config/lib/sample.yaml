@@ -6,12 +6,7 @@ TOPICS:
     'image_raw'
   DETECTED:
     'detected_boundary'
-  TARGET:
-    'targets'
-  TRACKER_DEBUG:
-    'tracker_err'
     
-
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
   #   FILE:
@@ -24,7 +19,7 @@ NODES:
   #     - '-o /home/cu-robotics/buff-code/data/'
   CAMERA:     # spawns our camera streamer
     FILE:
-      'visual_spawner.py'
+      'mds_camera.py'
     TOPICS:
       - 'RAW_IMG'
     CONFIG:
@@ -39,14 +34,5 @@ NODES:
       - 'DETECTED'
     CONFIG:
       'bouncing_ball.yaml'
-    PACKAGE:
-      'buffpy'
-  TRACKER:
-    FILE:
-      'mds_tracker.py'
-    TOPICS:
-      - 'DETECTED'
-      - 'TARGET'
-      - 'TRACKER_DEBUG'
     PACKAGE:
       'buffpy'
