@@ -306,13 +306,8 @@ def load_config_from_system_launch(args):
 	else:
 		data = None
 
-	topics = []
-	for arg in args[4:-2]:
-		name, kind = arg.split('=')
-		topics.append((name, kind))
-
 	# exclude node names and logs for now
-	return program, debug, data, topics
+	return program, debug, data, args[4:-2]
 
 if __name__=='__main__':
 	"""

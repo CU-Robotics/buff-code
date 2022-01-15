@@ -10,28 +10,21 @@
 
 
 
-c620::c620(int motorId, CAN_message_t* msg) : sendMsg(*msg) {
+c620::c620(short motorId, CAN_message_t* msg) : sendMsg(*msg) {
   id = motorId;
-  byteNum = (id - 1) * 2;
-  if(byteNum > 7) {
-    byteNum -= 8;
+  byteNum = id - 1;
+  if(byteNum > 3) {
+    byteNum -= 4;
     sendMsg.id = 0x1FF;   //ID for all c620s 4-7
   } else {
   sendMsg.id = 0x200;   //ID for all c620s 0-3
   }
-
-
 }
 
 void c620::setPower(float power) {
-  Serial.print("byteNum: ");
-  Serial.println(byteNum);
-  Serial.print("id: ");
-  Serial.println(id);
-  short newPower = (short)(power * C620_MAX_VALUE);
-  byte byteOne = highByte(newPower);
-  byte byteTwo = lowByte(newPower);
-  sendMsg.buf[byteNum] = byteOne;
-  sendMsg.buf[byteNum + 1] = byteTwo;
-  
+    short newPower = (short)(power * C620_MAX_VALUE);
+    byte byteOne = highByte(newPower);
+    byte byteTwo = lowByte(newPower);
+    sendMsg.buf[byteNum] = byteOne;
+    sendMsg.buf[byteNum + 1] = byteTwo;
 }

@@ -8,52 +8,48 @@ TOPICS:
     'detected_boundary'
   TARGET:
     'detected_targets'
-
-    
+  TARGET_ERR:
+    'detected_error'
 
 NODES:
-  DEBUG_VIEW:
+  # ROSBAGGER:    # This will record all system runs and allow us to play them back
+  #   FILE:
+  #     'record'
+  #   PACKAGE:
+  #     'rosbag'
+  #   ARGS:       # -a record all -x ignore -o output prefix
+  #     - '-a'
+  #     - '-x /rosout'
+  #     - '-o /home/cu-robotics/buff-code/data/'
+  CAMERA:     # spawns our camera streamer
     FILE:
-      'rqt_image_view'
-    PACKAGE:
-      'rqt_image_view'
-  RQT_GRAPH:
-    FILE:
-      'rqt_graph'
-    PACKAGE:
-      'rqt_graph'
-  CAMERA:
-    FILE:
-      'visual_spawner.py'
+      'mds_camera.py'
     TOPICS:
       - 'RAW_IMG'
     CONFIG:
       'default_camera.yaml'
     PACKAGE:
       'buffpy'
-  DETECTOR:
+  DETECTOR:   # spawns our detector node
     FILE:
       'mds_detector.py'
     TOPICS:
       - 'RAW_IMG'
       - 'BOUNDARY'
-      - 'IMG_PROCESS_STEP1'
-      - 'IMG_PROCESS_STEP2'
-      - 'IMG_PROCESS_STEP3'
-      - 'IMG_PROCESS_STEP4'
     CONFIG:
       'bouncing_ball.yaml'
     PACKAGE:
       'buffpy'
-  TRACKER:
+  TRACKER:     # spawns our tracker node
     FILE:
       'mds_tracker.py'
     TOPICS:
       - 'BOUNDARY'
       - 'TARGET'
+      - 'TARGET_ERR'
     PACKAGE:
       'buffpy'
-  SERIAL:
+  SERIAL:   # spawns our serial node
     FILE:
       'serial_handler.py'
     TOPICS:

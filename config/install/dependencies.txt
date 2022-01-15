@@ -1,0 +1,13 @@
+vim=2:8.0.1453-1ubuntu1.7 
+git=1:2.17.1-1ubuntu0.9 
+curl=7.58.0-2ubuntu3.16 
+wget=1.19.4-1ubuntu2.2 
+cmake=3.10.2-1ubuntu2.18.04.2 
+gnupg2=2.2.4-1ubuntu1.4 
+jupyter=4.4.0-2 
+python3-pip
+lsb-release=9.20170808ubuntu1 
+python3-opencv=3.2.0+dfsg-4ubuntu0.1 
+build-essential=12.4ubuntu1 
+ca-certificates=20210119~18.04.2 
+python3-setuptools=39.0.1-2 

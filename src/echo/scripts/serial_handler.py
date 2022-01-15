@@ -5,24 +5,27 @@ import buffvision as bv
 from std_msgs.msg import Float64MultiArray
 
 
-def callback(mesg, publisher):
+def callback(mesg):
 	# write message
 	# Serial.py
 	pass
 	
 
-def main(debug=False, config=None, topic='serial_out'):
+def main(configData):
 
 	rospy.init_node('target_tracker', anonymous=True)
 
-	sub = rospy.Subscriber(topic, Float64MultiArray, callback, queue_size=5)
+	all_topics = rospy.get_param('/buffbot/TOPICS')
+
+	topics = [all_topics[t] for t in configData['TOPICS']]
+
+	sub = rospy.Subscriber(topics[0], Float64MultiArray, callback, queue_size=5)
 
 	rospy.spin()
 	
 
 if __name__=='__main__':
-	if sys.argv[1] == 'sys-launch':
-		program, debug, config, topics = bv.load_config_from_system_launch(sys.argv)
-		main(debug=debug, config=config, topic=topics[0])
+	if '/buffbot' in sys.argv[1]:
+		main(rospy.get_param(sys.argv[1]))
 	else:
 		main()
