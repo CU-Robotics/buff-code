@@ -29,6 +29,7 @@ RUN apt-get update && \
 #
 # Set up the environment
 # not sure how to utilize the project_root variable
+# hard coding = bad
 RUN echo "source /home/cu-robotics/buff-code/buff.bash" >> /root/.bashrc
 CMD ["bash"]
 ENTRYPOINT ["/home/cu-robotics/buff-code/scripts/buff_entrypoint.sh"]
