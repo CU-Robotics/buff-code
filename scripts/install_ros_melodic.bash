@@ -24,12 +24,8 @@ sudo apt install -y ros-${ROS_DISTRO}-${ROS_PKG}
 #
 # Install ROS dependencies
 #
-pip3 install -r -y ${PROJECT_ROOT}/config/install/ros_dependencies.txt
+python3 -m pip install -r ${PROJECT_ROOT}/config/install/ros_dependencies.txt
 
-#
-# clean the apt cache
-#
-rm -rf /var/lib/apt/lists/*
 
 echo -e "\n\tFinishing ROS setup...\n"
 
@@ -53,10 +49,7 @@ catkin build cv_bridge && \
 cp -r install/lib/python3/dist-packages/* /usr/lib/python3/dist-packages/ && \
 cd /home/cu-robotics && rm -rf opencv_ws
 
-#
-# clean cache
-#
-rm -rf /var/lib/apt/lists/*
+
 
 
 
