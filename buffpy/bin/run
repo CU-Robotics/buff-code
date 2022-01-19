@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 		Launcher 
  	This is the main script for all CV 
@@ -17,7 +17,7 @@ import signal
 import roslaunch
 import subprocess as sb
 
-def load_config(file='mds_pipeline'):
+def load_config(file='live.yaml'):
 	if not os.path.exists(file):
 		print('Could not find config: Exiting ...')
 		return None
