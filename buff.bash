@@ -16,12 +16,12 @@ export ROBOT_ROOT="/home/cu-robotics/buff-code"
 if [[ "$(uname)" == "MINGW"* ]]; then
 	alias spinup="winpty docker run -it \
 	-e DISPLAY=host.docker.internal:0 \
-	-v $HOME/buff-code:/home/cu-robotics/buff-code \
+	-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
 	--net=host "
 else
 	alias spinup="docker run -it \
 	-e DISPLAY=host.docker.internal:0 \
-	-v $HOME/buff-code:/home/cu-robotics/buff-code \
+	-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
 	--net=host "
 fi
 
