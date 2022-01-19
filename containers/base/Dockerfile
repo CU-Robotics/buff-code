@@ -38,7 +38,9 @@ RUN apt-get update && \
 		python3-opencv=3.2.0+dfsg-4ubuntu0.1 \ 
 		build-essential=12.4ubuntu1 \
 		ca-certificates=20210119~18.04.2 \
-		python3-setuptools=39.0.1-2 && \
+		python3-setuptools=39.0.1-2 \
+		openssh-server \
+		iputils-ping && \
 		rm -rf /var/lib/apt/lists/*
 
 # 
