@@ -40,6 +40,9 @@ RUN apt-get update && \
 		ca-certificates=20210119~18.04.2 \
 		python3-setuptools=39.0.1-2 \
 		openssh-server \
+		openssh-client \
+		iputils-ping \
+		openssh-server \
 		iputils-ping && \
 		rm -rf /var/lib/apt/lists/*
 
