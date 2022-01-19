@@ -13,10 +13,17 @@ export ROBOT_IP='128.138.157.151' #'10.0.0.160' # '128.138.157.122' # '10.0.0.16
 export ROBOT_ADDRESS="cu-robotics@${ROBOT_IP}"
 export ROBOT_ROOT="/home/cu-robotics/buff-code"
 
-alias spinup="docker run -it \
+if [[ "$(uname)" == "MINGW"* ]]; then
+	alias spinup="winpty docker run -it \
 	-e DISPLAY=host.docker.internal:0 \
 	-v $HOME/buff-code:/home/cu-robotics/buff-code \
 	--net=host "
+else
+	alias spinup="docker run -it \
+	-e DISPLAY=host.docker.internal:0 \
+	-v $HOME/buff-code:/home/cu-robotics/buff-code \
+	--net=host "
+fi
 
 PYTHONPATH=
 
