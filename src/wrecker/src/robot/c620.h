@@ -19,3 +19,13 @@ class c620CAN : public rmMotor {
         c620CAN(int tempID, CAN_message_t* msg);
         void setPower(float power);
 };
+
+
+class c620PWM : public rmMotor {
+    private:
+        uint8_t outPin;
+        uint8_t inPin;
+    public:
+        c620PWM(uint8_t input, uint8_t output);
+        void setPower(float power);
+}
