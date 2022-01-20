@@ -10,7 +10,7 @@
 
 
 
-c620::c620(short motorId, CAN_message_t* msg) : sendMsg(*msg) {
+c620CAN::c620CAN(short motorId, CAN_message_t* msg) : sendMsg(*msg) {
   id = motorId;
   byteNum = id - 1;
   if(byteNum > 3) {
@@ -21,7 +21,7 @@ c620::c620(short motorId, CAN_message_t* msg) : sendMsg(*msg) {
   }
 }
 
-void c620::setPower(float power) {
+void c620CAN::setPower(float power) {
     short newPower = (short)(power * C620_MAX_VALUE);
     byte byteOne = highByte(newPower);
     byte byteTwo = lowByte(newPower);
