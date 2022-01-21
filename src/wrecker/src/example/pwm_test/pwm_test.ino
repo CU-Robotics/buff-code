@@ -1,17 +1,19 @@
+const int outputPin = 29;
+
 int newValue = 0;
 
 void setup() {
   Serial.begin(115200);
-  analogWriteFrequency(4, 500);
+  analogWriteFrequency(outputPin, 500);
   analogWriteResolution(15);
-  analogWrite(4,256);
+  analogWrite(outputPin, 16378);
 }
 
 void loop() {
   if(Serial.available() > 1) {
     newValue = Serial.parseInt();
     if(newValue >= 0) {
-      analogWrite(4, newValue);
+      analogWrite(outputPin, newValue);
       Serial.print("Success: ");
       Serial.println(newValue);
     } else {
