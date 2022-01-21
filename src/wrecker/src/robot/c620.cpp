@@ -6,6 +6,10 @@
 #include <FlexCAN_T4.h>
 #endif
 
+#ifndef FreqMeasureMulti_h
+#include <FreqMeasureMulti.h>
+#endif
+
 #include "c620.h"
 
 
@@ -37,6 +41,8 @@ c620PWM::c620PWM(uint8_t input, uint8_t output) {
   } else {
     inPin = -1;
   }
+
+  freq.begin(inPin, FREQMEASUREMULTI_MARK_ONLY);
   
   if ((output >= 0 && output <= 15) || output == 18 || output == 19 || (output >= 22 && output <= 25) || output == 28 || output == 29 || output == 33 || output == 36 || output == 37 || (output >= 42 && output <= 47) || output == 51 || output == 54)
   {
@@ -45,4 +51,64 @@ c620PWM::c620PWM(uint8_t input, uint8_t output) {
     outPin = -1;
   }
   
+  pinMode(outPin, OUTPUT);
+  analogWriteFrequency(outPin, 500);
+  analogWriteResolution(15);
+}
+
+//useful conversions of uS to pwm dutycycle
+// 1000-2000
+// 16378-32757
+
+// 1000-1500
+// 16378-24567
+
+// 1500-2000
+// 24567-32757
+
+// 1080-1480
+// 17688-24240
+
+// 1520-1920
+// 24894-31447
+
+// 0-1
+// 0-16.3785
+
+// 0-20
+// 0-327
+
+// 0-80
+// 0-1310
+
+void c620PWM::setPower(float power) {
+  unsigned int outputVal = 0;
+  if(power > 1) { //clamp power to -1 to 1
+    power = 1;
+  } else if (power < -1) {
+    power = -1;
+  }
+
+  if (power > 0) {
+    outputVal = map(power, 0, 1, 24894, 31447)
+  } else if (power < 0) {
+    outputVal = map(power, -1, 0, 17688, 24240)
+  } else {
+    outputVal = 1500;
+  }
+  
+  // outputVal = map(power, -1, 1, 16378, 32757);  //this approach is ignorant to the deadzones on the motor's PWM recieve
+
+  analogWrite(outPin, outputVal);
+}
+
+float c620PWM::getAngle() {
+  while (freq.available() > 2)  //burn through buffer of values in freq
+  {
+    freq.read();
+  }
+  
+  angle = map(round(freq.countToNanoseconds(freq.read())/1000), 1, 1024, 0, 360);
+  
+  return angle;
 }
