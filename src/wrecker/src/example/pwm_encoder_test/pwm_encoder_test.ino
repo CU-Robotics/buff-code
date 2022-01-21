@@ -4,6 +4,7 @@
    This example code is in the public domain.
 */
 #include <FreqMeasureMulti.h>
+#include <math.h>
 
 // Measure 3 frequencies at the same time! :-)
 FreqMeasureMulti freq1;
@@ -47,13 +48,13 @@ void loop() {
     cycles = freq1.read();
   }
   if (timeout > 500) {
-    dutyCycle = freq1.countToNanoseconds(cycles)/1000;
+    dutyCycle = round(freq1.countToNanoseconds(cycles)/1000);
     angle = map(dutyCycle, 1, 1024, 0, 360);
     Serial.print("count: ");
     Serial.print(count1);
     Serial.print(", cycles: ");
     Serial.print(cycles);
-    Serial.print(", duty cycle: ");
+    Serial.print(", duty cycle (ns): ");
     Serial.print(dutyCycle);
     Serial.print(", angle: ");
     Serial.println(angle);
