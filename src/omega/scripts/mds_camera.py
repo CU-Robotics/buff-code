@@ -68,7 +68,7 @@ class cv2_Camera:
 
 			# use this return code so we can know if it should respawn
 			# with a different device
-			self.camera.close()
+			self.camera.release()
 			return 0
 
 		return 1
