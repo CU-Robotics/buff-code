@@ -16,6 +16,7 @@ import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
+from models.common import DetectMultiBackend
 
 
 class MDS_Detector:
