@@ -1,0 +1,17 @@
+DEBUG:
+  True
+  
+TOPICS:
+  RAW_IMG:
+    'image_raw'
+
+NODES:
+  CAMERA:
+    FILE:
+      'mds_camera.py'
+    TOPICS:
+      - 'RAW_IMG'
+    CONFIG:
+      'default_camera.yaml'
+    PACKAGE:
+      'buffpy'

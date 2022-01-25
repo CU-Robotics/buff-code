@@ -1,14 +1,12 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 	Project:
 			BuffVision
 	Author: Mitchell D Scott
 	Description:
-		This file contains tools for doing cv. This is where we
-	will call our predicition model from. Think of this as 
-	the crows nest the model sits in while looking for land (or whales).
-	This design will allow us to spontaneously switch models
-	or even spin up two instances on competing machines.
+		This file contains tools for doing cv. there are functions
+		that will be used in many programs, they can be imported to 
+		any scripts from here. (as long as buffpy/lib is on PYTHONPATH)
 
 """
 import os
@@ -16,6 +14,7 @@ import cv2
 import sys
 import time
 import glob
+import yaml
 import rospy
 import datetime
 import traceback
@@ -114,6 +113,8 @@ def load_data(path='../data'): # default path only works in jupyter notebook or 
 	"""
 	# images = load_images(os.path.join(path, '*.jpg'))
 	labels = load_labels(os.path.join(path, '*.xml'))
+	if labels is None:
+		print('couldn\'t find any labels')
 	# if len(images) - len(labels):
 	# 	print(f'mismatched: images {len(images)} != labels {len(labels)}')
 		
@@ -123,7 +124,7 @@ def load_data(path='../data'): # default path only works in jupyter notebook or 
 		impath = os.path.join(path, imfile)
 		if os.path.exists(impath):
 			image = cv2.cvtColor(cv2.imread(impath), cv2.COLOR_BGR2RGB)
-			data.append((image, get_bounding_from_label(label)))
+			data.append((image, get_bounding_from_label(label), imfile, ))
 				
 	return data
 
@@ -249,7 +250,9 @@ def ROS_cv2_publisher(topic='image_raw'):
 	"""
 
 	# Create the image stream and set its capture rate to 30 FPS
-	cap = cv2.VideoCapture(0).set(cv2.CV_CAP_PROP_FPS, 30)
+	cap = cv2.VideoCapture(0)
+	cap.set(cv2.CAP_PROP_FPS, 30)
+
 	# Set a size variable (resolution)
 	size=(int(cap.get(3)), int(cap.get(4)))
 
@@ -263,6 +266,7 @@ def ROS_cv2_publisher(topic='image_raw'):
 	# CvBridge is used to conver cv images to sensor_msgs/Image
 	bridge = CvBridge()
 
+	rospy.loginfo('Streaming camera')
 	# If the stream is open and ROS is running
 	if cap.isOpened():
 		while not rospy.is_shutdown():
@@ -276,13 +280,34 @@ def ROS_cv2_publisher(topic='image_raw'):
 			# Publish the message
 			pub.publish(imgMsg)
 
-def ROS_cv2_pipeline(debug=False):
-	"""
-		includes a camera capture
-	"""
-	pass
 
+def load_config_from_system_launch(args):
+	"""
+		Used to handle input from a system launch
+		PARAMS:
+			args: list of args from system launch ([Program, Debug, Config, Topics...])
+		RETURNS:
+			program: filename of program
+			debug: T/F debug or naaa
+			data: dict of config data
+			topics: dict of ros topics (name : type)
+	"""
+	program, _, debug, config = args[:4]
 
+	if debug == 'True':
+		debug = True
+
+	filepath = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', config)
+
+	if os.path.exists(filepath):
+		with open(filepath, 'r') as f:
+			data = yaml.safe_load(f)
+
+	else:
+		data = None
+
+	# exclude node names and logs for now
+	return program, debug, data, args[4:-2]
 
 if __name__=='__main__':
 	"""

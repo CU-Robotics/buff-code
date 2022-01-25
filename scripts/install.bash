@@ -1,57 +1,40 @@
-#! /usr/bin/env bash
+#! /bin/bash
 
 #  run this script with 'source scripts/install.bash'
 
 PROJECT_ROOT=$PWD
 
 echo -e "Running Install from ${PWD}"
-echo -e "\n\tapt updating...\n"
 
+if [[ $PROJECT_ROOT != *"/buff-code" ]]; then
+	echo -e "Run this script from the project root"
+	exit
+fi 
+
+echo -e "\n\tapt updating...\n"
 #	update the apt package manager
 sudo apt update
 
-echo -e "\n\tInstalling Dependencies...\n"
 
+echo -e "\n\tInstalling Dependencies...\n"
 #	Using apt and pip install all the dependencies for the project
-xargs sudo apt install <${PROJECT_ROOT}/config/install/dependencies.txt -y
+xargs sudo apt install -y <${PROJECT_ROOT}/config/install/dependencies.txt
 
 echo -e "\n\tUpgrading pip3\n"
+# upgrade pip before installing dependencies
 python3.6 -m pip install --upgrade pip
-
 python3.6 -m pip install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
 
-# echo -e "\n\tSetting python alternatives\n"
-# sudo update-alternaitves --set python3 /usr/bin/python3.8 1
 
-echo -e "\n\tSetting up ROS melodic\n"
 
-# ROS installation
-# add repositories
-sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-
-# setup ROS keys
-curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
-
-sudo apt update
-
-# Install ROS
-if [[ "${HOSTNAME}" == "edge"* ]]; then
-	sudo apt install ros-melodic-desktop -y
-else
-	sudo apt install ros-melodic-desktop-full -y
+# If no ROS install it
+if [[ $ROS_DISTRO == "" ]]; then
+	.${PROJECT_ROOT}/scritps/install_ros_melodic.bash
 fi
 
-# Source the ros/setup.bash
-source /opt/ros/melodic/setup.bash
+# Also install Sublime Text-editor
+".${PROJECT_ROOT}/scripts/install_sublime.bash"
 
-# Install ROS dependencies
-sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential python3-catkin-tools python3-catkin-pkg python3-rospkg -y
-
-echo -e "\n\tFinishing ROS setup...\n"
-
-# Init rosdep
-sudo rosdep init
-rosdep update
 
 # DEPRECATED
 #	Install arduino-cli
