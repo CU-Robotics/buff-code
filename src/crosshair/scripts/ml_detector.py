@@ -19,15 +19,6 @@ from std_msgs.msg import Float64MultiArray
 from models.common import DetectMultiBackend
 
 
-"""
-
-    TODO
-
-    - implement Load_Stream from webcam
-
-"""
-
-
 class ML_Detector:
     def __init__(self,
                  weights="./lib/best.pt",
@@ -79,10 +70,7 @@ class ML_Detector:
         self.weights = weights
         self.model = DetectMultiBackend(self.weights, None, False, config)
         self.stride, self.names, _, _, _, _ = model.stride, model.names, model.pt, model.jit, model.onnx, model.engine
-
-        # do not need check img size, just crop/resize webcam stream
-
-        half = False  # use fp32
+        self.model.warmup(imgsz=(1, 3, 640, 640), half=False)
 
     def drawLines(self, image, contour):
         line = cv2.fitLine(contour, cv2.DIST_L2, 0, 1, 1)
@@ -95,6 +83,7 @@ class ML_Detector:
         return cv2.line(image, (x, y), (x + dx, y + dy), self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
 
     def handle_imshow():
+        # imshow would be nice
         pass
 
     def drawEllipse(self, image, contour):
@@ -107,10 +96,15 @@ class ML_Detector:
                 @PARAMS:
                         image: an RGB image
                 @RETURNS:
-                        bounds: bounding box of the detected object [(x1,y1), (x2,y2)]
+                        a list of bounding boxes in yolo format (x, y, w, h) 
         """
 
+        image = preprocess_image(image)
+
         return bounds
+
+    def preprocess_image(self, image):
+        pass
 
     def detect_and_annotate(self, image):
         """
