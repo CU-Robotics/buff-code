@@ -19,14 +19,30 @@ from std_msgs.msg import Float64MultiArray
 from models.common import DetectMultiBackend
 
 
-class MDS_Detector:
-    def __init__(self, configData=None):
+"""
+
+    TODO
+
+    - implement Load_Stream from webcam
+
+"""
+
+
+class ML_Detector:
+    def __init__(self,
+                 weights="./lib/best.pt",
+                 config="./lib/buffdata.yaml",
+                 configData=None,
+                 device=''  # cuda device, i.e. 0 or 0,1,2,3 or cpu
+                 ):
         """
-                Define all the parameters of the model here.
-                Can be initialized with a config file, a system launch
-                or manually from a terminal. will exit if not enough params
-                exist.
+                Put params here
+                The yolov5 model has an input size of (3, 640, 640)
+                so any input gets cropped to that size
         """
+
+        # ROS STUFF
+
         self.debug = rospy.get_param('/buffbot/DEBUG')
         topics = rospy.get_param('/buffbot/TOPICS')
 
@@ -45,7 +61,7 @@ class MDS_Detector:
 
             self.bridge = CvBridge()
 
-            rospy.init_node('mds_detector', anonymous=True)
+            rospy.init_node('nn_detector', anonymous=True)
 
             self.debug_pubs = []
             self.bound_pub = rospy.Publisher(
@@ -59,6 +75,15 @@ class MDS_Detector:
             self.im_subscriber = rospy.Subscriber(
                 self.topics[0], Image, self.imageCallBack, queue_size=1)
 
+        # init model
+        self.weights = weights
+        self.model = DetectMultiBackend(self.weights, None, False, config)
+        self.stride, self.names, _, _, _, _ = model.stride, model.names, model.pt, model.jit, model.onnx, model.engine
+
+        # do not need check img size, just crop/resize webcam stream
+
+        half = False  # use fp32
+
     def drawLines(self, image, contour):
         line = cv2.fitLine(contour, cv2.DIST_L2, 0, 1, 1)
         # find two points on the line
@@ -69,6 +94,9 @@ class MDS_Detector:
 
         return cv2.line(image, (x, y), (x + dx, y + dy), self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
 
+    def handle_imshow():
+        pass
+
     def drawEllipse(self, image, contour):
         ellipse = cv2.fitEllipse(contour)
         return cv2.ellipse(image, ellipse, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
@@ -77,7 +105,7 @@ class MDS_Detector:
         """
                 Define all image processing operations here
                 @PARAMS:
-                        image: an RGB image 
+                        image: an RGB image
                 @RETURNS:
                         bounds: bounding box of the detected object [(x1,y1), (x2,y2)]
         """
@@ -88,7 +116,7 @@ class MDS_Detector:
         """
                 Displays the steps in the processing line
                 @PARAMS:
-                        image: an RGB image 
+                        image: an RGB image
                 @RETURNS:
                         None
         """
