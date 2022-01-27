@@ -18,7 +18,11 @@ import torch.distributed as dist
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.general import LOGGER
+
+import sys
+sys.path.append("..")
+
+from lib.utils.general import LOGGER
 
 try:
     import thop  # for FLOPs computation
