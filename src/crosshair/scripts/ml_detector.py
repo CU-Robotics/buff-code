@@ -16,8 +16,19 @@ import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
-from models.common import DetectMultiBackend
 
+import sys
+sys.path.append("..")
+
+"""
+
+list of packages that the detector needs
+
+pandas
+
+"""
+
+from lib.models.common import DetectMultiBackend
 
 class ML_Detector:
     def __init__(self,
