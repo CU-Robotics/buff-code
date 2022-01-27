@@ -25,6 +25,10 @@ sys.path.append("..")
 list of packages that the detector needs
 
 pandas
+torch
+torchvision
+pillow
+tqdm (maybe)
 
 """
 

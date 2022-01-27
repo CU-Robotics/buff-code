@@ -9,8 +9,11 @@ import random
 import cv2
 import numpy as np
 
-from utils.general import LOGGER, check_version, colorstr, resample_segments, segment2box
-from utils.metrics import bbox_ioa
+import sys
+sys.path.append("..")
+
+from lib.utils.general import LOGGER, check_version, colorstr, resample_segments, segment2box
+from lib.utils.metrics import bbox_ioa
 
 
 class Albumentations:
