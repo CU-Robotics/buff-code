@@ -1,0 +1,6 @@
+train: ../buffdata/
+val: ../buffdata/
+
+nc: 1
+
+names: ['target']

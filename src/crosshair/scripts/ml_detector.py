@@ -11,33 +11,27 @@ import sys
 import cv2
 import yaml
 import rospy
+import torch
+import torch.backends.cudnn as cudnn
 import numpy as np
 import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
+import argparse
+from PIL import Image
 
 import sys
 sys.path.append("..")
 
-"""
-
-list of packages that the detector needs
-
-pandas
-torch
-torchvision
-pillow
-tqdm (maybe)
-
-"""
-
 from lib.models.common import DetectMultiBackend
+from lib.utils.augmentations import letterbox
+from lib.utils.general import non_max_suppression
 
 class ML_Detector:
     def __init__(self,
-                 weights="./lib/best.pt",
-                 config="./lib/buffdata.yaml",
+                 weights="../weights/best.pt",
+                 config="../weights/buffdata.yaml",
                  configData=None,
                  device=''  # cuda device, i.e. 0 or 0,1,2,3 or cpu
                  ):
@@ -46,6 +40,14 @@ class ML_Detector:
                 The yolov5 model has an input size of (3, 640, 640)
                 so any input gets cropped to that size
         """
+
+        # init model
+        self.weights = weights
+        self.model = DetectMultiBackend(self.weights, None, False, config)
+        self.stride, self.names, self.pt = self.model.stride, self.model.names, self.model.pt
+        self.model.warmup(imgsz=(1, 3, 640, 640), half=False)
+    
+    def init_ros(self):
 
         # ROS STUFF
 
@@ -81,12 +83,6 @@ class ML_Detector:
             self.im_subscriber = rospy.Subscriber(
                 self.topics[0], Image, self.imageCallBack, queue_size=1)
 
-        # init model
-        self.weights = weights
-        self.model = DetectMultiBackend(self.weights, None, False, config)
-        self.stride, self.names, _, _, _, _ = model.stride, model.names, model.pt, model.jit, model.onnx, model.engine
-        self.model.warmup(imgsz=(1, 3, 640, 640), half=False)
-
     def drawLines(self, image, contour):
         line = cv2.fitLine(contour, cv2.DIST_L2, 0, 1, 1)
         # find two points on the line
@@ -109,16 +105,57 @@ class ML_Detector:
         """
                 Define all image processing operations here
                 @PARAMS:
-                        image: an RGB image
+                        image: cv2 image
                 @RETURNS:
                         a list of bounding boxes in yolo format (x, y, w, h) 
         """
 
-        image = preprocess_image(image)
+        # can tune these later
+        conf_thres = 0.25
+        iou_thres = 0.45
 
-        return bounds
+        orig_x, orig_y = image.shape[:2]
+        img, _, _ = letterbox(image)
+        img = np.asarray(img)
+        img = np.moveaxis(img, -1, 0)
+        img = torch.from_numpy(img)
+        img = img.float()
+        img /= 255 # normalize
+        img = img[None] # add batch axis
+        out = self.model(img)
+        preds = non_max_suppression(out, conf_thres, iou_thres)
+
+        bounding_boxes = []
+
+        for pred in preds[0]:
+            cl, x, y, w, h, conf = pred
+            bounding_boxes.append((x, y, w, h))
+
+        return bounding_boxes
+
 
     def preprocess_image(self, image):
+        """
+                Define all image processing operations here
+                @PARAMS:
+                        image: cv2 image
+                @RETURNS:
+                        out_img: padded/normalized torch tensor (None, 640, 640, 3)
+        """
+
+        """
+
+        shape = image.shape[:2]
+        #scale to make one dimension shrink (or grow) to 640px
+        r = min(640 / shape[0], 640 / shape[1])
+        ratio = (r, r)
+        new_size = (int(round(r * shape[0])), int(round(r * shape[1])))
+        dw, dh = (640 - new_size[0], 640 - new_size[1])
+
+        dw /= 2
+        dh /= 2
+        """
+
         pass
 
     def detect_and_annotate(self, image):
@@ -192,8 +229,17 @@ def main(configData):
         for image, labels in data[0:5]:
             detector.detect_and_annotate(image)
 
-
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--noros', action="store_true", help="run without ros" )
+    args = parser.parse_args()
+    return args
+"""
 if __name__ == '__main__':
+
+    args = parse_args()
+    print(args)
+
     if '/buffbot' in sys.argv[1]:
         main(rospy.get_param(sys.argv[1]))
     elif sys.argv[1][-5:] == '.yaml':
@@ -205,3 +251,16 @@ if __name__ == '__main__':
     else:
         rospy.logerr(
             'Unsupported call: call this with a rosparam component name or a yaml config')
+
+"""
+
+if __name__ == "__main__":
+    img = cv2.imread('../../../config/lib/ml_test/86.jpg')
+    dets = []
+    with open('../../../config/lib/ml_test/86.txt', 'r') as labelfile:
+        for line in labelfile:
+            c, x, y, w, h = line.split(' ')
+            dets.append((c, x, y, w, h))
+
+    det = ML_Detector()
+    det.detect(img)
