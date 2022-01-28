@@ -131,7 +131,7 @@ class ML_Detector:
         for pred in preds[0]:
             x0, y0, x1, y1, conf, cl = pred 
             bounding_boxes.append((x0, y0, x1, y1, conf, cl))
-
+        
         return bounding_boxes, (ratio_x, ratio_y)
     
 
@@ -157,12 +157,14 @@ class ML_Detector:
     def label(self, image, bounding_boxes):
         # draw labels on a cv2 img
         offset_x = int((640 - image.shape[0]) / 2)
-        offset_y = int((640 - image.shape[1]) / 2)
 
         for bbox in bounding_boxes:
             if len(bbox) == 6:
                 # yolo format
-                x0, y0, x1, y1, conf, cl = bbox
+                x0, y0, x1, y1, conf, cl = bbox 
+
+                y0 -= offset_x
+                y1 -= offset_x
 
             else:
                 # label format
@@ -172,25 +174,15 @@ class ML_Detector:
 
                 x0 *= 640
                 x1 *= 640
-                y0 *= 640
-                y1 *= 640
-
-
-            y0 -= offset_x
+                y0 *= 360
+                y1 *= 360
 
             x0 = int(x0)
             x1 = int(x1)
-            y0 = int(y0) - offset_x
-            y1 = int(y1) - offset_x
-
-            print(offset_x)
-            print(offset_y)
-            print((x0, y0, x1, y1))
+            y0 = int(y0)
+            y1 = int(y1)
 
             image = cv2.rectangle(image, (x0, y0), (x1, y1), (0, 255, 0), 5)
-            image = cv2.rectangle(image, (100, 50), (200, 200), (0, 255, 0), 5)
-
-        cv2.imwrite('results.jpg', image)
         return image
     
     def detect_and_compare(self, image, labels):
@@ -199,9 +191,15 @@ class ML_Detector:
         """
 
         bounding_boxes, ratio = self.detect(image)
-        img_det = np.array(self.label(image, bounding_boxes))
-        img_labelled = np.array(self.label(image, labels))
-        collage = np.concatenate([img_det, img_labelled])
+
+        print("bounding boxes from detect")
+        print(bounding_boxes)
+
+        im_pred = self.label(image, bounding_boxes)
+        cv2.imwrite("pred.jpg", im_pred)
+        im_label = self.label(image, labels)
+        cv2.imwrite("label.jpg", im_label)
+       
 
     def detect_and_publish(self, image):
         """
@@ -280,7 +278,5 @@ if __name__ == "__main__":
             dets.append((float(c), float(x), float(y), float(w), float(h)))
 
     det = ML_Detector()
-    bounding_boxes, r = det.detect(img)
-    ratio_x, ratio_y = r
 
     det.detect_and_compare(img, dets)
