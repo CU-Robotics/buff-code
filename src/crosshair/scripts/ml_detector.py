@@ -33,7 +33,8 @@ class ML_Detector:
                  weights="../weights/best.pt",
                  config="../weights/buffdata.yaml",
                  configData=None,
-                 device=''  # cuda device, i.e. 0 or 0,1,2,3 or cpu
+                 device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
+                 orig_shape=(360, 640)
                  ):
         """
                 Put params here
@@ -46,6 +47,8 @@ class ML_Detector:
         self.model = DetectMultiBackend(self.weights, None, False, config)
         self.stride, self.names, self.pt = self.model.stride, self.model.names, self.model.pt
         self.model.warmup(imgsz=(1, 3, 640, 640), half=False)
+
+        self.orig_shape = orig_shape
     
     def init_ros(self):
 
@@ -97,17 +100,13 @@ class ML_Detector:
         # imshow would be nice
         pass
 
-    def drawEllipse(self, image, contour):
-        ellipse = cv2.fitEllipse(contour)
-        return cv2.ellipse(image, ellipse, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-
     def detect(self, image):
         """
                 Define all image processing operations here
                 @PARAMS:
                         image: cv2 image
                 @RETURNS:
-                        a list of bounding boxes in yolo format (x, y, w, h) 
+                        a list of bounding boxes (xyxy, conf, cls)
         """
 
         # can tune these later
@@ -115,7 +114,9 @@ class ML_Detector:
         iou_thres = 0.45
 
         orig_x, orig_y = image.shape[:2]
-        img, _, _ = letterbox(image)
+        img, ratio, _ = letterbox(image)
+        ratio_x, ratio_y = ratio
+
         img = np.asarray(img)
         img = np.moveaxis(img, -1, 0)
         img = torch.from_numpy(img)
@@ -128,57 +129,79 @@ class ML_Detector:
         bounding_boxes = []
 
         for pred in preds[0]:
-            cl, x, y, w, h, conf = pred
-            bounding_boxes.append((x, y, w, h))
+            x0, y0, x1, y1, conf, cl = pred 
+            bounding_boxes.append((x0, y0, x1, y1, conf, cl))
 
-        return bounding_boxes
+        return bounding_boxes, (ratio_x, ratio_y)
+    
+
+    def xywh2xyxy(self, x):
+        # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
+
+        x0 = x[0] - x[2] / 2  # top left x
+        y0 = x[1] - x[3] / 2  # top left y
+        x1 = x[0] + x[2] / 2  # bottom right x
+        y1 = x[1] + x[3] / 2  # bottom right y
+
+        return (x0, y0, x1, y1)
+    
+    def xyxy2xywh(self, x):
+            # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
+        y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
+        y[:, 0] = (x[:, 0] + x[:, 2]) / 2  # x center
+        y[:, 1] = (x[:, 1] + x[:, 3]) / 2  # y center
+        y[:, 2] = x[:, 2] - x[:, 0]  # width
+        y[:, 3] = x[:, 3] - x[:, 1]  # height
+        return y
+
+    def label(self, image, bounding_boxes):
+        # draw labels on a cv2 img
+        offset_x = int((640 - image.shape[0]) / 2)
+        offset_y = int((640 - image.shape[1]) / 2)
+
+        for bbox in bounding_boxes:
+            if len(bbox) == 6:
+                # yolo format
+                x0, y0, x1, y1, conf, cl = bbox
+
+            else:
+                # label format
+                _, x, y, w, h = bbox
+
+                x0, y0, x1, y1 = self.xywh2xyxy((x, y, w, h))
+
+                x0 *= 640
+                x1 *= 640
+                y0 *= 640
+                y1 *= 640
 
 
-    def preprocess_image(self, image):
+            y0 -= offset_x
+
+            x0 = int(x0)
+            x1 = int(x1)
+            y0 = int(y0) - offset_x
+            y1 = int(y1) - offset_x
+
+            print(offset_x)
+            print(offset_y)
+            print((x0, y0, x1, y1))
+
+            image = cv2.rectangle(image, (x0, y0), (x1, y1), (0, 255, 0), 5)
+            image = cv2.rectangle(image, (100, 50), (200, 200), (0, 255, 0), 5)
+
+        cv2.imwrite('results.jpg', image)
+        return image
+    
+    def detect_and_compare(self, image, labels):
         """
-                Define all image processing operations here
-                @PARAMS:
-                        image: cv2 image
-                @RETURNS:
-                        out_img: padded/normalized torch tensor (None, 640, 640, 3)
+            show detector predictions vs label
         """
 
-        """
-
-        shape = image.shape[:2]
-        #scale to make one dimension shrink (or grow) to 640px
-        r = min(640 / shape[0], 640 / shape[1])
-        ratio = (r, r)
-        new_size = (int(round(r * shape[0])), int(round(r * shape[1])))
-        dw, dh = (640 - new_size[0], 640 - new_size[1])
-
-        dw /= 2
-        dh /= 2
-        """
-
-        pass
-
-    def detect_and_annotate(self, image):
-        """
-                Displays the steps in the processing line
-                @PARAMS:
-                        image: an RGB image
-                @RETURNS:
-                        None
-        """
-        results = self.detect(image)
-        mostly_raw = np.concatenate(steps[:2], axis=1)
-        not_so_raw = np.concatenate(steps[2:], axis=1)
-        collage = np.concatenate([mostly_raw, not_so_raw])
-        bv.buffshow('Steps', collage)
-
-    def publish_steps(self):
-        """
-                Images processing steps are saved, this will publish them
-        """
-        for i, pub in enumerate(self.debug_pubs):
-            pub.publish(self.bridge.cv2_to_imgmsg(
-                self.steps[i], encoding='bgr8'))
+        bounding_boxes, ratio = self.detect(image)
+        img_det = np.array(self.label(image, bounding_boxes))
+        img_labelled = np.array(self.label(image, labels))
+        collage = np.concatenate([img_det, img_labelled])
 
     def detect_and_publish(self, image):
         """
@@ -190,7 +213,7 @@ class ML_Detector:
                 @RETURNS:
                         None
         """
-        results = self.detect(image)
+        results, orig_x, orig_y = self.detect(image)
         mesg = Float64MultiArray()
         mesg.data = results
 
@@ -216,13 +239,12 @@ def main(configData):
     if configData is None:
         return
 
-    MDS_Detector(configData=configData)
+    ML_Detector(configData=configData)
 
     if 'TOPICS' in configData:
         rospy.spin()
 
     if 'DATA' in configData:
-        # run independantly
         data = bv.load_data(path=os.path.join(os.get_env(
             'PROJECT_ROOT'), 'data', configData['DATA']))
 
@@ -236,31 +258,29 @@ def parse_args():
     return args
 """
 if __name__ == '__main__':
-
-    args = parse_args()
-    print(args)
-
-    if '/buffbot' in sys.argv[1]:
-        main(rospy.get_param(sys.argv[1]))
-    elif sys.argv[1][-5:] == '.yaml':
-        path = os.path.join(os.getenv('PROJECT_ROOT'),
-                            'config', 'lib', sys.argv[1])
-        with open(path, 'r') as f:
-            data = yaml.safe_load(f)
-        main(data)
+    if len(sys.argv) > 1:
+        if '/buffbot' in sys.argv[1]:
+            main(rospy.get_param(sys.argv[1]))
+        elif sys.argv[1][-5:] == '.yaml':
+            path = os.path.join(os.getenv('PROJECT_ROOT'),
+                                'config', 'lib', sys.argv[1])
+            with open(path, 'r') as f:
+                data = yaml.safe_load(f)
+            main(data)
     else:
         rospy.logerr(
             'Unsupported call: call this with a rosparam component name or a yaml config')
-
 """
-
 if __name__ == "__main__":
     img = cv2.imread('../../../config/lib/ml_test/86.jpg')
     dets = []
     with open('../../../config/lib/ml_test/86.txt', 'r') as labelfile:
         for line in labelfile:
-            c, x, y, w, h = line.split(' ')
-            dets.append((c, x, y, w, h))
+            c, x, y, w, h = line[:-1].split(' ')
+            dets.append((float(c), float(x), float(y), float(w), float(h)))
 
     det = ML_Detector()
-    det.detect(img)
+    bounding_boxes, r = det.detect(img)
+    ratio_x, ratio_y = r
+
+    det.detect_and_compare(img, dets)
