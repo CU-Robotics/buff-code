@@ -4,7 +4,7 @@
 #
 
 #   Select base image here (ARM64 or AMD64)
-ARG BASE_IMAGE=mdsdev0/buffbox:x86_64-base
+ARG BASE_IMAGE=mdsdev0/buffbox:x86_64-base # mdsdev0/buffbox:aarch64-base
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop

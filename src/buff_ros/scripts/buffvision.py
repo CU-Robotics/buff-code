@@ -209,7 +209,7 @@ def capture_video(duration=10):
 	cap.release()
 	out.release()
 
-def cv2_stream_test():
+def cv2_stream_test(device=0):
 	"""
 		Use openCV to create a stream to a camera and display fps
 		Crucial to use while not rospy.is_shutdown
@@ -220,7 +220,7 @@ def cv2_stream_test():
 	"""
 
 	# Create the image stream
-	cap = cv2.VideoCapture(0)
+	cap = cv2.VideoCapture(device)
 	# Set a size variable (resolution)
 	size=(int(cap.get(3)), int(cap.get(4)))
 
@@ -283,6 +283,7 @@ def ROS_cv2_publisher(topic='image_raw'):
 
 def load_config_from_system_launch(args):
 	"""
+		DEPRECATED
 		Used to handle input from a system launch
 		PARAMS:
 			args: list of args from system launch ([Program, Debug, Config, Topics...])
