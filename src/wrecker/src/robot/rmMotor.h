@@ -1,3 +1,5 @@
+#define RMMOTOR_H
+
 #ifndef CONSTANTS_H
 #include "constants.h"
 #endif
