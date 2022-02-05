@@ -8,6 +8,6 @@ void loop() {
   // put your main code here, to run repeatedly:
   while(Serial1.available()) {
     Serial1.println(Serial1.read());
-  }
+  }   
 
 }

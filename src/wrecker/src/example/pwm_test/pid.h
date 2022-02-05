@@ -15,7 +15,7 @@ class PID {
     public:
         PID(double dt, double min, double max, double Kp, double Ki, double Kd);
         double calculate(double setpoint, double pv);
-        //~PID();
+        ~PID();
 
 };
 
