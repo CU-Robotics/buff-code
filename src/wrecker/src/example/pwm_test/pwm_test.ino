@@ -1,15 +1,25 @@
-#include <PWMServo.h>
+const int outputPin = 29;
 
-PWMServo myServo;
+int newValue = 0;
 
 void setup() {
-  Serial.begin(9600);
-  myServo.attach(1, 1050, 1950);
-  myServo.write(90);
+  Serial.begin(115200);
+  analogWriteFrequency(outputPin, 500);
+  analogWriteResolution(15);
+  analogWrite(outputPin, 16378);
 }
 
 void loop() {
-  myServo.write(90);
-  delay(15);
-  Serial.println("test");
+  if(Serial.available() > 1) {
+    newValue = Serial.parseInt();
+    if(newValue >= 0) {
+      analogWrite(outputPin, newValue);
+      Serial.print("Success: ");
+      Serial.println(newValue);
+    } else {
+      Serial.print("error: ");
+      Serial.println(newValue);
+    }
+  }
+  
 }
