@@ -161,7 +161,33 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/mds_detector.py
   scripts/interactive_thresholder.py
+  scripts/ml_detector.py
+  
   DESTINATION $ENV{PROJECT_ROOT}/buffpy/lib
+)
+
+## we do a little setup
+catkin_install_python(PROGRAMS
+    lib/models/common.py
+    lib/models/experimental.py
+    lib/models/yolo.py
+    lib/models/tf.py
+
+    DESTINATION $ENV{PROJECT_ROOT}/buffpy/models
+)
+
+## we do a little setup
+catkin_install_python(PROGRAMS
+    lib/utils/activations.py
+    lib/utils/augmentations.py
+    lib/utils/callbacks.py
+    lib/utils/loss.py
+    lib/utils/datasets.py
+    lib/utils/torch_utils.py
+    lib/utils/plots.py
+    lib/utils/torch_utils.py
+
+    DESTINATION $ENV{PROJECT_ROOT}/buffpy/util
 )
 
 ## Mark executables for installation

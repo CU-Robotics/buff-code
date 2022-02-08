@@ -8,7 +8,6 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from gdrive_handler import GD_Handler
 
-
 class cv2_Camera:
 	def __init__(self, device, topic, fps=30, debug=False):
 		# init camera

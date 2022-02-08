@@ -6,8 +6,8 @@
 	Description:
 		Detects and displays images
 """
+
 import os
-import sys
 import cv2
 import yaml
 import rospy
@@ -20,13 +20,12 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
 import argparse
 from PIL import Image
-
 import sys
 sys.path.append("..")
 
-from lib.models.common import DetectMultiBackend
-from lib.utils.augmentations import letterbox
 from lib.utils.general import non_max_suppression
+from lib.utils.augmentations import letterbox
+from lib.models.common import DetectMultiBackend
 
 class ML_Detector:
     def __init__(self,
@@ -49,7 +48,7 @@ class ML_Detector:
         self.model.warmup(imgsz=(1, 3, 640, 640), half=False)
 
         self.orig_shape = orig_shape
-    
+
     def init_ros(self):
 
         # ROS STUFF
@@ -121,19 +120,18 @@ class ML_Detector:
         img = np.moveaxis(img, -1, 0)
         img = torch.from_numpy(img)
         img = img.float()
-        img /= 255 # normalize
-        img = img[None] # add batch axis
+        img /= 255  # normalize
+        img = img[None]  # add batch axis
         out = self.model(img)
         preds = non_max_suppression(out, conf_thres, iou_thres)
 
         bounding_boxes = []
 
         for pred in preds[0]:
-            x0, y0, x1, y1, conf, cl = pred 
+            x0, y0, x1, y1, conf, cl = pred
             bounding_boxes.append((x0, y0, x1, y1, conf, cl))
-        
+
         return bounding_boxes, (ratio_x, ratio_y)
-    
 
     def xywh2xyxy(self, x):
         # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
@@ -144,9 +142,9 @@ class ML_Detector:
         y1 = x[1] + x[3] / 2  # bottom right y
 
         return (x0, y0, x1, y1)
-    
+
     def xyxy2xywh(self, x):
-            # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
+        # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
         y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
         y[:, 0] = (x[:, 0] + x[:, 2]) / 2  # x center
         y[:, 1] = (x[:, 1] + x[:, 3]) / 2  # y center
@@ -161,7 +159,7 @@ class ML_Detector:
         for bbox in bounding_boxes:
             if len(bbox) == 6:
                 # yolo format
-                x0, y0, x1, y1, conf, cl = bbox 
+                x0, y0, x1, y1, conf, cl = bbox
 
                 y0 -= offset_x
                 y1 -= offset_x
@@ -184,7 +182,7 @@ class ML_Detector:
 
             image = cv2.rectangle(image, (x0, y0), (x1, y1), (0, 255, 0), 5)
         return image
-    
+
     def detect_and_compare(self, image, labels):
         """
             show detector predictions vs label
@@ -192,14 +190,10 @@ class ML_Detector:
 
         bounding_boxes, ratio = self.detect(image)
 
-        print("bounding boxes from detect")
-        print(bounding_boxes)
-
         im_pred = self.label(image, bounding_boxes)
         cv2.imwrite("pred.jpg", im_pred)
         im_label = self.label(image, labels)
         cv2.imwrite("label.jpg", im_label)
-       
 
     def detect_and_publish(self, image):
         """
@@ -211,12 +205,10 @@ class ML_Detector:
                 @RETURNS:
                         None
         """
-        results, orig_x, orig_y = self.detect(image)
+        bounding_boxes, ratio = self.detect(image)
         mesg = Float64MultiArray()
-        mesg.data = results
-
-        if not results is None:
-            self.bound_pub.publish(mesg)
+        mesg.data = bounding_boxes
+        self.bound_pub.publish(mesg)
 
         if self.debug:
             self.publish_steps()
@@ -249,11 +241,14 @@ def main(configData):
         for image, labels in data[0:5]:
             detector.detect_and_annotate(image)
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--noros', action="store_true", help="run without ros" )
+    parser.add_argument('--noros', action="store_true", help="run without ros")
     args = parser.parse_args()
     return args
+
+
 """
 if __name__ == '__main__':
     if len(sys.argv) > 1:
