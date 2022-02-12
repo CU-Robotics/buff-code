@@ -49,7 +49,7 @@ fi
 
 # Only export if if not already in path
 if [[ "${PYTHONPATH}" != *"buffpy"* ]]; then	
-	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}" 
+	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PROJECT_ROOT}/buffpy:${PYTHONPATH}" 
 fi
 
 # set ROS package path to buff-code so it can see buffpy

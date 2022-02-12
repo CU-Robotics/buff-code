@@ -23,9 +23,9 @@ from PIL import Image
 import sys
 sys.path.append("..")
 
-from lib.utils.general import non_max_suppression
-from lib.utils.augmentations import letterbox
-from lib.models.common import DetectMultiBackend
+from utils.general import non_max_suppression
+from utils.augmentations import letterbox
+from models.common import DetectMultiBackend
 
 class ML_Detector:
     def __init__(self,

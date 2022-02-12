@@ -42,7 +42,7 @@ class ml_Camera:
 
     def send_img(self):
 
-        img = cv2.imread('../../../config/lib/ml_test/86.jpg')
+        img = cv2.imread('../../../config/lib/ml_test/86.jpg', mode="RGB")
         img = np.array(img)
         img_msg = self.bridge.cv2_to_imgmsg(img)
         print(type(img_msg))

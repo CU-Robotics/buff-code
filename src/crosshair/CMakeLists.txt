@@ -178,6 +178,7 @@ catkin_install_python(PROGRAMS
 
 ## we do a little setup
 catkin_install_python(PROGRAMS
+
     lib/utils/activations.py
     lib/utils/augmentations.py
     lib/utils/callbacks.py
@@ -187,7 +188,7 @@ catkin_install_python(PROGRAMS
     lib/utils/plots.py
     lib/utils/torch_utils.py
 
-    DESTINATION $ENV{PROJECT_ROOT}/buffpy/util
+    DESTINATION $ENV{PROJECT_ROOT}/buffpy/utils
 )
 
 ## Mark executables for installation

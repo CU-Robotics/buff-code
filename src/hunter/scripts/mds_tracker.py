@@ -1,3 +1,4 @@
+
 #! /usr/bin/env python3
 import sys
 import time
@@ -20,7 +21,6 @@ class MDS_Tracker():
 		self.vStack = np.zeros(2)
 
 		self.target_pub = rospy.Publisher(self.topics[1], Float64MultiArray, queue_size=1)
-
 		self.err_pub = rospy.Publisher(self.topics[2], Float64MultiArray, queue_size=1)
 
 		rospy.init_node('target_tracker', anonymous=True)
@@ -77,6 +77,7 @@ class MDS_Tracker():
 			# publish the estimate
 			self.publish_pos()
 			rate.sleep()
+
 
 
 def main(configData):
