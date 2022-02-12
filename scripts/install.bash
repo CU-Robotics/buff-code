@@ -22,26 +22,20 @@ xargs sudo apt install -y <${PROJECT_ROOT}/config/install/dependencies.txt
 
 echo -e "\n\tUpgrading pip3\n"
 # upgrade pip before installing dependencies
-python3.6 -m pip install --upgrade pip
-python3.6 -m pip install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
+python3 -m pip install --upgrade pip==21.3.1
+
+echo -e "\n\tInstalling python3 requirements\n"
+python3 -m pip install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
 
 
 
-# If no ROS install it
+# If no ROS, install it
 if [[ $ROS_DISTRO == "" ]]; then
-	.${PROJECT_ROOT}/scritps/install_ros_melodic.bash
+	source "${PROJECT_ROOT}/scritps/install_ros_melodic.bash" melodic desktop
 fi
 
 # Also install Sublime Text-editor
-".${PROJECT_ROOT}/scripts/install_sublime.bash"
-
-
-# DEPRECATED
-#	Install arduino-cli
-#	Switching to teensy loader
-#curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=${DIR}/buffpy/bin sh
-#	Install SamD boards (subject to change, need to know the teensy's fqbn)
-# arduino-cli core install arduino:samd
+source "${PROJECT_ROOT}/scripts/install_sublime.bash"
 
 
 if [[ "${HOSTNAME}" != "edge"* ]]; then

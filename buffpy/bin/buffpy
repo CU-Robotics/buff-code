@@ -190,7 +190,11 @@ def main(ap):
 
 	# SSH into the robot at ROBOT_IP using X11 forwarding
 	if ap.sshBot:
-		result = subprocess.run(f'ssh -X {os.getenv("ROBOT_ADDRESS")}', shell=True)
+		host =  os.getenv("HOSTNAME")
+		if 'docker' in host or 'edge' in host:
+			result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")}', shell=True)
+		else:
+			result = subprocess.run(f'ssh -X {os.getenv("ROBOT_ADDRESS")}', shell=True)
 
 		# May be Deprecated
 	if ap.launch == 'bot':
