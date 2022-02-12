@@ -5,7 +5,6 @@
 */
 #define WHOAMI "Teensy4.1"
 
-IntervalTimer simUpdateTmr;
 IntervalTimer serialDumpTmr;
 IntervalTimer serialReadTmr;
 
@@ -32,8 +31,6 @@ unsigned long last_update = 0.0;
 unsigned long sim_timer = 0.0;
 unsigned long dump_timer = 0.0;
 unsigned long serial_timer = 0.0;
-
-int dumpOn = 0;
 
 void updateSim() {
   /*
@@ -62,9 +59,87 @@ void updateSim() {
   
 }
 
+void reset_sim() {
+  simVal = 1.0;
+  simErr = 0.0;
+  simActual = 1.0;
+  simdUpdate = 0.0;
+  simdActual = 0.0;
+  simStart = micros();
+  last_update = micros();
+}
+
+class SerialPipe {
+  private:
+    bool autoDump;
+  public:
+    SerialPipe();
+    void dump();
+    void parseCMD(char);
+};
+
+SerialPipe::SerialPipe(int baudrate, unsigned long dumpRate, unsigned long readRate, bool autoDump) {
+  Serial.begin(baudrate);
+
+  autoDump = autoDump;                                              // Default auto dump is off
+  
+  serialDumpTmr.priority(1);                                     // Set interval timer to handle serial dumps
+  serialDumpTmr.begin(verbose_serialDump, dumpRate);
+
+  serialReadTmr.priority(1);                                     // Set interval timer to handle serial reads
+  serialReadTmr.begin(serial_event, readRate);
+}
+
+void SerialPipe::dump() {
+  
+}
+
+void SerialPipe::parseCMD(char firstByte){
+    /*
+   * We detected a command and will parse it here
+   * 0 will reset the sim
+   * 1 will set the periodScale
+   * 2 will set the amplitudeScale
+   * 3 will set the phase shift
+   * d/D will dump the state
+   * r will set an auto-state dump (every n milliseconds)
+   * should switch this to some kind of lookup
+   */
+  if (firstByte == '1')
+    periodScalar = Serial.parseFloat();
+  else if (firstByte == '2')
+    amplitudeScalar = Serial.parseFloat();
+  else if (firstByte == '3')
+    phaseScalar = Serial.parseFloat();
+  else if (firstByte == 'd')
+    serialDump();
+  else if (firstByte == 'D')
+    verbose_serialDump();
+  else if (firstByte == 'r')
+    autoDump = !autoDump;
+  else if (firstByte == '0'){
+    reset_sim();
+  }
+}
+
+void SerialPipe::serial_event() {
+  /*
+   * this will handle all serial processing.
+   * - look for message start
+   * - drop invalid bytes
+   */
+  char incomingByte;
+  int byteCount = 0;
+  
+  byteCount++;
+  incomingByte = Serial.read();
+  while (Serial.available()) {
+    if (incomingByte == '@')                                      // if start char is read start parsing message
+      parse_cmd(Serial.read());
+  }
+}
+
 void serialDump() {
-  if (!dumpOn)
-    return;
   Serial.print('@'); Serial.print(WHOAMI); // 10 bytes
   Serial.print(','); Serial.print(simVal); // 15 bytes
   Serial.print(','); Serial.print(simActual); // 20 bytes
@@ -82,100 +157,28 @@ void serialDump() {
 }
 
 void verbose_serialDump() {
-  if (!dumpOn) 
-    return;
-  noInterrupts();
   Serial.print('@'); Serial.print(WHOAMI);
   Serial.print(",\n\tsimVal="); Serial.print(simVal, 5);
   Serial.print(",\n\tsimActual="); Serial.print(simActual, 5);
   Serial.print(",\n\tsimErr="); Serial.print(simErr, 5);
-  interrupts();
-
-  noInterrupts();
   Serial.print(",\n\tsimdUpdate="); Serial.print(simdUpdate, 5);
   Serial.print(",\n\tsimdActual="); Serial.print(simdActual, 5);
   Serial.print(",\n\tphaseScale="); Serial.print(phaseScalar, 5);
   Serial.print(",\n\tperiodScale="); Serial.print(periodScalar, 5);
   Serial.print(",\n\tamplitudeScale="); Serial.print(amplitudeScalar, 5);
-  interrupts();
-
-  noInterrupts();
   Serial.print(",\n\tloopDur="); Serial.print(loopDur);
   Serial.print("us,\n\tsimStart="); Serial.print(simStart);
   Serial.print("us,\n\tlast_update="); Serial.print(last_update);
   Serial.print("us,\n\tsim_timer="); Serial.print(sim_timer);
-  interrupts();
-
-  noInterrupts();
   Serial.print("us,\n\tserial_timer="); Serial.print(serial_timer);
   Serial.print("us,\n\tloopStart="); Serial.print(loopStart);
   Serial.println("us");
-  interrupts();
-}
-
-void parse_cmd(char incomingByte) {
-  /*
-   * We detected a command and will parse it here
-   * 0 will reset the sim
-   * 1 will set the periodScale
-   * 2 will set the amplitudeScale
-   * 3 will set the phase shift
-   * d/D will dump the state
-   * r will set an auto-state dump (every n milliseconds)
-   * should switch this to some kind of lookup
-   */
-  if (incomingByte == '1')
-    periodScalar = Serial.parseFloat();
-  else if (incomingByte == '2')
-    amplitudeScalar = Serial.parseFloat();
-  else if (incomingByte == '3')
-    phaseScalar = Serial.parseFloat();
-  else if (incomingByte == 'd')
-    serialDump();
-  else if (incomingByte == 'D')
-    verbose_serialDump();
-  else if (incomingByte == 'r')
-    dumpOn = !dumpOn;
-  else if (incomingByte == '0'){
-    reset_sim();
-  }
-}
-
-void serial_event() {
-  /*
-   * this will handle all serial processing.
-   * - look for message start
-   * - drop invalid bytes
-   */
-  char incomingByte;
-  int byteCount = 0;
-  
-  byteCount++;
-  incomingByte = Serial.read();
-  while (Serial.available()) {
-    if (incomingByte == '@')                                      // if start char is read start parsing message
-      parse_cmd(Serial.read());
-  }
-}
-
-void reset_sim() {
-  simVal = 1.0;
-  simErr = 0.0;
-  simActual = 1.0;
-  simdUpdate = 0.0;
-  simdActual = 0.0;
-  simStart = micros();
-  last_update = micros();
 }
 
 void setup() {
-  Serial.begin(9600);
+  
   reset_sim();
-  serialDumpTmr.priority(1);
-  serialDumpTmr.begin(verbose_serialDump, dumpRate);
 
-  serialReadTmr.priority(1);
-  serialReadTmr.begin(serial_event, serialRate);
 
   //simUpdateTmr.priority(0);
   //simUpdateTmr.begin(updateSim, simRate); 
