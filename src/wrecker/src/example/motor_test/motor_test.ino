@@ -1,22 +1,31 @@
 #include <FlexCAN_T4.h>
+#include "c620.h"
+
+#define G620
+
+CAN_message_t sendMsg;
+CAN_message_t recMsg;
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+c620CAN controller1 = c620CAN(3, &sendMsg);
 
+#ifdef G6020
 short spe = 2000;   //change this to anything between -30000 and 30000 (gm6020) or set in serial
+#else
+short spe = 2000;   // g620 values range from -16384 to 16384
+#endif
 
-byte bOne = highByte(spe);
-byte bTwo = lowByte(spe);
+//byte bOne = highByte(spe);
+//byte bTwo = lowByte(spe);
 
-int del = 5;
+int del = 500;
 
-int angle = 0;
-short torque = 0;
-short rpm = 0;
+//int angle = 0;
+//short torque = 0;
+//short rpm = 0;
 
-const bool printInfo = false;   //set to true to get stats of motors printed to serial
+const bool printInfo = true;   //set to true to get stats of motors printed to serial
 
-CAN_message_t msg;
-CAN_message_t recMsg;
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -25,41 +34,14 @@ void setup() {
   can1.setBaudRate(1000000);
   Serial.begin(9600);
 
+  Serial.println("Hello from teensy");
 }
 
 void loop() {
-  msg.id = 0x200;    //Modify id if not using gm6020
-  
-  msg.buf[0] = bOne; //set high order byte
-  msg.buf[1] = bTwo; //set low order byte
-  
-  msg.buf[2] = bOne; //set high order byte
-  msg.buf[3] = bTwo; //set low order byte
 
-  msg.buf[4] = bOne; //set high order byte
-  msg.buf[5] = bTwo; //set low order byte
+  controller1.setPower(.1);
 
-  msg.buf[6] = bOne; //set high order byte
-  msg.buf[7] = bTwo; //set low order byte
-
-  can1.write(msg);
-  
-  msg.id = 0x2FF;    //Modify id if not using gm6020
-  
-  msg.buf[0] = bOne; //set high order byte
-  msg.buf[1] = bTwo; //set low order byte
-  
-  msg.buf[2] = bOne; //set high order byte
-  msg.buf[3] = bTwo; //set low order byte
-
-  msg.buf[4] = bOne; //set high order byte
-  msg.buf[5] = bTwo; //set low order byte
-
-  msg.buf[6] = bOne; //set high order byte
-  msg.buf[7] = bTwo; //set low order byte
-
-  can1.write(msg);
-
+  can1.write(sendMsg);
 
 //  Serial.println("Sent CAN data");
 //  Serial.println(msg.id,HEX);
@@ -71,36 +53,39 @@ void loop() {
   
   delay(del);
   if(printInfo && can1.read(recMsg)) {
+
+    controller1.updateMotor(&recMsg);
+    
     Serial.println("------------------");
     Serial.print("motor id: ");
     Serial.println(recMsg.id, HEX);
-    angle = recMsg.buf[0];
-    angle = angle << 8;
-    angle = angle | recMsg.buf[1];
+//    angle = recMsg.buf[0];
+//    angle = angle << 8;
+//    angle = angle | recMsg.buf[1];
     Serial.print("Motor angle: ");
-    Serial.println(angle);
-    
-    torque = recMsg.buf[4];
-    torque = torque << 8;
-    torque = torque | recMsg.buf[5];
+    Serial.println(controller1.getAngle());
+//    
+//    torque = recMsg.buf[4];
+//    torque = torque << 8;
+//    torque = torque | recMsg.buf[5];
     Serial.print("Torque: ");
-    Serial.println(torque);
+    Serial.println(controller1.getTorque());
 
-    rpm = recMsg.buf[2];
-    rpm = rpm << 8;
-    rpm = rpm | recMsg.buf[3];
+//    rpm = recMsg.buf[2];
+//    rpm = rpm << 8;
+//    rpm = rpm | recMsg.buf[3];
     Serial.print("RPM: ");
-    Serial.println(rpm);
+    Serial.println(controller1.getRpm());
     
   }
 
-  if(Serial.available() > 1) {
+//  if(Serial.available() > 1) {
 //    String data = Serial.read();
-    spe = Serial.parseInt();
-    Serial.print("new speed: ");
-    Serial.println(spe);
-    bOne = highByte(spe);
-    bTwo = lowByte(spe);
-  }
+//    spe = Serial.parseInt();
+//    Serial.print("new speed: ");
+//    Serial.println(spe);
+//    bOne = highByte(spe);
+//    bTwo = lowByte(spe);
+//  }
   
 }
