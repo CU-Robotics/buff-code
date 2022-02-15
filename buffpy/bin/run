@@ -203,6 +203,12 @@ def spin(coreProc, pool, launch):
 		# Kill core
 		os.kill(coreProc.pid, signal.SIGTERM)
 
+	except Exception as e:
+		# In event of an error kill the core
+		os.kill(coreProc.pid, signal.SIGTERM)
+		print(e)
+		print('Killed due to error')
+
 def main(args):
 	"""
 		Launch all relevant pool.

@@ -29,8 +29,8 @@ from models.common import DetectMultiBackend
 
 class ML_Detector:
     def __init__(self,
-                 weights="../weights/best.pt",
-                 config="../weights/buffdata.yaml",
+                 weights="/home/cu-robotics/buff-code/weights/best.pt",
+                 config="/home/cu-robotics/buff-code/weights/buffdata.yaml",
                  configData=None,
                  device='',  # cuda device, i.e. 0 or 0,1,2,3 or cpu
                  orig_shape=(360, 640)
@@ -265,9 +265,9 @@ if __name__ == '__main__':
             'Unsupported call: call this with a rosparam component name or a yaml config')
 """
 if __name__ == "__main__":
-    img = cv2.imread('../../../config/lib/ml_test/86.jpg')
+    img = cv2.imread('/home/cu-robotics/buff-code/config/lib/ml_test/86.jpg')
     dets = []
-    with open('../../../config/lib/ml_test/86.txt', 'r') as labelfile:
+    with open('/home/cu-robotics/buff-code/config/lib/ml_test/86.txt', 'r') as labelfile:
         for line in labelfile:
             c, x, y, w, h = line[:-1].split(' ')
             dets.append((float(c), float(x), float(y), float(w), float(h)))

@@ -41,11 +41,9 @@ class ml_Camera:
                 'Camera and publisher Initialized: {} {} {}'.format(device, topic, fps))
 
     def send_img(self):
-
-        img = cv2.imread('../../../config/lib/ml_test/86.jpg', mode="RGB")
+        img = cv2.imread('/home/cu-robotics/buff-code/config/lib/ml_test/86.jpg', cv2.IMREAD_COLOR)
         img = np.array(img)
-        img_msg = self.bridge.cv2_to_imgmsg(img)
-        print(type(img_msg))
+        img_msg = self.bridge.cv2_to_imgmsg(img, 'bgr8')
         self.pub.publish(img_msg)
 
         return 1
