@@ -1,5 +1,5 @@
 DEBUG:
-  True
+  False 
   
 TOPICS:
   RAW_IMG:
