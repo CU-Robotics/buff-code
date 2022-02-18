@@ -1,12 +1,4 @@
 #! /usr/bin/env python3
-"""
-	Project:
-			Mitch detector
-	Author: Mitchell D Scott
-	Description:
-		Detects and displays images
-"""
-
 import os
 import cv2
 import yaml
@@ -19,13 +11,14 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
 import argparse
-from PIL import Image
 import sys
 sys.path.append("..")
 
 from utils.general import non_max_suppression
 from utils.augmentations import letterbox
 from models.common import DetectMultiBackend
+
+DATA_PATH = "/home/cu-robotics/buff-code/data"
 
 class ML_Detector:
     def __init__(self,
@@ -48,10 +41,6 @@ class ML_Detector:
         self.model.warmup(imgsz=(1, 3, 640, 640), half=False)
 
         self.orig_shape = orig_shape
-
-    def init_ros(self):
-
-        # ROS STUFF
 
         self.debug = rospy.get_param('/buffbot/DEBUG')
         topics = rospy.get_param('/buffbot/TOPICS')
@@ -83,7 +72,7 @@ class ML_Detector:
                         rospy.Publisher(topic, Image, queue_size=1))
 
             self.im_subscriber = rospy.Subscriber(
-                self.topics[0], Image, self.imageCallBack, queue_size=1)
+            self.topics[0], Image, self.imageCallBack, queue_size=1)
 
     def drawLines(self, image, contour):
         line = cv2.fitLine(contour, cv2.DIST_L2, 0, 1, 1)
@@ -191,9 +180,14 @@ class ML_Detector:
         bounding_boxes, ratio = self.detect(image)
 
         im_pred = self.label(image, bounding_boxes)
-        cv2.imwrite("pred.jpg", im_pred)
+        cv2.imwrite(DATA_PATH + "pred.jpg", im_pred)
         im_label = self.label(image, labels)
-        cv2.imwrite("label.jpg", im_label)
+        cv2.imwrite(DATA_PATH + "label.jpg", im_label)
+    
+    def save_dets(self, image, bounding_boxes):
+        im_label = self.label(image, bounding_boxes)
+        cv2.imwrite(os.path.join(DATA_PATH + "label.jpg"), im_label)
+        rospy.logerr("saved bboxes")
 
     def detect_and_publish(self, image):
         """
@@ -209,6 +203,10 @@ class ML_Detector:
         mesg = Float64MultiArray()
         mesg.data = bounding_boxes
         self.bound_pub.publish(mesg)
+
+        #self.detect_and_compare(image, labels)
+
+        self.save_dets(image, bounding_boxes)
 
         if self.debug:
             self.publish_steps()
@@ -248,8 +246,16 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+def main(configData):
+    if configData is None:
+        return
 
-"""
+    det = ML_Detector(configData=configData);
+
+    if 'TOPICS' in configData:
+        rospy.spin()
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         if '/buffbot' in sys.argv[1]:
@@ -264,6 +270,7 @@ if __name__ == '__main__':
         rospy.logerr(
             'Unsupported call: call this with a rosparam component name or a yaml config')
 """
+
 if __name__ == "__main__":
     img = cv2.imread('/home/cu-robotics/buff-code/config/lib/ml_test/86.jpg')
     dets = []
@@ -275,3 +282,4 @@ if __name__ == "__main__":
     det = ML_Detector()
 
     det.detect_and_compare(img, dets)
+"""

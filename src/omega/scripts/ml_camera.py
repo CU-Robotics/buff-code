@@ -6,11 +6,14 @@ import rospy
 import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
+import std_msgs
+from std_msgs.msg import String
 from gdrive_handler import GD_Handler
 import numpy as np
+from time import sleep
 
 class ml_Camera:
-    def __init__(self, device, topic, fps=30, debug=False):
+    def __init__(self, device, topic, fps=30, debug=True):
         # init camera
         self.camera = cv2.VideoCapture(device)
         self.device = device
@@ -42,11 +45,8 @@ class ml_Camera:
 
     def send_img(self):
         img = cv2.imread('/home/cu-robotics/buff-code/config/lib/ml_test/86.jpg', cv2.IMREAD_COLOR)
-        img = np.array(img)
         img_msg = self.bridge.cv2_to_imgmsg(img, 'bgr8')
         self.pub.publish(img_msg)
-
-        return 1
 
     def stream(self):
         # If the stream is open and ROS is running
@@ -79,9 +79,6 @@ class ml_Camera:
             # use this return code so we can know if it should respawn
             # with a different device
             self.camera.release()
-            return 0
-
-        return 1
 
 
 def scan_for_video():
@@ -102,8 +99,10 @@ def scan_for_video():
 def main(configData):
 
     # These things are defined under the systems namespace (/buffbot/CAMERA)
+
     fps = configData['FPS']
     device = configData['DEVICE']
+
     topic_name = configData['TOPICS'][0]
 
     # These are defined under the generic namespace
@@ -115,7 +114,14 @@ def main(configData):
     # create the video stream
     camera = ml_Camera(device, raw_img_topic, fps=fps, debug=debug)
 
+    rospy.logerr("sleeping 3 secs")
+    sleep(3)
     ret = camera.send_img()
+    sleep(3)
+
+    rospy.spin()
+    
+
     """
     # Stream the video
     ret = camera.stream()
