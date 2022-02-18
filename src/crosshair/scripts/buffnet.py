@@ -11,13 +11,15 @@ import sys
 import cv2
 import yaml
 import rospy
+import torch
 import numpy as np
 import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
+from gdrive_handler import GD_Handler
 from std_msgs.msg import Float64MultiArray
 
-class MDS_Detector:
+class BuffNet:
 	def __init__(self, configData=None):
 		"""
 			Define all the parameters of the model here.
@@ -25,55 +27,49 @@ class MDS_Detector:
 			or manually from a terminal. will exit if not enough params
 			exist.
 		"""
-		self.debug = rospy.get_param('/buffbot/DEBUG')
-		topics = rospy.get_param('/buffbot/TOPICS')
+		if 'DEBUG' in configData:
+			self.debug = True
 
-		self.topics = [topics[t] for t in configData['TOPICS']]
+		if not rospy.is_shutdown():
+			self.debug = rospy.get_param('/buffbot/DEBUG')
+			topics = rospy.get_param('/buffbot/TOPICS')
+			self.topics = [topics[t] for t in configData['TOPICS']]
+			# Only spin up image sub if core is running
+			if len(self.topics) > 0:
+
+				self.bridge = CvBridge()
+				rospy.init_node('buffnet', anonymous=True)
+				self.target_pub = rospy.Publisher(self.topics[1], Float64MultiArray, queue_size=1)
+
+				if self.debug and len(self.topics) > 2:
+					self.debug_pub = rospy.Publisher(self.topics[2], Image, queue_size=1)
+
+				self.im_subscriber = rospy.Subscriber(self.topics[0], Image, self.imageCallBack, queue_size=1)
+
+		elif 'TOPICS' in configData:
+			self.topics = configData['TOPICS']
+		
+		else:
+			self.topics = []
 
 		if configData is None:
 			# there is no config for the model to load from
 			return None
 
-		self.steps = None
-		if 'LOW' in configData:
-			self.low = np.array(configData['LOW'])
-		if 'HIGH' in configData:
-			self.high = np.array(configData['HIGH'])
 		if 'ANNOTATION_COLOR' in configData:
 			self.ANNOTATION_COLOR = configData['ANNOTATION_COLOR']
 		if 'ANNOTATION_THICKNESS' in configData:
 			self.ANNOTATION_THICKNESS = configData['ANNOTATION_THICKNESS']
 
+		if 'MODEL' in configData and os.path.exists(configData['MODEL']):
+			model_path = configData['MODEL']
+				
+		else:
+			model_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
+			gdrive = GD_Handler()
+			gdrive.downloadBatch(batch='BuffNetv2-exp6', path=model_path)
 
-		# Only spin up image sub if core is running
-		if len(self.topics) > 0:
-
-			self.bridge = CvBridge()
-
-			rospy.init_node('mds_detector', anonymous=True)
-
-			self.debug_pubs = []
-			self.bound_pub = rospy.Publisher(self.topics[1], Float64MultiArray, queue_size=1)
-
-			if self.debug and len(self.topics) == 6:
-				for topic in self.topics[2:]:
-						self.debug_pubs.append(rospy.Publisher(topic, Image, queue_size=1))
-
-			self.im_subscriber = rospy.Subscriber(self.topics[0], Image, self.imageCallBack, queue_size=1)
-
-	def drawLines(self, image, contour):
-		line = cv2.fitLine(contour, cv2.DIST_L2, 0, 1, 1)
-		# find two points on the line
-		x = int(line[0])
-		y = int(line[1])
-		dx = int(line[2])
-		dy = int(line[3])	
-
-		return cv2.line(image, (x, y), (x + dx, y + dy), self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-
-	def drawEllipse(self, image, contour):
-		ellipse = cv2.fitEllipse(contour)
-		return cv2.ellipse(image, ellipse, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
+		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
 
 	def detect(self, image):
 		"""
@@ -81,37 +77,26 @@ class MDS_Detector:
 			@PARAMS:
 				image: an RGB image 
 			@RETURNS:
-				bounds: bounding box of the detected object [(x1,y1), (x2,y2)]
+				detections: bounding box of the detected object with color and class [class, (x1,y1), (x2,y2)]
 		"""
-		bounds = []
-		source = image.copy()
-		blurred = cv2.bilateralFilter(image, 15, 150, 45)
-		hsv = cv2.cvtColor(blurred, cv2.COLOR_RGB2HSV)
-		thresh = cv2.inRange(hsv, self.low, self.high)
-		thresh = cv2.bitwise_and(image, image, mask=thresh)
-		mask = cv2.cvtColor(thresh, cv2.COLOR_RGB2GRAY)
-		# if you don't know this already,
-		# you need to go read the docs
-		_, contours, _ = cv2.findContours(image=mask, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)	
+		image = cv2.resize(image, (416, 416))
+		return self.model(image)
 
-		annotated = image
-		for i, cnt in enumerate(contours):
-			a1 = cv2.contourArea(cnt)
-			if a1 > 20:
-				#annotated = cv2.drawContours(annotated, [cnt], -1, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-				annotated = self.drawEllipse(annotated, cnt)
-			
+	def annotate_images(self, images=None, labels=None):
+		if images is None or labels is None:
+			return None
+		annotated_images = []
+		for i, image in enumerate(images):
+			im = image.copy()
+			for label in labels[i]:
+				w = int(label[3] * image.shape[0])
+				h = int(label[4] * image.shape[0])
+				p1 = (int(label[1] * image.shape[0]) - int(w / 2), int(label[2] * image.shape[0]) - int(h / 2))
+				p2 = (int(label[1] * image.shape[0]) + int(w / 2), int(label[2] * image.shape[0]) + int(h / 2))
+				im = cv2.rectangle(im, p1, p2, ANNO_COL, 2)
+			annotated_images.append(im)
 
-				rect = cv2.minAreaRect(cnt)
-				box = np.int0(cv2.boxPoints(rect))
-				# m1 = np.abs(box[1][0] - box[0][0]) / np.abs(box[1][1] - box[0][1]) 
-				cv2.drawContours(annotated, [box], 0, self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-				#cv2.line(annotated, (box[0][0], box[0][1]), (box[3][0], box[3][1]), self.ANNOTATION_COLOR, self.ANNOTATION_THICKNESS)
-				bounds = np.array([rect[0][0], rect[0][1], rect[1][0], rect[1][1], rect[2]])
-		
-		self.steps = [blurred, hsv, thresh, annotated]
-
-		return bounds
+		return annotated_images
 
 	def detect_and_annotate(self, image):
 		"""
@@ -122,17 +107,14 @@ class MDS_Detector:
 				None
 		"""
 		results = self.detect(image)
-		mostly_raw = np.concatenate(steps[:2], axis=1)
-		not_so_raw = np.concatenate(steps[2:], axis=1)
-		collage = np.concatenate([mostly_raw, not_so_raw])
-		bv.buffshow('Steps', collage)
+		annotated = self.annotate_images([image])
+		bv.buffshow('Annotation', annotated)
 
-	def publish_steps(self):
+	def publish_annotated(self, image):
 		"""
 			Images processing steps are saved, this will publish them
 		"""
-		for i, pub in enumerate(self.debug_pubs):
-				pub.publish(self.bridge.cv2_to_imgmsg(self.steps[i], encoding='bgr8'))
+		pub.publish(self.bridge.cv2_to_imgmsg(self.annotate_images([image])[0], encoding='bgr8'))
 
 	def detect_and_publish(self, image):
 		"""
@@ -149,10 +131,10 @@ class MDS_Detector:
 		mesg.data = results
 		
 		if not results is None:
-			self.bound_pub.publish(mesg)
+			self.target_pub.publish(mesg)
 
 		if self.debug:
-			self.publish_steps()
+			self.publish_annotated(image.copy)
 
 	def imageCallBack(self, img_msg):
 		"""
@@ -194,7 +176,7 @@ if __name__=='__main__':
 	elif '/buffbot' in sys.argv[1]:
 			main(rospy.get_param(sys.argv[1]))
 	else:
-		rospy.logerr('Unsupported call: call this with a rosparam component name or a yaml config')
+		rospy.logerr('Unsupported call: use this with a rosparam component name or a yaml config')
 
 
 

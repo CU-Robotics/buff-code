@@ -83,7 +83,7 @@ class GD_Handler:
 		"""
 		uploadFolder(batch, 'images')
 
-	def downloadBatch(self, batch=None):
+	def downloadBatch(self, batch=None, path=None):
 		"""
 			Use this function to pull data from GDrive
 		"""
@@ -96,9 +96,14 @@ class GD_Handler:
 		print(f'GDrive handler Downloading from {batch}')
 
 		for file in file_list:
+			if path is None:
+				path = os.path.join(os.getenv('PROJECT_ROOT'), 'data', file['title'])
+			else:
+				path = os.path.join(path, file['title'])
+
 			print(f'GDrive handler Downloading {file["title"]}...')
 			#data = drive.CreateFile({'id': file['id']})
-			file.GetContentFile(os.path.join(os.getenv('PROJECT_ROOT'), 'data', file['title']))
+			file.GetContentFile(path)
 			file = None
 
 def main(action, data=None):
