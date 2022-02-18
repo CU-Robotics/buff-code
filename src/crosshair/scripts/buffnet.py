@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 """
 	Project:
-			Mitch detector
+			buffnet detector
 	Author: Mitchell D Scott
 	Description:
 		Detects and displays images
@@ -170,7 +170,7 @@ def main(configData):
 	if configData is None:
 		return
 
-	detector = MDS_Detector(configData=configData)
+	detector = BuffNet(configData=configData)
 
 	if 'TOPICS' in configData:
 		rospy.spin()
@@ -185,7 +185,7 @@ def main(configData):
 
 if __name__=='__main__':
 	if len(sys.argv) < 2:
-		exit(0)
+		main({})
 	if sys.argv[1][-5:] == '.yaml':
 		path = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', sys.argv[1])
 		with open(path, 'r') as f:
