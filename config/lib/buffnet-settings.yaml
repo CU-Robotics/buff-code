@@ -1,0 +1,10 @@
+TOPICS:
+  - 'image_raw'
+  - 'detected_target'
+  - 'annotated_image'
+ANNOTATION_COLOR:
+  - 0
+  - 255
+  - 0
+ANNOTATION_THICKNESS:
+  2

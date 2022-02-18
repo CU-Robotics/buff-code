@@ -159,7 +159,7 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/mds_detector.py
+  scripts/buffnet.py
   scripts/interactive_thresholder.py
   DESTINATION $ENV{PROJECT_ROOT}/buffpy/lib
 )

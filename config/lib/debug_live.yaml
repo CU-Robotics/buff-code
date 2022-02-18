@@ -4,16 +4,10 @@ DEBUG:
 TOPICS:
   RAW_IMG:
     'image_raw'
-  IMG_PROCESS_STEP1:
-    'image_blurred'
-  IMG_PROCESS_STEP2:
-    'image_hsv'
-  IMG_PROCESS_STEP3:
-    'image_threshold'
-  IMG_PROCESS_STEP4:
-    'image_annotated'
-  BOUNDARY:
-    'detected_boundary'
+  ANNOTATED_IMAGE:
+    'annotated_image'
+  DETECTED:
+    'detected_object'
   TARGET:
     'detected_targets'
   TARGET_ERR:
@@ -50,23 +44,20 @@ NODES:
       'buffpy'
   DETECTOR:   # spawns our detector node
     FILE:
-      'mds_detector.py'
+      'buffnet.py'
     TOPICS:
       - 'RAW_IMG'
-      - 'BOUNDARY'
-      - 'IMG_PROCESS_STEP1'
-      - 'IMG_PROCESS_STEP2'
-      - 'IMG_PROCESS_STEP3'
-      - 'IMG_PROCESS_STEP4'
+      - 'DETECTED'
+      - 'ANNOTATED_IMAGE'
     CONFIG:
-      'bouncing_ball.yaml'
+      'buffnet-settings.yaml'
     PACKAGE:
       'buffpy'
   TRACKER:     # spawns our tracker node
     FILE:
       'mds_tracker.py'
     TOPICS:
-      - 'BOUNDARY'
+      - 'DETECTED'
       - 'TARGET'
       - 'TARGET_ERR'
     PACKAGE:

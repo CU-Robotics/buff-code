@@ -194,7 +194,7 @@ if __name__=='__main__':
 	elif '/buffbot' in sys.argv[1]:
 			main(rospy.get_param(sys.argv[1]))
 	else:
-		rospy.logerr('Unsupported call: call this with a rosparam component name or a yaml config')
+		rospy.logerr('Unsupported call: use this with a rosparam component name or a yaml config')
 
 
 
