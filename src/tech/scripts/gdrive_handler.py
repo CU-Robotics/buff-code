@@ -88,7 +88,7 @@ class GD_Handler:
 			Use this function to pull data from GDrive
 		"""
 		if batch is None:
-			batch = self.handle['UNLABELED_DATA_FOLDER_ID']
+			return
 		else:
 			batch = self.handle[batch]
 		
@@ -105,6 +105,22 @@ class GD_Handler:
 			#data = drive.CreateFile({'id': file['id']})
 			file.GetContentFile(path)
 			file = None
+
+	def downloadFile(self, file=None, path=None):
+		if file is None or not file in self.handle:
+			return
+		else:
+			file = self.handle[file]
+		
+		file = self.drive.CreateFile({'id': file})
+
+		if path is None:
+			path = os.path.join(os.getenv('PROJECT_ROOT'), 'data', file['title'])
+		else:
+			path = os.path.join(path, file['title'])
+
+		print(f'GDrive handler Downloading {file["title"]}...')
+		file.GetContentFile(path)
 
 def main(action, data=None):
 	gd = GD_Handler()

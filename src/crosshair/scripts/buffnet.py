@@ -30,6 +30,15 @@ class BuffNet:
 		if 'DEBUG' in configData:
 			self.debug = True
 
+		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
+		model_path = os.path.join(model_dir, 'best.pt')
+
+		if not os.path.exists(model_path):
+			gdrive = GD_Handler()
+			gdrive.downloadFile(file='BuffNetv2-exp6', path=model_dir)
+
+		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
+
 		if not rospy.is_shutdown():
 			self.debug = rospy.get_param('/buffbot/DEBUG')
 			topics = rospy.get_param('/buffbot/TOPICS')
@@ -61,15 +70,6 @@ class BuffNet:
 		if 'ANNOTATION_THICKNESS' in configData:
 			self.ANNOTATION_THICKNESS = configData['ANNOTATION_THICKNESS']
 
-		if 'MODEL' in configData and os.path.exists(configData['MODEL']):
-			model_path = configData['MODEL']
-				
-		else:
-			model_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-			gdrive = GD_Handler()
-			gdrive.downloadBatch(batch='BuffNetv2-exp6', path=model_path)
-
-		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
 
 	def detect(self, image):
 		"""
@@ -80,7 +80,7 @@ class BuffNet:
 				detections: bounding box of the detected object with color and class [class, (x1,y1), (x2,y2)]
 		"""
 		image = cv2.resize(image, (416, 416))
-		return self.model(image)
+		return self.model(image).pandas().xyxy
 
 	def annotate_images(self, images=None, labels=None):
 		if images is None or labels is None:
@@ -110,11 +110,11 @@ class BuffNet:
 		annotated = self.annotate_images([image])
 		bv.buffshow('Annotation', annotated)
 
-	def publish_annotated(self, image):
+	def publish_annotated(self, image, label):
 		"""
 			Images processing steps are saved, this will publish them
 		"""
-		pub.publish(self.bridge.cv2_to_imgmsg(self.annotate_images([image])[0], encoding='bgr8'))
+		pub.publish(self.bridge.cv2_to_imgmsg(self.annotate_images([image], [label])[0], encoding='bgr8'))
 
 	def detect_and_publish(self, image):
 		"""
@@ -126,15 +126,24 @@ class BuffNet:
 			@RETURNS:
 				None
 		"""
-		results = self.detect(image)
+		preds = self.detect(image)
 		mesg = Float64MultiArray()
-		mesg.data = results
+		labels = [label for label in preds]
+		print(labels)
+
+		if len(labels) > 0:
+			mesg.data = [-1.0, -1.0, -1.0, -1.0]
+		else:
+			# results -> labels
+			#mesg.data = labels
+			print(preds[0]) # debug only
+			return
 		
 		if not results is None:
 			self.target_pub.publish(mesg)
 
-		if self.debug:
-			self.publish_annotated(image.copy)
+		# if self.debug:
+		# 	self.publish_annotated(image.copy, labels)
 
 	def imageCallBack(self, img_msg):
 		"""

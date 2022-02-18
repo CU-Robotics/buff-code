@@ -1,7 +1,5 @@
-TOPICS:
-  - 'image_raw'
-  - 'detected_target'
-  - 'annotated_image'
+MODEL:
+  'best.pt'
 ANNOTATION_COLOR:
   - 0
   - 255
