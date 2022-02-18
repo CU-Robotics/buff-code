@@ -269,17 +269,4 @@ if __name__ == '__main__':
     else:
         rospy.logerr(
             'Unsupported call: call this with a rosparam component name or a yaml config')
-"""
 
-if __name__ == "__main__":
-    img = cv2.imread('/home/cu-robotics/buff-code/config/lib/ml_test/86.jpg')
-    dets = []
-    with open('/home/cu-robotics/buff-code/config/lib/ml_test/86.txt', 'r') as labelfile:
-        for line in labelfile:
-            c, x, y, w, h = line[:-1].split(' ')
-            dets.append((float(c), float(x), float(y), float(w), float(h)))
-
-    det = ML_Detector()
-
-    det.detect_and_compare(img, dets)
-"""

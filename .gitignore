@@ -5,7 +5,7 @@ build
 install
 buffpy/lib
 buffpy/bin/teensy
-config/sensitive/*
+config/sensitive/
 buffpy/bin/__pycache__
 dev/.ipynb_checkpoints
 buffpy/bin/libpng12.so.0
