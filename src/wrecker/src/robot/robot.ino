@@ -40,28 +40,6 @@ void loop() {
   // Serial.println(myMotor.getTemp());
   can1.write(msg);
 
-  // if(can1.read(recMsg)) {   //parsed without motor class
-  //   Serial.println("------------------");
-  //   Serial.print("motor id: ");
-  //   Serial.println(recMsg.id, HEX);
-  //   angle = recMsg.buf[0];
-  //   angle = angle << 8;
-  //   angle = angle | recMsg.buf[1];
-  //   Serial.print("Motor angle: ");
-  //   Serial.println(angle);
-    
-  //   torque = recMsg.buf[4];
-  //   torque = torque << 8;
-  //   torque = torque | recMsg.buf[5];
-  //   Serial.print("Torque: ");
-  //   Serial.println(torque);
-
-  //   rpm = recMsg.buf[2];
-  //   rpm = rpm << 8;
-  //   rpm = rpm | recMsg.buf[3];
-  //   Serial.print("RPM: ");
-  //   Serial.println(rpm);
-  // }
 
   if(can1.read(recMsg)) { //parsed with motor class
     myMotor.updateMotor(recMsg);

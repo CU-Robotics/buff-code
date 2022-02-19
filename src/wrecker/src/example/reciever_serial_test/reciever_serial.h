@@ -1,3 +1,4 @@
+#include "arduino.h"
 #define REC_SERIAL_H
 
 struct reciever_message
