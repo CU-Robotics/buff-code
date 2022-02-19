@@ -1,13 +1,3 @@
-#define RMMOTOR_H
-
-#ifndef CONSTANTS_H
-#include "constants.h"
-#endif
-
-#ifndef _FLEXCAN_T4_H_
-#include <FlexCAN_T4.h>
-#endif
-
 #include "rmMotor.h"
 
 short rmMotor::getTorque() {
@@ -38,19 +28,19 @@ format of data sent from motors over CAN
 6 temp
 */
 void rmMotor::updateMotor(CAN_message_t* recMsg) {
-    angle = recMsg.buf[0];
+    angle = recMsg->buf[0];
     angle = angle << 8;
-    angle = angle | recMsg.buf[1];
+    angle = angle | recMsg->buf[1];
 
-    rpm = recMsg.buf[2];
+    rpm = recMsg->buf[2];
     rpm = rpm << 8;
-    rpm = rpm | recMsg.buf[3];
+    rpm = rpm | recMsg->buf[3];
 
-    torque = recMsg.buf[4];
+    torque = recMsg->buf[4];
     torque = torque << 8;
-    torque = torque | recMsg.buf[5];
+    torque = torque | recMsg->buf[5];
 
-    temp = recMsg.buf[6];
+    temp = recMsg->buf[6];
 }
 
 void rmMotor::updateMotor(short newTorque, short newRpm, short newAngle, byte newTemp) {
