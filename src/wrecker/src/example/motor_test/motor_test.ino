@@ -44,7 +44,7 @@ void loop() {
 
   can1.write(msg);
   
-  msg.id = 0x2FF;    //Modify id if not using gm6020
+  msg.id = 0x1FF;    //Modify id if not using gm6020
   
   msg.buf[0] = bOne; //set high order byte
   msg.buf[1] = bTwo; //set low order byte

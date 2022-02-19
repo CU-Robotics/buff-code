@@ -1,4 +1,4 @@
-const int outputPin = 29;
+const int outputPin = 2;
 
 int newValue = 0;
 
