@@ -24,7 +24,7 @@ sudo apt install -y ros-${ROS_DISTRO}-${ROS_PKG}
 #
 # Install ROS dependencies
 #
-python3 -m pip install -r ${PROJECT_ROOT}/config/install/ros_dependencies.txt
+python3 -m pip install -r ${PROJECT_ROOT}/buffpy/config/install/ros_dependencies.txt
 
 
 echo -e "\n\tFinishing ROS setup...\n"

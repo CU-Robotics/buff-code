@@ -107,7 +107,7 @@ def cleanWorkspace():
 		will also remove any generated binaries and configs
 	"""
 	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
-	lib_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy/lib')
+	lib_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'lib')
 
 	if not 'edge' in os.getenv('HOSTNAME'):
 		result = subprocess.run(f'catkin clean -y', shell=True)
@@ -127,7 +127,7 @@ def buildWorkspace(build):
 	# use catkin to clean the workspace if it was already built
 	result = subprocess.run(f'catkin clean -y', shell=True)
 	# clean the lib when building
-	clear_directory(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy/lib'))
+	clear_directory(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'lib'))
 
 	# Rebuild the workspace with catkin build
 	if build[0]:
@@ -158,7 +158,7 @@ def install():
 	# if root does exist remove it
 	result1 = subprocess.run(f'ssh {bot} "if [[ -d {bot_root} ]]; then rm -rf {bot_root}; mkdir {bot_root}; fi"', shell=True)
 	if result1.returncode == 0:
-		result2 = subprocess.run(['scp', '-r', source, target])
+		result2 = subprocess.run(['scp', '-r', source, f'{bot}:{target}'])
 		if result2.returncode == 0:
 			print(f'Install Error: {result2}')
 

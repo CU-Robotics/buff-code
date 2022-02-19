@@ -1,7 +1,7 @@
 #! /bin/bash
 
 #  run this script with 'source scripts/install.bash'
-
+##### DEPRECATED ######
 PROJECT_ROOT=$PWD
 
 echo -e "Running Install from ${PWD}"

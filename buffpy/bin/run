@@ -55,7 +55,7 @@ def parse_target(args, projectRoot):
 
 		if target[-5:] == '.yaml':	# if target is a yaml file set config
 			print('Loading system:...')
-			target_path = os.path.join(projectRoot, 'config', 'lib', '{}'.format(target))
+			target_path = os.path.join(projectRoot, 'buffpy', 'config', 'lib', '{}'.format(target))
 			config = load_config(target_path)	# None if no config
 
 			if config is None:
@@ -129,7 +129,7 @@ def launch_system(target_path, config):
 					node.pop('CONFIG')
 
 				elif 'CONFIG' in node:
-					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', node['CONFIG']), 'r') as f:
+					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', node['CONFIG']), 'r') as f:
 						data = yaml.safe_load(f)
 						if not data is None:
 							node.update(data) # Add the programs config to its run config

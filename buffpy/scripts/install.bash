@@ -18,24 +18,24 @@ sudo apt update
 
 echo -e "\n\tInstalling Dependencies...\n"
 #	Using apt and pip install all the dependencies for the project
-xargs sudo apt install -y <${PROJECT_ROOT}/config/install/dependencies.txt
+xargs sudo apt install -y <${PROJECT_ROOT}/buffpy/config/install/dependencies.txt
 
 echo -e "\n\tUpgrading pip3\n"
 # upgrade pip before installing dependencies
 python3 -m pip install --upgrade pip==21.3.1
 
 echo -e "\n\tInstalling python3 requirements\n"
-python3 -m pip install -r ${PROJECT_ROOT}/config/install/python3_requirements.txt
+python3 -m pip install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
 
 
 
 # If no ROS, install it
 if [[ $ROS_DISTRO == "" ]]; then
-	source "${PROJECT_ROOT}/scritps/install_ros_melodic.bash" melodic desktop
+	source "${PROJECT_ROOT}/buffpy/scritps/install_ros_melodic.bash" melodic desktop
 fi
 
 # Also install Sublime Text-editor
-source "${PROJECT_ROOT}/scripts/install_sublime.bash"
+source "${PROJECT_ROOT}/buffpy/scripts/install_sublime.bash"
 
 
 if [[ "${HOSTNAME}" != "edge"* ]]; then
