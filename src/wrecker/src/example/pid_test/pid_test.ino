@@ -6,7 +6,7 @@ FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1; //create an object for CAN bus 1
 
 short voltage = 0;   //value that will be sent to the motor
 
-PID_v2 anglePID(6, 5, .75, PID::Direct);  //first value is P, Second is I, third is D, fourth vallue does something important I presume
+PID_v2 anglePID(10, 8, .75, PID::Direct);  //first value is P, Second is I, third is D, fourth vallue does something important I presume
 
 PID_v2 rpmPID(.5, 0, 0, PID::Direct);  //first value is P, Second is I, third is D, fourth vallue does something important I presume
 
@@ -69,7 +69,7 @@ void loop() {
     measuredRPM = measuredRPM << 8;   //move the high byte into the high position
     measuredRPM = measuredRPM | recMsg.buf[3];  //get the low byte into the variable
 
-    voltage = rpmPID.Run(measuredRPM);
+    voltage = anglePID.Run(measuredAngle);
     Serial.print("Voltage: ");
     Serial.print(voltage);
     Serial.print(", angle: ");
@@ -78,9 +78,9 @@ void loop() {
     Serial.println(measuredRPM);
   }
 
-  rpmPID.Compute();   //must be run to recalculate the PID output, maybe should be moved to just before anglePID.run()
+  anglePID.Compute();   //must be run to recalculate the PID output, maybe should be moved to just before anglePID.run()
   
-  sendMsg.id = 0x200;    //ID for first 4 GM6020 motors or second 4 C620 ESCs
+  sendMsg.id = 0x1FF;    //1ff is ID for first 4 GM6020 motors or second 4 C620 ESCs
 
   byte bOne = highByte(voltage);
   byte bTwo = lowByte(voltage);
