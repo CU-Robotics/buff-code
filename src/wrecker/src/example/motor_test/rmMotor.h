@@ -1,8 +1,9 @@
+#ifndef RMMOTOR_H
 #define RMMOTOR_H
 
-#ifndef CONSTANTS_H
+#include <FlexCAN_T4.h>
+
 #include "constants.h"
-#endif
 
 class rmMotor {
   public:
@@ -22,3 +23,5 @@ class rmMotor {
     short byteNum = -1;
     CAN_message_t *sendMsgPtr = NULL;
 };
+
+#endif // RMMOTOR_H

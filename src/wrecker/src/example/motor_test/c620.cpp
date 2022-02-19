@@ -1,15 +1,3 @@
-#ifndef CONSTANTS_H
-#include "constants.h"
-#endif
-
-#ifndef _FLEXCAN_T4_H_
-#include <FlexCAN_T4.h>
-#endif
-
-#ifndef FreqMeasureMulti_h
-#include <FreqMeasureMulti.h>
-#endif
-
 #include "c620.h"
 
 c620CAN::c620CAN(short motorId, CAN_message_t* mySendMsgPtr){

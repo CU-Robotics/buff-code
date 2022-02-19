@@ -15,10 +15,6 @@
 #endif
 
 class c620CAN : public rmMotor {
-    private:
-        int id;
-        CAN_message_t& sendMsg;
-        int byteNum;
     public:
         c620CAN(int tempID, CAN_message_t* msg);
         void setPower(float power);
