@@ -180,7 +180,7 @@ if __name__=='__main__':
 	if len(sys.argv) < 2:
 		main({})
 	if sys.argv[1][-5:] == '.yaml':
-		path = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', sys.argv[1])
+		path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', sys.argv[1])
 		with open(path, 'r') as f:
 			data = yaml.safe_load(f)
 		main(data)

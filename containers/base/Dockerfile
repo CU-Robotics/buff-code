@@ -4,7 +4,7 @@
 #
 
 # change this to select ARM or x86_64
-ARG BASE_IMAGE=ubuntu:18.04  # nvcr.io/nvidia/l4t-base:r32.6.1 # 
+ARG BASE_IMAGE=ubuntu:18.04 # nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04 # 
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop
@@ -59,6 +59,7 @@ RUN apt-get update && \
 	python3 -m pip install \
 		torch==1.9.0 \
 		pandas==1.1.5 \
+		pillow==8.4.0 \
 		pydrive==1.3.1 \
 		cython==0.29.26 \
 		rosdep==0.21.0 \
