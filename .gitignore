@@ -4,6 +4,7 @@ devel
 build
 install
 buffpy/lib
+*/.DS_store
 buffpy/bin/teensy
 config/sensitive/*
 buffpy/bin/__pycache__
