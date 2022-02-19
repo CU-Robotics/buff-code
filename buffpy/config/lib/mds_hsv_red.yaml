@@ -1,0 +1,14 @@
+LOW: 
+  - 120
+  - 108
+  - 180
+HIGH:
+  - 128
+  - 145
+  - 240
+ANNOTATION_COLOR:
+  - 0
+  - 255
+  - 0
+ANNOTATION_THICKNESS:
+  2

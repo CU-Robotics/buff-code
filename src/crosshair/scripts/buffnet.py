@@ -77,26 +77,35 @@ class BuffNet:
 			@PARAMS:
 				image: an RGB image 
 			@RETURNS:
-				detections: bounding box of the detected object with color and class [class, (x1,y1), (x2,y2)]
+				annotations: bounding box of the detected object with color and class [class, name, (x1,y1), (w,h)]
 		"""
 		image = cv2.resize(image, (416, 416))
-		return self.model(image).pandas().xyxy
+		pred = self.model(image).pandas().xywh
 
-	def annotate_images(self, images=None, labels=None):
-		if images is None or labels is None:
+		annotation = []
+		detection = []
+		for i in range(len(row)):
+			annotation.append([row['class'][i], row['name'][i], round(row['xcenter'][i]), round(row['ycenter'][i]), round(row['width'][i]), round(row['height'][i])])
+			detection.apend([round(row['xcenter'][i]), round(row['ycenter'][i]), round(row['width'][i]), round(row['height'][i])])
+
+		return annotation, detection
+
+	def annotate_image(self, images=None, labels=None):
+
+		if image is None or labels is None:
 			return None
-		annotated_images = []
-		for i, image in enumerate(images):
-			im = image.copy()
-			for label in labels[i]:
-				w = int(label[3] * image.shape[0])
-				h = int(label[4] * image.shape[0])
-				p1 = (int(label[1] * image.shape[0]) - int(w / 2), int(label[2] * image.shape[0]) - int(h / 2))
-				p2 = (int(label[1] * image.shape[0]) + int(w / 2), int(label[2] * image.shape[0]) + int(h / 2))
-				im = cv2.rectangle(im, p1, p2, ANNO_COL, 2)
-			annotated_images.append(im)
 
-		return annotated_images
+		annotated_image = image.copy()
+
+		for label in labels:
+			w = int(label[4])
+			h = int(label[5])
+			p1 = (int(label[2]) - int(w / 2), int(label[3]) - int(h / 2))
+			p2 = (int(label[2]) + int(w / 2), int(label[3]) + int(h / 2))
+			annotated_image = cv2.rectangle(annotated_image, p1, p2, ANNO_COL[label[0] % 3], 2)
+			annotated_image = cv2.putText(annotated_image, label[1], p1, cv2.FONT_HERSHEY_SIMPLEX, 0.4, ANNO_COL[label[0] % 3], 1, cv2.LINE_AA)
+		
+		return annotated_image
 
 	def detect_and_annotate(self, image):
 		"""
@@ -126,20 +135,13 @@ class BuffNet:
 			@RETURNS:
 				None
 		"""
-		preds = self.detect(image)
+		annotations, predictions = self.detect(image)
 		mesg = Float64MultiArray()
-		labels = [label for label in preds]
-		print(labels)
 
-		if len(labels) > 0:
-			mesg.data = [-1.0, -1.0, -1.0, -1.0]
+		if len(preds) < 1:
+			mesg.data = [-1.0, -1.0, -1.0, -1.0, -1.0]
 		else:
-			# results -> labels
-			#mesg.data = labels
-			print(preds[0]) # debug only
-			return
-		
-		if not results is None:
+			mesg.data = np.array(predictions, dtype=np.float64)
 			self.target_pub.publish(mesg)
 
 		# if self.debug:
