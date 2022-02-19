@@ -1,4 +1,5 @@
 #include <FlexCAN_T4.h>
+#include "pid.h"
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 
@@ -13,7 +14,7 @@ int angle = 0;
 short torque = 0;
 short rpm = 0;
 
-const bool printInfo = false;   //set to true to get stats of motors printed to serial
+const bool printInfo = true;   //set to true to get stats of motors printed to serial
 
 CAN_message_t msg;
 CAN_message_t recMsg;
@@ -28,6 +29,9 @@ void setup() {
 }
 
 void loop() {
+
+  PID pidTest = PID(0.1, -100, 100, 0.1, 0.01, 0.1);
+  
   msg.id = 0x200;    //Modify id if not using gm6020
   
   msg.buf[0] = bOne; //set high order byte
@@ -44,7 +48,7 @@ void loop() {
 
   can1.write(msg);
   
-  msg.id = 0x2FF;    //Modify id if not using gm6020
+  msg.id = 0x1FF;    //Modify id if not using gm6020
   
   msg.buf[0] = bOne; //set high order byte
   msg.buf[1] = bTwo; //set low order byte
@@ -95,12 +99,14 @@ void loop() {
   }
 
   if(Serial.available() > 1) {
-//    String data = Serial.read();
+    String data = Serial.read();
     spe = Serial.parseInt();
     Serial.print("new speed: ");
     Serial.println(spe);
-    bOne = highByte(spe);
-    bTwo = lowByte(spe);
+    short nBOne = (short) pidTest.calculate(spe, torque);
+    short nBTwo = (short) pidTest.calculate(spe, torque);
+    bOne = highByte(nBOne);
+    bTwo = lowByte(nBTwo);
   }
   
 }
