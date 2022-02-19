@@ -2,8 +2,6 @@
 #include <math.h>
 #include "constants.h"
 
-#define _USE_MATH_DEFINES
-#define WHEEL_BASE_LENGTH 14.50
 
 swerveKinematics::swerveKinematics(){
     flWSpd, WheelSpd[0] = 0;

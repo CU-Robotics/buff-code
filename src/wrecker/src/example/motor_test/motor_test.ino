@@ -48,7 +48,7 @@ void loop() {
 
   can1.write(msg);
   
-  msg.id = 0x2FF;    //Modify id if not using gm6020
+  msg.id = 0x1FF;    //Modify id if not using gm6020
   
   msg.buf[0] = bOne; //set high order byte
   msg.buf[1] = bTwo; //set low order byte
@@ -103,8 +103,8 @@ void loop() {
     spe = Serial.parseInt();
     Serial.print("new speed: ");
     Serial.println(spe);
-    short nBOne = pidTest.calculate(spe, torque);
-    short nBTwo = pidTest.calculate(spe, torque);
+    short nBOne = (short) pidTest.calculate(spe, torque);
+    short nBTwo = (short) pidTest.calculate(spe, torque);
     bOne = highByte(nBOne);
     bTwo = lowByte(nBTwo);
   }

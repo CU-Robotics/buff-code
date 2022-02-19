@@ -5,5 +5,6 @@
 //max values
 #define C620_MAX_VALUE 16384
 #define GM6020_MAX_VALUE 30000
-#define WHEEL_BASE_LENGTH 1
+#define _USE_MATH_DEFINES
+#define WHEEL_BASE_LENGTH 14.50
 #define SWERVE_R 27.164
