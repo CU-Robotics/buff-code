@@ -184,13 +184,15 @@ def main(configData):
 
 
 if __name__=='__main__':
-	if '/buffbot' in sys.argv[1]:
-		main(rospy.get_param(sys.argv[1]))
-	elif sys.argv[1][-5:] == '.yaml':
+	if len(sys.argv) < 2:
+		return
+	if sys.argv[1][-5:] == '.yaml':
 		path = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', sys.argv[1])
 		with open(path, 'r') as f:
 			data = yaml.safe_load(f)
 		main(data)
+	elif '/buffbot' in sys.argv[1]:
+			main(rospy.get_param(sys.argv[1]))
 	else:
 		rospy.logerr('Unsupported call: call this with a rosparam component name or a yaml config')
 
