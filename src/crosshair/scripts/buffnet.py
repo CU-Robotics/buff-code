@@ -31,11 +31,11 @@ class BuffNet:
 			self.debug = True
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, 'best.pt')
+		model_path = os.path.join(model_dir, configData['MODEL'])
 
 		if not os.path.exists(model_path):
 			gdrive = GD_Handler()
-			gdrive.downloadFile(file='BuffNetv2-exp6', path=model_dir)
+			gdrive.downloadFile(file='BuffNetv2-exp14', path=model_dir, title='BuffNetv2-exp14.pt')
 
 		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
 
@@ -65,11 +65,6 @@ class BuffNet:
 			# there is no config for the model to load from
 			return None
 
-		if 'ANNOTATION_COLOR' in configData:
-			self.ANNOTATION_COLOR = configData['ANNOTATION_COLOR']
-		if 'ANNOTATION_THICKNESS' in configData:
-			self.ANNOTATION_THICKNESS = configData['ANNOTATION_THICKNESS']
-
 
 	def detect(self, image):
 		"""
@@ -80,17 +75,24 @@ class BuffNet:
 				annotations: bounding box of the detected object with color and class [class, name, (x1,y1), (w,h)]
 		"""
 		image = cv2.resize(image, (416, 416))
-		pred = self.model(image).pandas().xywh
+		prediction = np.array(self.model(image).pandas().xywh)[0]
 
 		annotation = []
 		detection = []
-		for i in range(len(row)):
-			annotation.append([row['class'][i], row['name'][i], round(row['xcenter'][i]), round(row['ycenter'][i]), round(row['width'][i]), round(row['height'][i])])
-			detection.apend([round(row['xcenter'][i]), round(row['ycenter'][i]), round(row['width'][i]), round(row['height'][i])])
+
+		if len(prediction) < 1:
+			return annotation, detection
+
+		for x,y,w,h,cf,cl,n in prediction:
+			annotation.append([round(x), round(y), round(w), round(h), cf, cl, n])
+			detection.append([round(x), round(y), round(w), round(h), cf, cl])
 
 		return annotation, detection
 
-	def annotate_image(self, images=None, labels=None):
+	def generate_color(self, cl):
+		return (np.cos(cl) * 255, np.sin(cl) * 255, np.tan(cl) * 255)
+
+	def annotate_image(self, image=None, labels=None):
 
 		if image is None or labels is None:
 			return None
@@ -98,12 +100,13 @@ class BuffNet:
 		annotated_image = image.copy()
 
 		for label in labels:
-			w = int(label[4])
-			h = int(label[5])
-			p1 = (int(label[2]) - int(w / 2), int(label[3]) - int(h / 2))
-			p2 = (int(label[2]) + int(w / 2), int(label[3]) + int(h / 2))
-			annotated_image = cv2.rectangle(annotated_image, p1, p2, ANNO_COL[label[0] % 3], 2)
-			annotated_image = cv2.putText(annotated_image, label[1], p1, cv2.FONT_HERSHEY_SIMPLEX, 0.4, ANNO_COL[label[0] % 3], 1, cv2.LINE_AA)
+			w = int(label[2])
+			h = int(label[3])
+			p1 = (int(label[0]) - int(w / 2), int(label[1]) - int(h / 2))
+			p2 = (int(label[0]) + int(w / 2), int(label[1]) + int(h / 2))
+			color = self.generate_color(label[5])
+			annotated_image = cv2.rectangle(annotated_image, p1, p2, color, 2)
+			annotated_image = cv2.putText(annotated_image, f'{label[6]}-{label[4]}%', p1, cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1, cv2.LINE_AA)
 		
 		return annotated_image
 
@@ -116,14 +119,14 @@ class BuffNet:
 				None
 		"""
 		results = self.detect(image)
-		annotated = self.annotate_images([image])
+		annotated = self.annotate_image(image, results[0])
 		bv.buffshow('Annotation', annotated)
 
-	def publish_annotated(self, image, label):
+	def publish_annotated(self, image):
 		"""
 			Images processing steps are saved, this will publish them
 		"""
-		pub.publish(self.bridge.cv2_to_imgmsg(self.annotate_images([image], [label])[0], encoding='bgr8'))
+		self.debug_pub.publish(self.bridge.cv2_to_imgmsg(image, encoding='bgr8'))
 
 	def detect_and_publish(self, image):
 		"""
@@ -138,14 +141,17 @@ class BuffNet:
 		annotations, predictions = self.detect(image)
 		mesg = Float64MultiArray()
 
-		if len(preds) < 1:
+		if len(predictions) < 1:
 			mesg.data = [-1.0, -1.0, -1.0, -1.0, -1.0]
 		else:
-			mesg.data = np.array(predictions, dtype=np.float64)
-			self.target_pub.publish(mesg)
+			for pred in predictions:
+				mesg.data = np.array(pred, dtype=np.float64)
+				self.target_pub.publish(mesg)
 
-		# if self.debug:
-		# 	self.publish_annotated(image.copy, labels)
+		if self.debug:
+			image = self.annotate_image(image, annotations)
+
+		self.publish_annotated(image)
 
 	def imageCallBack(self, img_msg):
 		"""

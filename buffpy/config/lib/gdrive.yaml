@@ -18,5 +18,7 @@ Sample_Competition:
   '10-hYTf3C16Uz7UDZA_aiJ8GRlIfvNPCe'
 BuffNetv2-exp6:
   '14KZVHvYYasl-1JDNuDQx-DKBYQ4wnrvU'
+BuffNetv2-exp14:
+  '1-plMlrb0CrBVb2eEB-QHjHQ-_6V5Kcpb'
 SECRETS:
-  'config/sensitive/client_secrets.json'
+  'buffpy/config/sensitive/client_secrets.json'

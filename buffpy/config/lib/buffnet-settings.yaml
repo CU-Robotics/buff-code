@@ -1,8 +1,2 @@
 MODEL:
-  'best.pt'
-ANNOTATION_COLOR:
-  - 0
-  - 255
-  - 0
-ANNOTATION_THICKNESS:
-  2
+  'BuffNetv2-exp14.pt'
