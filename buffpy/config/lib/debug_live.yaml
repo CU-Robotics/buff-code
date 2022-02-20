@@ -1,0 +1,73 @@
+DEBUG:
+  True
+  
+TOPICS:
+  RAW_IMG:
+    'image_raw'
+  ANNOTATED_IMAGE:
+    'annotated_image'
+  DETECTED:
+    'detected_object'
+  TARGET:
+    'detected_targets'
+  TARGET_ERR:
+    'detected_error'
+
+NODES:
+  # ROSBAGGER:    # This will record all system runs and allow us to play them back
+  #   FILE:
+  #     'record'
+  #   PACKAGE:
+  #     'rosbag'
+  #   ARGS:       # -a record all -x ignore -o output prefix
+  #     - '-a'
+  #     - '-x /rosout'
+  #     - '-o /home/cu-robotics/buff-code/data/'
+  DEBUG_VIEW:   # Opens an image view pane
+    FILE:
+      'rqt_image_view'
+    PACKAGE:
+      'rqt_image_view'
+  RQT_GRAPH:    # Opens an rqt_graph
+    FILE:
+      'rqt_graph'
+    PACKAGE:
+      'rqt_graph'
+  CAMERA:     # spawns our camera streamer
+    FILE:
+      'mds_camera.py'
+    TOPICS:
+      - 'RAW_IMG'
+    CONFIG:
+      'default_camera.yaml'
+    PACKAGE:
+      'buffpy'
+    REQUIRED:
+      'yes'  # can be anything
+  DETECTOR:   # spawns our detector node
+    FILE:
+      'buffnet.py'
+    TOPICS:
+      - 'RAW_IMG'
+      - 'DETECTED'
+      - 'ANNOTATED_IMAGE'
+    CONFIG:
+      'buffnet-settings.yaml'
+    PACKAGE:
+      'buffpy'
+  TRACKER:     # spawns our tracker node
+    FILE:
+      'mds_tracker.py'
+    TOPICS:
+      - 'DETECTED'
+      - 'TARGET'
+      - 'TARGET_ERR'
+    PACKAGE:
+      'buffpy'
+  SERIAL:   # spawns our serial node
+    FILE:
+      'serial_handler.py'
+    TOPICS:
+      - 'TARGET'
+    PACKAGE:
+      'buffpy'

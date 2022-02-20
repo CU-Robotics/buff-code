@@ -170,7 +170,7 @@ def main(configData):
 	if configData is None:
 		return
 
-	MDS_Detector(configData=configData)
+	detector = MDS_Detector(configData=configData)
 
 	if 'TOPICS' in configData:
 		rospy.spin()
@@ -185,7 +185,7 @@ def main(configData):
 
 if __name__=='__main__':
 	if len(sys.argv) < 2:
-		return
+		exit(0)
 	if sys.argv[1][-5:] == '.yaml':
 		path = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', sys.argv[1])
 		with open(path, 'r') as f:
@@ -194,7 +194,7 @@ if __name__=='__main__':
 	elif '/buffbot' in sys.argv[1]:
 			main(rospy.get_param(sys.argv[1]))
 	else:
-		rospy.logerr('Unsupported call: call this with a rosparam component name or a yaml config')
+		rospy.logerr('Unsupported call: use this with a rosparam component name or a yaml config')
 
 
 

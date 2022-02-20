@@ -79,13 +79,15 @@ def scan_for_video():
 		for f in files:
 			if f[-4:] == '.mp4':
 				return os.path.join(root, f)
+			if f[-4:] == '.avi':
+				return os.path.join(root, f)
 
 	# when no video download one
 	# needs testing
 	gdrive = GD_Handler()
-	gdrive.downloadBatch('Bouncing_Ball')
+	gdrive.downloadFile('Sample_Competition')
 
-	return os.path.join(os.getenv('PROJECT_ROOT'), 'data', 'bouncing_ball.mp4')
+	return os.path.join(os.getenv('PROJECT_ROOT'), 'data', 'sample_competition.avi')
 
 
 def main(configData):
