@@ -1,15 +1,15 @@
 DEBUG:
   False
   
+
 TOPICS:
   RAW_IMG:
     'image_raw'
-  BOUNDARY:
-    'detected_boundary'
+  DETECTED:
+    'detected_object'
   TARGET:
-    'detected_targets'
-  TARGET_ERR:
-    'detected_error'
+    'target'
+
 
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
@@ -30,23 +30,24 @@ NODES:
       'default_camera.yaml'
     PACKAGE:
       'buffpy'
+    REQUIRED:
+      'yes'  # can be anything
   DETECTOR:   # spawns our detector node
     FILE:
-      'mds_detector.py'
+      'buffnet.py'
     TOPICS:
       - 'RAW_IMG'
-      - 'BOUNDARY'
+      - 'DETECTED'
     CONFIG:
-      'bouncing_ball.yaml'
+      'buffnet-settings.yaml'
     PACKAGE:
       'buffpy'
   TRACKER:     # spawns our tracker node
     FILE:
       'mds_tracker.py'
     TOPICS:
-      - 'BOUNDARY'
+      - 'DETECTED'
       - 'TARGET'
-      - 'TARGET_ERR'
     PACKAGE:
       'buffpy'
   SERIAL:   # spawns our serial node

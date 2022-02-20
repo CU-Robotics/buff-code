@@ -1,6 +1,8 @@
-edge0:
-  'infantry'
-edge1:
+# edge0:
+#   'infantry'
+# edge1:
+#   'hero'
+# edge2:
+#   'sentry'
+rogue0:
   'hero'
-edge2:
-  'sentry'
