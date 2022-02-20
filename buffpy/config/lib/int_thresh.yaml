@@ -1,9 +1,0 @@
-DEBUG:
-  True
-
-NODES:
-  IMAGE_VIEWER:
-    FILE:
-      'interactive_thresholder.py'
-    PACKAGE:
-      'buffpy'

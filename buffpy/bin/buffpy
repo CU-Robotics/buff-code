@@ -28,6 +28,7 @@
 
 import os
 import sys
+import yaml
 import shutil
 import argparse
 import subprocess
@@ -41,22 +42,15 @@ def parseArgs():
 			parsedargs: argparse args object
 	"""
 	parser = argparse.ArgumentParser(prog=sys.argv[0],
-	description='CU-Robotics Digital House-Keeper')
-	parser.add_argument('--sshBot',
-		action='store_true',
-		help='SSH into the bot at the ROBOT_IP env variable')
-	parser.add_argument('--setBot', 
-		nargs=1,
-		metavar='ROBOT_IP',
-		help='Set the IP of the robot in development')
+	description='CU-Robotics Multi-Agent Deployment Manager')
 	parser.add_argument('--installKeys',
 		action='store_true',
-		help='Push local sshkeys to the robot at ROBOT_IP')
+		help='Push local sshkeys to the robots')
 	parser.add_argument('--launch', 
 		nargs=1,
 		metavar='LOCATION',
 		default=False,
-		help='Launch the robots software locally (True, 1) or on the bot (bot)')
+		help='Launch the robots software on robots')
 	parser.add_argument('--botPull', 
 		action='store_true',
 		help='Pull data from the robot at ROBOT_IP')
@@ -67,15 +61,10 @@ def parseArgs():
 		help='Builds the workspace locally (debug) or to the robot_ip (install)')
 	parser.add_argument('--install', 
 		action='store_true',
-		help='Builds the workspace locally (debug) or to the robot_ip (install)')
+		help='Builds the workspace locally and installs to the registered robots')
 	parser.add_argument('--clean',
 		action='store_true',
 		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
-	parser.add_argument('--flash',
-		nargs=2,
-		metavar=('FQBN', 'FW'),
-		default=None,
-		help='Flashes the given board with the target FW (expected port is ACM0)')
 
 	return parser.parse_args(sys.argv[1:])
 
@@ -136,74 +125,94 @@ def buildWorkspace(build):
 	else:
 		print('No profile specified exiting:...')
 
-def install():
+def get_devices():
+	# load all registered devices
+	config = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'robots', 'robots.yaml')
+	if os.path.exists(config):
+		with open(config, 'r') as f:
+			return yaml.safe_load(f)
+
+def install_buffpy(botAddress, source, target, ID, botType):
+	""" Install buffpy to a bot over scp
 	"""
-		Install all built code to the robot
-	"""
-	# Don't build on edge devices (robot)
-	if 'edge' in os.getenv('HOSTNAME'):
-		print(f"Can/'t build on device: {os.getenv('HOSTNAME')}")
-		return
-	
-	bot = os.getenv('ROBOT_ADDRESS')
-	bot_root = os.getenv('ROBOT_ROOT')
-	project_root = os.getenv('PROJECT_ROOT')
-	source = os.path.join(project_root, 'buffpy')
-	target = os.path.join(bot_root, 'buffpy')
 
 	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
 		print("Workspace not built, run: /'buffpy --build <profile>/'")
 		return
 
+	with open(ID, 'w+') as f:
+		f.write(f"FROM:\n  '{botType}.yaml'\n")
 	# if root does exist remove it
-	result1 = subprocess.run(f'ssh {bot} "if [[ -d {bot_root} ]]; then rm -rf {bot_root}; mkdir {bot_root}; fi"', shell=True)
+	result1 = subprocess.run(['ssh', botAddress, f'if [[ -d {target} ]]; then rm -rf {target}; fi; mkdir {target}'])
 	if result1.returncode == 0:
-		result2 = subprocess.run(['scp', '-r', source, f'{bot}:{target}'])
+		result2 = subprocess.run(['scp', '-r', source, f'{botAddress}:{target}'])
 		if result2.returncode == 0:
+			print(f'Successfuly installed to {botAddress}')
+
+		else:
 			print(f'Install Error: {result2}')
 
 	else:
-		print(f'Install Error: {result1}')
+		print(f'{result1}')
+
+
+def install_all_devices():
+	"""
+		Install all built code to all robots
+	"""
+
+	# Don't build on edge devices (robot)
+	if 'edge' in os.getenv('HOSTNAME'):
+		print(f"Can/'t build on device: {os.getenv('HOSTNAME')}")
+		return
+
+	devices = get_devices()
+
+	# Setup Parameters for install
+	target = os.path.join('/home', 'cu-robotics', 'buff-code')
+	project_root = os.getenv('PROJECT_ROOT')
+	source = os.path.join(project_root, 'buffpy')
+	ID = os.path.join(project_root, 'buffpy', 'config', 'robots', 'self.yaml')
+
+	for robot in devices:
+		botType = devices[robot]
+
+		# set target destination
+		botAddress = f'cu-robotics@{robot}.local'
+
+		install_buffpy(botAddress, source, target, ID, botType)
+
+def install_ssh_keys():
+	devices = get_devices()
+
+	if not os.path.exists('~/.ssh/id_ed25519.pub'):
+		result = subprocess.run(['ssh-keygen', '-t', 'ed25519'])
+
+	for robot in devices:
+		result = subprocess.run(['ssh-copy-id', '-i', f'~/.ssh/id_ed25519.pub cu-robotics@{robot}.local'])
+		if result.returncode == 0:
+			print(f'{robot} -> {result}')
 
 def main(ap):
 
 	if ap.clean:
 		cleanWorkspace()
 
-	if not ap.setBot is None:
-		# Does not work the way I want
-		# os.environ['ROBOT_IP'] = f'{ap.setBot}' # os.environ will only set the vars for this process and its subprocesses
-		# os.environ['ROBOT_ADRESS'] = f'cu-robotics@{ap.setBot}'
-		# result = subprocess.run(f'ROBOT_IP={ap.setBot} && ROBOT_ADDRESS=cu-robotics@{ap.setBot}', shell=True)
-		print('NotImplemented: ERROR')
 	if ap.installKeys:
-		result = subprocess.run(f'ssh-copy-id -i ~/.ssh/id_ed25519.pub {os.getenv("ROBOT_ADDRESS")}', shell=True)
+		install_ssh_keys()
 
 	if ap.build:
 		buildWorkspace(ap.build)
 
 	if ap.install:
-		install()
-
-	# SSH into the robot at ROBOT_IP using X11 forwarding
-	if ap.sshBot:
-		host =  os.getenv("HOSTNAME")
-		if 'docker' in host or 'edge' in host:
-			result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")}', shell=True)
-		else:
-			result = subprocess.run(f'ssh -X {os.getenv("ROBOT_ADDRESS")}', shell=True)
+		install_all_devices()
 
 	# May be Deprecated
 	if ap.launch == 'bot':
-		result = subprocess.run(f'ssh {os.getenv("ROBOT_ADDRESS")} "cd buff-code && source buff.bash && launch"', shell=True)
-		# need to handle result
-		
-	elif ap.launch:
-		result = subprocess.run('launch')
+		result = subprocess.run(['ssh', os.getenv("ROBOT_ADDRESS"), 'cd buff-code && source buff.bash && launch'])
 
 	if ap.botPull:
-		result = subprocess.run(f'scp {os.getenv("ROBOT_ADDRESS")}:{os.getenv("ROBOT_ROOT")}/data {os.getenv("PROJECT_ROOT")}/data', shell=True)
-		# handle result
+		result = subprocess.run(['scp', f'{os.getenv("ROBOT_ADDRESS")}:{os.getenv("ROBOT_ROOT")}/data', f'{os.getenv("PROJECT_ROOT")}/data'])
 
 if __name__ == '__main__':
 	ap = parseArgs()
