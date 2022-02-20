@@ -1,7 +1,11 @@
 # Buff-Code
 CU Robotics' development repo
 
-This project is a workspace with tools for building, installing and analyzing code on a robot. buff-code is desinged to run in an Ubuntu18 environment or on a Jetson device (you can also launch it in a docker container). This repo provides a few tools that users should become familiar with. The tools are in the python3 package buffpy in the project's root. The two most useful tools are buffpy and run. buffpy is used to build/clean, install to a robot, ssh to a robot and hopefully soon flash a microcontroller. buffpy has been refered to as a digital house keeper. It's really just a collection of frequently used commands, calling buffpy is faster than typing out long commands. Although, the arguments might not fit your needs, sometimes you will have to type things out. run is another tool but run is used to... run code. run will read in a system config yaml or a python script and launch all the necessary programs. The wiki has much more documentation on these so be sure to check it out. 
+This project is a workspace with tools for building, installing and analyzing code on multiple robots. buff-code is desinged to run in an Ubuntu18 environment or on a Jetson device (you can also launch it in a docker container). 
+
+This repo provides a few tools that users should become familiar with. The tools are in the python3 package buffpy in the project's root. The two most useful tools are buffpy and run. buffpy is used to build/clean, install to a robot, ssh to a robot and hopefully soon flash a microcontroller. buffpy has been refered to as a digital mom. It's really just a collection of ros andlinux tools in a python CLI. The novel part of buff-code is the ability to debug and manage multiple robots. 
+
+In addition to buffpy there is a tool called run. run will read in a system config yaml or a python script and launch all the necessary programs. The wiki has much more documentation on these so be sure to check it out. 
 
 ## Quick start
 checkout the [Getting started wiki](https://github.com/CU-Robotics/buff-code/wiki/Getting-Started) for more details.
@@ -14,15 +18,11 @@ Clone this repo into your home directory (/home/$USER/buff-code).
     
 Now run the install from the root of the project
 
-	source scripts/install.bash 
-
-  *the install has a bug that may require this additional command*
-
-    sudo apt install --reinstall ros-melodic-desktop-full
+	source buffpy/scripts/install.bash 
 
 First always load the environment variables, if you're not sure if you did just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo (usually /home/$USER/buff-code).
 
-	source buff.bash
+	source buffpy/buff.bash
 	
 The majority of functionality is based in the buffpy package. This package is setup as a command line tool in buff.bash. All you need to utilize this package is call 'buffpy' from the command line.
 
@@ -57,13 +57,14 @@ buff-code
   - buffpy: A python package to handle the ugly backend
     - bin: binaries (buffpy, teensy, run)
     - lib: installed files (only python3 atm)
-  - config: A place for any and all setup/configuration/secret files
-    - install: Files containing install info
-    - lib: File containing misc info
-    - sensitive: shhh... it's a secret
+    - config: A place for any and all setup/configuration/secret files
+      - install: Files containing install info
+      - lib: File containing misc info
+      - sensitive: shhh... it's a secret
+    - scripts: arbitrary scripts (installs & entrypoints)
+    - buff.bash: a setup script (needs to be run every development session, docker runs this automatically)
   - data: a Temporary folder for handling data (should get cleared regularly, if missing will cause issues)
   - docs: A better verion of this document (moving to wiki)
-  - scripts: arbitrary scripts (installs & entrypoints)
   - src: The source code for our controllers
     - buff_ros
       - Our misc ros package
@@ -79,7 +80,6 @@ buff-code
       - Serial node src (python)
     - tech
       - N/A
-  - buff.bash: a setup script (needs to be run every development session, docker runs this automatically)
   - README.md: you're reading it
   - .gitignore: keeps the secrets safe
 
@@ -94,6 +94,15 @@ When working on this project
 
 ## CHANGES
 *Changes include all PRs that modify the directory structure, the installed binaries and any changes that will effect workspace usage*
+ - Version 0.05
+   - Date: February 19, 2022
+   - Editor: Mitchell D Scott
+   - Status: Mostly tested (docker, run, all sub-systems)
+   - Description: 
+      - Moved some folders into buffpy for smoother install
+      - began setup for multi-agent install
+      - crosshair model loading, predictions and debug looks ok
+      - small gdrive improvements (can set the name of a downloaded file and download files instead of folders)
  - Version 0.04
    - Date: January 11, 2022
    - Editor: Mitchell D Scott
