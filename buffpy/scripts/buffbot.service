@@ -1,0 +1,13 @@
+[Unit]
+Description=CU Robotics Startup Service
+ConditionPathExists=/home/cu-robotics/buff-code/buffpy
+
+[Service]
+Type=simple
+#ExecStartPre=
+ExecStart=/home/cu-robotics/buff-code/buffpy/run /home/cu-robotics/buff-code/config/robots/self.yaml
+#ExecStartPost=
+RestartSec=5s
+
+[Install]
+#WantedBy=

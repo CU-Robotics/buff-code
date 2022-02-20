@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 """
+						DEPRECATED
 	Project:
 			Mitch detector
 	Author: Mitchell D Scott

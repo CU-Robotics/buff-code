@@ -20,8 +20,9 @@ class MDS_Tracker():
 		self.vStack = np.zeros(2)
 
 		self.target_pub = rospy.Publisher(self.topics[1], Float64MultiArray, queue_size=1)
-
-		self.err_pub = rospy.Publisher(self.topics[2], Float64MultiArray, queue_size=1)
+		
+		if self.debug:
+			self.err_pub = rospy.Publisher(self.topics[2], Float64MultiArray, queue_size=1)
 
 		rospy.init_node('target_tracker', anonymous=True)
 
