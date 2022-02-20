@@ -155,9 +155,7 @@ class BuffNet:
 				self.target_pub.publish(mesg)
 
 		if self.debug:
-			image = self.annotate_image(image, annotations)
-
-		self.publish_annotated(image)
+			self.publish_annotated(self.annotate_image(image, annotations))
 
 	def imageCallBack(self, img_msg):
 		"""
