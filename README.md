@@ -1,11 +1,9 @@
 # Buff-Code
 CU Robotics' development repo
 
-This project is a workspace with tools for building, installing and analyzing code on multiple robots. buff-code is desinged to run in an Ubuntu18 environment or on a Jetson device (you can also launch it in a docker container). 
+Buff-Code is a workspace meant to build and deploy code to a multi-robot team. Buff-Code is supported in Ubuntu18 or on a Jetson device (Also we support docker). 
 
-This repo provides a few tools that users should become familiar with. The tools are in the python3 package buffpy in the project's root. The two most useful tools are buffpy and run. buffpy is used to build/clean, install to a robot, ssh to a robot and hopefully soon flash a microcontroller. buffpy has been refered to as a digital mom. It's really just a collection of ros andlinux tools in a python CLI. The novel part of buff-code is the ability to debug and manage multiple robots. 
-
-In addition to buffpy there is a tool called run. run will read in a system config yaml or a python script and launch all the necessary programs. The wiki has much more documentation on these so be sure to check it out. 
+This repo provides a few tools that users should become familiar with. The tools are in the python3 package BuffPy in the project's root. The two most useful tools are BuffPy and Run. BuffPy is used to build/clean, install to a robot, ssh to a robot and hopefully soon flash a microcontroller. It's really just a collection of ros and linux tools in a python CLI. The novel part of Buff-Code is the ability to debug and manage multiple robots. 
 
 ## Quick start
 checkout the [Getting started wiki](https://github.com/CU-Robotics/buff-code/wiki/Getting-Started) for more details.
