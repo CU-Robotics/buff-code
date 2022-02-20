@@ -61,6 +61,11 @@ class BuffNet:
 		else:
 			self.topics = []
 
+		if 'IMAGE_SIZE' in configData:
+			self.image_size = configData['IMAGE_SIZE']
+		else:
+			self.image_size = (416, 416)
+
 		if configData is None:
 			# there is no config for the model to load from
 			return None
@@ -74,7 +79,7 @@ class BuffNet:
 			@RETURNS:
 				annotations: bounding box of the detected object with color and class [class, name, (x1,y1), (w,h)]
 		"""
-		image = cv2.resize(image, (416, 416))
+		image = cv2.resize(image, self.image_size)
 		prediction = np.array(self.model(image).pandas().xywh)[0]
 
 		annotation = []
@@ -98,12 +103,13 @@ class BuffNet:
 			return None
 
 		annotated_image = image.copy()
-		print(image.shape)
+
+		scale = (image.shape[1] / self.image_size[0], image.shape[0] / self.image_size[1])
 		for label in labels:
-			w = int(label[2])
-			h = int(label[3])
-			p1 = (int(label[0]) - int(w / 2), int(label[1]) - int(h / 2))
-			p2 = (int(label[0]) + int(w / 2), int(label[1]) + int(h / 2))
+			w = int(label[2]) * scale[0]
+			h = int(label[3]) * scale[1]
+			p1 = (int((label[0] - (w / 2)) * scale[0]), int((label[1] - (h / 2)) * scale[1]))
+			p2 = (int((label[0] + (w / 2)) * scale[0]), int((label[1] + (h / 2)) * scale[1]))
 			color = self.generate_color(label[5])
 			annotated_image = cv2.rectangle(annotated_image, p1, p2, color, 2)
 			annotated_image = cv2.putText(annotated_image, f'{label[6]}-{round(label[4])}%', p1, cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1, cv2.LINE_AA)
