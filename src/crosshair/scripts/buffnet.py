@@ -98,7 +98,7 @@ class BuffNet:
 			return None
 
 		annotated_image = image.copy()
-
+		print(image.shape)
 		for label in labels:
 			w = int(label[2])
 			h = int(label[3])
@@ -106,7 +106,7 @@ class BuffNet:
 			p2 = (int(label[0]) + int(w / 2), int(label[1]) + int(h / 2))
 			color = self.generate_color(label[5])
 			annotated_image = cv2.rectangle(annotated_image, p1, p2, color, 2)
-			annotated_image = cv2.putText(annotated_image, f'{label[6]}-{label[4]}%', p1, cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1, cv2.LINE_AA)
+			annotated_image = cv2.putText(annotated_image, f'{label[6]}-{round(label[4])}%', p1, cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1, cv2.LINE_AA)
 		
 		return annotated_image
 
