@@ -3,7 +3,7 @@
 set -e
 export PYTHONPATH=
 
-buffbash="/home/cu-robotics/buff-code/buff.bash"
+buffbash="/home/cu-robotics/buff-code/buffpy/buff.bash"
 echo "sourcing   	$buffbash"
 source "$buffbash"
 

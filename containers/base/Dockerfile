@@ -4,7 +4,7 @@
 #
 
 # change this to select ARM or x86_64
-ARG BASE_IMAGE=ubuntu:18.04 # nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04 # 
+ARG BASE_IMAGE=ubuntu:18.04 # nvcr.io/nvidia/l4t-base:r32.6.1 # 
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop
@@ -46,6 +46,9 @@ RUN apt-get update && \
 		tmux && \
 		rm -rf /var/lib/apt/lists/*
 
+# Needed for l4t build to fix matplotlib issue
+#ENV MPLLOCALFREETYPE=1
+
 # 
 # Install ROS 
 #   see ros install script for more info
@@ -58,10 +61,14 @@ RUN apt-get update && \
 	apt-get remove -y python3-pip && \
 	python3 -m pip install \
 		torch==1.9.0 \
+		tqdm==4.62.3 \
 		pandas==1.1.5 \
 		pillow==8.4.0 \
 		pydrive==1.3.1 \
 		cython==0.29.26 \
+		seaborn==0.11.2 \
+		matplotlib==3.2.2 \
+		torchvision==0.10.0 \
 		rosdep==0.21.0 \
 		wstool==0.1.17 \
 		rosinstall==0.7.8 \

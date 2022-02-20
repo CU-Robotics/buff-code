@@ -11,7 +11,7 @@ from pydrive.drive import GoogleDrive
 
 class GD_Handler:
 
-	def __init__(self, config='config/lib/gdrive.yaml'):
+	def __init__(self, config='buffpy/config/lib/gdrive.yaml'):
 		self.config = os.path.join(os.getenv('PROJECT_ROOT'), config)
 
 		with open(self.config, 'r') as f:
@@ -106,7 +106,7 @@ class GD_Handler:
 			file.GetContentFile(path)
 			file = None
 
-	def downloadFile(self, file=None, path=None):
+	def downloadFile(self, file=None, path=None, title=None):
 		if file is None or not file in self.handle:
 			return
 		else:
@@ -114,12 +114,15 @@ class GD_Handler:
 		
 		file = self.drive.CreateFile({'id': file})
 
-		if path is None:
-			path = os.path.join(os.getenv('PROJECT_ROOT'), 'data', file['title'])
-		else:
-			path = os.path.join(path, file['title'])
+		if title is None:
+			title = file['title']
 
-		print(f'GDrive handler Downloading {file["title"]}...')
+		if path is None:
+			path = os.path.join(os.getenv('PROJECT_ROOT'), 'data', title)
+		else:
+			path = os.path.join(path, title)
+
+		print(f'GDrive handler Downloading {file["title"]}->{title}...')
 		file.GetContentFile(path)
 
 def main(action, data=None):
