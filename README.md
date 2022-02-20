@@ -1,7 +1,7 @@
 # Buff-Code
 CU Robotics' development repo
 
-Buff-Code is a workspace meant to build and deploy code to a multi-robot team. Buff-Code is supported in Ubuntu18 or on a Jetson device (Also we support docker). 
+Buff-Code is Multi-Agent build and deployment system. Buff-Code is supported in Ubuntu18 or on a Jetson device (Also we support docker). 
 
 This repo provides a few tools that users should become familiar with. The tools are in the python3 package BuffPy in the project's root. The two most useful tools are BuffPy and Run. BuffPy is used to build/clean, install to a robot, ssh to a robot and hopefully soon flash a microcontroller. It's really just a collection of ros and linux tools in a python CLI. The novel part of Buff-Code is the ability to debug and manage multiple robots. 
 
@@ -31,20 +31,16 @@ The majority of functionality is based in the buffpy package. This package is se
 
 	optional arguments:
 	-h, --help            show this help message and exit
-	--sshBot              SSH into the bot at the ROBOT_IP env variable
-	--setBot ROBOT_IP     Set the IP of the robot in development
 	--installKeys         Push local sshkeys to the robot at ROBOT_IP
-	--launch LOCATION     Launch the robots software locally (True, 1) or on the bot (bot)
 	--botPull             Pull data from the robot at ROBOT_IP
 	--build PROFILE       Builds the workspace locally (debug) or to the robot_ip (install)
 	--clean               Clean the current bin and data, NOT recoverable; only run this if you are sure you want to
-	--flash FQBN FW       Flashes the given board with the target FW (expected port is ACM0)
 	
 To launch a system use the run command:
 
     run <name_of_config>.yaml
   
-run will spawn all of the nodes defined in the config as well as uploading any config files to the rosparam  server.
+run will spawn all of the nodes defined in the config as well as uploading any config files to the rosparam server.
 
 run can also be used to spawn a python script (the script must be in buffpy/lib):
 
