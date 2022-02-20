@@ -55,7 +55,7 @@ def parse_target(args, projectRoot):
 
 		if target[-5:] == '.yaml':	# if target is a yaml file set config
 			print('Loading system:...')
-			target_path = os.path.join(projectRoot, 'config', 'lib', '{}'.format(target))
+			target_path = os.path.join(projectRoot, 'buffpy', 'config', 'lib', '{}'.format(target))
 			config = load_config(target_path)	# None if no config
 
 			if config is None:
@@ -125,14 +125,15 @@ def launch_system(target_path, config):
 				# only arg needed is the node name, everything else is under the node name on the param server
 				args = '{}/{}'.format(namespace, name)
 
-				if 'CONFIG' in node and not node['CONFIG'] is None:
-					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', node['CONFIG']), 'r') as f:
-						data =yaml.safe_load(f)
-						if not data is None:
-							node.update(data)
+				if 'CONFIG' in node and node['CONFIG'] is None:
+					node.pop('CONFIG')
 
 				elif 'CONFIG' in node:
-					node.pop('CONFIG')
+					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', node['CONFIG']), 'r') as f:
+						data = yaml.safe_load(f)
+						if not data is None:
+							node.update(data) # Add the programs config to its run config
+
 
 				rospy.set_param(args, node)
 
@@ -144,8 +145,14 @@ def launch_system(target_path, config):
 				# no args passed
 				args = ''
 
+			if 'REQUIRED' in node:
+				required = True
+
+			else:
+				required = False
+
 			# launch the process and add it to the pool
-			process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=False)
+			process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=required)
 			pool.append(launch.launch(process))
 
 	return coreProc, pool, launch
@@ -169,15 +176,37 @@ def launch_python(target_path, target_args):
 
 	return coreProc
 
-def spin(coreProc, pool, launch):
+def spin(config, target_path, target_args):
 	"""
+		initialize the run and launch
 		loop and wait for user kill or core to finish
 		@PARAMS:
-			coreProc: subprocess obj, the core process running
-			pool: roslaunch objs, the spawned pool
-			launch: roslaunch obj, the launch running
+			config: a python script or system config file (yaml)
+			target_path: the targetfile to launch or roscore
+			target_args: arguments for the target file
 	"""
+	# target path is essential for launching. If it is empty
+	# there was an error and the program should exit
+	if target_path is None:
+		print('Failed to load target: {}'.format(target_path))
+		exit(0)
+
+	# Try to catch user kill and other errors
 	try: 
+		# launch the pool
+		if config == 'python':
+			coreProc = launch_python(target_path, target_args)
+		elif not config is None:
+			coreProc, pool, launch = launch_system(target_path, config)
+		else:
+			print('Config Empty: Exiting...')
+
+		# coreProc is the core process we are trying to spawn (python script or roscore)
+		# if it fails there is no point in spinning
+		if coreProc is None: 
+			print('Launching target core failed :(')
+			exit(0)
+
 		# this hanldes user kill (available after spawn & in the run space below)
 		# this will loop until an interrupt or the core dies.
 		while coreProc.poll() is None:
@@ -226,28 +255,8 @@ def main(args):
 	# parse the input 
 	target_path, target_args, config = parse_target(args, projectRoot)
 
-	# target path is essential for launching. If it is empty
-	# there was an error and the program should exit
-	if target_path is None:
-		print('Failed to load target: {}'.format(target_path))
-		exit(0)
-
-	# launch the pool
-	if config == 'python':
-		coreProc = launch_python(target_path, target_args)
-	elif not config is None:
-		coreProc, pool, launch = launch_system(target_path, config)
-	else:
-		print('Config Empty: Exiting...')
-
-	# coreProc is the core process we are trying to spawn (python script or roscore)
-	# if it fails there is no point in spinning
-	if coreProc is None: 
-		print('Launching target core failed :(')
-		exit(0)
-
 	# spin till finished
-	spin(coreProc, pool, launch) 
+	spin(config, target_path, target_args) 
 
 	print('RUN finished')
 		

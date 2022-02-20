@@ -11,7 +11,7 @@ from pydrive.drive import GoogleDrive
 
 class GD_Handler:
 
-	def __init__(self, config='config/lib/gdrive.yaml'):
+	def __init__(self, config='buffpy/config/lib/gdrive.yaml'):
 		self.config = os.path.join(os.getenv('PROJECT_ROOT'), config)
 
 		with open(self.config, 'r') as f:
@@ -83,12 +83,12 @@ class GD_Handler:
 		"""
 		uploadFolder(batch, 'images')
 
-	def downloadBatch(self, batch=None):
+	def downloadBatch(self, batch=None, path=None):
 		"""
 			Use this function to pull data from GDrive
 		"""
 		if batch is None:
-			batch = self.handle['UNLABELED_DATA_FOLDER_ID']
+			return
 		else:
 			batch = self.handle[batch]
 		
@@ -96,10 +96,34 @@ class GD_Handler:
 		print(f'GDrive handler Downloading from {batch}')
 
 		for file in file_list:
+			if path is None:
+				path = os.path.join(os.getenv('PROJECT_ROOT'), 'data', file['title'])
+			else:
+				path = os.path.join(path, file['title'])
+
 			print(f'GDrive handler Downloading {file["title"]}...')
 			#data = drive.CreateFile({'id': file['id']})
-			file.GetContentFile(os.path.join(os.getenv('PROJECT_ROOT'), 'data', file['title']))
+			file.GetContentFile(path)
 			file = None
+
+	def downloadFile(self, file=None, path=None, title=None):
+		if file is None or not file in self.handle:
+			return
+		else:
+			file = self.handle[file]
+		
+		file = self.drive.CreateFile({'id': file})
+
+		if title is None:
+			title = file['title']
+
+		if path is None:
+			path = os.path.join(os.getenv('PROJECT_ROOT'), 'data', title)
+		else:
+			path = os.path.join(path, title)
+
+		print(f'GDrive handler Downloading {file["title"]}->{title}...')
+		file.GetContentFile(path)
 
 def main(action, data=None):
 	gd = GD_Handler()

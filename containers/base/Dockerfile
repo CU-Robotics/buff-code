@@ -4,7 +4,7 @@
 #
 
 # change this to select ARM or x86_64
-ARG BASE_IMAGE=ubuntu:18.04  # nvcr.io/nvidia/l4t-base:r32.6.1 # 
+ARG BASE_IMAGE=ubuntu:18.04 # nvcr.io/nvidia/l4t-base:r32.6.1 # 
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=desktop
@@ -26,7 +26,7 @@ RUN useradd -ms /bin/bash cu-robotics
 #
 RUN apt-get update && \
 		apt-get install -y --no-install-recommends \
-		vim=2:8.0.1453-1ubuntu1.7 \
+		vim=2:8.0.1453-1ubuntu1.8 \
 		git=1:2.17.1-1ubuntu0.9 \
 		curl=7.58.0-2ubuntu3.16 \
 		wget=1.19.4-1ubuntu2.2 \
@@ -41,8 +41,13 @@ RUN apt-get update && \
 		python3-setuptools=39.0.1-2 \
 		openssh-server \
 		openssh-client \
-		iputils-ping && \
+		iputils-ping \ 
+		htop \
+		tmux && \
 		rm -rf /var/lib/apt/lists/*
+
+# Needed for l4t build to fix matplotlib issue
+#ENV MPLLOCALFREETYPE=1
 
 # 
 # Install ROS 
@@ -55,10 +60,17 @@ RUN apt-get update && \
 	python3 -m pip install --upgrade pip==21.3.1 && \
 	apt-get remove -y python3-pip && \
 	python3 -m pip install \
+		torch==1.9.0 \
+		tqdm==4.62.3 \
+		pandas==1.1.5 \
+		pillow==8.4.0 \
+		pydrive==1.3.1 \
 		cython==0.29.26 \
+		seaborn==0.11.2 \
+		matplotlib==3.2.2 \
+		torchvision==0.10.0 \
 		rosdep==0.21.0 \
 		wstool==0.1.17 \
-		pydrive==1.3.1 \
 		rosinstall==0.7.8 \
 		defusedxml==0.7.1 \
 		catkin-tools==0.8.2 \
