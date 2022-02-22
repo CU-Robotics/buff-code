@@ -178,7 +178,7 @@ def install_all_devices():
 		botType = devices[robot]
 
 		# set target destination
-		botAddress = f'cu-robotics@{robot}.local'
+		botAddress = f'cu-robotics@{robot}'
 
 		install_buffpy(botAddress, source, target, ID, botType)
 
