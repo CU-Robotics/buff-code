@@ -1,8 +1,8 @@
-# edge0:
-#   'infantry'
-# edge1:
-#   'hero'
-# edge2:
-#   'sentry'
-rogue0:
+edge0:
+  'infantry'
+128.138.157.232:
+  'infantry'
+edge1:
   'hero'
+edge2:
+  'sentry'
