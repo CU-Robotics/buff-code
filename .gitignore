@@ -3,11 +3,12 @@ data/*
 devel
 build
 install
-buffpy/lib
 */.DS_store
+buffpy/lib/*
+.catkin_tools/*
 buffpy/bin/teensy
-config/sensitive/*
 buffpy/bin/__pycache__
 dev/.ipynb_checkpoints
 buffpy/bin/libpng12.so.0
+buffpy/config/sensitive/*
 buffpy/bin/libusb-0.1.so.4

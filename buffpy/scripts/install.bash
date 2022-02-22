@@ -25,7 +25,7 @@ echo -e "\n\tUpgrading pip3\n"
 python3 -m pip install --upgrade pip==21.3.1
 
 echo -e "\n\tInstalling python3 requirements\n"
-python3 -m pip install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
+sudo -H python3 -m pip install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
 
 
 
