@@ -5,7 +5,7 @@ build
 install
 */.DS_store
 buffpy/lib/*
-.catkin_tools/*
+*/devel_collision.txt
 buffpy/bin/teensy
 buffpy/bin/__pycache__
 dev/.ipynb_checkpoints
