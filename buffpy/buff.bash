@@ -24,14 +24,14 @@ fi
 
 PYTHONPATH=
 
-# Only export if if not already in path
-if [[ "${PYTHONPATH}" != *"/usr/lib/python3"* ]]; then	
-	export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH}" 
-fi
-
 # If ROS is installed source the setup file
 if [[ -f /opt/ros/melodic/setup.bash ]]; then
 	source /opt/ros/melodic/setup.bash
+fi
+
+# Only export if if not already in path
+if [[ "${PYTHONPATH}" != *"/usr/lib/python3"* ]]; then	
+	export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH}" 
 fi
 
 # Only needed if we are using ros packages
