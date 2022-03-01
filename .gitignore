@@ -5,8 +5,8 @@ build/
 install/
 */.DS_store
 buffpy/lib/*
+*/sensitive/
 */__pycache__
-*/sensitive/*
 */devel_collision.txt
 buffpy/bin/teensy
 buffpy/bin/libpng12.so.0
