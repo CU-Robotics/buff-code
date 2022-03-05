@@ -17,13 +17,53 @@ import signal
 import roslaunch
 import subprocess as sb
 
-def load_config(file='live.yaml'):
+def overwrite_conf(a, b):
+	for item in a:
+		# Handle lists
+		if type(a[item]) is list:
+			if not item in b:
+				b[item] = [] # initialize
+
+			for n in a[item]:
+				b[item].append(n) # add item
+
+		elif type(a[item]) is dict: # recurse on dictionary
+			if item in b:
+				b[item] = overwrite_conf(a[item], b[item])
+
+			else:
+				b[item] = a[item]
+
+		else:	# insert string or number
+			b[item] = a[item]
+
+	return b
+
+def load_config(file):
+	"""
+		Loda the target system config file.
+		Now featuring recursive inheritance
+		@PARAMS:
+			file: The overwriting conf data
+		@RETURNS:
+			case 0: empty dictionary
+			case 1: the parent data (dict)
+			case 2: the parent updated with the child (dict)
+	"""
 	if not os.path.exists(file):
-		print('Could not find config: Exiting ...')
-		return None
+		print('Could not find config: ...')
+		return {}
 
 	with open(file, 'r') as f:
-		return yaml.safe_load(f)
+		data = yaml.safe_load(f)
+
+	if 'FROM' in data:
+		parent = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', data['FROM'])
+		parentData = load_config(file=parent)
+
+		data = overwrite_conf(data, parentData)
+
+	return data
 
 def parse_target(args, projectRoot):
 	""" 
@@ -51,21 +91,21 @@ def parse_target(args, projectRoot):
 			
 			if len(args) > 2:
 				target_args = args[2:]
-				print('Found args {}'.format(target_args))
+				print(f'Found args {target_args}')
 
 		if target[-5:] == '.yaml':	# if target is a yaml file set config
 			print('Loading system:...')
-			target_path = os.path.join(projectRoot, 'config', 'lib', '{}'.format(target))
+			target_path = os.path.join(projectRoot, 'buffpy', 'config', 'lib', target)
 			config = load_config(target_path)	# None if no config
 
 			if config is None:
-				print('No config data in {}'.format(target_path))
+				print(f'No config data in {target_path}')
 
 	if not os.path.exists(target_path):
-		print('Target path not found {}'.format(target_path))
+		print(f'Target path not found {target_path}')
 		return None, [], None
 
-	print('Targeting: {}, {}'.format(target_path, target_args))
+	print(f'Targeting: {target_path}, {target_args}')
 
 	return target_path, target_args, config
 
@@ -90,11 +130,11 @@ def launch_system(target_path, config):
 	# Set nodes and package
 	nodes = config['NODES']
 
-	print('Nodes: {}'.format(nodes))
+	print(f'System Config: {config}')
 
 	# Cant spawn pool without nodes
 	if nodes is None:
-		print('Missing NODES in config file {}'.format(target))
+		print(f'Missing NODES in config file {target}')
 
 	else:
 		namespace = '/buffbot'
@@ -105,8 +145,8 @@ def launch_system(target_path, config):
 		launch = roslaunch.scriptapi.ROSLaunch()
 		launch.start()
 
-		rospy.set_param('{}/DEBUG'.format(namespace), config['DEBUG'])
-		rospy.set_param('{}/TOPICS'.format(namespace), config['TOPICS'])
+		rospy.set_param(f'{namespace}/DEBUG', config['DEBUG'])
+		rospy.set_param(f'{namespace}/TOPICS', config['TOPICS'])
 
 		# load and launch each node in the config
 		for name in nodes:
@@ -114,7 +154,7 @@ def launch_system(target_path, config):
 
 			# If missing package type or filename skip
 			if not 'PACKAGE' in node or not 'FILE' in node:
-				rospy.logerr('{} Has an invalid definition'.format(node))
+				rospy.logerr(f'{node} Has an invalid definition')
 				continue
 
 			program = node['FILE']
@@ -123,16 +163,17 @@ def launch_system(target_path, config):
 			# Not all packages handle our launch params
 			if package == 'buffpy':
 				# only arg needed is the node name, everything else is under the node name on the param server
-				args = '{}/{}'.format(namespace, name)
+				args = f'{namespace}/{name}'
 
-				if 'CONFIG' in node and not node['CONFIG'] is None:
-					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', node['CONFIG']), 'r') as f:
-						data =yaml.safe_load(f)
-						if not data is None:
-							node.update(data)
+				if 'CONFIG' in node and node['CONFIG'] is None:
+					node.pop('CONFIG')
 
 				elif 'CONFIG' in node:
-					node.pop('CONFIG')
+					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', node['CONFIG']), 'r') as f:
+						data = yaml.safe_load(f)
+						if not data is None:
+							node.update(data) # Add the programs config to its run config
+
 
 				rospy.set_param(args, node)
 
@@ -144,8 +185,14 @@ def launch_system(target_path, config):
 				# no args passed
 				args = ''
 
+			if 'REQUIRED' in node:
+				required = True
+
+			else:
+				required = False
+
 			# launch the process and add it to the pool
-			process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=False)
+			process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=required)
 			pool.append(launch.launch(process))
 
 	return coreProc, pool, launch
@@ -169,15 +216,38 @@ def launch_python(target_path, target_args):
 
 	return coreProc
 
-def spin(coreProc, pool, launch):
+def spin(config, target_path, target_args):
 	"""
+		initialize the run and launch
 		loop and wait for user kill or core to finish
 		@PARAMS:
-			coreProc: subprocess obj, the core process running
-			pool: roslaunch objs, the spawned pool
-			launch: roslaunch obj, the launch running
+			config: a python script or system config file (yaml)
+			target_path: the targetfile to launch or roscore
+			target_args: arguments for the target file
 	"""
+	# target path is essential for launching. If it is empty
+	# there was an error and the program should exit
+	if target_path is None:
+		print(f'Failed to load target: {target_path}')
+		exit(0)
+
+	coreProc = None
+	# Try to catch user kill and other errors
 	try: 
+		# launch the pool
+		if config == 'python':
+			coreProc = launch_python(target_path, target_args)
+		elif not config is None:
+			coreProc, pool, launch = launch_system(target_path, config)
+		else:
+			print('Config Empty: Exiting...')
+			exit(0)
+		# coreProc is the core process we are trying to spawn (python script or roscore)
+		# if it fails there is no point in spinning
+		if coreProc is None: 
+			print('Launching target core failed :(')
+			exit(0)
+
 		# this hanldes user kill (available after spawn & in the run space below)
 		# this will loop until an interrupt or the core dies.
 		while coreProc.poll() is None:
@@ -226,28 +296,8 @@ def main(args):
 	# parse the input 
 	target_path, target_args, config = parse_target(args, projectRoot)
 
-	# target path is essential for launching. If it is empty
-	# there was an error and the program should exit
-	if target_path is None:
-		print('Failed to load target: {}'.format(target_path))
-		exit(0)
-
-	# launch the pool
-	if config == 'python':
-		coreProc = launch_python(target_path, target_args)
-	elif not config is None:
-		coreProc, pool, launch = launch_system(target_path, config)
-	else:
-		print('Config Empty: Exiting...')
-
-	# coreProc is the core process we are trying to spawn (python script or roscore)
-	# if it fails there is no point in spinning
-	if coreProc is None: 
-		print('Launching target core failed :(')
-		exit(0)
-
 	# spin till finished
-	spin(coreProc, pool, launch) 
+	spin(config, target_path, target_args) 
 
 	print('RUN finished')
 		
