@@ -1,8 +1,8 @@
-logs
-data/*
-devel/
-build/
-install/
+/logs/
+/data/*
+/devel/
+/build/
+/install/
 **/.DS_store
 buffpy/lib/*
 **/__pycache__
