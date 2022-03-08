@@ -1,4 +1,3 @@
-# Buff-Code
 ![alt text](https://github.com/CU-Robotics/buff-code/blob/master/buffcode-card.png?raw=true)
 
 ### CU Robotics' Development Repository
