@@ -3,7 +3,7 @@ data/*
 devel/
 build/
 install/
-*/.DS_store
+**/.DS_store
 buffpy/lib/*
 */__pycache__
 */sensitive/*
