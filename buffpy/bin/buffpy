@@ -136,21 +136,21 @@ def install_buffpy(botAddress, source, target, ID, botType):
 	""" Install buffpy to a bot over scp
 	"""
 
-	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
-		print("Workspace not built, run: /'buffpy --build <profile>/'")
-		return
-
 	with open(ID, 'w+') as f:
 		f.write(f"FROM:\n  '{botType}.yaml'\n")
 	# if root does exist remove it
-	result1 = subprocess.run(['ssh', botAddress, f'if [[ -d {target} ]]; then rm -rf {target}; fi; mkdir {target}'])
-	if result1.returncode == 0:
-		result2 = subprocess.run(['scp', '-r', source, f'{botAddress}:{target}'])
-		if result2.returncode == 0:
-			print(f'Successfuly installed to {botAddress}')
+	try:	
+		result1 = subprocess.run(['ssh', botAddress, f'if [[ -d {target} ]]; then rm -rf {target}; fi; mkdir {target}'], timeout=5)
+		if result1.returncode == 0:
+			result2 = subprocess.run(['scp', '-r', source, f'{botAddress}:{target}'])
+			if result2.returncode == 0:
+				print(f'Successfuly installed to {botAddress}')
 
-		else:
-			print(f'Install Error: {result2}')
+			else:
+				print(f'Install Error: {result2}')
+
+	except subprocess.TimeoutExpired:
+		print(f'{botAddress} Timed out')
 
 	else:
 		print(f'{result1}')
@@ -161,18 +161,22 @@ def install_all_devices():
 		Install all built code to all robots
 	"""
 
+		# Setup Parameters for install
+	target = os.path.join('/home', 'cu-robotics', 'buff-code')
+	project_root = os.getenv('PROJECT_ROOT')
+	source = os.path.join(project_root, 'buffpy')
+	ID = os.path.join(project_root, 'buffpy', 'config', 'robots', 'self.yaml')
+
+	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
+		print("Workspace not built, run: /'buffpy --build <profile>/'")
+		return
+
 	# Don't build on edge devices (robot)
 	if 'edge' in os.getenv('HOSTNAME'):
 		print(f"Can/'t build on device: {os.getenv('HOSTNAME')}")
 		return
 
 	devices = get_devices()
-
-	# Setup Parameters for install
-	target = os.path.join('/home', 'cu-robotics', 'buff-code')
-	project_root = os.getenv('PROJECT_ROOT')
-	source = os.path.join(project_root, 'buffpy')
-	ID = os.path.join(project_root, 'buffpy', 'config', 'robots', 'self.yaml')
 
 	for robot in devices:
 		botType = devices[robot]
@@ -184,14 +188,21 @@ def install_all_devices():
 
 def install_ssh_keys():
 	devices = get_devices()
-
-	if not os.path.exists('~/.ssh/id_ed25519.pub'):
+	home = os.getenv('HOME')
+	if not os.path.exists(f'{home}/.ssh/id_ed25519.pub'):
 		result = subprocess.run(['ssh-keygen', '-t', 'ed25519'])
 
 	for robot in devices:
-		result = subprocess.run(['ssh-copy-id', '-i', f'~/.ssh/id_ed25519.pub cu-robotics@{robot}.local'])
-		if result.returncode == 0:
-			print(f'{robot} -> {result}')
+		botAddress = f'cu-robotics@{robot}'
+		try:
+			result = subprocess.run(['ssh', botAddress, f'if [[ ! -f /home/cu-robotics/.ssh/id_ed25519.pub ]]; then ssh-keygen -t ed25519; fi'], timeout=5)
+			if result.returncode == 0:
+				result = subprocess.run(['ssh-copy-id', '-i', f'{home}/.ssh/id_ed25519.pub', botAddress])
+				if result.returncode == 0:
+					print(f'{robot} Success')
+
+		except subprocess.TimeoutExpired:
+			print(f'{robot} Timed out')
 
 def main(ap):
 
