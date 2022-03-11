@@ -1,0 +1,5 @@
+tech
+/home/mdyse/buff-code/devel/.private/tech/cmake.lock /home/mdyse/buff-code/devel/./cmake.lock
+/home/mdyse/buff-code/devel/.private/tech/lib/pkgconfig/tech.pc /home/mdyse/buff-code/devel/lib/pkgconfig/tech.pc
+/home/mdyse/buff-code/devel/.private/tech/share/tech/cmake/techConfig.cmake /home/mdyse/buff-code/devel/share/tech/cmake/techConfig.cmake
+/home/mdyse/buff-code/devel/.private/tech/share/tech/cmake/techConfig-version.cmake /home/mdyse/buff-code/devel/share/tech/cmake/techConfig-version.cmake
