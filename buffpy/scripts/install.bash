@@ -2,7 +2,9 @@
 
 #  run this script with 'source scripts/install.bash'
 
-PROJECT_ROOT=$PWD
+ROSDISTRO=melodic
+ROSVERSION=desktop
+export PROJECT_ROOT=$PWD
 
 echo -e "Running Install from ${PWD}"
 
@@ -19,24 +21,25 @@ sudo apt update
 echo -e "\n\tInstalling Dependencies...\n"
 #	Using apt and pip install all the dependencies for the project
 xargs sudo apt install -y <${PROJECT_ROOT}/buffpy/config/install/dependencies.txt
+sudo rm -rf /var/lib/apt/lists/*
 
 echo -e "\n\tUpgrading pip3\n"
+# Not sure whats happening apt only installs pip==9.0.1
+sudo apt purge -y python3-pip
 # upgrade pip before installing dependencies
-python3 -m pip install --upgrade pip==21.3.1
+python3 -m pip install --upgrade pip==21.3.1 setuptools wheel
 
+export MPLLOCALFREETYPE=1
 echo -e "\n\tInstalling python3 requirements\n"
-sudo -H python3 -m pip install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
-
-
+python3 -m pip install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
 
 # If no ROS, install it
 if [[ $ROS_DISTRO == "" ]]; then
-	source "${PROJECT_ROOT}/buffpy/scritps/install_ros_melodic.bash" melodic desktop
+	source "${PROJECT_ROOT}/buffpy/scripts/install_ros.bash" $ROSDISTRO $ROSVERSION
 fi
 
 # Also install Sublime Text-editor
-source "${PROJECT_ROOT}/buffpy/scripts/install_sublime.bash"
-
+# source "${PROJECT_ROOT}/buffpy/scripts/install_sublime.bash"
 
 if [[ "${HOSTNAME}" != "edge"* ]]; then
 	echo -e "\n\tInstalling Teensy loader...\n"
@@ -55,4 +58,8 @@ if [[ "${HOSTNAME}" != "edge"* ]]; then
 	tar -xvsf teensy_linux64.tar.gz -C ${PROJECT_ROOT}/buffpy/bin
 	# remove unecessary tar.gz 
 	rm teensy_linux64.tar.gz
+
+else
+	sudo cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
+
 fi

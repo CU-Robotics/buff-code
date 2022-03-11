@@ -32,22 +32,31 @@ echo -e "\n\tFinishing ROS setup...\n"
 #
 # Init rosdep
 #
+sudo rm -rf /var/lib/apt/lists/*
+sudo apt update
+sudo apt install python-rosdep
 sudo rosdep init
 rosdep update
 
 #
 # Install cv2 bridge for python3
 #
-apt update && \
-cd /home/cu-robotics && mkdir opencv_ws && cd opencv_ws && \
-git clone https://github.com/ros-perception/vision_opencv.git src/vision_opencv && \
-cd src/vision_opencv && git checkout 1.13.0 && cd ../.. && \
-bash /opt/ros/melodic/setup.sh && \
-catkin init && \
-catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
-catkin build cv_bridge && \
-cp -r install/lib/python3/dist-packages/* /usr/lib/python3/dist-packages/ && \
-cd /home/cu-robotics && rm -rf opencv_ws
+sudo rm -rf /var/lib/apt/lists/*
+sudo apt update 
+cd /home/cu-robotics 
+mkdir opencv_ws 
+cd opencv_ws
+git clone https://github.com/ros-perception/vision_opencv.git src/vision_opencv
+cd src/vision_opencv 
+git checkout 1.13.0 
+cd ../.. 
+source /opt/ros/melodic/setup.bash
+catkin init 
+catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic
+catkin build cv_bridge
+cp -r install/lib/python3/dist-packages/* /usr/lib/python3/dist-packages/
+cd /home/cu-robotics 
+rm -rf opencv_ws
 
 
 
