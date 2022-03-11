@@ -2,7 +2,7 @@ edge0.local:
   'infantry'
 128.138.157.232:
   'infantry'
-edge1:
+edge1.local:
   'hero'
-edge2:
+edge2.local:
   'sentry'
