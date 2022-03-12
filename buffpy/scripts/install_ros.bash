@@ -7,19 +7,23 @@ echo -e "\n\tSetting up ROS ${ROS_DISTRO}\n"
 
 # ROS installation
 # add repositories
-sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+# sudo
+ sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 
 #
 # setup ROS keys
 #
-curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+# sudocurl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | 
+ apt-key add -
 
-sudo apt update
+# sudo
+ apt update
 
 #
 # Install ROS
 #
-sudo apt install -y ros-${ROS_DISTRO}-${ROS_PKG}
+# sudo
+ apt install -y ros-${ROS_DISTRO}-${ROS_PKG}
 
 #
 # Install ROS dependencies
@@ -32,17 +36,24 @@ echo -e "\n\tFinishing ROS setup...\n"
 #
 # Init rosdep
 #
-sudo rm -rf /var/lib/apt/lists/*
-sudo apt update
-sudo apt install python-rosdep
-sudo rosdep init
+# sudo
+ rm -rf /var/lib/apt/lists/*
+# sudo
+ apt update
+# sudo
+ apt install python-rosdep
+# sudo
+cd /opt/ros/melodic
+ rosdep init
 rosdep update
 
 #
 # Install cv2 bridge for python3
 #
-sudo rm -rf /var/lib/apt/lists/*
-sudo apt update 
+# sudo
+ rm -rf /var/lib/apt/lists/*
+# sudo
+ apt update 
 cd /home/cu-robotics 
 mkdir opencv_ws 
 cd opencv_ws
@@ -57,6 +68,7 @@ catkin build cv_bridge
 cp -r install/lib/python3/dist-packages/* /usr/lib/python3/dist-packages/
 cd /home/cu-robotics 
 rm -rf opencv_ws
+cd ${PROJECT_ROOT}
 
 
 

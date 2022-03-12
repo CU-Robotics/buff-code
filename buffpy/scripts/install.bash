@@ -1,6 +1,7 @@
 #! /bin/bash
 
 #  run this script with 'source scripts/install.bash'
+export DEBIAN_FRONTEND=noninteractive
 
 ROSDISTRO=melodic
 ROSVERSION=desktop
@@ -15,23 +16,9 @@ fi
 
 echo -e "\n\tapt updating...\n"
 #	update the apt package manager
-sudo apt update
+# sudo
+apt update
 
-
-echo -e "\n\tInstalling Dependencies...\n"
-#	Using apt and pip install all the dependencies for the project
-xargs sudo apt install -y <${PROJECT_ROOT}/buffpy/config/install/dependencies.txt
-sudo rm -rf /var/lib/apt/lists/*
-
-echo -e "\n\tUpgrading pip3\n"
-# Not sure whats happening apt only installs pip==9.0.1
-sudo apt purge -y python3-pip
-# upgrade pip before installing dependencies
-python3 -m pip install --upgrade pip==21.3.1 setuptools wheel
-
-export MPLLOCALFREETYPE=1
-echo -e "\n\tInstalling python3 requirements\n"
-python3 -m pip install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
 
 # If no ROS, install it
 if [[ $ROS_DISTRO == "" ]]; then
@@ -51,8 +38,10 @@ if [[ "${HOSTNAME}" != "edge"* ]]; then
 	curl https://www.pjrc.com/teensy/00-teensy.rules -O
 
 	# mv rules into rules.d and set the proper file permissions
-	sudo mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
-	sudo chmod 0644 /etc/udev/rules.d/00-teensy.rules
+	# sudo
+	 mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
+	# sudo
+	 chmod 0644 /etc/udev/rules.d/00-teensy.rules
 
 	# extract the tar to buffpy/bin
 	tar -xvsf teensy_linux64.tar.gz -C ${PROJECT_ROOT}/buffpy/bin
@@ -60,6 +49,7 @@ if [[ "${HOSTNAME}" != "edge"* ]]; then
 	rm teensy_linux64.tar.gz
 
 else
-	sudo cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
+	# sudo
+	 cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
 
 fi
