@@ -67,7 +67,7 @@ RUN apt-get update && \
 		pydrive==1.3.1 \
 		cython==0.29.26 \
 		seaborn==0.11.2 \
-		matplotlib==3.2.2 \
+		
 		torchvision==0.10.0 \
 		rosdep==0.21.0 \
 		wstool==0.1.17 \
