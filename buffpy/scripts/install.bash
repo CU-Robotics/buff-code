@@ -3,8 +3,8 @@
 #  run this script with 'source scripts/install.bash'
 export DEBIAN_FRONTEND=noninteractive
 
-ROSDISTRO=melodic
-ROSVERSION=desktop
+ROS_PKG=desktop
+ROS_DISTRO=melodic
 export PROJECT_ROOT=$PWD
 
 echo -e "Running Install from ${PWD}"
@@ -19,34 +19,31 @@ echo -e "\n\tapt updating...\n"
 # sudo
 apt update
 
-
 # If no ROS, install it
-if [[ $ROS_DISTRO == "" ]]; then
-	source "${PROJECT_ROOT}/buffpy/scripts/install_ros.bash" $ROSDISTRO $ROSVERSION
+if [[ ! -d /opt/ros/${ROS_DISTRO} ]]; then
+	source "${PROJECT_ROOT}/buffpy/scripts/install_ros.bash" $ROS_DISTRO $ROS_PKG
 fi
 
 # Also install Sublime Text-editor
-# source "${PROJECT_ROOT}/buffpy/scripts/install_sublime.bash"
+## source "${PROJECT_ROOT}/buffpy/scripts/install_sublime.bash"
 
 if [[ "${HOSTNAME}" != "edge"* ]]; then
-	echo -e "\n\tInstalling Teensy loader...\n"
+	# echo -e "\n\tInstalling Teensy loader...\n"
 
-	#	Pull teensy files from pjrc.com
-	# teensy binary and objects
-	curl https://www.pjrc.com/teensy/teensy_linux64.tar.gz -O
-	# teensy rules file
-	curl https://www.pjrc.com/teensy/00-teensy.rules -O
+	# #	Pull teensy files from pjrc.com
+	# # teensy binary and objects
+	# curl https://www.pjrc.com/teensy/teensy_linux64.tar.gz -O
+	# # teensy rules file
+	# curl https://www.pjrc.com/teensy/00-teensy.rules -O
 
-	# mv rules into rules.d and set the proper file permissions
-	# sudo
-	 mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
-	# sudo
-	 chmod 0644 /etc/udev/rules.d/00-teensy.rules
+	# # mv rules into rules.d and set the proper file permissions
+	# sudo mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
+	# sudo chmod 0644 /etc/udev/rules.d/00-teensy.rules
 
-	# extract the tar to buffpy/bin
-	tar -xvsf teensy_linux64.tar.gz -C ${PROJECT_ROOT}/buffpy/bin
-	# remove unecessary tar.gz 
-	rm teensy_linux64.tar.gz
+	# # extract the tar to buffpy/bin
+	# tar -xvsf teensy_linux64.tar.gz -C ${PROJECT_ROOT}/buffpy/bin
+	# # remove unecessary tar.gz 
+	# rm teensy_linux64.tar.gz
 
 else
 	# sudo
