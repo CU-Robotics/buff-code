@@ -5,6 +5,7 @@ ROS_DISTRO=$1
 
 echo -e "\n\tSetting up ROS ${ROS_DISTRO} ${ROS_DISTRO}\n"
 
+
 # ROS installation
 # add repositories
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
@@ -25,6 +26,7 @@ sudo apt install -y ros-${ROS_DISTRO}-${ROS_PKG}
 #
 # Install ROS dependencies
 #
+
 echo -e "\n\tpip Installing from ${PROJECT_ROOT}/buffpy/config/install/ros_dependencies.txt\n"
 python3 -m pip install -r ${PROJECT_ROOT}/buffpy/config/install/ros_dependencies.txt
 
@@ -34,6 +36,7 @@ echo -e "\n\tFinishing ROS setup...\n"
 #
 # Init rosdep
 #
+
 sudo rm -rf /var/lib/apt/lists/*
 sudo apt update
 sudo rosdep init
