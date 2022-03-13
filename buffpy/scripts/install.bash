@@ -1,12 +1,19 @@
 #! /bin/bash
 
-#  run this script with 'source scripts/install.bash'
-export DEBIAN_FRONTEND=noninteractive
 
-ROS_PKG=desktop
-ROS_DISTRO=melodic
-export PROJECT_ROOT=$PWD
+#
+#  Export some variables
+#
+export ROS_PKG=ros-base						# Basic ROS (haha only communication and services)
+export ROS_DISTRO=melodic				# ROS for Ubuntu18
 
+export PROJECT_ROOT=$PWD				# Path to buff-code
+export DEBIAN_FRONTEND=noninteractive	# prevent prompts in docker and everywhere else
+
+
+#
+#	Assert start-up directory
+#
 echo -e "Running Install from ${PWD}"
 
 if [[ $PROJECT_ROOT != *"/buff-code" ]]; then
@@ -14,21 +21,50 @@ if [[ $PROJECT_ROOT != *"/buff-code" ]]; then
 	exit
 fi 
 
+
+#
+#	Source buff.bash
+#
+source ${PROJECT_ROOT}/buffpy/buff.bash
+
+
+#
+#	Update the apt package manager
+#
 echo -e "\n\tapt updating...\n"
-#	update the apt package manager
-# sudo
-apt update
 
-# If no ROS, install it
+sudo apt update
+
+
+#
+#	Install BuffCode
+#
+source ${PROJECT_ROOT}/buffpy/scripts/install_buffpy.bash
+
+sudo apt autoremove -y	
+sudo apt cleansudo apt update
+
+
+#
+#	Check for ROS install (installs if none)
+#
 if [[ ! -d /opt/ros/${ROS_DISTRO} ]]; then
-	source "${PROJECT_ROOT}/buffpy/scripts/install_ros.bash" $ROS_DISTRO $ROS_PKG
+	source "${PROJECT_ROOT}/buffpy/scripts/install_ros.bash"
 fi
+sudo apt autoremove -ysudo apt cleansudo apt update
 
-# Also install Sublime Text-editor
-## source "${PROJECT_ROOT}/buffpy/scripts/install_sublime.bash"
 
+#
+#	Also install Sublime Text-editor
+# Deprecated, IDE on edge devices/containers is slow
+# source "${PROJECT_ROOT}/buffpy/scripts/install_sublime.bash"
+
+
+#
+#	Install Utilities
+#
 if [[ "${HOSTNAME}" != "edge"* ]]; then
-	# echo -e "\n\tInstalling Teensy loader...\n"
+	echo -e "\n\tInstalling Teensy loader...\n"
 
 	# #	Pull teensy files from pjrc.com
 	# # teensy binary and objects
@@ -46,7 +82,9 @@ if [[ "${HOSTNAME}" != "edge"* ]]; then
 	# rm teensy_linux64.tar.gz
 
 else
-	# sudo
-	 cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
+	#	Copy our startup service to the system units directory
+	sudo cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
 
 fi
+
+

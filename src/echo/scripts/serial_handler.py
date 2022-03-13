@@ -26,6 +26,7 @@ def tryConnect(port):
 	Returns:
 	  status: bool - True if successful
 	"""
+	global device
 	try:
 
 		device = serial.Serial(port, baudrate, timeout=5)

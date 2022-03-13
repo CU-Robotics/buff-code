@@ -33,44 +33,6 @@ import shutil
 import argparse
 import subprocess
 
-def parseArgs():
-	"""
-		Handles parsing all inputs to buff
-		@PARAMS
-			None
-		@RETURNS
-			parsedargs: argparse args object
-	"""
-	parser = argparse.ArgumentParser(prog=sys.argv[0],
-	description='CU-Robotics Multi-Agent Deployment Manager')
-	parser.add_argument('--installKeys',
-		action='store_true',
-		help='Push local sshkeys to the robots')
-	parser.add_argument('--launch', 
-		nargs=1,
-		metavar='LOCATION',
-		default=False,
-		help='Launch the robots software on robots')
-	parser.add_argument('--botPull', 
-		action='store_true',
-		help='Pull data from the robot at ROBOT_IP')
-	parser.add_argument('--build', 
-		nargs=1,
-		metavar='PROFILE',
-		default=False,
-		help='Builds the workspace locally (debug) or to the robot_ip (install)')
-	parser.add_argument('--install', 
-		action='store_true',
-		help='Installs build to the registered robots')
-	parser.add_argument('--initialize', 
-		action='store_true',
-		help='Initializes registered devices')
-	parser.add_argument('--clean',
-		action='store_true',
-		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
-
-	return parser.parse_args(sys.argv[1:])
-
 
 def clear_directory(path):
 
@@ -150,7 +112,7 @@ def install_ssh_keys():
 	for robot in devices:
 		botAddress = f'cu-robotics@{robot}'
 		try:
-			result = subprocess.run(['ssh', botAddress, f'if [[ ! -f /home/cu-robotics/.ssh/id_ed25519.pub ]]; then ssh-keygen -t ed25519; fi'], timeout=5)
+			result = subprocess.run(['ssh', botAddress, f'if [[ ! -f /home/cu-robotics/.ssh/id_ed25519.pub ]]; then ssh-keygen -t ed25519; fi'], timeout=10)
 			if result.returncode == 0:
 				result = subprocess.run(['ssh-copy-id', '-i', f'{home}/.ssh/id_ed25519.pub', botAddress])
 				if result.returncode == 0:
@@ -168,7 +130,7 @@ def install_buffpy(botAddress, source, target, ID, botType):
 		f.write(f"FROM:\n  '{botType}.yaml'\n")
 	# if root does exist remove it
 	try:	
-		cleanDir_result = subprocess.run(['ssh', botAddress, f'if [[ -d {target} ]]; then rm -rf {target}; fi; mkdir {target}'], timeout=7)
+		cleanDir_result = subprocess.run(['ssh', botAddress, f'if [[ -d {target} ]]; then rm -rf {target}; fi; mkdir {target}'], timeout=10)
 		if cleanDir_result.returncode == 0:
 			install_result = subprocess.run(['scp', '-r', source, f'{botAddress}:{target}'])
 			print(install_result)
@@ -247,12 +209,86 @@ def initialize_devices():
 
 		except subprocess.TimeoutExpired:
 			print(f'{botAddress} Timed out')
-				
+
+
+def diagnostic():
+	print(f'\n\tBuffPy Diagnostic Running...\n')
+	try:
+		import cv2			# Test opencv-python import
+		print(f'cv2 import success')
+		import yaml			# Test pyyaml import
+		print(f'yaml import success')
+		import torch		# Test pytorch import
+		print(f'torch import success')
+		import numpy		# Test numpy import
+		print(f'numpy import success')
+		import rospy		# Test rospy import
+		print(f'rospy import success')
+		import pydrive 		# Test pydrive import
+		print(f'pydrive import success')
+
+		if cv2.__version__ != '4.5.5':
+			print(f'Open-CV version mis-match: {cv2.__version__} != 4.5.5')
+		if yaml.__version__ != '6.0':
+			print(f'PyYaml version mis-match: {yaml.__version__} != 6.0')
+		if not '1.9.0' in torch.__version__:
+			print(f'PyTorch version mis-match: {torch.__version__} != 1.9.0*')
+
+		print(f'\n\tDiagnostic Successful\n')
+
+	except Exception as e:
+		print(e)
+
+
+def parseArgs():
+	"""
+		Handles parsing all inputs to buff
+		@PARAMS
+			None
+		@RETURNS
+			parsedargs: argparse args object
+	"""
+	parser = argparse.ArgumentParser(prog=sys.argv[0],
+	description='CU-Robotics Multi-Agent Deployment Manager')
+	parser.add_argument('--installKeys',
+		action='store_true',
+		help='Push local sshkeys to the robots')
+	parser.add_argument('--launch', 
+		nargs=1,
+		metavar='LOCATION',
+		default=False,
+		help='Launch the robots software on robots')
+	parser.add_argument('--botPull', 
+		action='store_true',
+		help='Pull data from the robot at ROBOT_IP')
+	parser.add_argument('--build', 
+		nargs=1,
+		metavar='PROFILE',
+		default=False,
+		help='Builds the workspace locally (debug) or to the robot_ip (install)')
+	parser.add_argument('--install', 
+		action='store_true',
+		help='Installs build to the registered robots')
+	parser.add_argument('--diagnostic', 
+		action='store_true',
+		help='Tests a workspace installation and tools')
+	parser.add_argument('--initialize', 
+		action='store_true',
+		help='Initializes registered devices')
+	parser.add_argument('--clean',
+		action='store_true',
+		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
+
+	return parser.parse_args(sys.argv[1:])
+						
 
 def main(ap):
 
 	if ap.clean:
 		cleanWorkspace()
+
+	if ap.diagnostic:
+		diagnostic()
 
 	if ap.installKeys:
 		install_ssh_keys()

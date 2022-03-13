@@ -1,8 +1,11 @@
-tmux 
-htop 
-iputils-ping  
-openssh-client 
-openssh-server 
+tmux=2.6-3ubuntu0.2
+htop=2.1.0-3
+ffmpeg=7:3.4.8-0ubuntu0.2
+libsm6=2:1.2.2-1
+libxext6=2:1.3.3-1
+iputils-ping=3:20161105-1ubuntu3
+openssh-client=1:7.6p1-4ubuntu0.6
+openssh-server=1:7.6p1-4ubuntu0.6
 wget=1.19.4-1ubuntu2.2 
 gnupg2=2.2.4-1ubuntu1.4 
 git=1:2.17.1-1ubuntu0.9 
@@ -11,8 +14,7 @@ vim=2:8.0.1453-1ubuntu1.8
 cmake=3.10.2-1ubuntu2.18.04.2  
 lsb-release=9.20170808ubuntu1  
 ca-certificates=20210119~18.04.2 
-python3-dev
+python3-dev=3.6.7-1~18.04
 python3-pip 
-jupyter=4.4.0-2 
 build-essential=12.4ubuntu1 
 python3-setuptools=39.0.1-2 
