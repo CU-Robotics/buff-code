@@ -4,7 +4,8 @@
 #
 #  Export some variables
 #
-export ROS_PKG=ros-base						# Basic ROS (haha only communication and services)
+
+export ROS_PKG=ros-base					# Basic ROS (haha only communication and services)
 export ROS_DISTRO=melodic				# ROS for Ubuntu18
 
 export PROJECT_ROOT=$PWD				# Path to buff-code
@@ -12,46 +13,44 @@ export DEBIAN_FRONTEND=noninteractive	# prevent prompts in docker and everywhere
 
 
 #
-#	Assert start-up directory
-#
-echo -e "Running Install from ${PWD}"
-
-if [[ $PROJECT_ROOT != *"/buff-code" ]]; then
-	echo -e "Run this script from the project root"
-	exit
-fi 
-
-
-#
 #	Source buff.bash
 #
+
 source ${PROJECT_ROOT}/buffpy/buff.bash
 
 
 #
 #	Update the apt package manager
 #
+
 echo -e "\n\tapt updating...\n"
 
 sudo apt update
+sudo apt upgrade -y
 
 
 #
 #	Install BuffCode
 #
+
 source ${PROJECT_ROOT}/buffpy/scripts/install_buffpy.bash
 
 sudo apt autoremove -y	
-sudo apt cleansudo apt update
+sudo apt clean
+sudo apt update
 
 
 #
 #	Check for ROS install (installs if none)
 #
+
 if [[ ! -d /opt/ros/${ROS_DISTRO} ]]; then
 	source "${PROJECT_ROOT}/buffpy/scripts/install_ros.bash"
 fi
-sudo apt autoremove -ysudo apt cleansudo apt update
+
+sudo apt autoremove -y
+sudo apt clean
+sudo apt update
 
 
 #
@@ -63,6 +62,7 @@ sudo apt autoremove -ysudo apt cleansudo apt update
 #
 #	Install Utilities
 #
+
 if [[ "${HOSTNAME}" != "edge"* ]]; then
 	echo -e "\n\tInstalling Teensy loader...\n"
 
