@@ -11,7 +11,7 @@ ENV ROS_PKG=desktop
 ENV ROS_DISTRO=melodic
 ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
 
-ENV PROJECT_ROOT=/home/cu-robotics/buff-code
+ENV PROJECT_ROOT=/home/cu-robotics/buff-code/
 
 ENV DEBIAN_FRONTEND=noninteractive
 
