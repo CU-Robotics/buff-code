@@ -4,24 +4,29 @@
 #
 # 	First install system dependencies through apt
 #
+
 echo -e "\n\tInstalling BuffCode Dependencies...\n"
 
-sudo xargs apt install -y <${PROJECT_ROOT}/buffpy/config/install/dependencies.txt
+sudo xargs apt install -y --no-install-recommends <${PROJECT_ROOT}/buffpy/config/install/dependencies.txt
 
 
 #
-#	Upgrade pip to recent version (21.3.1)
+#	Install pip with get-pip
 #
-echo -e "\n\tUpgrading pip3\n"
 
-python3 -m pip install --upgrade pip==21.3.1 # upgrade pip3
+echo -e "\n\tInstalling pip3\n"
 
-sudo apt purge -y python3-pip # Remove distro pip3 # Apt installs and can't uninstall pip3==9.0.1
+curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py
+
+sudo python3 get-pip.py
+
+rm get-pip.py
 
 
 #
 #	Install python requirements with pip3
 #
+
 echo -e "\n\tInstalling BuffCode python3 requirements\n"
 
-python3 -m pip install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
+pip install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
