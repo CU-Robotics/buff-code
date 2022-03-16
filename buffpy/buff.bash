@@ -34,7 +34,7 @@ fi
 # Only export if if not already in path
 
 if [[ "${PYTHONPATH}" != *"/usr/lib/python3"* ]]; then	
-	export PYTHONPATH="${HOME}/.local/lib/python3/dist-packages:${PYTHONPATH}" 
+	export PYTHONPATH="${HOME}/.local/lib/python3.6/site-packages:${PYTHONPATH}" 
 fi
 
 # Only needed if we are using ros packages
