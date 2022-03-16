@@ -37,7 +37,7 @@ source ${PROJECT_ROOT}/buffpy/buff.bash
 #	Uninstall BuffCode Python requirments
 #
 
-pip uninstall -r ${PROJECT_ROOT}/buffpy/config/install/ros_dependencies.txt
+pip uninstall -r ${PROJECT_ROOT}/buffpy/config/install/ros_python_requirements.txt
 pip uninstall -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
 pip uninstall pip
 

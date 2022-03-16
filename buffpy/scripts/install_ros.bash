@@ -40,7 +40,7 @@ sudo apt update
 
 echo -e "\n\tInstalling ros dependencies\n"
 
-pip install -r ${PROJECT_ROOT}/buffpy/config/install/ros_dependencies.txt
+pip install -r ${PROJECT_ROOT}/buffpy/config/install/ros_python_requirements.txt
 
 
 #
