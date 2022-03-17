@@ -88,7 +88,7 @@ def spin(i):
 		tryConnect(device, port)
 
 
-def main():
+def main(data):
 	global device
 
 	try:
@@ -112,7 +112,14 @@ def main():
 
 
 if __name__=='__main__':
-	main()
+	if len(sys.argv) < 2:
+		print(f'No Data: Serial Layer exiting')
+	elif '/buffbot' in sys.argv[1]:
+		main(rospy.get_param(sys.argv[1]))
+	elif '.yaml' in sys.argv[1]:
+		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', sys.argv[1]), 'r') as f:
+			data = yaml.safe_load(f)
+		main(data)
 
 
 

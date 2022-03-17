@@ -26,6 +26,12 @@ source ${PROJECT_ROOT}/buffpy/buff.bash
 echo -e "\n\tapt updating...\n"
 
 sudo apt update
+
+# Make some space if on Jetson
+if [[ "${HOSTNAME}" == "edge"* ]]; then
+	sudo apt purge -y thunderbird libreoffice-*
+fi
+
 sudo apt upgrade -y
 
 
