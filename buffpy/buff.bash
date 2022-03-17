@@ -1,5 +1,6 @@
 #! /usr/bin/bash
 
+
 if [[ "${PWD}" != */buff-code ]]; then
 	echo -e "running from ${PWD}, is this your project root?"
 	return
@@ -25,13 +26,15 @@ fi
 PYTHONPATH=
 
 # If ROS is installed source the setup file
+
 if [[ -f /opt/ros/melodic/setup.bash ]]; then
 	source /opt/ros/melodic/setup.bash
 fi
 
 # Only export if if not already in path
-if [[ "${PYTHONPATH}" != *"/usr/lib/python3"* ]]; then	
-	export PYTHONPATH="/usr/lib/python3/dist-packages:${PYTHONPATH}" 
+
+if [[ "${PYTHONPATH}" != *"${HOME}/.local/lib/python3.6/dist-packages"* ]]; then	
+	export PYTHONPATH="${HOME}/.local/lib/python3.6/dist-packages:${PYTHONPATH}" 
 fi
 
 # Only needed if we are using ros packages
@@ -40,16 +43,23 @@ fi
 # fi
 
 #		Setup python tools
-if [[ "${PATH}" != *"buffpy"* ]]; then
+
+if [[ "${PATH}" != *"${PROJECT_ROOT}/buffpy/bin"* ]]; then
 	export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
 fi 
 
+# if [[ "${PATH}" != *"/.local/bin:"* ]]; then
+# 	export PATH="${HOME}/.local/bin:${PATH}"
+# fi 
+
 # Only export if if not already in path
-if [[ "${PYTHONPATH}" != *"buffpy"* ]]; then	
+
+if [[ "${PYTHONPATH}" != *"${PROJECT_ROOT}/buffpy/lib:"* ]]; then	
 	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}" 
 fi
 
 # set ROS package path to buff-code so it can see buffpy
+
 if [[ "${ROS_PACKAGE_PATH}" != *"buff-code"* ]]; then
 	export ROS_PACKAGE_PATH="${PROJECT_ROOT}:${ROS_PACKAGE_PATH}"
 fi
