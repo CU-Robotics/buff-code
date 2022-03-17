@@ -11,7 +11,7 @@ from pydrive.drive import GoogleDrive
 
 class GD_Handler:
 
-	def __init__(self, config='buffpy/config/lib/gdrive.yaml'):
+	def __init__(self, config='buffpy/config/data/gdrive.yaml'):
 		self.config = os.path.join(os.getenv('PROJECT_ROOT'), config)
 
 		with open(self.config, 'r') as f:
@@ -141,7 +141,7 @@ def main(action, data=None):
 		if len(data) >= 2:
 			gd.downloadFile(file=data[0], path=data[1])
 		else:
-			gd.downloadFile(file=data[0], path=data[1])
+			gd.downloadFile(file=data[0])
 
 if __name__=='__main__':
 	if len(sys.argv) > 2:
