@@ -1,29 +1,39 @@
 #! /usr/bin/env python3
 """
 	Project: BuffPy
-	author: Mitchell D Scott
+	Author: Mitchell D Scott
 	Description:
-	  This is a python3 command line tool from CU-Robotics
+	  This is a python3 command line tool from CU Robotics.
 	It is meant to simplify development of robotics software.
-	Think of buff-code as a python3 app that handles the backend
-	of software development:
-	 - installing/setting up devices
-	 - handling data
-	 - testing
+	BuffPy handles the backend of software development, which 
+	includes but is not limited to:
 
-	  The goal is to eliminate the need for engineers to work on
-	the workspace and allow them to focus on the algorithms 
-	that drive the robot.
+	 - installing/initializing devices
+	 - data management
+	 - realtime diagnostics
+
+	  The goal is to eliminate any backend blockers from our
+	  development flow. This novel part of this program is 
+	  the team management capabilities. Instead of having many
+	  repositories for a group of robots, BuffPy can redistribute
+	  ros nodes for a variety of applications.
 
 	TODO:
-		debug and test all functionality (this script is woefully untested
-		and will likely brake, even with standard input).
-
-		make functionality more robust to erraneous input and general brake downs.
+	  - Improve quality and scope of the diagnostic
+	  - There are plans to overdevelop the shit out of 
+	  	the install (less install on edge devices through 
+	  	converting buffpy to a virtual env for python3.6)
+	  - Implement multi agent debug (ie buffpy --debug $HOSTNAME
+	  	will open debug dialog with HOSTNAME)
+	  - Cached install, check check file to see which files do not 
+	  	need to be installed
+	  - Multi-threaded initialization, don't wait for install on 
+	  	each device. Instead run simultaneously while monitoring 
+	  	progress and errors
 
 	NOTES:
-		This program only really works once the workspace has been built.
-		Which happens with the install. -- Removed GDrive_handler to fix this
+		So unstable it hurts
+		Need better testing protocols (not diagnostic)
 """
 
 import os
@@ -35,86 +45,108 @@ import subprocess
 
 
 def clear_directory(path):
+	"""
+		Used for cleaning. Clears a directory and or replaces it.
+		The cleared directory will be empty after.
+		PARAMS:
+			path: string or path object, specifies the directory to clear
+	"""
 
-	# Idoit Security
-	# this function could wipe the entire disk
-	# if not used with caution. (its also very easy for an attacker to change an environment variable)
+	# 		Idoit Security
+	#  this function could wipe the entire disk
+	# if not used with caution. It's probably not safe but if
+	# PROJECT_ROOT changes there could be catastrophic effects.
 	if len(path.split('/')) < 3:
 		print(f'Illegal Directory: cannot remove {path}')
 		return
 
-	# Remove all lib files, these are installed by catkin
-	# By walking through each dir and removing its files
-	# we can then delete the directories
+	# Delete dir if it exists
 	if os.path.exists(path):
-		for root, dirs, files in os.walk(path):
-			for file in files:
-				os.remove(os.path.join(root, file))
-			for directory in dirs:
-				shutil.rmtree(os.path.join(root, directory))
-			break
-	else:
-		os.mkdir(path)
+		shutil.rmtree(path)
+	
+	# Recreate empty directory
+	os.mkdir(path)
 
 
-def cleanWorkspace():
+def clean_buffpy():
 	"""
 		Removes the data folder, and when it becomes necesary
-		will also remove any generated binaries and configs
+		will also remove any generated binaries and configs.
+		This is an end-all clean up. It will clean everything.
 	"""
+
 	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
 	lib_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'lib')
 
 	if not 'edge' in os.getenv('HOSTNAME'):
-		result = subprocess.run(f'catkin clean -y', shell=True)
+		result = subprocess.run(['catkin', 'clean', '-y'])
 
 	clear_directory(data_path)
 	clear_directory(lib_path)
 
 
-def buildWorkspace(build):
+def build_buffpy(profile):
 	"""
-		Builds the current workspace locally or to a robot.
-		this will need to copy python files and binaries to the robot.
-		@PARAMS:
-			build: the profile to build
-		@RETURNS:
-			None
+		Builds the current workspace locally.
+		PARAMS:
+			profile: string, the profile to build
 	"""
+
+	if not profile:
+		print('No profile specified exiting:...')
+		return
+
 	# use catkin to clean the workspace if it was already built
-	result = subprocess.run(f'catkin clean -y', shell=True)
-	# clean the lib when building
-	clear_directory(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'lib'))
+	catkin_tools = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'build', '.catkin_tools.yaml')
+
+	if os.path.exists(catkin_tools):
+		with open(catkin_tools, 'r') as f:
+			build_config = yaml.safe_load(f)
+		if 'profile' in build_config:
+			if build_config['profile'] != profile:
+				print(f'Building with new profile: {profile}')
+				print(f'Cleaning old profile: {build_config["profile"]}')
+				result = subprocess.run(['catkin', 'clean', '-b', '-y'])
 
 	# Rebuild the workspace with catkin build
-	if build[0]:
-		result = subprocess.run(f'catkin build --profile={build[0]}', shell=True)
-
-	else:
-		print('No profile specified exiting:...')
+	result = subprocess.run(['catkin', 'build', '--profile', profile])		
 
 
 def get_devices():
-	# load all registered devices
-	config = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'robots', 'robots.yaml')
-	if os.path.exists(config):
-		with open(config, 'r') as f:
+	"""
+		Load all registered devices from
+		robots.yaml
+	"""
+	robots = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'robots', 'robots.yaml')
+	if os.path.exists(robots):
+		with open(robots, 'r') as f:
 			return yaml.safe_load(f)
 
 
 def install_ssh_keys():
+	"""
+		Generate and push ed25519 keys to
+		registered devices. This may be a huge 
+		security risk. But it makes installing
+		and sshing really nice.
+		requires password (per device)
+			2 - without installed keys
+			0 - with installed keys
+	"""
 
 	devices = get_devices()
 	home = os.getenv('HOME')
+
+	# only generate keys if they do not exist already
 	if not os.path.exists(f'{home}/.ssh/id_ed25519.pub'):
 		result = subprocess.run(['ssh-keygen', '-t', 'ed25519'])
 
 	for robot in devices:
-		botAddress = f'cu-robotics@{robot}'
+		robot_address = f'cu-robotics@{robot}'
 		try:
-			result = subprocess.run(['ssh', botAddress, f'if [[ ! -f /home/cu-robotics/.ssh/id_ed25519.pub ]]; then ssh-keygen -t ed25519; fi'], timeout=10)
+			result = subprocess.run(['ssh', robot_address, f'if [[ ! -f /home/cu-robotics/.ssh/id_ed25519.pub ]]; then ssh-keygen -t ed25519; fi'], timeout=10)
 			if result.returncode == 0:
-				result = subprocess.run(['ssh-copy-id', '-i', f'{home}/.ssh/id_ed25519.pub', botAddress])
+				result = subprocess.run(['ssh-copy-id', '-i', f'{home}/.ssh/id_ed25519.pub', robot_address])
 				if result.returncode == 0:
 					print(f'{robot} Success')
 
@@ -122,96 +154,122 @@ def install_ssh_keys():
 			print(f'{robot} Timed out')
 
 
-def install_buffpy(botAddress, source, target, ID, botType):
-	""" Install buffpy to a bot over scp
+def deploy_buffpy(robot_address, robot_type, source, target, ID):
+	""" 
+		Install buffpy to a bot with scp.
+		PARAMS:
+			robot_address: string, USERNAME@<IP/HOSTNAME>
+			robot_type: string, the bot type to install
+			source: string or path like object, the target directory to copy
+			target: string or path like object, the target directory to copy to
+			ID: string or path like object, the identify file of the install (self.yaml)
+		RETURNS:
+			returncode: int, the return code of the install (failed = 13)
 	"""
-
 	with open(ID, 'w+') as f:
-		f.write(f"FROM:\n  '{botType}.yaml'\n")
+		f.write(f"FROM:\n  '{robot_type}.yaml'\n")
 	# if root does exist remove it
 	try:	
-		cleanDir_result = subprocess.run(['ssh', botAddress, f'if [[ -d {target} ]]; then rm -rf {target}; fi; mkdir {target}'], timeout=10)
-		if cleanDir_result.returncode == 0:
-			install_result = subprocess.run(['scp', '-r', source, f'{botAddress}:{target}'])
+		clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target}/buffpy ]]; then rm -rf {target}/buffpy; fi; mkdir -p {target}'], timeout=10)
+		if clean_dir_result.returncode == 0:
+			install_result = subprocess.run(['scp', '-r', source, f'{robot_address}:{target}'])
 			print(install_result)
 
 			return install_result.returncode
 				
 	except subprocess.TimeoutExpired:
-		print(f'{botAddress} Timed out')
+		print(f'{robot_address} Timed out')
 
-	return 1
+	return 13
 
 
-def install_all_devices():
+def load_install_params():
 	"""
-		Install all built code to all robots
+		Get installation definition
+		RETURNS:
+			source: string or path like object, the target directory to copy
+			target: string or path like object, the target directory to copy to
+			ID: string or path like object, the identify file of the install (self.yaml)
 	"""
 
-		# Setup Parameters for install
-	target = os.path.join('/home', 'cu-robotics', 'buff-code')
+	# Setup Parameters for install
 	project_root = os.getenv('PROJECT_ROOT')
 	source = os.path.join(project_root, 'buffpy')
+	target = os.path.join('/home', 'cu-robotics', 'buff-code')
 	ID = os.path.join(project_root, 'buffpy', 'config', 'robots', 'self.yaml')
 
 	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
-		print("Workspace not built, run: /'buffpy --build <profile>/'")
+		print("Workspace not built, run:\n\t \'buffpy --build <profile>\'")
 		return
 
-	# Don't build on edge devices (robot)
+	# Don't install from edge devices (robot)
 	if 'edge' in os.getenv('HOSTNAME'):
-		print(f"Can/'t build on device: {os.getenv('HOSTNAME')}")
+		print(f'Can\'t isntall from device: {os.getenv("HOSTNAME")}')
 		return
 
 	devices = get_devices()
 
+	return source, target, ID, devices
+
+def deploy_all_devices():
+	"""
+		Install built code to all robots
+		regestered in robots.yaml
+		requires password
+			1 - without installed keys
+			0 - with installed keys
+	"""
+
+	# define the installation
+	source, target, ID, devices = load_install_params()
+
+	print(f'Deploying with\n\tSource: {source}\n\tTarget: {target}\n\tID: {ID}\n\tDevices: {devices}')
+
 	for robot in devices:
-		botType = devices[robot]
 
+		# get robot type
+		robot_type = devices[robot]
 		# set target destination
-		botAddress = f'cu-robotics@{robot}'
-
-		install_buffpy(botAddress, source, target, ID, botType)
+		robot_address = f'cu-robotics@{robot}'
+		# deploy build
+		deploy_buffpy(robot_address, robot_type, source, target, ID)
 
 
 def initialize_devices():
+	"""
+		Deploy buffpy and run installation on
+		each registered device.
+	"""
 
-		# Setup Parameters for initializing
-	target = os.path.join('/home', 'cu-robotics', 'buff-code')
-	project_root = os.getenv('PROJECT_ROOT')
-	source = os.path.join(project_root, 'buffpy')
-	ID = os.path.join(project_root, 'buffpy', 'config', 'robots', 'self.yaml')
+	# define the installation
+	source, target, ID, devices = load_install_params()
 
-	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
-		print("Workspace not built, run: /'buffpy --build <profile>/'")
-		return
-
-	# Don't build on edge devices (robot)
-	if 'edge' in os.getenv('HOSTNAME'):
-		print(f"Can/'t build on device: {os.getenv('HOSTNAME')}")
-		return
-
-	devices = get_devices()
+	print(f'Running install as\n\tSource: {source}\n\tTarget: {target}\n\tID: {ID}\n\tDevices: {devices}')
 
 	for robot in devices:
-		botType = devices[robot]
 
+		# get robot type
+		robot_type = devices[robot]
 		# set target destination
-		botAddress = f'cu-robotics@{robot}'
-		if install_buffpy(botAddress, source, target, ID, botType) != 0:
+		robot_address = f'cu-robotics@{robot}'
+		# deploy buffpy and source the install scripts
+		if deploy_buffpy(robot_address, robot_type, source, target, ID) != 0:
 			continue
 		try:
 			setup_result = subprocess.run(['ssh', 
 					'-t',
-					botAddress, 
-					f'cd /home/cu-robotics/buff-code; \
-					source buffpy/scripts/install.bash'])
+					robot_address, 
+					f'cd /home/cu-robotics/buff-code && source buffpy/scripts/install.bash'])
 
 		except subprocess.TimeoutExpired:
-			print(f'{botAddress} Timed out')
+			print(f'{robot_address} Timed out')
 
 
 def diagnostic():
+	"""
+		Test the various parts of buffpy.
+		currently only checks the install.
+	"""
 	print(f'\n\tBuffPy Diagnostic Running...\n')
 	try:
 		import cv2			# Test opencv-python import
@@ -222,10 +280,10 @@ def diagnostic():
 		print(f'torch import success')
 		import numpy		# Test numpy import
 		print(f'numpy import success')
-		import rospy		# Test rospy import
-		print(f'rospy import success')
 		import pydrive 		# Test pydrive import
 		print(f'pydrive import success')
+		import rospy		# Test rospy import
+		print(f'rospy import success')
 
 		if cv2.__version__ != '4.5.5':
 			print(f'Open-CV version mis-match: {cv2.__version__} != 4.5.5')
@@ -240,12 +298,12 @@ def diagnostic():
 		print(e)
 
 
-def parseArgs():
+def parse_arguments():
 	"""
 		Handles parsing all inputs to buff
-		@PARAMS
+		PARAMS
 			None
-		@RETURNS
+		RETURNS
 			parsedargs: argparse args object
 	"""
 	parser = argparse.ArgumentParser(prog=sys.argv[0],
@@ -285,7 +343,7 @@ def parseArgs():
 def main(ap):
 
 	if ap.clean:
-		cleanWorkspace()
+		clean_buffpy()
 
 	if ap.diagnostic:
 		diagnostic()
@@ -297,12 +355,13 @@ def main(ap):
 		initialize_devices()
 
 	if ap.build:
-		buildWorkspace(ap.build)
+		build_buffpy(ap.build)
 
 	if ap.install:
-		install_all_devices()
+		deploy_all_devices()
 
 	# May be Deprecated
+	# Consider moving to buff.bash as an alias
 	if ap.launch == 'bot':
 		result = subprocess.run(['ssh', os.getenv("ROBOT_ADDRESS"), 'cd buff-code && source buff.bash && launch'])
 
@@ -310,6 +369,6 @@ def main(ap):
 		result = subprocess.run(['scp', f'{os.getenv("ROBOT_ADDRESS")}:{os.getenv("ROBOT_ROOT")}/data', f'{os.getenv("PROJECT_ROOT")}/data'])
 
 if __name__ == '__main__':
-	ap = parseArgs()
+	ap = parse_arguments()
 	main(ap)
 

@@ -2,6 +2,7 @@
 import os
 import sys
 import cv2
+import yaml
 import rospy
 import buffvision as bv
 from cv_bridge import CvBridge
@@ -51,18 +52,24 @@ class cv2_Camera:
 				# Capture frame
 				ret, frame = self.camera.read()
 
+
 				if ret:
 					# Convert the cv frame to a ROS message
 					imgMsg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
 					# Publish the message
 					self.pub.publish(imgMsg)
+
 					rate.sleep()
 
 				else:
 					self.lives -= 1
 					if self.debug:
 						rospy.logerr('Camera reseting after return: {}'.format(ret))
-					rospy.sleep(2)
+
+					self.camera.release()
+
+					rospy.sleep(1)
+
 					self.camera = cv2.VideoCapture(self.device)
 					self.camera.set(cv2.CAP_PROP_FPS, self.fps)
 
@@ -95,13 +102,19 @@ def main(configData):
 	# These things are defined under the systems namespace (/buffbot/CAMERA)
 	fps = configData['FPS']
 	device = configData['DEVICE']
-	topic_name = configData['TOPICS'][0]
+	
+	if 'TOPICS' in configData:
+		topic_name = configData['TOPICS'][0]
+		# These are defined under the generic namespace
+		topics = rospy.get_param('/buffbot/TOPICS')
+		debug = rospy.get_param('/buffbot/DEBUG')
+		raw_img_topic = topics[topic_name]
 
-	# These are defined under the generic namespace
-	debug = rospy.get_param('/buffbot/DEBUG')
-	topics = rospy.get_param('/buffbot/TOPICS')
+	else:
+		raw_img_topic = 'image_raw'
+		debug=True
 
-	raw_img_topic = topics[topic_name]
+		
 
 	# create the video stream
 	camera = cv2_Camera(device, raw_img_topic, fps=fps, debug=debug)
@@ -122,7 +135,11 @@ def main(configData):
 
 
 if __name__=='__main__':
-	if '/buffbot' in sys.argv[1]:
+	if len(sys.argv) < 2:
+		print(f'No Data: MDS camera exiting')
+	elif '/buffbot' in sys.argv[1]:
 		main(rospy.get_param(sys.argv[1]))
-	else:
-		rospy.logerr('Unsupported: Call visual spawner from a system launch')
+	elif '.yaml' in sys.argv[1]:
+		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', sys.argv[1]), 'r') as f:
+			data = yaml.safe_load(f)
+		main(data)

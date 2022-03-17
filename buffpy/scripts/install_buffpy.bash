@@ -29,4 +29,4 @@ rm get-pip.py
 
 echo -e "\n\tInstalling BuffCode python3 requirements\n"
 
-pip install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt
+pip3 install -r ${PROJECT_ROOT}/buffpy/config/install/python3_requirements.txt

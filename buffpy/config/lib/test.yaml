@@ -1,0 +1,22 @@
+DEBUG:
+  False
+  
+
+TOPICS:
+  RAW_IMG:
+    'image_raw'
+
+
+NODES:
+
+  CAMERA:     # spawns our camera streamer
+    FILE:
+      'mds_camera.py'
+    TOPICS:
+      - 'RAW_IMG'
+    CONFIG:
+      'default_camera.yaml'
+    PACKAGE:
+      'buffpy'
+    REQUIRED:
+      'yes'  # can be anything

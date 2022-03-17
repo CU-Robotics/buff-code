@@ -40,21 +40,24 @@ sudo apt update
 
 echo -e "\n\tInstalling ros dependencies\n"
 
-pip install -r ${PROJECT_ROOT}/buffpy/config/install/ros_python_requirements.txt
+pip3 install -r ${PROJECT_ROOT}/buffpy/config/install/ros_python_requirements.txt
 
 
 #
 # Init rosdep
 #
 
-echo -e "\n\tSetting up rosdep\n"
+if [[ "${HOSTNAME}" != "edge"* ]]; then
+	echo -e "\n\tSetting up rosdep\n"
 
-sudo apt update
+	sudo apt update
+	sudo apt install python-rosdep
+	
+	cd /opt/ros/${ROS_DISTRO}
 
-cd /opt/ros/${ROS_DISTRO}
-
-sudo rosdep init
-rosdep update
+	sudo rosdep init
+	rosdep update
+fi
 
 
 #
@@ -77,13 +80,11 @@ cd $HOME && mkdir opencv_ws && cd opencv_ws && \
 
 git clone -b noetic https://github.com/ros-perception/vision_opencv.git src/vision_opencv && \
 
-cd src/vision_opencv  && sed -i 's/python37/python3/g' cv_bridge/CMakeLists.txt && cd ../.. && \
-
-source /opt/ros/melodic/setup.bash && catkin init && \
+cd src/vision_opencv  && sed -i 's/python37/python3/g' cv_bridge/CMakeLists.txt && cd ../.. && catkin init && \
 
 catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
 
-catkin build cv_bridge && cp -r install/lib/python3/dist-packages/* ${HOME}/.local/lib/python3.6/site-packages/ && cd $HOME
+catkin build cv_bridge && cp -r install/lib/python3/dist-packages ${HOME}/.local/lib/python3.6/ && cd $HOME
 
 if [[ -d ${HOME}/opencv_ws ]]; then
 	rm -rf ${HOME}/opencv_ws

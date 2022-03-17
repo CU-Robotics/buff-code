@@ -33,8 +33,8 @@ fi
 
 # Only export if if not already in path
 
-if [[ "${PYTHONPATH}" != *"/usr/lib/python3"* ]]; then	
-	export PYTHONPATH="${HOME}/.local/lib/python3.6/site-packages:${PYTHONPATH}" 
+if [[ "${PYTHONPATH}" != *"${HOME}/.local/lib/python3.6/dist-packages"* ]]; then	
+	export PYTHONPATH="${HOME}/.local/lib/python3.6/dist-packages:${PYTHONPATH}" 
 fi
 
 # Only needed if we are using ros packages
@@ -44,17 +44,17 @@ fi
 
 #		Setup python tools
 
-if [[ "${PATH}" != *"buffpy"* ]]; then
+if [[ "${PATH}" != *"${PROJECT_ROOT}/buffpy/bin"* ]]; then
 	export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
 fi 
 
-if [[ "${PATH}" != *"/.local/bin:"* ]]; then
-	export PATH="${HOME}/.local/bin:${PATH}"
-fi 
+# if [[ "${PATH}" != *"/.local/bin:"* ]]; then
+# 	export PATH="${HOME}/.local/bin:${PATH}"
+# fi 
 
 # Only export if if not already in path
 
-if [[ "${PYTHONPATH}" != *"buffpy"* ]]; then	
+if [[ "${PYTHONPATH}" != *"${PROJECT_ROOT}/buffpy/lib:"* ]]; then	
 	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}" 
 fi
 
