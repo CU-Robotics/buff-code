@@ -94,7 +94,7 @@ def load_config(file):
 		data = yaml.safe_load(f)
 
 	if 'FROM' in data:
-		parent = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', data['FROM'])
+		parent = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'system', data['FROM'])
 		parentData = load_config(file=parent)
 
 		data = overwrite_conf(data, parentData)
@@ -131,7 +131,7 @@ def parse_target(args, projectRoot):
 
 		if target[-5:] == '.yaml':	# if target is a yaml file set config
 			print('Loading ROS System:...')
-			target_path = os.path.join(projectRoot, 'buffpy', 'config', 'lib', target)
+			target_path = os.path.join(projectRoot, 'buffpy', 'config', 'system', target)
 			config = load_config(target_path)	# None if no config
 
 			if config is None:
@@ -205,10 +205,10 @@ def launch_system(target_path, config):
 					node.pop('CONFIG')
 
 				elif 'CONFIG' in node:
-					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', node['CONFIG']), 'r') as f:
+					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', node['CONFIG']), 'r') as f:
 						data = yaml.safe_load(f)
 						if not data is None:
-							node.update(data) # Add the programs config to its run config
+							node.update(data) # Add the data yaml to the nodes system definition
 
 
 				rospy.set_param(args, node)
