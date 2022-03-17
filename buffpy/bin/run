@@ -1,13 +1,5 @@
 #! /usr/bin/env python3
 """
-		Odyssy Launch Platform
- 	This is the main script for all CV 
-	operations. The script reads in a
-	config file that describes the pipeline
-	and then launches the defined targets.
-
-"""
-"""
 	Project: Odyssey Launch Platform
 	Author: Mitchell D Scott
 	Description:
