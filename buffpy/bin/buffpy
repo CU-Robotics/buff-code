@@ -323,7 +323,7 @@ def parse_arguments():
 		nargs=1,
 		metavar='PROFILE',
 		default=False,
-		help='Builds the workspace locally (debug) or to the robot_ip (install)')
+		help='Builds the workspace locally (use profile debug)')
 	parser.add_argument('--install', 
 		action='store_true',
 		help='Installs build to the registered robots')
@@ -355,7 +355,7 @@ def main(ap):
 		initialize_devices()
 
 	if ap.build:
-		build_buffpy(ap.build)
+		build_buffpy(ap.build[0])
 
 	if ap.install:
 		deploy_all_devices()
