@@ -1,11 +1,29 @@
 #! /usr/bin/env python3
 """
-		Launcher 
- 	This is the main script for all CV 
-	operations. The script reads in a
-	config file that describes the pipeline
-	and then launches the defined targets.
+	Project: Odyssey Launch Platform
+	Author: Mitchell D Scott
+	Description:
+	  This is a python3 command line tool from CU Robotics.
+	Use this script to spawn systems. Systems are defined as
+	yaml files in buffpy/config/lib. A system consists of a 
+	setof ROS nodes and the topics that link them. A system may
+	also include data files (yaml) to configure nodes. Nodes
+	do not accept arguments, everything needs to be passed 
+	through the ROS-param server.
 
+	  The goal is to eliminate the overhead of using launch files.
+	This script is also designed to make the migration to ROS2 and
+	python3 as easy as possible (hope this happens soon). Another
+	benefit of this method is the ability to deploy the same source
+	to a variety of robots. All robots launch code the same way but
+	by importing different system yamls or data yamls the overall
+	systems can vary dramatically.
+
+	TODO:
+	  - Wait until the migration for major developments
+
+	NOTES:
+		It's been awhile, I'll get back to you
 """
 
 import os 
@@ -17,7 +35,17 @@ import signal
 import roslaunch
 import subprocess as sb
 
+
 def overwrite_conf(a, b):
+	"""
+		Overwrite a parent yamls data
+		with the data of it's child
+		PARAMS:
+			a: dict (from pyyaml), the child
+			b: dict (from pyyaml), the parent
+		RETURNS:
+			b: dict, overwrite result
+	"""
 	for item in a:
 		# Handle lists
 		if type(a[item]) is list:
@@ -42,10 +70,10 @@ def overwrite_conf(a, b):
 def load_config(file):
 	"""
 		Loda the target system config file.
-		Now featuring recursive inheritance
-		@PARAMS:
+		Now featuring recursive inheritance!
+		PARAMS:
 			file: The overwriting conf data
-		@RETURNS:
+		RETURNS:
 			case 0: empty dictionary
 			case 1: the parent data (dict)
 			case 2: the parent updated with the child (dict)
@@ -58,7 +86,7 @@ def load_config(file):
 		data = yaml.safe_load(f)
 
 	if 'FROM' in data:
-		parent = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', data['FROM'])
+		parent = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'system', data['FROM'])
 		parentData = load_config(file=parent)
 
 		data = overwrite_conf(data, parentData)
@@ -67,12 +95,12 @@ def load_config(file):
 
 def parse_target(args, projectRoot):
 	""" 
-		get target_path and config if they exist, all
+		Get target_path and config if they exist, all
 		input checking debugging gets done here before launch
-		@PARAMS:
+		PARAMS:
 			args: list of strings, [file, args] args can be None
 			projectRoot: filepath, root of the project
-		@RETURN:
+		RETURN:
 			target_path: filepath, the target (yaml or py)
 			target_args: args for a python script
 			config: config data (dict), config for a system
@@ -85,7 +113,7 @@ def parse_target(args, projectRoot):
 		target = args[1]
 
 		if target[-3:] == '.py':	# if arg1 is a python script set the target path
-			print('Loading script:...')
+			print('Loading Python3 Script:...')
 			config = 'python'		# so we know its python
 			target_path = os.path.join(projectRoot, 'buffpy', 'lib', target)
 			
@@ -94,8 +122,8 @@ def parse_target(args, projectRoot):
 				print(f'Found args {target_args}')
 
 		if target[-5:] == '.yaml':	# if target is a yaml file set config
-			print('Loading system:...')
-			target_path = os.path.join(projectRoot, 'buffpy', 'config', 'lib', target)
+			print('Loading ROS System:...')
+			target_path = os.path.join(projectRoot, 'buffpy', 'config', 'system', target)
 			config = load_config(target_path)	# None if no config
 
 			if config is None:
@@ -111,26 +139,26 @@ def parse_target(args, projectRoot):
 
 def launch_system(target_path, config):
 	"""
-		This wil launch all of our nodes and roscore. 
+		This wil launch all nodes and roscore. 
 		launches core process with subprocess.Popen 
 		systems are launched with the usage below
 		rosrun package program args=[debug, config, topics...]
-		@PARAMS:
+		PARAMS:
 			target_path: filepath, to yaml
 			config: load configuration (dict)
-		@RETURNS:
-			coreProc: subprocess obj, the core process
-			pool: list of roslaunch pool
+		RETURNS:
+			core_process: subprocess obj, the core process
+			pool: list of roslaunch processes
 	"""
+	
+	pool = []	
 	cmd = 'roscore'
-	coreProc = None
-	pool = []
-
+	core_process = None
 		
 	# Set nodes and package
 	nodes = config['NODES']
 
-	print(f'System Config: {config}')
+	print(f'System Definition:\n{yaml.dump(config, allow_unicode=True, default_flow_style=False)}\n')
 
 	# Cant spawn pool without nodes
 	if nodes is None:
@@ -140,7 +168,7 @@ def launch_system(target_path, config):
 		namespace = '/buffbot'
 
 		# launch core
-		coreProc = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
+		core_process = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
 
 		launch = roslaunch.scriptapi.ROSLaunch()
 		launch.start()
@@ -169,10 +197,10 @@ def launch_system(target_path, config):
 					node.pop('CONFIG')
 
 				elif 'CONFIG' in node:
-					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', node['CONFIG']), 'r') as f:
+					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', node['CONFIG']), 'r') as f:
 						data = yaml.safe_load(f)
 						if not data is None:
-							node.update(data) # Add the programs config to its run config
+							node.update(data) # Add the data yaml to the nodes system definition
 
 
 				rospy.set_param(args, node)
@@ -195,64 +223,66 @@ def launch_system(target_path, config):
 			process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=required)
 			pool.append(launch.launch(process))
 
-	return coreProc, pool, launch
+	return core_process, pool, launch
 
 def launch_python(target_path, target_args):
 	"""
 		Runs a python script It starts by building a 
 		cmd for the core process and then runs the 
 		command with subprocess.Popen 
-		@PARAMS:
+		PARAMS:
 			target_path: filepath, to python script
 			target_args: list of strings, args for the command (can be empty)
-		@RETURNS:
-			coreProc: subprocess obj, the core process
+		RETURNS:
+			core_process: subprocess obj, the core process
 			pool: empty list
 	"""
 
 	# run a single script without a config
 	cmd = ['python3', target_path] + target_args
-	coreProc = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
+	print(f'Targeting:\n\t{cmd}')
+	core_process = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
 
-	return coreProc
+	return core_process
 
 def spin(config, target_path, target_args):
 	"""
 		initialize the run and launch
 		loop and wait for user kill or core to finish
-		@PARAMS:
+		PARAMS:
 			config: a python script or system config file (yaml)
 			target_path: the targetfile to launch or roscore
 			target_args: arguments for the target file
 	"""
+
 	# target path is essential for launching. If it is empty
 	# there was an error and the program should exit
 	if target_path is None:
 		print(f'Failed to load target: {target_path}')
 		exit(0)
 
-	coreProc = None
+	core_process = None
 	# Try to catch user kill and other errors
 	try: 
 		# launch the pool
 		if config == 'python':
-			coreProc = launch_python(target_path, target_args)
+			core_process = launch_python(target_path, target_args)
 		elif not config is None:
-			coreProc, pool, launch = launch_system(target_path, config)
+			core_process, pool, launch = launch_system(target_path, config)
 		else:
 			print('Config Empty: Exiting...')
 			exit(0)
-		# coreProc is the core process we are trying to spawn (python script or roscore)
+		# core_process is the core process we are trying to spawn (python script or roscore)
 		# if it fails there is no point in spinning
-		if coreProc is None: 
+		if core_process is None: 
 			print('Launching target core failed :(')
 			exit(0)
 
 		# this hanldes user kill (available after spawn & in the run space below)
 		# this will loop until an interrupt or the core dies.
-		while coreProc.poll() is None:
+		while core_process.poll() is None:
 			# if output/errors print them
-			mesg = coreProc.communicate()
+			mesg = core_process.communicate()
 			if mesg[0]:
 				print(mesg[0].decode('utf-8')) # this will force us to use rospy.log to print info I think
 			if mesg[1]:
@@ -271,11 +301,11 @@ def spin(config, target_path, target_args):
 		# 	proc.stop()
 
 		# Kill core
-		os.kill(coreProc.pid, signal.SIGTERM)
+		os.kill(core_process.pid, signal.SIGTERM)
 
 	except Exception as e:
 		# In event of an error kill the core
-		os.kill(coreProc.pid, signal.SIGTERM)
+		os.kill(core_process.pid, signal.SIGTERM)
 		print(e)
 		print('Killed due to error')
 
@@ -285,10 +315,10 @@ def main(args):
 		See wiki for input usage
 	"""
 
-	# Initialize config as None
-	config = None
+	# list of roslaunch pool, empty when running python
+	pool = []
+	config = None # Initialize config as None
 	launch = None
-	pool = []	# list of roslaunch pool, empty when running python
 	fileName = args[0]	# program file name is always the first arg
 	binPath = os.path.dirname(fileName) # path to buffpy/bin
 	projectRoot = os.getenv('PROJECT_ROOT')	# path to project root
