@@ -1,31 +1,130 @@
 #! /usr/bin/env python3
 import sys
-import rospy
-import buffvision as bv
-from std_msgs.msg import Float64MultiArray
+import time
+import serial
+import traceback as tb
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
+start = time.time()
+t = []
+error = []
+target = []
+measure = []
+control = []
+
+fig, ax = plt.subplots()
+
+device = None
+baudrate = 9600
+connected = False
+port = '/dev/tty.usbmodem113221301'
+
+def tryConnect(port):
+	"""
+	  Try to connect with the device.
+	Returns:
+	  status: bool - True if successful
+	"""
+	global device
+	try:
+
+		device = serial.Serial(port, baudrate, timeout=5)
+		device.flush()
+
+	except Exception as e:
+		print(f'Error Detecting Device at {port}')
+		print(e)
+
+	else:
+		print('Device Connected: Reading...')
+
+	return device
+
+def parsePacket(packet):
+	"""
+	  Create a new msg to publish.
+		Params:
+			topic: string - destination for the publisher
+			msgType: string - the datatype of the msg
+			data: ??? - the data to fill msg
+		Returns:
+		  msg: ??? - the msg to send
+	"""
+	t.append(time.time() - start)
+	for item in packet:
+		name, val = item.split(':')
+		if name == 'E':
+			error.append(float(val))
+		elif name == 'T':
+			target.append(float(val))
+		elif name == 'M':
+			measure.append(float(val))
+		elif name == 'U':
+			control.append(float(val))
+
+def spin(i):
+	"""
+	  Read a line from the serial port and publish it
+	to a topic given the mode. The mode is the first 4 bytes
+	of the msg.
+	"""
+	global device
+	try:
+		if device.in_waiting:
+			packet = device.readline().decode().rstrip().split(',')
+			parsePacket(packet)
+
+		ax.plot(t, error)
+		ax.plot(t, target)
+		ax.plot(t, measure)
+		ax.plot(t, control)
+
+	except Exception as e:
+		tb.print_exc()
+		print(e)
+		print('Possible I/O Error')
+		time.sleep(2)
+		tryConnect(device, port)
 
 
-def callback(mesg):
-	# write message
-	# Serial.py
-	pass
-	
+def main(data):
+	global device
 
-def main(configData):
+	try:
+		device = tryConnect(port)
+		#ani = FuncAnimation(fig, spin, frames=20, interval=100, repeat=True)
 
-	rospy.init_node('target_tracker', anonymous=True)
+		plt.show()
+		while True:
+			cmdStr = input()
+			device.write(cmdStr)
 
-	all_topics = rospy.get_param('/buffbot/TOPICS')
+	except KeyboardInterrupt:
+		if device:
+			device.close()
 
-	topics = [all_topics[t] for t in configData['TOPICS']]
+	except Exception as e:
+		exc_type, exc_value, exc_traceback = sys.exc_info()
+		tb.print_exc()
+		if device:
+			device.close()
 
-	sub = rospy.Subscriber(topics[0], Float64MultiArray, callback, queue_size=5)
-
-	rospy.spin()
-	
 
 if __name__=='__main__':
-	if '/buffbot' in sys.argv[1]:
+	if len(sys.argv) < 2:
+		print(f'No Data: Serial Layer exiting')
+	elif '/buffbot' in sys.argv[1]:
 		main(rospy.get_param(sys.argv[1]))
-	else:
-		main()
+	elif '.yaml' in sys.argv[1]:
+		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
+			data = yaml.safe_load(f)
+		main(data)
+
+
+
+
+
+
+
+

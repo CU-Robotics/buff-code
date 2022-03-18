@@ -66,10 +66,6 @@ class BuffNet:
 		else:
 			self.image_size = (416, 416)
 
-		if configData is None:
-			# there is no config for the model to load from
-			return None
-
 
 	def detect(self, image):
 		"""
@@ -188,16 +184,13 @@ def main(configData):
 
 if __name__=='__main__':
 	if len(sys.argv) < 2:
-		main({})
-	if sys.argv[1][-5:] == '.yaml':
-		path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', sys.argv[1])
-		with open(path, 'r') as f:
+		print(f'No Data: BuffNet exiting ...')
+	elif '/buffbot' in sys.argv[1]:
+		main(rospy.get_param(sys.argv[1]))
+	elif '.yaml' in sys.argv[1]:
+		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
 			data = yaml.safe_load(f)
 		main(data)
-	elif '/buffbot' in sys.argv[1]:
-			main(rospy.get_param(sys.argv[1]))
-	else:
-		rospy.logerr('Unsupported call: use this with a rosparam component name or a yaml config')
 
 
 
