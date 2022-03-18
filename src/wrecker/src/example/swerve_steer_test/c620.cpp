@@ -145,3 +145,19 @@ float c610Enc::getAngle() {
   
   return angle;
 }
+
+void c610Enc::updateMotor(CAN_message_t* recMsg) {
+    // angle = recMsg->buf[0];
+    // angle = angle << 8;
+    // angle = angle | recMsg->buf[1];
+
+    rpm = recMsg->buf[2];
+    rpm = rpm << 8;
+    rpm = rpm | recMsg->buf[3];
+
+    torque = recMsg->buf[4];
+    torque = torque << 8;
+    torque = torque | recMsg->buf[5];
+
+    temp = recMsg->buf[6];
+}

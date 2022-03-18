@@ -34,6 +34,7 @@ class c610Enc : public rmMotor {
         c610Enc(short tempID, CAN_message_t* msg, uint8_t encPin); //constructor
         void setPower(float power);
         float getAngle();
+        void updateMotor(CAN_message_t* recMsg);     //update motor info values directly from CAN message
 };
 
 #endif // C620_H
