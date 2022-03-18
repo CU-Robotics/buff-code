@@ -10,10 +10,10 @@ int del = 1; // delay length, figure out why this is necesary!!!!!!!!!
 
 const bool printInfo = true;   //set to true to get stats of motors printed to serial
 
-float power;
+float power = 0;
 
 float currentAngle = 0;
-float targetAngle = 0;
+float targetAngle = 180;
 float error = 0;
 float dError = 0;
 float tempError = 0;
@@ -36,10 +36,19 @@ void loop() {
   // controller1.setPower(.1);
 
   currentAngle = controller1.getAngle();
-  error = ((targetAngle - currentAngle) / 360);
-  dError = error - tempError;
-  tempError = error;
-  power = (error * kp) - (dError * kd);
+
+  // Serial.print("currentAngle: ");
+  // Serial.println(currentAngle);
+
+  // Serial.print("targetAngle: ");
+  // Serial.println(targetAngle);
+
+  // error = ((targetAngle - currentAngle) / 360);
+  // dError = error - tempError;
+  // tempError = error;
+  // power = (error * kp) - (dError * kd);
+  power = targetAngle - currentAngle;
+  power = power / (360 * 8);
   controller1.setPower(power);
   can1.write(sendMsg);
     
@@ -52,7 +61,7 @@ void loop() {
     Serial.print("motor id: ");
     Serial.println(recMsg.id, HEX);
     Serial.print("Motor angle: ");
-    Serial.println(controller1.getAngle());
+    Serial.println(currentAngle);
     Serial.print("Torque: ");
     Serial.println(controller1.getTorque());
     Serial.print("RPM: ");
@@ -61,6 +70,8 @@ void loop() {
     Serial.println(error);
     Serial.print("dError: ");
     Serial.println(dError);
+    Serial.print("Target angle: ");
+    Serial.println(targetAngle);
     Serial.print("Power: ");
     Serial.println(power);
     
