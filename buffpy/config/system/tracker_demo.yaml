@@ -1,0 +1,22 @@
+DEBUG: True
+
+TOPICS:
+    DETECTED: "detected_object"
+    TARGET: "target"
+
+NODES:
+    # demo detector will publish 2d coords at 30fps to detected_object
+    # goal of the tracker is to upsample, predict and publish these detections to tracker
+
+    CAMERA: # spawn detector
+        FILE: "tracker_demo_detector.py"
+        TOPICS:
+            - "DETECTED"
+        CONFIG: "default_camera.yaml"
+        PACKAGE: "buffpy"
+    TRACKER: # spawns our tracker node
+        FILE: "tracker.py"
+        TOPICS:
+            - "DETECTED"
+            - "TARGET"
+        PACKAGE: "buffpy"
