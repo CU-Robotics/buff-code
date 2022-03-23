@@ -32,6 +32,8 @@ class DetectionTracer:
         self.debug = rospy.get_param('/buffbot/DEBUG')
         topics = rospy.get_param('/buffbot/TOPICS')
 
+        rospy.logerr(topics)
+
         self.topics = [topics[t] for t in configData['TOPICS']]
 
         if self.debug:
@@ -54,6 +56,7 @@ class DetectionTracer:
         pos = detection.data
         # debug for now
         rospy.loginfo(f'Detection: {pos}')
+        return
 
     def update_pos(self):
 
