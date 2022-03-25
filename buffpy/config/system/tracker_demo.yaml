@@ -1,4 +1,10 @@
+# if debug is true:
+# print the detections,
+# save them periodically
 DEBUG: True
+
+# random_noise, sine
+DEMO: "random_noise"
 
 TOPICS:
     DETECTED: "detected_object"

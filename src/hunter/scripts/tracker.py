@@ -10,6 +10,9 @@ from std_msgs.msg import Float64MultiArray
 class Tracker:
     def __init__(self, configData):
 
+        self.plot_count = 0
+        self.DEBUG_SAVE_PATH = None
+
         self.t = 1/30
         self.state = []
         self.error = 0
@@ -19,7 +22,7 @@ class Tracker:
         self.prev_1 = None
         self.prev_2 = None
         self.prev_3 = None
-        self.pred_4 = None
+        self.prev_4 = None
 
         # our predictions for 1 step ahead, 2, 3
         self.pred_1 = None
@@ -34,11 +37,9 @@ class Tracker:
         self.debug = rospy.get_param('/buffbot/DEBUG')
         topics = rospy.get_param('/buffbot/TOPICS')
 
-        self.topics = [topics[t] for t in configData['TOPICS']]
+        rospy.logerr(topics['detected_object'])
 
-        if self.debug:
-            self.err_pub = rospy.Publisher(
-                'target', Float64MultiArray, queue_size=1)
+        self.topics = [topics[t] for t in configData['TOPICS']]
 
         rospy.init_node('target_tracker', anonymous=True)
 
@@ -54,7 +55,6 @@ class Tracker:
         t = self.t
 
         # do tracker stuff
-        #rospy.loginfo(f'Detection: {pos_x}, {pos_y}')
         pos = np.array((x, y))
         self.update_prev(pos, t)
         self.update_deltas()
@@ -123,6 +123,47 @@ class Tracker:
 
         else:
             self.pred_1 = self.prev_1
+
+    def plot(self, samples):
+        sampleX, sampleY, vXActual, vYActual, aXActual, aYActual, sample_t = list(
+            zip(*samples))
+        pose, vel, accel, jerk, error, t = list(zip(*self.deltas))
+        poseX, poseY = list(zip(*pose))
+
+        vX, vY = list(zip(*vel))
+        aX, aY = list(zip(*accel))
+        jX, jY = list(zip(*jerk))
+        eX, eY = list(zip(*error))
+        fig, ax = plt.subplots(2, 3, figsize=(20, 20))
+        ax[0][0].legend(loc='upper right')
+        ax[0][0].set_title('Sampled vs Predicted x / y')
+        ax[0][1].plot(t, aX, label='Predicted X Accel', marker='x')
+        ax[0][1].plot(t, aY, label='Predicted Y Accel', marker='x')
+        ax[0][1].plot(sample_t, aXActual, label='Sample X Accel', marker='o')
+        ax[0][1].plot(sample_t, aYActual, label='Sample Y Accel', marker='o')
+        ax[0][1].legend(loc='upper right')
+        ax[0][1].set_title('Sampled vs Predicted Acceleration / dt')
+        ax[0][2].plot(t, vX, label='Predicted X Velocity', marker='x')
+        ax[0][2].plot(t, vY, label='Predicted Y Velocity', marker='x')
+        ax[0][2].plot(sample_t, vXActual,
+                      label='Sample X Velocity', marker='o')
+        ax[0][2].plot(sample_t, vYActual,
+                      label='Sample Y Velocity', marker='o')
+        ax[0][2].legend(loc='upper right')
+        ax[0][2].set_title('Sampled vs Predicted Velocity / dt')
+        ax[1][0].plot(t, eX, label='X Error', marker='x')
+        ax[1][0].plot(t, eY, label='Y Error', marker='x')
+        ax[1][0].legend(loc='upper right')
+        ax[1][0].set_title('Error over Time')
+        ax[1][1].set_title('Sampled vs Predicted x / t')
+        ax[1][1].plot(sample_t, sampleX, label='Sample X Pose', marker='o')
+        ax[1][1].plot(t, poseX, label='Predicted X Pose', marker='o')
+        ax[1][2].set_title('Sampled vs Predicted y / t')
+        ax[1][2].plot(sample_t, sampleY, label='Sample Y Pose', marker='o')
+        ax[1][2].plot(t, poseY, label='Predicted Y Pose', marker='o')
+        plt.savefig(os.path.join(self.DEBUG_SAVE_PATH,
+                    f'plot_{self.plot_count}.png'))
+        plt.show()
 
 
 def main(configData):
