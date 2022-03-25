@@ -22,15 +22,13 @@ class TrackerDataGenerator:
                 or manually from a terminal. will exit if not enough params
                 exist.
         """
+
+        self.dt = 1/30
         self.debug = rospy.get_param('/buffbot/DEBUG')
         topics = rospy.get_param('/buffbot/TOPICS')
 
         self.topics = [topics[t] for t in configData['TOPICS']]
         rospy.logerr('topics: {}'.format(self.topics))
-
-        if configData is None:
-            # there is no config for the model to load from
-            return None
 
         self.position = (150, 150)
         pub_topic = 'detected_object'
@@ -53,7 +51,7 @@ class TrackerDataGenerator:
                 msg.data = self.position
                 self.bound_pub.publish(msg)
                 # sending a new bound takes like 1ms. we're not trying to be precise here, just want about 30fps
-                time.sleep(0.031)
+                time.sleep(self.dt - 0.002)
 
         else:
             rospy.logerr("len of topics is not zero")
@@ -61,8 +59,8 @@ class TrackerDataGenerator:
     def generate_data(self):
         rand_1 = np.random.randint(-50, 50)
         rand_2 = np.random.randint(-20, 20)
-        pred_1, pred_2 = self.position
-        self.position = (pred_1 + rand_1, pred_2 + rand_2)
+        prev_1, prev_2 = self.position
+        self.position = (prev_1 + rand_1, prev_2 + rand_2)
 
 
 def main(configData):
