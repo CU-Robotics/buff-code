@@ -11,6 +11,7 @@ import numpy as np
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
+import time
 
 
 class TrackerDataGenerator:
@@ -25,12 +26,14 @@ class TrackerDataGenerator:
         topics = rospy.get_param('/buffbot/TOPICS')
 
         self.topics = [topics[t] for t in configData['TOPICS']]
+        rospy.logerr('topics: {}'.format(self.topics))
 
         if configData is None:
             # there is no config for the model to load from
             return None
 
-        self.steps = None
+        self.position = (150, 150)
+        pub_topic = 'detected_object'
 
         # Only spin up image sub if core is running
 
@@ -38,32 +41,28 @@ class TrackerDataGenerator:
 
             self.bridge = CvBridge()
 
-            rospy.init_node('detected_object', anonymous=True)
+            rospy.init_node('tracker_data_generator', anonymous=True)
 
             self.debug_pubs = []
             self.bound_pub = rospy.Publisher(
-                self.topics[1], Float64MultiArray, queue_size=1)
-
-            if self.debug and len(self.topics) == 6:
-                for topic in self.topics[2:]:
-                    self.debug_pubs.append(
-                        rospy.Publisher(topic, Image, queue_size=1))
-
-            self.im_subscriber = rospy.Subscriber(
-                self.topics[0], Image, self.imageCallBack, queue_size=1)
+                'detected_object', Float64MultiArray, queue_size=1)
 
             while True:
                 self.generate_data()
                 msg = Float64MultiArray()
                 msg.data = self.position
-                bouund_pub.publish(msg)
+                self.bound_pub.publish(msg)
+                # sending a new bound takes like 1ms. we're not trying to be precise here, just want about 30fps
+                time.sleep(0.031)
+
         else:
             rospy.logerr("len of topics is not zero")
 
-    def generate_data():
-        rand_1 = np.random.randint(0, 50)
-        rand_2 = np.random.randint(0, 20)
-        return (pred + rand_1, pred + rand_2)
+    def generate_data(self):
+        rand_1 = np.random.randint(-50, 50)
+        rand_2 = np.random.randint(-20, 20)
+        pred_1, pred_2 = self.position
+        self.position = (pred_1 + rand_1, pred_2 + rand_2)
 
 
 def main(configData):
@@ -71,7 +70,7 @@ def main(configData):
     if configData is None:
         return
 
-    detector = MDS_Detector(configData=configData)
+    detector = TrackerDataGenerator(configData=configData)
 
     if 'TOPICS' in configData:
         rospy.spin()
