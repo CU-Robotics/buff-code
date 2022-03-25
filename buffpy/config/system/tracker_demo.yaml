@@ -3,6 +3,8 @@
 # save them periodically
 DEBUG: True
 
+NUM_DEMO_FRAMES: 1000
+
 # random_noise, sine
 DEMO: "random_noise"
 
@@ -18,7 +20,7 @@ NODES:
         FILE: "tracker_demo_detector.py"
         TOPICS:
             - "DETECTED"
-        CONFIG: "default_camera.yaml"
+        CONFIG: "tracker_demo_config.yaml"
         PACKAGE: "buffpy"
     TRACKER: # spawns our tracker node
         FILE: "tracker.py"
