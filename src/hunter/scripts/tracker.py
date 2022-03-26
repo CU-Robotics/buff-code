@@ -36,6 +36,8 @@ class Tracker:
         self.error = 0
         self.pred_prev = np.array((0, 0))
 
+        self.num_targets = 0
+
         self.debug = True
 
         # previous groundtruth values. (3, 2 timesteps ago, 1 ago, now) We use these to update our deltas
@@ -64,7 +66,7 @@ class Tracker:
         rospy.init_node('target_tracker', anonymous=True)
 
         self.detect_sub = rospy.Subscriber(
-            'detected_object', Float64MultiArray, self.detected_callback, queue_size=5)
+            'detected_object', Float64MultiArray, self.detected_callback, queue_size=1)
 
         self.save_sub = rospy.Subscriber(
             'save_data', Bool, self.save_callback, queue_size=1
@@ -75,6 +77,7 @@ class Tracker:
 
     def detected_callback(self, msg):
         x, y = msg.data
+        rospy.logerr((x, y))
         # for now. need to figure out how to get accurate time between messages?
         t = self.t
 
@@ -86,13 +89,14 @@ class Tracker:
         self.update_error()
         self.save_state()
 
+        self.t += self.dt
+
         # send out predictions
         predictions_arr = Float64MultiArray()
         predictions = np.array((*self.pred_1, *self.pred_2, *self.pred_3))
         predictions_arr.data = predictions
-        if(self.debug):
-            rospy.loginfo(
-                'current pos: {self.prev_1} pred_1: {self.pred_1} pred_2: {self.pred_2} pred_3: {self.pred_3} error: {self.error} d_1: {self.d_1}'.format(self=self))
+        rospy.loginfo(
+            'current pos: {self.prev_1} pred_1: {self.pred_1} pred_2: {self.pred_2} pred_3: {self.pred_3} error: {self.error} d_1: {self.d_1} num_targets {self.num_targets}'.format(self=self))
         self.prediction_pub.publish(predictions_arr)
 
     # save data
@@ -139,10 +143,10 @@ class Tracker:
     def update_predictions(self):
 
         if self.pred_1 is not None:
-            if self.pred_2 is None:
+            if self.pred_2 is None or self.pred_3 is None:
                 self.pred_prev = np.array((0, 0))
             else:
-                self.pred_prev = self.pred_2
+                self.pred_prev = self.pred_1
 
         if(self.d_1 is not None and self.d_2 is not None and self.d_3 is not None):
             self.pred_1 = self.prev_1 + \
@@ -159,6 +163,8 @@ class Tracker:
             self.pred_1 = self.prev_1
 
     def plt_save(self):
+        rospy.loginfo(self.plot_count)
+        rospy.loginfo(self.state)
         pred, pose, velocity, acceleration, jerk, error, time = list(
             zip(*self.state))
         poseX, poseY = list(zip(*pose))
@@ -177,6 +183,8 @@ class Tracker:
                     f'plot_{self.plot_count}.png'))
         plt.close()
         self.plot_count += 1
+
+        sys.exit(1)
 
 
 def main(configData):
