@@ -5,6 +5,9 @@ import rospy
 import numpy as np
 import buffvision as bv
 from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Bool
+import matplotlib.pyplot as plt
+import os
 
 """
     Tracker class
@@ -19,7 +22,13 @@ class Tracker:
     def __init__(self, configData):
 
         self.plot_count = 0
-        self.DEBUG_SAVE_PATH = None
+        self.DEBUG_SAVE_PATH = os.path.join(
+            os.getenv('PROJECT_ROOT'),  'data', 'tracker_demo')
+        # in case these don't exist, this makes them
+        try:
+            os.makedirs(self.DEBUG_SAVE_PATH)
+        except FileExistsError as e:
+            pass
 
         self.dt = 1/30
         self.t = 0
@@ -30,20 +39,20 @@ class Tracker:
         self.debug = True
 
         # previous groundtruth values. (3, 2 timesteps ago, 1 ago, now) We use these to update our deltas
-        self.prev_1 = None
-        self.prev_2 = None
-        self.prev_3 = None
-        self.prev_4 = None
+        self.prev_1 = np.array((0, 0))
+        self.prev_2 = np.array((0, 0))
+        self.prev_3 = np.array((0, 0))
+        self.prev_4 = np.array((0, 0))
 
         # our predictions for 1 step ahead, 2, 3
-        self.pred_1 = (0, 0)
-        self.pred_2 = (0, 0)
-        self.pred_3 = (0, 0)
+        self.pred_1 = np.array((0, 0))
+        self.pred_2 = np.array((0, 0))
+        self.pred_3 = np.array((0, 0))
 
         # our deltas that we use to update predictions
-        self.d_1 = None
-        self.d_2 = None
-        self.d_3 = None
+        self.d_1 = np.array((0, 0))
+        self.d_2 = np.array((0, 0))
+        self.d_3 = np.array((0, 0))
 
         self.debug = rospy.get_param('/buffbot/DEBUG')
         topics = rospy.get_param('/buffbot/TOPICS')
@@ -55,12 +64,16 @@ class Tracker:
         rospy.init_node('target_tracker', anonymous=True)
 
         self.detect_sub = rospy.Subscriber(
-            'detected_object', Float64MultiArray, self.callback, queue_size=5)
+            'detected_object', Float64MultiArray, self.detected_callback, queue_size=5)
+
+        self.save_sub = rospy.Subscriber(
+            'save_data', Bool, self.save_callback, queue_size=1
+        )
 
         self.prediction_pub = rospy.Publisher(
             'predictions', Float64MultiArray, queue_size=1)
 
-    def callback(self, msg):
+    def detected_callback(self, msg):
         x, y = msg.data
         # for now. need to figure out how to get accurate time between messages?
         t = self.t
@@ -81,6 +94,10 @@ class Tracker:
             rospy.loginfo(
                 'current pos: {self.prev_1} pred_1: {self.pred_1} pred_2: {self.pred_2} pred_3: {self.pred_3} error: {self.error} d_1: {self.d_1}'.format(self=self))
         self.prediction_pub.publish(predictions_arr)
+
+    # save data
+    def save_callback(self, msg):
+        self.plt_save()
 
     def mse(self, x, y):
         return ((x - y) ** 2).sum()
@@ -123,7 +140,7 @@ class Tracker:
 
         if self.pred_1 is not None:
             if self.pred_2 is None:
-                self.pred_pred = np.array((0, 0))
+                self.pred_prev = np.array((0, 0))
             else:
                 self.pred_prev = self.pred_2
 
@@ -141,46 +158,25 @@ class Tracker:
         else:
             self.pred_1 = self.prev_1
 
-    def plot(self, samples):
-        sampleX, sampleY, vXActual, vYActual, aXActual, aYActual, sample_t = list(
-            zip(*samples))
-        pose, vel, accel, jerk, error, t = list(zip(*self.deltas))
+    def plt_save(self):
+        pred, pose, velocity, acceleration, jerk, error, time = list(
+            zip(*self.state))
         poseX, poseY = list(zip(*pose))
+        predX, predY = list(zip(*pred))
 
-        vX, vY = list(zip(*vel))
-        aX, aY = list(zip(*accel))
-        jX, jY = list(zip(*jerk))
-        eX, eY = list(zip(*error))
-        fig, ax = plt.subplots(2, 3, figsize=(20, 20))
-        ax[0][0].legend(loc='upper right')
-        ax[0][0].set_title('Sampled vs Predicted x / y')
-        ax[0][1].plot(t, aX, label='Predicted X Accel', marker='x')
-        ax[0][1].plot(t, aY, label='Predicted Y Accel', marker='x')
-        ax[0][1].plot(sample_t, aXActual, label='Sample X Accel', marker='o')
-        ax[0][1].plot(sample_t, aYActual, label='Sample Y Accel', marker='o')
-        ax[0][1].legend(loc='upper right')
-        ax[0][1].set_title('Sampled vs Predicted Acceleration / dt')
-        ax[0][2].plot(t, vX, label='Predicted X Velocity', marker='x')
-        ax[0][2].plot(t, vY, label='Predicted Y Velocity', marker='x')
-        ax[0][2].plot(sample_t, vXActual,
-                      label='Sample X Velocity', marker='o')
-        ax[0][2].plot(sample_t, vYActual,
-                      label='Sample Y Velocity', marker='o')
-        ax[0][2].legend(loc='upper right')
-        ax[0][2].set_title('Sampled vs Predicted Velocity / dt')
-        ax[1][0].plot(t, eX, label='X Error', marker='x')
-        ax[1][0].plot(t, eY, label='Y Error', marker='x')
-        ax[1][0].legend(loc='upper right')
-        ax[1][0].set_title('Error over Time')
-        ax[1][1].set_title('Sampled vs Predicted x / t')
-        ax[1][1].plot(sample_t, sampleX, label='Sample X Pose', marker='o')
-        ax[1][1].plot(t, poseX, label='Predicted X Pose', marker='o')
-        ax[1][2].set_title('Sampled vs Predicted y / t')
-        ax[1][2].plot(sample_t, sampleY, label='Sample Y Pose', marker='o')
-        ax[1][2].plot(t, poseY, label='Predicted Y Pose', marker='o')
+        fig, ax = plt.subplots(2, figsize=(40, 40))
+
+        ax[0].set_title('Sampled vs Predicted x / t')
+        ax[0].plot(time, poseX, label='Sample X Pose', marker='x')
+        ax[0].plot(time, predX, label='Predicted X Pose', marker='o')
+        ax[1].set_title('Sampled vs Predicted y / t')
+        ax[1].plot(time, poseY, label='Sample Y Pose', marker='x')
+        ax[1].plot(time, predY, label='Predicted Y Pose', marker='o')
+
         plt.savefig(os.path.join(self.DEBUG_SAVE_PATH,
                     f'plot_{self.plot_count}.png'))
-        plt.show()
+        plt.close()
+        self.plot_count += 1
 
 
 def main(configData):
