@@ -1,12 +1,9 @@
 # if debug is true:
 # print the detections,
 # save them periodically
-DEBUG: True
-
-NUM_DEMO_FRAMES: 1000
 
 # random_noise, sine
-DEMO: "random_noise"
+DEBUG: True
 
 TOPICS:
     DETECTED: "detected_object"
