@@ -38,7 +38,7 @@ class Tracker:
 
         self.num_targets = 0
 
-        self.debug = True
+        self.debug = rospy.get_param('/buffbot/DEBUG')
 
         # previous groundtruth values. (3, 2 timesteps ago, 1 ago, now) We use these to update our deltas
         self.prev_1 = np.array((0, 0))
@@ -59,8 +59,6 @@ class Tracker:
         self.debug = rospy.get_param('/buffbot/DEBUG')
         topics = rospy.get_param('/buffbot/TOPICS')
 
-        rospy.logerr(topics)
-
         self.topics = [topics[t] for t in configData['TOPICS']]
 
         rospy.init_node('target_tracker', anonymous=True)
@@ -77,7 +75,6 @@ class Tracker:
 
     def detected_callback(self, msg):
         x, y = msg.data
-        rospy.logerr((x, y))
         # for now. need to figure out how to get accurate time between messages?
         t = self.t
 
@@ -95,8 +92,9 @@ class Tracker:
         predictions_arr = Float64MultiArray()
         predictions = np.array((*self.pred_1, *self.pred_2, *self.pred_3))
         predictions_arr.data = predictions
-        rospy.loginfo(
-            'current pos: {self.prev_1} pred_1: {self.pred_1} pred_2: {self.pred_2} pred_3: {self.pred_3} error: {self.error} d_1: {self.d_1} num_targets {self.num_targets}'.format(self=self))
+        if(self.debug):
+            rospy.loginfo(
+                'current pos: {self.prev_1} pred_1: {self.pred_1} pred_2: {self.pred_2} pred_3: {self.pred_3} error: {self.error} d_1: {self.d_1} num_targets {self.num_targets}'.format(self=self))
         self.prediction_pub.publish(predictions_arr)
 
     # save data
@@ -163,8 +161,6 @@ class Tracker:
             self.pred_1 = self.prev_1
 
     def plt_save(self):
-        rospy.loginfo(self.plot_count)
-        rospy.loginfo(self.state)
         pred, pose, velocity, acceleration, jerk, error, time = list(
             zip(*self.state))
         poseX, poseY = list(zip(*pose))
@@ -182,7 +178,10 @@ class Tracker:
         plt.savefig(os.path.join(self.DEBUG_SAVE_PATH,
                     f'plot_{self.plot_count}.png'))
         plt.close()
-        self.plot_count += 1
+
+        if self.debug:
+            rospy.loginfo(
+                f'Successfully saved at /data/tracker_demo/plot_{self.plot_count}.png. Exiting...')
 
         sys.exit(1)
 
