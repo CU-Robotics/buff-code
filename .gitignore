@@ -11,3 +11,5 @@ buffpy/lib/*
 buffpy/bin/teensy
 buffpy/bin/libpng12.so.0
 buffpy/bin/libusb-0.1.so.4
+.vscode
+*.swp
