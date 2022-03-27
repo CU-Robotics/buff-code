@@ -1,5 +1,4 @@
-crosshair
-/home/cu-robotics/buff-code/devel/.private/crosshair/cmake.lock /home/cu-robotics/buff-code/devel/./cmake.lock
-/home/cu-robotics/buff-code/devel/.private/crosshair/lib/pkgconfig/crosshair.pc /home/cu-robotics/buff-code/devel/lib/pkgconfig/crosshair.pc
-/home/cu-robotics/buff-code/devel/.private/crosshair/share/crosshair/cmake/crosshairConfig-version.cmake /home/cu-robotics/buff-code/devel/share/crosshair/cmake/crosshairConfig-version.cmake
-/home/cu-robotics/buff-code/devel/.private/crosshair/share/crosshair/cmake/crosshairConfig.cmake /home/cu-robotics/buff-code/devel/share/crosshair/cmake/crosshairConfig.cmake
+/home/mdyse/buff-code/devel/.private/crosshair/cmake.lock /home/mdyse/buff-code/devel/./cmake.lock
+/home/mdyse/buff-code/devel/.private/crosshair/share/crosshair/cmake/crosshairConfig-version.cmake /home/mdyse/buff-code/devel/share/crosshair/cmake/crosshairConfig-version.cmake
+/home/mdyse/buff-code/devel/.private/crosshair/share/crosshair/cmake/crosshairConfig.cmake /home/mdyse/buff-code/devel/share/crosshair/cmake/crosshairConfig.cmake
+/home/mdyse/buff-code/devel/.private/crosshair/lib/pkgconfig/crosshair.pc /home/mdyse/buff-code/devel/lib/pkgconfig/crosshair.pc
