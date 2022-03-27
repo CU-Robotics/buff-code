@@ -1,5 +1,14 @@
 ![alt text](https://github.com/CU-Robotics/buff-code/blob/master/buffcode-card.png?raw=true)
 
+
+### TODO
+
+hunter
+- generate 2d tracking data from video for demo purposes
+    - create 2d tracking demo notebook
+- integrate tracker with repo
+
+
 ### CU Robotics' Development Repository
 
 Buff-Code is Multi-Agent build, deployment and management system. Buff-Code is supported in Ubuntu18 or on a Jetson device (Also we support docker). 

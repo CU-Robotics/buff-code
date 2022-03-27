@@ -161,6 +161,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/buffnet.py
   scripts/interactive_thresholder.py
+  scripts/tracker_demo_detector.py
   DESTINATION $ENV{PROJECT_ROOT}/buffpy/lib
 )
 
