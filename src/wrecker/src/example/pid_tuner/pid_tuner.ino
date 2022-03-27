@@ -1,48 +1,67 @@
+#define WHOAMI "Teensy4.1"
+
+struct pid_packet {
+  float Kp = 0.0;
+  float Ki = 0.0;
+  float Kd = 0.0;
+  float R = 0.0;
+  float U = 0.0;
+  float Y = 0.0;
+  float E = 0.0;
+};
 
 
 IntervalTimer serialDumpTmr;
 IntervalTimer serialReadTmr;
 
-float Kp = 1.0;
+float dErr = 0.0;
+float iErr = 0.0;
 
-float error;
-float control;
-float setValue;
-float measuredValue;
+pid_packet pid;
 
+unsigned long start;
 unsigned long dumpRate = 100000.0;                               // dumpRate is set to 100,000 us or 0.1 second
 unsigned long readRate = 100000.0;                                      // Same as dump
 
 
 void serial_event() 
 {
+  char cmd = Serial.read();
   if (Serial.available() > 0) 
+    Serial.readStringUntil('@');
+
+  cmd = Serial.read();
+
+  switch (cmd)
   {
-    char cmd = Serial.read();
-    if (cmd == 'K')
-      Kp = Serial.parseFloat();
-    if (cmd == 'T')
-      setValue = Serial.parseFloat();
-    if (cmd == 'R')
-    {
-      setValue = 0.0;
-      error = 0.0;
-      control = 0.0;
-      measuredValue = 0.0;
-    }
+    case 'P':
+      pid.Kp = Serial.parseFloat();
+      break;
+    case 'I':
+      pid.Ki = Serial.parseFloat();
+      break;
+    case 'D':
+      pid.Kd = Serial.parseFloat();
+      break;
+    case 'X':
+      pid.R = 0.0;
+      pid.U = 0.0;
+      pid.Y = 0.0;
+      pid.E = 0.0;
+      break;
   }  
 }
 
 void dump()
 {
-  Serial.print("T:");
-  Serial.print(setValue);
-  Serial.print(",M:");
-  Serial.print(measuredValue);
-  Serial.print(",E:");
-  Serial.print(error);
-  Serial.print(",U:");
-  Serial.println(control);
+  Serial.print("Reference:");
+  Serial.print(pid.R);
+  Serial.print(",Output:");
+  Serial.print(pid.Y);
+  Serial.print(",Error:");
+  Serial.print(pid.E);
+  Serial.print(",Control:");
+  Serial.println(pid.U);
 }
 
 void setup() {
@@ -53,14 +72,20 @@ void setup() {
 
   serialReadTmr.priority(1);                                     // Set interval timer to handle serial reads
   serialReadTmr.begin(serial_event, readRate);
+
+  start = micros();
 }
 
 void loop() {
-  // set measured value here
-  // measuredValue = xxxxx
 
-  error = setValue - measuredValue;
+  unsigned long t = micros() - start;
 
-  control += Kp * error;
+  pid.R = cos(t * PI / 500000);                                  // Set the period of the function to 1,000,000 us
+  
+  dErr = (pid.R - pid.Y) - pid.E;                                // Use PID to track the reference
+  pid.E = pid.R - pid.Y;
+  iErr += pid.E;
+  pid.U = (pid.E * pid.Kp) + (dErr * pid.Kd) + (iErr * pid.Ki);
+  pid.Y += pid.U;
 
 }
