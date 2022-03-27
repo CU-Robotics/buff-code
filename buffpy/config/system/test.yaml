@@ -1,5 +1,5 @@
 DEBUG:
-  False
+  True
   
 
 TOPICS:
@@ -9,13 +9,11 @@ TOPICS:
 
 NODES:
 
-  CAMERA:     # spawns our camera streamer
+  SERIAL:     # spawns our camera streamer
     FILE:
-      'mds_camera.py'
-    TOPICS:
-      - 'RAW_IMG'
+      'serial_layer.py'
     CONFIG:
-      'default_camera.yaml'
+      'default_serial.yaml'
     PACKAGE:
       'buffpy'
     REQUIRED:
