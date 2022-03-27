@@ -20,18 +20,18 @@ from gdrive_handler import GD_Handler
 from std_msgs.msg import Float64MultiArray
 
 class BuffNet:
-	def __init__(self, configData=None):
+	def __init__(self, config_data=None):
 		"""
 			Define all the parameters of the model here.
 			Can be initialized with a config file, a system launch
 			or manually from a terminal. will exit if not enough params
 			exist.
 		"""
-		if 'DEBUG' in configData:
+		if 'DEBUG' in config_data:
 			self.debug = True
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, configData['MODEL'])
+		model_path = os.path.join(model_dir, config_data['MODEL'])
 
 		if not os.path.exists(model_path):
 			gdrive = GD_Handler()
@@ -42,7 +42,7 @@ class BuffNet:
 		if not rospy.is_shutdown():
 			self.debug = rospy.get_param('/buffbot/DEBUG')
 			topics = rospy.get_param('/buffbot/TOPICS')
-			self.topics = [topics[t] for t in configData['TOPICS']]
+			self.topics = [topics[t] for t in config_data['TOPICS']]
 			# Only spin up image sub if core is running
 			if len(self.topics) > 0:
 
@@ -55,14 +55,14 @@ class BuffNet:
 
 				self.im_subscriber = rospy.Subscriber(self.topics[0], Image, self.imageCallBack, queue_size=1)
 
-		elif 'TOPICS' in configData:
-			self.topics = configData['TOPICS']
+		elif 'TOPICS' in config_data:
+			self.topics = config_data['TOPICS']
 		
 		else:
 			self.topics = []
 
-		if 'IMAGE_SIZE' in configData:
-			self.image_size = configData['IMAGE_SIZE']
+		if 'IMAGE_SIZE' in config_data:
+			self.image_size = config_data['IMAGE_SIZE']
 		else:
 			self.image_size = (416, 416)
 
@@ -164,19 +164,19 @@ class BuffNet:
 		self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg))
 
 
-def main(configData):
+def main(config_data):
 
-	if configData is None:
+	if config_data is None:
 		return
 
-	detector = BuffNet(configData=configData)
+	detector = BuffNet(config_data=config_data)
 
-	if 'TOPICS' in configData:
+	if 'TOPICS' in config_data:
 		rospy.spin()
 
-	if 'DATA' in configData:	
+	if 'DATA' in config_data:	
 		# run independantly
-		data = bv.load_data(path=os.path.join(os.get_env('PROJECT_ROOT'), 'data', configData['DATA']))
+		data = bv.load_data(path=os.path.join(os.get_env('PROJECT_ROOT'), 'data', config_data['DATA']))
 
 		for image, labels in data[0:5]:
 			detector.detect_and_annotate(image)
