@@ -8,6 +8,7 @@ DEBUG: True
 TOPICS:
     DETECTED: "detected_object"
     TARGET: "target"
+    ERROR: "tracking_error"
 
 NODES:
     # demo detector will publish 2d coords at 30fps to detected_object
@@ -16,12 +17,16 @@ NODES:
     CAMERA: # spawn detector
         FILE: "tracker_demo_detector.py"
         TOPICS:
-            - "DETECTED"
+          - "DETECTED"
         CONFIG: "tracker_demo_config.yaml"
         PACKAGE: "buffpy"
     TRACKER: # spawns our tracker node
         FILE: "tracker.py"
         TOPICS:
-            - "DETECTED"
-            - "TARGET"
+            PUBLISH:
+              - "TARGET"
+              - "ERROR"
+            SUBSCRIBE:
+              - "DETECTED"
+
         PACKAGE: "buffpy"

@@ -10,10 +10,12 @@ from std_msgs.msg import Float64
 class SerialLayer():
 	def __init__(self, config_data):
 
+		self.timeout = 0
 		self.debug = False
 		self.device = None
 		self.baudrate = -1
 		self.publishers = {}
+		self.subscribers = {}
 		self.connected = False
 		self.port = '/dev/ttyACM0'
 
@@ -30,20 +32,42 @@ class SerialLayer():
 			self.baudrate = config_data['BAUDRATE']
 
 		if 'TOPICS' in config_data: # Set up ros publishers
+			# If topics probably debug ...?
+			debug = rospy.get_param('/buffbot/DEBUG')
+
 			topics_names = config_data['TOPICS']
 			all_topics = rospy.get_param('/buffbot/TOPICS')
-			debug = rospy.get_param('/buffbot/DEBUG')
-			for tn in topics_names:
+			# if 'PUBLISH' in config_data['TOPICS']:
+			# 	for tn in topics_names['PUBLISH']:
+			# 		topic = all_topics[tn]
+			# 		self.publishers[topic] = rospy.Publisher(topic, Float64, queue_size=10)
+
+			if 'SUBSCRIBE' in config_data['TOPICS']:
+				tn = topics_names['SUBSCRIBE']
 				topic = all_topics[tn]
-				self.publishers[topic] = rospy.Publisher(topic, Float64, queue_size=1)
+				self.subscribers[topic] = rospy.Subscriber(topic, self.writer_callback, Float64, queue_size=1)
 
 		# for now require roscore to run (maybe later set up non-ros runtime)
 		rospy.init_node('echo-serial', anonymous=True)
 
-		self.tryConnect()
+		self.try_connect()
 
 
-	def tryConnect(self):
+	def write_device(self, packet):
+		"""
+		  Write a packet to the teensy
+		"""
+		self.device.write(packet)
+
+
+	def writer_callback(self, msg):
+		"""
+		  Callback for writing messages to the teensy
+		"""
+		self.write_device(bytes(msg.data, 'utf-8'))
+
+
+	def try_connect(self):
 		"""
 		  Try to connect with the device.
 		"""
@@ -62,7 +86,7 @@ class SerialLayer():
 			print('Device Connected: Reading...')
 
 
-	def parsePacket(self):
+	def parse_packet(self):
 		"""
 		  Create a new msg to publish.
 			Params:
@@ -81,7 +105,7 @@ class SerialLayer():
 			name, val = item.split(':')
 			
 			if not name in self.publishers:
-				self.publishers[name] = rospy.Publisher(name, Float64, queue_size=1)
+				self.publishers[name] = rospy.Publisher(name, Float64, queue_size=10)
 
 			# rospy.loginfo(val)
 			msg = Float64(float(val))
@@ -96,23 +120,23 @@ class SerialLayer():
 		"""
 		try:
 			if not self.device:
-				self.tryConnect()
+				self.try_connect()
 
 			elif self.device.in_waiting:
-				self.parsePacket()
+				self.parse_packet()
 
 		except Exception as e:
 			tb.print_exc()
 			print(e)
 			print('Possible I/O Disconnect: Reseting...')
 			time.sleep(2)
-			self.tryConnect()
+			self.try_connect()
 
 
 def main(data):
 
 	try:
-		layer = SerialLayer(data) # tryConnect(port)
+		layer = SerialLayer(data)
 
 		while not rospy.is_shutdown():
 			layer.spin()

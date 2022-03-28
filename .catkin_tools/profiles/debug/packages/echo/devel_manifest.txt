@@ -1,5 +1,0 @@
-echo
-/home/mdyse/buff-code/devel/.private/echo/cmake.lock /home/mdyse/buff-code/devel/./cmake.lock
-/home/mdyse/buff-code/devel/.private/echo/share/echo/cmake/echoConfig.cmake /home/mdyse/buff-code/devel/share/echo/cmake/echoConfig.cmake
-/home/mdyse/buff-code/devel/.private/echo/share/echo/cmake/echoConfig-version.cmake /home/mdyse/buff-code/devel/share/echo/cmake/echoConfig-version.cmake
-/home/mdyse/buff-code/devel/.private/echo/lib/pkgconfig/echo.pc /home/mdyse/buff-code/devel/lib/pkgconfig/echo.pc

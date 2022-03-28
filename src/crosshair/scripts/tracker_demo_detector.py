@@ -68,8 +68,8 @@ class TrackerDataGenerator:
                     self.generate_data()
                     msg = Float64MultiArray()
 
-                    if(self.debug):
-                        rospy.loginfo(f'sent position: {self.position}')
+                    # if(self.debug):
+                    #     rospy.loginfo(f'sent position: {self.position}')
 
                     msg.data = self.position
                     self.bound_pub.publish(msg)

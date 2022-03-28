@@ -25,7 +25,8 @@ NODES:
     FILE:
       'mds_camera.py'
     TOPICS:
-      - 'RAW_IMG'
+      PUBLISH:
+        - 'RAW_IMG'
     CONFIG:
       'default_camera.yaml'
     PACKAGE:
@@ -36,24 +37,31 @@ NODES:
     FILE:
       'buffnet.py'
     TOPICS:
-      - 'RAW_IMG'
-      - 'DETECTED'
+      SUBSCRIBE:
+        - 'RAW_IMG'
+      PUBLISH:
+        - 'DETECTED'
     CONFIG:
       'buffnet-settings.yaml'
     PACKAGE:
       'buffpy'
   TRACKER:     # spawns our tracker node
     FILE:
-      'mds_tracker.py'
+      'tracker.py'
     TOPICS:
-      - 'DETECTED'
-      - 'TARGET'
+      SUBSCRIBE:
+        - 'DETECTED'
+      PUBLISH:
+        - 'TARGET'
     PACKAGE:
       'buffpy'
   SERIAL:   # spawns our serial node
     FILE:
-      'serial_handler.py'
+      'serial_layer.py'
     TOPICS:
-      - 'TARGET'
+      SUBSCRIBE:
+        - 'TARGET'
+    CONFIG:
+      'default_serial.yaml'
     PACKAGE:
       'buffpy'
