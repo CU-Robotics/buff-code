@@ -160,6 +160,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/buffnet.py
+  scripts/tracker_demo_detector.py
   DESTINATION $ENV{PROJECT_ROOT}/buffpy/lib
 )
 

@@ -9,6 +9,7 @@ TOPICS:
     DETECTED: "detected_object"
     TARGET: "target"
     ERROR: "tracking_error"
+    MAP: "target_map"
 
 NODES:
     # demo detector will publish 2d coords at 30fps to detected_object
@@ -21,11 +22,12 @@ NODES:
         CONFIG: "tracker_demo_config.yaml"
         PACKAGE: "buffpy"
     TRACKER: # spawns our tracker node
-        FILE: "tracker.py"
+        FILE: "deadreckon_tracer.py"
         TOPICS:
             PUBLISH:
               - "TARGET"
               - "ERROR"
+              - "MAP"
             SUBSCRIBE:
               - "DETECTED"
 
