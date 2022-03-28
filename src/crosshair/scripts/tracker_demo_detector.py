@@ -123,9 +123,10 @@ class TrackerDataGenerator:
         # elif self.position[3] < 15:
         #     self.position[3] = 15
         t = time.time() 
-        h =  50 #50 * np.cos(t) + 50
-        x =  100 * np.sin(t)
-        self.position = np.array([150 + x, 150, 10, h, 1, 0])
+        h =  50 * np.sin(t * 2) + 60
+        x =  50 * np.sin(t) + 150
+        rospy.loginfo(f'{h}')
+        self.position = np.array([x, 150, 10, h, 1, 0])
 
 
     def spin(self):

@@ -35,7 +35,7 @@ class Dead_Reckon_Tracer:
 		self.FOV = np.radians(120)
 
 		# armour photogrammetry
-		self.m = 50.0
+		self.m = 125.0
 		self.b = 50.0
 
 		# input bounds
@@ -93,11 +93,11 @@ class Dead_Reckon_Tracer:
 				image = cv2.line(image, origin, fovl, (255,0,0))
 				image = cv2.line(image, origin, fovr, (255,0,0))
 				for (x,y) in self.history:
-					target = (int(origin[0] + (x * np.cos(self.psi)) - (y * np.sin(self.psi))), int(origin[1] + (x * np.sin(self.psi)) + (y * np.cos(self.psi))))
+					target = (int(origin[0] + x), int(origin[1] + y))
 					image = cv2.circle(image, target, 10, (0,255,0), 2)
 
 				x,y = self.pose
-				pose = (int(origin[0] + (x * np.cos(self.psi)) - (y * np.sin(self.psi))), int(origin[1] + (x * np.sin(self.psi)) + (y * np.cos(self.psi))))
+				pose = (int(origin[0] + x), int(origin[1] + y))
 				image = cv2.circle(image, pose, 10, (0,0,255))
 
 				msg = self.bridge.cv2_to_imgmsg(image, encoding='rgb8')
@@ -132,6 +132,9 @@ class Dead_Reckon_Tracer:
 			self.update_error()
 
 	def project(self, pose):
+		"""
+		Projects a detection into the body frame
+		"""
 		d = (self.m / pose[3]) + self.b
 		alpha = ((pose[0] / self.image_size[0]) - 0.5) * self.FOV
 		return d * np.array([np.cos(self.psi + alpha), np.sin(self.psi + alpha)])
