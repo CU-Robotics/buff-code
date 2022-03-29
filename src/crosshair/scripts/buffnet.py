@@ -178,11 +178,13 @@ class BuffNet:
         if 'DEBUG' in config_data:
             self.debug = True
 
-        self.cam_source = 'rgb'
-        self.nn_path = os.path.join(model_dir, config_data['MODEL'])
-        self.conf_thresh = 0.5
-        self.iou_thresh = 0.5
-        self.nn_shape = 320
+        model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
+
+        cam_source = 'rgb'
+        nn_path = os.path.join(model_dir, config_data['MODEL'])
+        conf_thresh = 0.5
+        iou_thresh = 0.5
+        nn_shape = 320
 
         # Start defining a pipeline
 
@@ -209,7 +211,6 @@ class BuffNet:
         xout_rgb = pipeline.create(dai.node.XLinkOut)
         xout_rgb.setStreamName("nn_input")
         xout_rgb.input.setBlocking(False)
-
         detection_nn.passthrough.link(xout_rgb.input)
 
         xout_nn = pipeline.create(dai.node.XLinkOut)

@@ -5,10 +5,12 @@ FROM:
   'live.yaml'
 
 TOPICS:
-  ANNOTATED_IMAGE:
-    'annotated_image'
-  TARGET_ERR:
-    'detected_error'
+  ERROR:
+    'tracking_error'
+  TARGET_MAP:
+    'target_map'
+  BUFFNET_DEBUG:
+    'image_annotated'
 
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
@@ -32,7 +34,12 @@ NODES:
       'rqt_graph'
   DETECTOR:   # spawns our detector node
     TOPICS:
-      - 'ANNOTATED_IMAGE'
+      PUBLISH:
+        - 'BUFFNET_DEBUG'
   TRACKER:     # spawns our tracker node
     TOPICS:
-      - 'TARGET_ERR'
+      PUBLISH:
+        - 'ERROR'
+        - 'TARGET_MAP'
+        
+
