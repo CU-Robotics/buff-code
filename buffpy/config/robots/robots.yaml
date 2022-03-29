@@ -1,8 +1,8 @@
-edge0.local:
-  'infantry'
-128.138.157.110:
-  'infantry'
-edge1.local:
-  'hero'
-edge2.local:
-  'sentry'
+# edge0.local:
+#   'infantry'
+128.138.157.140:
+#   'infantry'
+# edge1.local:
+#   'hero'
+# edge2.local:
+#   'sentry'
