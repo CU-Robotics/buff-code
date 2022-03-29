@@ -107,7 +107,8 @@ class GD_Handler:
 			file = None
 
 	def downloadFile(self, file=None, path=None, title=None):
-		if file is None or not file in self.handle:
+		if file is None and not file in self.handle:
+			print(f'Missing file {file}')
 			return
 		else:
 			file = self.handle[file]
