@@ -11,19 +11,17 @@ from gdrive_handler import GD_Handler
 
 
 class cv2_Camera:
-	def __init__(self, device, topic, fps=30, debug=False):
-		# init camera
-		self.camera = cv2.VideoCapture(device)
-		self.device = device
-		# set fps
-		self.camera.set(cv2.CAP_PROP_FPS, fps)
-		self.fps = fps
+	def __init__(self, config_data):
+		# Save config for reset
+		self.config_data = config_data
+		self.init_camera()
 
-		# set image resolution
-		self.resolution = (int(self.camera.get(3)), int(self.camera.get(4)))
+		out_topic = config_data['TOPICS']['PUBLISH'][0]
+		all_topics = rospy.get_param('/buffbot/TOPICS')
+
 
 		# Create the image publisher
-		self.pub = rospy.Publisher(topic, Image, queue_size=1)
+		self.pub = rospy.Publisher(all_topics[out_topic], Image, queue_size=1)
 		# Init this program as a ROS node
 		# anonymous sets a unique node ID
 		rospy.init_node('omega_streamer', anonymous=True)
@@ -33,12 +31,25 @@ class cv2_Camera:
 		self.bridge = CvBridge()
 
 		# set the debug mode
-		self.debug = debug
+		self.debug = rospy.get_param('/buffbot/DEBUG')
 
 		self.lives = 9
 		
-		if debug:
-			rospy.loginfo('Camera and publisher Initialized: {} {} {}'.format(device, topic, fps))
+		if self.debug:
+			rospy.loginfo('Camera and publisher Initialized: {} {} {}'.format(self.config_data['DEVICE'], out_topic, self.fps))
+
+	def init_camera(self):
+		# init camera
+		self.camera = cv2.VideoCapture(self.config_data['DEVICE'])
+		# set fps
+		self.fps = self.config_data['FPS']
+		self.camera.set(cv2.CAP_PROP_FPS, self.fps)
+
+		# set image resolution
+		w, h, d = self.config_data['RESOLUTION']
+		self.resolution = (w, h, d)
+		self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution[0])
+		self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution[1])
 
 	def stream(self):
 		# If the stream is open and ROS is running
@@ -70,68 +81,29 @@ class cv2_Camera:
 
 					rospy.sleep(1)
 
-					self.camera = cv2.VideoCapture(self.device)
-					self.camera.set(cv2.CAP_PROP_FPS, self.fps)
+					self.camera = cv2.VideoCapture(self.config_data)
 
-			# use this return code so we can know if it should respawn
-			# with a different device
 			self.camera.release()
-			return 0
+			return
 
-		return 1
-
-def scan_for_video():
-	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
-	for root, dirs, files in os.walk(data_path):
-		for f in files:
-			if f[-4:] == '.mp4':
-				return os.path.join(root, f)
-			if f[-4:] == '.avi':
-				return os.path.join(root, f)
-
-	# when no video download one
-	# needs testing
-	gdrive = GD_Handler()
-	gdrive.downloadFile('Sample_Competition')
-
-	return os.path.join(os.getenv('PROJECT_ROOT'), 'data', 'sample_competition.avi')
+		if 'DATA_DEFAULT' in self.config_data:
+			self.lives -= 1
+			self.config_data['DEVICE'] = os.path.join(os.getenv('PROJECT_ROOT'), 'data', self.config_data['DATA_DEFAULT'])
+			self.camera.release()
+			self.init_camera()
+			self.stream()
 
 
-def main(configData):
-
-	# These things are defined under the systems namespace (/buffbot/CAMERA)
-	fps = configData['FPS']
-	device = configData['DEVICE']
-	
-	if 'TOPICS' in configData:
-		topic_name = configData['TOPICS'][0]
-		# These are defined under the generic namespace
-		topics = rospy.get_param('/buffbot/TOPICS')
-		debug = rospy.get_param('/buffbot/DEBUG')
-		raw_img_topic = topics[topic_name]
-
-	else:
-		raw_img_topic = 'image_raw'
-		debug=True
-
-		
+def main(config_data):
 
 	# create the video stream
-	camera = cv2_Camera(device, raw_img_topic, fps=fps, debug=debug)
+	camera = cv2_Camera(config_data)
 		
 	# Stream the video
 	ret = camera.stream()
 
 	if ret == 1:
-		rospy.logerr('Couldn\'t open camera: Checking for video file...')
-		video_file = scan_for_video()
-		if video_file:
-			rospy.loginfo('Running {} as {}'.format(video_file, raw_img_topic))
-			camera = cv2_Camera(video_file, raw_img_topic, fps=fps, debug=debug)
-			# Stream the video
-			ret = camera.stream()
-			if ret == 1:
-				rospy.logerr('Failed to play video: Exiting...')
+		rospy.logerr('Couldn\'t open camera: Exiting...')
 
 
 if __name__=='__main__':

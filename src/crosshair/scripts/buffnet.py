@@ -39,30 +39,27 @@ class BuffNet:
 
 		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
 
-		if not rospy.is_shutdown():
-			self.debug = rospy.get_param('/buffbot/DEBUG')
-			topics = rospy.get_param('/buffbot/TOPICS')
-			self.topics = [topics[t] for t in config_data['TOPICS']]
-			# Only spin up image sub if core is running
-			if len(self.topics) > 0:
+		rospy.loginfo
 
-				self.bridge = CvBridge()
-				rospy.init_node('buffnet', anonymous=True)
-				self.target_pub = rospy.Publisher(self.topics[1], Float64MultiArray, queue_size=1)
+		self.bridge = CvBridge()
+		rospy.init_node('buffnet', anonymous=True)
+		self.debug = rospy.get_param('/buffbot/DEBUG')
 
-				if self.debug and len(self.topics) > 2:
-					self.debug_pub = rospy.Publisher(self.topics[2], Image, queue_size=1)
+		topics = rospy.get_param('/buffbot/TOPICS')
+		pubs = [topics[t] for t in config_data['TOPICS']['PUBLISH']]
+		subs = [topics[t] for t in config_data['TOPICS']['SUBSCRIBE']]
 
-				self.im_subscriber = rospy.Subscriber(self.topics[0], Image, self.imageCallBack, queue_size=1)
+		if len(pubs) > 0:
+			self.target_pub = rospy.Publisher(pubs[0], Float64MultiArray, queue_size=1)
+			if self.debug and len(pubs) > 1:
+				self.debug_pub = rospy.Publisher(pubs[1], Image, queue_size=1)
 
-		elif 'TOPICS' in config_data:
-			self.topics = config_data['TOPICS']
-		
-		else:
-			self.topics = []
+		if len(subs) > 0:
+			self.im_subscriber = rospy.Subscriber(subs[0], Image, self.imageCallBack, queue_size=1)
 
-		if 'IMAGE_SIZE' in config_data:
-			self.image_size = config_data['IMAGE_SIZE']
+		if 'CAMERA' in config_data:
+			w, h, d = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
+			self.image_size = (w, d)
 		else:
 			self.image_size = (416, 416)
 

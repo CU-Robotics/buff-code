@@ -1,20 +1,64 @@
 DEBUG:
-  True
+  False
   
 
 TOPICS:
   RAW_IMG:
     'image_raw'
+  DETECTED:
+    'detected_object'
+  BUFFNET_DEBUG:
+    'image_annotated'
+  TARGET:
+    'target'
+  ERROR:
+    'tracking_error'
+  TARGET_MAP:
+    'target_map'
 
 
 NODES:
-
-  SERIAL:     # spawns our camera streamer
+  # ROSBAGGER:    # This will record all system runs and allow us to play them back
+  #   FILE:
+  #     'record'
+  #   PACKAGE:
+  #     'rosbag'
+  #   ARGS:       # -a record all -x ignore -o output prefix
+  #     - '-a'
+  #     - '-x /rosout'
+  #     - '-o /home/cu-robotics/buff-code/data/'
+  CAMERA:     # spawns our camera streamer
     FILE:
-      'serial_layer.py'
+      'mds_camera.py'
+    TOPICS:
+      PUBLISH:
+        - 'RAW_IMG'
     CONFIG:
-      'default_serial.yaml'
+      'default_camera.yaml'
     PACKAGE:
       'buffpy'
     REQUIRED:
       'yes'  # can be anything
+  DETECTOR:   # spawns our detector node
+    FILE:
+      'buffnet.py'
+    TOPICS:
+      SUBSCRIBE:
+        - 'RAW_IMG'
+      PUBLISH:
+        - 'DETECTED'
+        - 'BUFFNET_DEBUG'
+    CONFIG:
+      'buffnet-settings.yaml'
+    PACKAGE:
+      'buffpy'
+
+  # SERIAL:     # spawns our camera streamer
+  #   FILE:
+  #     'serial_layer.py'
+  #   CONFIG:
+  #     'default_serial.yaml'
+  #   PACKAGE:
+  #     'buffpy'
+  #   REQUIRED:
+  #     'yes'  # can be anything

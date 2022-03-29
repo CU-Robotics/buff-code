@@ -125,7 +125,6 @@ class TrackerDataGenerator:
         t = time.time() 
         h =  50 * np.sin(t * 2) + 60
         x =  50 * np.sin(t) + 150
-        rospy.loginfo(f'{h}')
         self.position = np.array([x, 150, 10, h, 1, 0])
 
 

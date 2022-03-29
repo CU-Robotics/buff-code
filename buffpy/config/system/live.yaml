@@ -47,12 +47,14 @@ NODES:
       'buffpy'
   TRACKER:     # spawns our tracker node
     FILE:
-      'tracker.py'
+      'deadreckon_tracer.py'
     TOPICS:
       SUBSCRIBE:
         - 'DETECTED'
       PUBLISH:
         - 'TARGET'
+    CONFIG:
+        'default_deadreckon.yaml'
     PACKAGE:
       'buffpy'
   SERIAL:   # spawns our serial node

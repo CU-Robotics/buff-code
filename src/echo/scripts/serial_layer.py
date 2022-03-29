@@ -10,6 +10,8 @@ from std_msgs.msg import Float64
 class SerialLayer():
 	def __init__(self, config_data):
 
+		self.lives = 4
+
 		self.timeout = 0
 		self.debug = False
 		self.device = None
@@ -43,9 +45,9 @@ class SerialLayer():
 			# 		self.publishers[topic] = rospy.Publisher(topic, Float64, queue_size=10)
 
 			if 'SUBSCRIBE' in config_data['TOPICS']:
-				tn = topics_names['SUBSCRIBE']
-				topic = all_topics[tn]
-				self.subscribers[topic] = rospy.Subscriber(topic, self.writer_callback, Float64, queue_size=1)
+				for tn in topics_names['SUBSCRIBE']:
+					topic = all_topics[tn]
+					self.subscribers[topic] = rospy.Subscriber(topic, Float64, self.writer_callback, queue_size=1)
 
 		# for now require roscore to run (maybe later set up non-ros runtime)
 		rospy.init_node('echo-serial', anonymous=True)
@@ -81,6 +83,10 @@ class SerialLayer():
 		except Exception as e:
 			print(f'Error Detecting Device at {self.port}')
 			print(e)
+			
+			self.lives -= 1
+			if self.lives < 1:
+				exit(0)
 
 		else:
 			print('Device Connected: Reading...')
@@ -146,7 +152,6 @@ def main(data):
 			layer.device.close()
 
 	except Exception as e:
-		exc_type, exc_value, exc_traceback = sys.exc_info()
 		tb.print_exc()
 		if layer.device:
 			layer.device.close()
