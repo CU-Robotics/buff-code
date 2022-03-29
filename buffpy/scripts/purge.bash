@@ -2,6 +2,10 @@
 
 
 # Doesn't Actually work :/
+# MEANING THIS MAY PURGE YOUR ENTIRE FS
+# DO NOT RUN
+
+exit
 
 #
 #  Export some variables
