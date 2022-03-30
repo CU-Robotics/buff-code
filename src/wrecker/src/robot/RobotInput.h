@@ -23,6 +23,7 @@ class RobotInput {
     float getChassisRelativeHeading(); // Degrees, obtained from IMU & GM6020-Yaw's Encoder.
 
     // Ref System
+    int getRobotClass();
     int getRobotLevel();
     int getRobotType();
     int getMatchState();
