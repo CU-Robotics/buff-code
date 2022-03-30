@@ -16,7 +16,6 @@ void 17mmShooter::init(RobotConfig *config) {
   this->bottomFlywheelMotor = new Snail(1);
 
   this->feederController = new PIDController(this->config->17mmShooter.PID.P, this->config->17mmShooter.PID.I, this->config->17mmShooter.PID.D, this->config->17mmShooter.PID.F);
-  this->feederController.setOutputRange(-10000.0, 10000.0);
 }
 
 void 17mmShooter::loop(RobotInput input, float deltaTime) {
