@@ -40,4 +40,7 @@ void 17mmShooter::loop(RobotInput input, float deltaTime) {
 
   float PIDOutput = this->feederController.calculate(this->feederMotor.rpm, feedrate, deltaTime);
   this->feederMotor.setPower(PIDOutput);
+  
+  this->topFlywheelMotor.setPower(this->config->17mmShooter.flywheelPower);
+  this->bottomFlywheelMotor.setPower(this->config->17mmShooter.flywheelPower);
 }
