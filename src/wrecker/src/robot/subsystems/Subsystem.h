@@ -1,8 +1,11 @@
 #include "RobotInput.h"
-#include "RobotConstants.h"
+#include "RobotConfig.h"
 
 class Subsystem {
   public:
-    void init();
-    void loop(RobotInput input, RobotConstants constants);
+    void init(RobotConfig constants);
+    void loop(RobotInput input, float deltaTime);
+
+  private:
+    RobotConfig *config;
 };
