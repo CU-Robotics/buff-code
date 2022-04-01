@@ -4,7 +4,7 @@ import time
 import rospy
 import serial
 import traceback as tb
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64MultiArray
 
 
 class SerialLayer():
@@ -47,7 +47,7 @@ class SerialLayer():
 			if 'SUBSCRIBE' in config_data['TOPICS']:
 				for tn in topics_names['SUBSCRIBE']:
 					topic = all_topics[tn]
-					self.subscribers[topic] = rospy.Subscriber(topic, Float64, self.writer_callback, queue_size=1)
+					self.subscribers[topic] = rospy.Subscriber(topic, Float64MultiArray, self.writer_callback, queue_size=1)
 
 		# for now require roscore to run (maybe later set up non-ros runtime)
 		rospy.init_node('echo-serial', anonymous=True)
@@ -59,14 +59,18 @@ class SerialLayer():
 		"""
 		  Write a packet to the teensy
 		"""
-		self.device.write(packet)
+		if not self.device is None:
+			self.device.write(packet)
 
 
 	def writer_callback(self, msg):
 		"""
 		  Callback for writing messages to the teensy
 		"""
-		self.write_device(bytes(msg.data, 'utf-8'))
+		s = ''
+		for l in msg.data:
+			s += str(l)
+		self.write_device(bytes(s, 'utf-8'))
 
 
 	def try_connect(self):
