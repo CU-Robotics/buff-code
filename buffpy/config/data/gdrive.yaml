@@ -1,0 +1,24 @@
+TEAM_DRIVE_ID:
+  '1MQrW871lFB-j0ZkCRYmug9NMWbkBBE9k'
+UNLABELED_DATA_FOLDER_ID:
+  '1fwwvRmqJbnv6zqRw_5MhmmmWbVM6AEcs'
+Batch20-Unlabeled:
+  '1Z1xyeuBfTJI4mOlWFyGVQb4HxD8fU1oh'
+Batch19-Unlabeled:
+  '1ayE3XAbqIZraYPod0AsU4TC7OchfsmG6'
+Batch20:
+  '1GRfBkk7SycV7xFELDaz8ANeXo2yZ9BaR'
+Batch19:
+  '1uJakhDTk5mvcrqetFDyedhLPbzL2jDJe'
+Yogi:
+  '1wAyKEnpN08ye2Qgb4MXyWNpu0xXzHI-Y'
+Bouncing_Ball:
+  '1IBGeRO5NdQ5NpnJEY6FaZGVwckO0A51k'
+Sample_Competition:
+  '10-hYTf3C16Uz7UDZA_aiJ8GRlIfvNPCe'
+BuffNetv2-exp6:
+  '14KZVHvYYasl-1JDNuDQx-DKBYQ4wnrvU'
+BuffNetv2-exp14:
+  '1-plMlrb0CrBVb2eEB-QHjHQ-_6V5Kcpb'
+SECRETS:
+  'buffpy/config/sensitive/client_secrets.json'

@@ -88,11 +88,12 @@ def main(configData):
 	
 
 if __name__=='__main__':
-	if '/buffbot' in sys.argv[1]:
+	if len(sys.argv) < 2:
+		print(f'No Data: MDS tracker exiting')
+	elif '/buffbot' in sys.argv[1]:
 		main(rospy.get_param(sys.argv[1]))
-	elif sys.argv[1][-5:] == '.yaml':
-		path = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', sys.argv[1])
-		with open(path, 'r') as f:
+	elif '.yaml' in sys.argv[1]:
+		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
 			data = yaml.safe_load(f)
 		main(data)
 

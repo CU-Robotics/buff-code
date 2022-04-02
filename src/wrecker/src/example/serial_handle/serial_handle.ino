@@ -90,10 +90,6 @@ SerialPipe::SerialPipe(int baudrate, unsigned long dumpRate, unsigned long readR
   serialReadTmr.begin(serial_event, readRate);
 }
 
-void SerialPipe::dump() {
-  
-}
-
 void SerialPipe::parseCMD(char firstByte){
     /*
    * We detected a command and will parse it here
@@ -135,11 +131,11 @@ void SerialPipe::serial_event() {
   incomingByte = Serial.read();
   while (Serial.available()) {
     if (incomingByte == '@')                                      // if start char is read start parsing message
-      parse_cmd(Serial.read());
+      parseCMD(Serial.read());
   }
 }
 
-void serialDump() {
+void SerialPipe::serialDump() {
   Serial.print('@'); Serial.print(WHOAMI); // 10 bytes
   Serial.print(','); Serial.print(simVal); // 15 bytes
   Serial.print(','); Serial.print(simActual); // 20 bytes
@@ -156,7 +152,7 @@ void serialDump() {
   Serial.print(','); Serial.println(loopStart); // 75 bytes
 }
 
-void verbose_serialDump() {
+void SerialPipe::verbose_serialDump() {
   Serial.print('@'); Serial.print(WHOAMI);
   Serial.print(",\n\tsimVal="); Serial.print(simVal, 5);
   Serial.print(",\n\tsimActual="); Serial.print(simActual, 5);
@@ -179,9 +175,6 @@ void setup() {
   
   reset_sim();
 
-
-  //simUpdateTmr.priority(0);
-  //simUpdateTmr.begin(updateSim, simRate); 
 }
 
 void loop() {

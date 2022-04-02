@@ -1,5 +1,0 @@
-buff_vision
-/home/cu-robotics/buff-code/devel/.private/buff_vision/cmake.lock /home/cu-robotics/buff-code/devel/./cmake.lock
-/home/cu-robotics/buff-code/devel/.private/buff_vision/lib/pkgconfig/buff_vision.pc /home/cu-robotics/buff-code/devel/lib/pkgconfig/buff_vision.pc
-/home/cu-robotics/buff-code/devel/.private/buff_vision/share/buff_vision/cmake/buff_visionConfig-version.cmake /home/cu-robotics/buff-code/devel/share/buff_vision/cmake/buff_visionConfig-version.cmake
-/home/cu-robotics/buff-code/devel/.private/buff_vision/share/buff_vision/cmake/buff_visionConfig.cmake /home/cu-robotics/buff-code/devel/share/buff_vision/cmake/buff_visionConfig.cmake

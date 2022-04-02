@@ -11,7 +11,7 @@ from pydrive.drive import GoogleDrive
 
 class GD_Handler:
 
-	def __init__(self, config='buffpy/config/lib/gdrive.yaml'):
+	def __init__(self, config='buffpy/config/data/gdrive.yaml'):
 		self.config = os.path.join(os.getenv('PROJECT_ROOT'), config)
 
 		with open(self.config, 'r') as f:
@@ -107,7 +107,8 @@ class GD_Handler:
 			file = None
 
 	def downloadFile(self, file=None, path=None, title=None):
-		if file is None or not file in self.handle:
+		if file is None and not file in self.handle:
+			print(f'Missing file {file}')
 			return
 		else:
 			file = self.handle[file]
@@ -118,9 +119,12 @@ class GD_Handler:
 			title = file['title']
 
 		if path is None:
-			path = os.path.join(os.getenv('PROJECT_ROOT'), 'data', title)
-		else:
-			path = os.path.join(path, title)
+			path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
+
+		if not os.path.isdir(path):
+				os.mkdir(path)			
+			
+		path = os.path.join(path, title)
 
 		print(f'GDrive handler Downloading {file["title"]}->{title}...')
 		file.GetContentFile(path)
@@ -131,11 +135,22 @@ def main(action, data=None):
 	if action == 'push':
 		gd.uploadFolder()
 
-	if action == 'pull' and not data is None:
+	if action == 'pulldir' and not data is None:
 		gd.downloadBatch(batch=data)
+
+	if action == 'pullf' and not data is None:
+		if len(data) >= 2:
+			gd.downloadFile(file=data[0], path=data[1])
+		else:
+			gd.downloadFile(file=data[0])
 
 if __name__=='__main__':
 	if len(sys.argv) > 2:
-		main(sys.argv[1], sys.argv[2])
+		main(sys.argv[1], sys.argv[2:])
 	elif len(sys.argv) > 1:
 		main(sys.argv[1])
+
+
+
+
+

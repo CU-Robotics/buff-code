@@ -1,0 +1,45 @@
+DEBUG:
+  True
+
+FROM:
+  'live.yaml'
+
+TOPICS:
+  ERROR:
+    'tracking_error'
+  TARGET_MAP:
+    'target_map'
+  BUFFNET_DEBUG:
+    'image_annotated'
+
+NODES:
+  # ROSBAGGER:    # This will record all system runs and allow us to play them back
+  #   FILE:
+  #     'record'
+  #   PACKAGE:
+  #     'rosbag'
+  #   ARGS:       # -a record all -x ignore -o output prefix
+  #     - '-a'
+  #     - '-x /rosout'
+  #     - '-o /home/cu-robotics/buff-code/data/'
+  DEBUG_VIEW:   # Opens an image view pane
+    FILE:
+      'rqt_image_view'
+    PACKAGE:
+      'rqt_image_view'
+  RQT_GRAPH:    # Opens an rqt_graph
+    FILE:
+      'rqt_graph'
+    PACKAGE:
+      'rqt_graph'
+  DETECTOR:   # spawns our detector node
+    TOPICS:
+      PUBLISH:
+        - 'BUFFNET_DEBUG'
+  TRACKER:     # spawns our tracker node
+    TOPICS:
+      PUBLISH:
+        - 'ERROR'
+        - 'TARGET_MAP'
+        
+
