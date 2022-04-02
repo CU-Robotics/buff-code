@@ -1,4 +1,4 @@
-DEBUG: False
+DEBUG: True
 
 TOPICS:
     RAW_IMG: "image_raw"
@@ -16,11 +16,10 @@ NODES:
     #     - '-x /rosout'
     #     - '-o /home/cu-robotics/buff-code/data/'
     DETECTOR: # spawns our detector node
-        FILE: "buffnet.py"
+        FILE: "luxnet.py"
         TOPICS:
-            SUBSCRIBE:
-                - "RAW_IMG"
             PUBLISH:
+                - "RAW_IMG"
                 - "DETECTED"
         CONFIG: "buffnet-settings.yaml"
         PACKAGE: "buffpy"
