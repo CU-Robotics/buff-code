@@ -3,10 +3,29 @@
 
 ### TODO
 
-hunter
-- generate 2d tracking data from video for demo purposes
-    - create 2d tracking demo notebook
-- integrate tracker with repo
+Omega
+- Wrote camera/video publisher
+- ROS package will be deprecated soon (Luxonis through Crosshair)
+Crosshair
+- Write a program to detect armor plates in an image
+    - developed YOLOv5 in demo notebook (trained with NYU's dataset)
+    - integrated model download and execution script
+    - setup debug topic (image_annotated)
+- Convert detection script to the input output handler of the Luxonis camera (temporary, Hunter's ros package will take over) 
+Hunter
+- Write a program that tracks and computes a control signal for the turret.
+    - developed 2d tracking demo notebook (dead reckoning)
+    - integrated tracker with repo
+    - setup generic equations for trajectory updating (on detections) and yaw pitch control signals
+- Needs to be tuned for our robots
+- Need to write a diagnostic program
+- Move detections and tracking onto Luxonis hardware (requires debug/diagnostic modifications)
+Echo
+- Wrote a serial to ROS script
+    - publishes data from the serial port to a topic defined by the serial message
+    - subscribes to a set of topics and writes the message to the serial device
+- Needs hardware testing
+- Will integrate with the firmware once it's functional
 
 
 ### CU Robotics' Development Repository
