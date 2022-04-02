@@ -1,6 +1,6 @@
-class robot {
+class Robot {
     public:
-    robot();
+    Robot();
     void loop();
     private:
 };
