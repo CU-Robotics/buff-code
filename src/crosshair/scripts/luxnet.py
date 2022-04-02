@@ -1,10 +1,10 @@
 #! /usr/bin/env python3
 """
-	Project:
-			buffnet detector
-	Author: Mitchell D Scott
-	Description:
-		Detects and displays images
+    Project:
+            buffnet detector
+    Author: Mitchell D Scott
+    Description:
+        Detects and displays images
 """
 import os
 import sys
@@ -138,28 +138,21 @@ def draw_boxes(frame, boxes, total_classes):
         return frame
     else:
 
-        # define class colors
-        colors = boxes[5] * (255 / total_classes)
-        colors = colors.astype(np.uint8)
-        colors = cv2.applyColorMap(colors, cv2.COLORMAP_HSV)
-        colors = np.array(colors)
-
         for i in range(boxes.shape[0]):
             x1, y1, x2, y2 = int(boxes[i, 0]), int(
                 boxes[i, 1]), int(boxes[i, 2]), int(boxes[i, 3])
             conf, cls = boxes[i, 4], int(boxes[i, 5])
 
             label = f"{labelMap[cls]}: {conf:.2f}"
-            color = colors[i, 0, :].tolist()
 
-            frame = cv2.rectangle(frame, (x1, y1), (x2, y2), color, 1)
+            frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
 
             # Get the width and height of label for bg square
             (w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.3, 1)
 
             # Shows the text.
             frame = cv2.rectangle(frame, (x1, y1 - 2*h),
-                                  (x1 + w, y1), color, -1)
+                                  (x1 + w, y1), (0, 255, 0), -1)
             frame = cv2.putText(frame, label, (x1, y1 - 5),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
     return frame
@@ -180,7 +173,7 @@ class BuffNet:
         model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
 
         cam_source = 'rgb'
-        nn_path = os.path.join(model_dir, config_data['MODEL'])
+        nn_path = os.path.join(model_dir, 'model.blob')
         conf_thresh = 0.5
         iou_thresh = 0.5
         nn_shape = 320
@@ -221,21 +214,20 @@ class BuffNet:
         if not rospy.is_shutdown():
             self.debug = rospy.get_param('/buffbot/DEBUG')
             topics = rospy.get_param('/buffbot/TOPICS')
-            self.topics = [topics[t] for t in config_data['TOPICS']]
+            #self.topics = [topics[t] for t in config_data['TOPICS']]
             # Only spin up image sub if core is running
-            if len(self.topics) > 0:
+            if len(topics) > 0:#len(self.topics) > 0:
 
                 self.bridge = CvBridge()
                 rospy.init_node('buffnet', anonymous=True)
-                self.target_pub = rospy.Publisher(
-                    self.topics[1], Float64MultiArray, queue_size=1)
+                self.det_pub = rospy.Publisher(
+                    'detections', Float64MultiArray, queue_size=1)
 
-                if self.debug and len(self.topics) > 2:
-                    self.debug_pub = rospy.Publisher(
-                        self.topics[2], Image, queue_size=1)
-
-                self.im_subscriber = rospy.Subscriber(
-                    self.topics[0], Image, self.imageCallBack, queue_size=1)
+                if self.debug:
+                    self.raw_pub = rospy.Publisher(
+                        'raw_images', Image, queue_size=1)
+                    self.ann_pub = rospy.Publisher(
+                        'annotated_images', Image, queue_size=1)
 
             with dai.Device(pipeline) as device:
 
@@ -248,6 +240,8 @@ class BuffNet:
                 counter = 0
                 fps = 0
                 layer_info_printed = False
+
+                i = 0
 
                 while True:
                     in_nn_input = q_nn_input.get()
@@ -263,6 +257,7 @@ class BuffNet:
                     # reshape to proper format
                     cols = output.shape[0]//6300
                     output = np.reshape(output, (6300, cols))
+
                     output = np.expand_dims(output, axis=0)
 
                     total_classes = cols - 5
@@ -270,12 +265,30 @@ class BuffNet:
                     boxes = non_max_suppression(
                         output, conf_thres=conf_thresh, iou_thres=iou_thresh)
 
-                    boxes = np.array(boxes[0])
+                    rospy.loginfo(len(boxes))
+                    boxes = boxes[0]
 
-                    target_msg = Float64MultiArray()
-                    target_msg.data = boxes[0]
-                    self.target_pub.publish(target_msg)
+                    # publish our detections
 
+                    if boxes is not None:
+                        boxes = boxes.numpy() 
+                        rospy.loginfo(boxes)
+                        target_msg = Float64MultiArray(data=np.array(boxes.flatten(), dtype=np.float64))
+                        self.det_pub.publish(target_msg)
+                        ann_frame = draw_boxes(frame, boxes, 9)
+
+                        ann_img_msg = self.bridge.cv2_to_imgmsg(ann_frame, "bgr8")
+                        self.ann_pub.publish(ann_img_msg)
+                    else:
+                        ann_img_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
+                        self.ann_pub.publish(ann_img_msg)
+                        # send an empty message of some kind
+                        pass
+
+                    # publish our images
+
+                    img_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
+                    self.raw_pub.publish(img_msg)
 
 def main(config_data):
 
@@ -294,7 +307,6 @@ def main(config_data):
 
         for image, labels in data[0:5]:
             detector.detect_and_annotate(image)
-
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
