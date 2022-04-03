@@ -1,25 +1,69 @@
-DEBUG: True
+DEBUG:
+  False
+  
 
 TOPICS:
-    RAW_IMG: "image_raw"
-    DETECTED: "detected_object"
-    TARGET: "target"
+  RAW_IMG:
+    'image_raw'
+  DETECTED:
+    'detected_object'
+  TARGET:
+    'target'
+
 
 NODES:
-    # ROSBAGGER:    # This will record all system runs and allow us to play them back
-    #   FILE:
-    #     'record'
-    #   PACKAGE:
-    #     'rosbag'
-    #   ARGS:       # -a record all -x ignore -o output prefix
-    #     - '-a'
-    #     - '-x /rosout'
-    #     - '-o /home/cu-robotics/buff-code/data/'
-    DETECTOR: # spawns our detector node
-        FILE: "luxnet.py"
-        TOPICS:
-            PUBLISH:
-                - "RAW_IMG"
-                - "DETECTED"
-        CONFIG: "buffnet-settings.yaml"
-        PACKAGE: "buffpy"
+  # ROSBAGGER:    # This will record all system runs and allow us to play them back
+  #   FILE:
+  #     'record'
+  #   PACKAGE:
+  #     'rosbag'
+  #   ARGS:       # -a record all -x ignore -o output prefix
+  #     - '-a'
+  #     - '-x /rosout'
+  #     - '-o /home/cu-robotics/buff-code/data/'
+  CAMERA:     # spawns our camera streamer
+    FILE:
+      'mds_camera.py'
+    TOPICS:
+      PUBLISH:
+        - 'RAW_IMG'
+    CONFIG:
+      'default_camera.yaml'
+    PACKAGE:
+      'buffpy'
+    REQUIRED:
+      'yes'  # can be anything
+  DETECTOR:   # spawns our detector node
+    FILE:
+      'buffnet.py'
+    TOPICS:
+      SUBSCRIBE:
+        - 'RAW_IMG'
+      PUBLISH:
+        - 'DETECTED'
+    CONFIG:
+      'buffnet-settings.yaml'
+    PACKAGE:
+      'buffpy'
+  TRACKER:     # spawns our tracker node
+    FILE:
+      'deadreckon_tracer.py'
+    TOPICS:
+      SUBSCRIBE:
+        - 'DETECTED'
+      PUBLISH:
+        - 'TARGET'
+    CONFIG:
+        'default_deadreckon.yaml'
+    PACKAGE:
+      'buffpy'
+  SERIAL:   # spawns our serial node
+    FILE:
+      'serial_layer.py'
+    TOPICS:
+      SUBSCRIBE:
+        - 'TARGET'
+    CONFIG:
+      'default_serial.yaml'
+    PACKAGE:
+      'buffpy'
