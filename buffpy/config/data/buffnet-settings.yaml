@@ -1,1 +1,2 @@
-MODEL: "model.blob"
+MODEL_NAME: "model.blob"
+
