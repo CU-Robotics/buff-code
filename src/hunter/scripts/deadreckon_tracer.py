@@ -87,19 +87,6 @@ class Dead_Reckon_Tracer:
 		fovr = (int(origin[0] + (5 * d[0] * np.cos(self.psi + np.radians(self.FOV / 2)))), int(origin[1] + (5 * d[1] * np.sin(self.psi + np.radians(self.FOV / 2)))))
 		fovl = (int(origin[0] + (5 * d[0] * np.cos(self.psi - np.radians(self.FOV / 2)))), int(origin[1] + (5 * d[1] * np.sin(self.psi - np.radians(self.FOV / 2)))))
 
-<<<<<<< HEAD
-				image = cv2.rectangle(image, bot_1, bot_2, (0,0,0), 2)
-				image = cv2.line(image, origin, fovl, (255,0,0))
-				image = cv2.line(image, origin, fovr, (255,0,0))
-				for (x,y) in self.history:
-					if x >= 0 and y >=0:
-						target = (int(origin[0] + x), int(origin[1] + y))
-						image = cv2.circle(image, target, 5, (0,255,0), 2)
-
-				x,y = self.pose
-				pose = (int(origin[0] + x), int(origin[1] + y))
-				image = cv2.circle(image, pose, 5, (0,0,255))
-=======
 		image = cv2.rectangle(image, bot_1, bot_2, (0,0,0), 2)
 		image = cv2.line(image, origin, fovl, (255,0,0))
 		image = cv2.line(image, origin, fovr, (255,0,0))
@@ -111,7 +98,6 @@ class Dead_Reckon_Tracer:
 		x,y = self.pose
 		pose = (int(origin[0] + y), int(origin[1] + x))
 		image = cv2.circle(image, pose, 10, (0,0,255))
->>>>>>> 0a90acd8cf15316f466467e43d948cb96718b62f
 
 		msg = self.bridge.cv2_to_imgmsg(image, encoding='rgb8')
 		self.map_pub.publish(msg)
@@ -147,10 +133,6 @@ class Dead_Reckon_Tracer:
 		Projects a detection into the body frame
 		PARAMS:
 			pose: Float64MultiArray.data, [x,y,h,w,cf,cl] (detection msg)
-<<<<<<< HEAD
-
-=======
->>>>>>> 0a90acd8cf15316f466467e43d948cb96718b62f
 		RETURNS:
 			vector (x,y): body frame position of the detection
 		"""
