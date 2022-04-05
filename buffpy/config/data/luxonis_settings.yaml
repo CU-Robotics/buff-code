@@ -1,0 +1,9 @@
+MODEL_INFO:
+  IOU: 0.5
+  CONFIDENCE: 0.5
+  MODEL_FILE: "model.blob"
+
+CAMERA:
+  FPS: 30
+  FOV: 64
+  RESOLUTION: 320
