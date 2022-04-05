@@ -1,0 +1,25 @@
+DEBUG: True
+
+TOPICS:
+    RAW_IMG: "image_raw"
+    DETECTED: "detected_object"
+    TARGET: "target"
+
+NODES:
+    # ROSBAGGER:    # This will record all system runs and allow us to play them back
+    #   FILE:
+    #     'record'
+    #   PACKAGE:
+    #     'rosbag'
+    #   ARGS:       # -a record all -x ignore -o output prefix
+    #     - '-a'
+    #     - '-x /rosout'
+    #     - '-o /home/cu-robotics/buff-code/data/'
+    DETECTOR: # spawns our detector node
+        FILE: "luxnet.py"
+        TOPICS:
+            PUBLISH:
+                - "RAW_IMG"
+                - "DETECTED"
+        CONFIG: "buffnet-settings.yaml"
+        PACKAGE: "buffpy"
