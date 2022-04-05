@@ -25,4 +25,15 @@ class c620PWM : public rmMotor {
         float getAngle();   //retrieves angle from encoder and returns it
 };
 
+class c610Enc : public rmMotor {
+    private:
+        uint8_t inPin;
+        FreqMeasureMulti freq;
+        float angle;
+    public:
+        c610Enc(short tempID, CAN_message_t* msg, uint8_t encPin); //constructor
+        void setPower(float power);
+        float getAngle();
+}
+
 #endif // C620_H
