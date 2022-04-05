@@ -3,8 +3,9 @@ import sys
 import time
 import rospy
 import serial
+import numpy as np
 import traceback as tb
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import String, Float64MultiArray
 
 
 class SerialLayer():
@@ -21,38 +22,20 @@ class SerialLayer():
 		self.connected = False
 		self.port = '/dev/ttyACM0'
 
-		if 'DEBUG' in config_data:
-			self.debug = config_data['DEBUG']
+		self.debug = rospy.get_param('/buffbot/DEBUG')
 
-		if 'PORT' in config_data:
-			self.port = config_data['PORT']
-
-		if 'TIMEOUT' in config_data:
-			self.timeout = config_data['TIMEOUT']
-
-		if 'BAUDRATE' in config_data:
-			self.baudrate = config_data['BAUDRATE']
-
-		if 'TOPICS' in config_data: # Set up ros publishers
-			# If topics probably debug ...?
-			debug = rospy.get_param('/buffbot/DEBUG')
-
-			topics_names = config_data['TOPICS']
-			all_topics = rospy.get_param('/buffbot/TOPICS')
-			# if 'PUBLISH' in config_data['TOPICS']:
-			# 	for tn in topics_names['PUBLISH']:
-			# 		topic = all_topics[tn]
-			# 		self.publishers[topic] = rospy.Publisher(topic, Float64, queue_size=10)
-
-			if 'SUBSCRIBE' in config_data['TOPICS']:
-				for tn in topics_names['SUBSCRIBE']:
-					topic = all_topics[tn]
-					self.subscribers[topic] = rospy.Subscriber(topic, Float64MultiArray, self.writer_callback, queue_size=1)
-
-		# for now require roscore to run (maybe later set up non-ros runtime)
-		rospy.init_node('echo-serial', anonymous=True)
+		self.port = config_data['PORT']
+		self.timeout = config_data['TIMEOUT']
+		self.baudrate = config_data['BAUDRATE']
 
 		self.try_connect()
+
+		topics = rospy.get_param('/buffbot/TOPICS')
+		self.aim_sub = rospy.Subscriber(topics['TARGET'], String, self.writer_callback, queue_size=1)
+
+		rospy.init_node('echo-serial', anonymous=True)
+
+		self.publishers['aim'] = rospy.Publisher(topics['AIM_HEADING'], Float64MultiArray, queue_size=1)
 
 
 	def write_device(self, packet):
@@ -85,15 +68,14 @@ class SerialLayer():
 			self.device.flush()
 
 		except Exception as e:
-			print(f'Error Detecting Device at {self.port}')
-			print(e)
-			
+			rospy.logerr(e)
+			rospy.logerr(f"Serial lives left {self.lives}")
 			self.lives -= 1
 			if self.lives < 1:
-				exit(0)
+				return False
 
 		else:
-			print('Device Connected: Reading...')
+			rospy.loginfo('Device Connected: Reading...')
 
 
 	def parse_packet(self):
@@ -115,10 +97,9 @@ class SerialLayer():
 			name, val = item.split(':')
 			
 			if not name in self.publishers:
-				self.publishers[name] = rospy.Publisher(name, Float64, queue_size=10)
+				self.publishers[name] = rospy.Publisher(name, Float64MultiArray, queue_size=10)
 
-			# rospy.loginfo(val)
-			msg = Float64(float(val))
+			msg = Float64MultiArray(data=np.array(val.split(','), dtype=np.float64))
 			self.publishers[name].publish(msg)
 
 
@@ -128,37 +109,37 @@ class SerialLayer():
 		to a topic given the mode. The mode is the first 4 bytes
 		of the msg.
 		"""
-		try:
-			if not self.device:
-				self.try_connect()
-
-			elif self.device.in_waiting:
-				self.parse_packet()
-
-		except Exception as e:
-			tb.print_exc()
-			print(e)
-			print('Possible I/O Disconnect: Reseting...')
-			time.sleep(2)
-			self.try_connect()
-
-
-def main(data):
-
-	try:
-		layer = SerialLayer(data)
-
 		while not rospy.is_shutdown():
-			layer.spin()
+			try:
+				if not self.device:
+					if not self.try_connect():
+						return
 
-	except KeyboardInterrupt:
-		if layer.device:
-			layer.device.close()
+				elif self.device.in_waiting:
+					self.parse_packet()
 
-	except Exception as e:
-		tb.print_exc()
-		if layer.device:
-			layer.device.close()
+			except KeyboardInterrupt:
+				if self.device:
+					self.device.close()
+				return
+
+			except Exception as e:
+				tb.print_exc()
+				print(e)
+				if self.device:
+					self.device.close()
+				print('Possible I/O Disconnect: Reseting...')
+				time.sleep(2)
+				if not self.try_connect():
+					return
+
+
+def main(config_data):
+
+	layer = SerialLayer(config_data)
+	layer.spin()
+
+		
 
 
 if __name__=='__main__':
