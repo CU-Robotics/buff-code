@@ -1,8 +1,9 @@
-#include <pid.h>
+// #include <pid.h>
 
 const int outputPin = 29;
 
 int newValue = 0;
+int currValue = 0;
 
 void setup() {
   Serial.begin(115200);

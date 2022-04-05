@@ -4,11 +4,13 @@ CAN_message_t sendMsg;
 CAN_message_t recMsg;
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
-c620CAN controller1 = c620CAN(3, &sendMsg);
+c620CAN controller1 = c620CAN(1, &sendMsg);
 
 int del = 500; // delay length
 
 const bool printInfo = true;   //set to true to get stats of motors printed to serial
+
+float power;
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -22,7 +24,7 @@ void setup() {
 
 void loop() {
 
-  controller1.setPower(.1);
+  // controller1.setPower(.1);
 
   can1.write(sendMsg);
   
@@ -46,7 +48,8 @@ void loop() {
   if(Serial.available() > 1) {
     String data = Serial.read();
     power = Serial.parseFloat();
-    controller1.setPower(power)
+    controller1.setPower(power);
+    can1.write(sendMsg);
     Serial.print("new power: ");
     Serial.println(power);
   }
