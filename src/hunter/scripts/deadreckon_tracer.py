@@ -132,13 +132,13 @@ class Dead_Reckon_Tracer:
 		"""
 		Projects a detection into the body frame
 		PARAMS:
-			pose: Float64MultiArray.data, [x,y,w,h,cf,cl] (detection msg)
-
+			pose: Float64MultiArray.data, [x,y,h,w,cf,cl] (detection msg)
 		RETURNS:
 			vector (x,y): body frame position of the detection
 		"""
-		d = (self.m / pose[3]) + self.b
-		alpha = np.radians((pose[0] / self.image_size[0]) * self.FOV / 2)
+		d = self.a * np.exp(self.m * (pose[2] + self.b))
+		rospy.loginfo(f'{d} {pose[2]} {pose[3]}')
+		alpha = np.radians((pose[0] / self.image_size[0]) * self.FOV) / 2
 		return d * np.array([np.cos(self.psi + alpha), np.sin(self.psi + alpha)])
 
 	def predict(self):
@@ -211,13 +211,8 @@ class Dead_Reckon_Tracer:
 
 def main(config_data):
 
-	if config_data is None:
-		return
-
-	tracker = Dead_Reckon_Tracer(config_data=config_data)
-
-	while not rospy.is_shutdown():
-		tracker.spin()
+	tracker = Dead_Reckon_Tracer(config_data)
+	tracker.spin()
 
 
 if __name__ == '__main__':
