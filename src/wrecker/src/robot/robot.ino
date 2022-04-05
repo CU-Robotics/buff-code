@@ -5,8 +5,9 @@
 #include "c620.h"
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+c620CAN controller1 = c620CAN(1, &sendMsg);
 
-CAN_message_t msg;
+CAN_message_t sendMsg;
 CAN_message_t recMsg;
 
 short angle;
@@ -23,35 +24,10 @@ void setup() {
   can1.begin();
   can1.setBaudRate(1000000);
   Serial.begin(9600);
-  // myMotor.setPower(0.5);
 }
 
 void loop() {
-  // Serial.print("id: ");
-  // Serial.println(msg.id, HEX);
-  myMotor.setPower(1);
-  Serial.print("send id: ");
-  Serial.println(msg.id, HEX);
-  Serial.println("send power: ");
-  short temp = msg.buf[4];
-  temp = temp << 8;
-  temp = temp | msg.buf[5];
-  Serial.println(temp);
-  // Serial.println(myMotor.getTemp());
-  can1.write(msg);
-
-
-  if(can1.read(recMsg)) { //parsed with motor class
-    myMotor.updateMotor(recMsg);
-    Serial.print("angle: ")
-    Serial.println(myMotor.getAngle());
-    Serial.print("rpm: ");
-    Serial.println(myMotor.getRPM());
-    Serial.print("torque: ");
-    Serial.println(myMotor.getTorque());
-    Serial.print("temp: ")
-    Serial.println(myMotor.getTemp());
-  }
+  
 
   delay(10);
 }
