@@ -449,14 +449,10 @@ void loop() {
         
       }
 
-      
-
       cmd_id = cmd_id | temp;
 
       Serial.println(cmd_id);
 
-
-      
 
      if(cmd_id == 514){   //power and heat data   
          

@@ -9,9 +9,6 @@ Ref_sys::Ref_sys(){
 
 }      //non-parameterized constructor
 
-Ref_sys::Ref_sys(){
-
-}      //parameterized constructor
 
 string Ref_sys::get_comp_type(){
 
