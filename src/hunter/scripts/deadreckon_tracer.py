@@ -10,7 +10,7 @@ from std_msgs.msg import Bool
 from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import String, Float64MultiArray
 
 """
 	Dead Reckoning Tracker class
@@ -24,25 +24,21 @@ class Dead_Reckon_Tracer:
 		self.t = 0
 		self.error = 0
 		self.measure = None
-		self.t_offset = 0.02
+		self.m = config_data['M']
+		self.b = config_data['B']
+		self.d_scale = config_data['DSCALE']
+		self.t_offset = config_data['LEAD_TIME']
 
 		# camera heading
 		self.phi = 0.0
 		self.psi = 0.0
 
-
-		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
-
-		if 'M' in config_data and 'B' in config_data and 'DSCALE' in config_data:
-			self.m = config_data['M']
-			self.b = config_data['B']
-			self.d_scale = config_data['DSCALE']
-		else:
-			rospy.logerr(f'DeadReckon tracker missing config elements: exiting...')
-			exit(0)
-
-		# input bounds
-		self.image_size = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
+		params = rospy.get_param('/buffbot')
+		if 'LUXONIS' in params:
+			self.FOV = params['LUXONIS']['CAMERA']['FOV']
+			# input bounds
+			image_res = params['LUXONIS']['CAMERA']['RESOLUTION']
+			self.image_size = (image_res, image_res, 3)
 
 		self.bridge = CvBridge()
 
@@ -57,22 +53,21 @@ class Dead_Reckon_Tracer:
 		topics = rospy.get_param('/buffbot/TOPICS')
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 
-		pubs = [topics[t] for t in config_data['TOPICS']['PUBLISH']]
-		subs = [topics[t] for t in config_data['TOPICS']['SUBSCRIBE']]
-
 		rospy.init_node('dr_tracer', anonymous=True)
 		self.rate = rospy.Rate(30)
 
 		self.detect_sub = rospy.Subscriber(
-			subs[0], Float64MultiArray, self.detection_callback, queue_size=1)
+			topics['DETECTION'], Float64MultiArray, self.detection_callback, queue_size=5)
+
+		self.aim_heading_sub = rospy.Subscriber(
+			topics['AIM_HEADING'], Float64MultiArray)
 
 		self.prediction_pub = rospy.Publisher(
-			pubs[0], Float64MultiArray, queue_size=1)
+			topics['TARGET'], String, queue_size=1)
 
-		if len(pubs) > 1:
-			self.debug_pubs[pubs[1]] = rospy.Publisher(pubs[1], Float64MultiArray, queue_size=1)
-			if len(pubs) > 2 and self.debug:
-				self.debug_pubs[pubs[2]] = rospy.Publisher(pubs[2], Image, queue_size=1)
+		if self.debug:
+			self.map_pub = rospy.Publisher(topics['TARGET_MAP'], Image, queue_size=1)
+			self.tracking_err_pub = rospy.Publisher(topics['TRACKING_ERROR'], Float64MultiArray, queue_size=1)
 
 
 	def publish_debug(self):
@@ -80,34 +75,32 @@ class Dead_Reckon_Tracer:
 		Publish the measured error of predictions and a map
 		of the detected targets
 		"""
-		for topic in self.debug_pubs:
-			if topic == 'tracking_error':
-				msg = Float64MultiArray(data=self.error)
-				self.debug_pubs[topic].publish(msg)
+			
+		msg = Float64MultiArray(data=self.error)
+		self.tracking_err_pub.publish(msg)
 
-			if topic == 'target_map':
-				d = (self.image_size[0] * 0.02, self.image_size[1] * 0.02)
-				image = np.ones(self.image_size, dtype=np.uint8) * 255
-				origin = (int(self.image_size[0] / 2), int(self.image_size[1] / 2))
-				bot_1 = (int(origin[0] - d[0]), int(origin[1] - d[1]))
-				bot_2 = (int(origin[0] + d[0]), int(origin[1] + d[1]))
-				fovr = (int(origin[0] + (5 * d[0] * np.cos(self.psi + np.radians(self.FOV / 2)))), int(origin[1] + (5 * d[1] * np.sin(self.psi + np.radians(self.FOV / 2)))))
-				fovl = (int(origin[0] + (5 * d[0] * np.cos(self.psi - np.radians(self.FOV / 2)))), int(origin[1] + (5 * d[1] * np.sin(self.psi - np.radians(self.FOV / 2)))))
+		d = (self.image_size[0] * 0.02, self.image_size[1] * 0.02)
+		image = np.ones(self.image_size, dtype=np.uint8) * 255
+		origin = (int(self.image_size[0] / 2), int(self.image_size[1] / 2))
+		bot_1 = (int(origin[0] - d[0]), int(origin[1] - d[1]))
+		bot_2 = (int(origin[0] + d[0]), int(origin[1] + d[1]))
+		fovr = (int(origin[0] + (5 * d[0] * np.cos(self.psi + np.radians(self.FOV / 2)))), int(origin[1] + (5 * d[1] * np.sin(self.psi + np.radians(self.FOV / 2)))))
+		fovl = (int(origin[0] + (5 * d[0] * np.cos(self.psi - np.radians(self.FOV / 2)))), int(origin[1] + (5 * d[1] * np.sin(self.psi - np.radians(self.FOV / 2)))))
 
-				image = cv2.rectangle(image, bot_1, bot_2, (0,0,0), 2)
-				image = cv2.line(image, origin, fovl, (255,0,0))
-				image = cv2.line(image, origin, fovr, (255,0,0))
-				for (x,y) in self.history:
-					if x >= 0 and y >=0:
-						target = (int(origin[0] + x), int(origin[1] + y))
-						image = cv2.circle(image, target, 10, (0,255,0), 2)
+		image = cv2.rectangle(image, bot_1, bot_2, (0,0,0), 2)
+		image = cv2.line(image, origin, fovl, (255,0,0))
+		image = cv2.line(image, origin, fovr, (255,0,0))
+		for (x,y) in self.history:
+			if x >= 0 and y >=0:
+				target = (int(origin[0] + x), int(origin[1] + y))
+				image = cv2.circle(image, target, 10, (0,255,0), 2)
 
-				x,y = self.pose
-				pose = (int(origin[0] + y), int(origin[1] + x))
-				image = cv2.circle(image, pose, 10, (0,0,255))
+		x,y = self.pose
+		pose = (int(origin[0] + y), int(origin[1] + x))
+		image = cv2.circle(image, pose, 10, (0,0,255))
 
-				msg = self.bridge.cv2_to_imgmsg(image, encoding='rgb8')
-				self.debug_pubs[topic].publish(msg)
+		msg = self.bridge.cv2_to_imgmsg(image, encoding='rgb8')
+		self.map_pub.publish(msg)
 
 
 
@@ -118,7 +111,7 @@ class Dead_Reckon_Tracer:
 		self.predict()
 		psi = np.arctan(self.pose[1] / self.pose[0]) # arctan of x,y is yaw
 		phi = self.d_scale * np.linalg.norm(self.pose) # phi is this needs to be tuned function of distance
-		msg = Float64MultiArray(data=[phi, psi])
+		msg = String(f'aim_control:{phi},{psi}')
 		self.prediction_pub.publish(msg)
 
 	def detection_callback(self, msg):
@@ -139,13 +132,13 @@ class Dead_Reckon_Tracer:
 		"""
 		Projects a detection into the body frame
 		PARAMS:
-			pose: Float64MultiArray.data, [x,y,w,h,cf,cl] (detection msg)
-
+			pose: Float64MultiArray.data, [x,y,h,w,cf,cl] (detection msg)
 		RETURNS:
 			vector (x,y): body frame position of the detection
 		"""
-		d = (self.m / pose[3]) + self.b
-		alpha = np.radians((pose[0] / self.image_size[0]) * self.FOV / 2)
+		d = self.a * np.exp(self.m * (pose[2] + self.b))
+		rospy.loginfo(f'{d} {pose[2]} {pose[3]}')
+		alpha = np.radians((pose[0] / self.image_size[0]) * self.FOV) / 2
 		return d * np.array([np.cos(self.psi + alpha), np.sin(self.psi + alpha)])
 
 	def predict(self):
@@ -218,13 +211,8 @@ class Dead_Reckon_Tracer:
 
 def main(config_data):
 
-	if config_data is None:
-		return
-
-	tracker = Dead_Reckon_Tracer(config_data=config_data)
-
-	while not rospy.is_shutdown():
-		tracker.spin()
+	tracker = Dead_Reckon_Tracer(config_data)
+	tracker.spin()
 
 
 if __name__ == '__main__':

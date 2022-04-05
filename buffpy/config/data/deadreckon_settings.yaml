@@ -1,0 +1,21 @@
+LEAD_TIME:
+  0.02
+DSCALE:
+  0.05
+M:
+  125.0
+B:
+  50.0
+
+DEVICE:
+  0
+FPS:
+  30
+RESOLUTION:
+  - 300
+  - 300
+  - 3
+FOV:
+  120
+DATA_DEFAULT:
+  'sample_competition.avi'
