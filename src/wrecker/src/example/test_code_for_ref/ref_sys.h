@@ -7,7 +7,6 @@ class Ref_sys{
 
         Ref_sys();      //non-parameterized constructor
 
-        Ref_sys();      //parameterized constructor
 
         string get_comp_type();
 
