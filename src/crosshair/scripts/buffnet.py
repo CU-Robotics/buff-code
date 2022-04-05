@@ -188,10 +188,3 @@ if __name__=='__main__':
 		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
 			data = yaml.safe_load(f)
 		main(data)
-
-
-
-
-
-
-
