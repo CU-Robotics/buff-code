@@ -10,57 +10,56 @@ ref_sys::ref_sys(){
 
 bool ref_sys::read_serial(){
 
-    byte enter_code, temp;
-    uint16_t data_length, cmd_id, unix_time, temp_hp, rem_proj, temp_max_hp, temp_stat;
+    byte enter_code, temp;          //These 3 lines initialize all our temporary variables
+    uint16_t data_length, cmd_id, unix_time, temp_hp, rem_proj, temp_max_hp, temp_stat;  
     uint8_t seq, crc, comp_stat, warning_level, robo_id, robot_level;
 
     ref_sys curr_ref;           //Setting up an instance of our ref_sys class
   
   
     // put your main code here, to run repeatedly:
-    if(Serial1.available()>1){
+    if(Serial1.available()>1){      //The first instance to check if serial data is available
 
-    enter_code = Serial1.read();
+    enter_code = Serial1.read();    //It will read in the first byte of data
 
-    if(enter_code == 0xA5){
+    if(enter_code == 0xA5){         //It looks for this value that signifies that there is about to be a transmission of data
       
       Serial.println("Enter code received");
 
-        while(Serial1.readBytes(&temp, 1) != 1){
+        while(Serial1.readBytes(&temp, 1) != 1){        //This waits till another byte of data is available
         }
         
-        data_length = temp;
+        data_length = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         data_length = data_length << 8;
 
-        while(Serial1.readBytes(&temp, 1) != 1){
+        while(Serial1.readBytes(&temp, 1) != 1){        //This waits till another byte of data is available
         }
       
 
-        data_length = data_length | temp;
+        data_length = data_length | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         Serial.println(data_length);
 
-        while(Serial1.readBytes(&temp, 1) != 1){  
+        while(Serial1.readBytes(&temp, 1) != 1){          //This waits till another byte of data is available
         }
         
-
         seq = temp;
         
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
         crc = temp;
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
-        cmd_id = temp;
+        cmd_id = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         cmd_id = cmd_id << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
-        cmd_id = cmd_id | temp;
+        cmd_id = cmd_id | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         Serial.println(cmd_id);
 
@@ -72,30 +71,30 @@ bool ref_sys::read_serial(){
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting chasis output voltage 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_chasis_volt(temp_stat);
+        curr_ref.set_chasis_volt(temp_stat);    
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting chasis output current
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_chasis_current(temp_stat);
 
@@ -110,9 +109,9 @@ bool ref_sys::read_serial(){
         Serial.println("received cmd_id inside 1"); 
 
         while(Serial1.readBytes(&temp, 1) != 1){   
-        }
+        }        //This waits till another byte of data is available
 
-        comp_stat = temp;
+        comp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         comp_stat = comp_stat >> 4;
 
         if(comp_stat == 0){
@@ -143,13 +142,13 @@ bool ref_sys::read_serial(){
         while(Serial1.readBytes(&temp, 1) != 1){   
         }
 
-        unix_time = temp;
+        unix_time = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         unix_time = unix_time << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    
-        }
+        }        //This waits till another byte of data is available
 
-        unix_time = unix_time | temp;
+        unix_time = unix_time | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_rem_time(int(unix_time));
 
@@ -161,7 +160,7 @@ bool ref_sys::read_serial(){
         Serial.println("received cmd_id inside 2"); 
 
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
         comp_stat = temp;
 
@@ -184,39 +183,38 @@ bool ref_sys::read_serial(){
             Serial.println("received cmd_id inside 3"); 
 
             while(Serial1.readBytes(&temp, 1) != 1){
-            
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp;
+        temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_hp = temp_hp << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){   
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp_hp | temp;
+        temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_red_hero_hp(temp_hp);
 
         /////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
         while(Serial1.readBytes(&temp, 1) != 1){            //skipping 2 bytes  
-        }
+        }        //This waits till another byte of data is available
 
         ///////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp;
+        temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_hp = temp_hp << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){            //red infantry hp  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp_hp | temp;
+        temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_red_infantry_hp(temp_hp);
 
@@ -234,15 +232,15 @@ bool ref_sys::read_serial(){
         //////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp;
+        temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_hp = temp_hp << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){            //red infantry hp   
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp_hp | temp;
+        temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_red_sentry_hp(temp_hp);
 
@@ -260,15 +258,15 @@ bool ref_sys::read_serial(){
         //////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp;
+        temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_hp = temp_hp << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Blue hero  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp_hp | temp;
+        temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_blue_hero_hp(temp_hp);
 
@@ -282,15 +280,15 @@ bool ref_sys::read_serial(){
         ///////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp;
+        temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_hp = temp_hp << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){            //blue infantry hp
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp_hp | temp;
+        temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_blue_infantry_hp(temp_hp);
 
@@ -308,15 +306,15 @@ bool ref_sys::read_serial(){
         //////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp;
+        temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_hp = temp_hp << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){            //blue infantry hp  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp_hp | temp;
+        temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_blue_sentry_hp(temp_hp);
 
@@ -340,60 +338,60 @@ bool ref_sys::read_serial(){
         //////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
-        rem_proj = temp;
+        rem_proj = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         rem_proj = rem_proj << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){            //RED 1 remaining projectiles   
-        }
+        }        //This waits till another byte of data is available
 
-        rem_proj = rem_proj | temp;
+        rem_proj = rem_proj | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_red_one_rem_proj(temp_hp);
 
         ///////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){   
-        }
+        }        //This waits till another byte of data is available
 
-        rem_proj = temp;
+        rem_proj = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         rem_proj = rem_proj << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){            //RED 2 remaining projectiles    
-        }
+        }        //This waits till another byte of data is available
 
-        rem_proj = rem_proj | temp;
+        rem_proj = rem_proj | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_red_two_rem_proj(temp_hp);
 
         ///////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
-        rem_proj = temp;
+        rem_proj = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         rem_proj = rem_proj << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){            //Blue one remaining projectiles
-        }
+        }        //This waits till another byte of data is available
 
-        rem_proj = rem_proj | temp;
+        rem_proj = rem_proj | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_blue_one_rem_proj(temp_hp);
 
         ///////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
-        rem_proj = temp;
+        rem_proj = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         rem_proj = rem_proj << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){            //Blue two remaining projectiles  
-        }
+        }        //This waits till another byte of data is available
 
-        rem_proj = rem_proj | temp;
+        rem_proj = rem_proj | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_blue_two_rem_proj(temp_hp);
 
@@ -407,7 +405,7 @@ bool ref_sys::read_serial(){
 
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
         warning_level = temp;
 
@@ -426,7 +424,7 @@ bool ref_sys::read_serial(){
         }
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
         robo_id = temp;
 
@@ -442,42 +440,44 @@ bool ref_sys::read_serial(){
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
         robo_id = temp;
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
         robot_level = temp;
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp;
+        temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_hp = temp_hp << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
-        temp_hp = temp_hp | temp;
+        temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         ////////////////////////////////////////////////////////////////////////////
         
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
-        temp_max_hp = temp;
+        temp_max_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_max_hp = temp_max_hp << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_max_hp = temp_max_hp | temp;
+        temp_max_hp = temp_max_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         ////////////////////////////////////////////////////////////////////////////
+
+        //This part looks for the robot id and then assigns values that follow depending on what robot id is transmitted
 
         if(int(robo_id) == 1){      //red hero
 
@@ -544,150 +544,150 @@ bool ref_sys::read_serial(){
         ////////////////////////////////////////////////////////////////////////////
         
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){          //Robot 1 cooling value read in 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_1_cool_val(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot one barrel heat limit 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_1_barr_heat_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot one speed limit 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_1_speed_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot two cooling value  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_2_cool_val(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot two barrel heat limit 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_2_barr_heat_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot two speed limit
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_2_speed_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot 42mm cooling value
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_42_cool_val(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot 42mm barrel heat limit  
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_42_barr_heat_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot 42mm speed limit 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_42_speed_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
         while(Serial1.readBytes(&temp, 1) != 1){ 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp;
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
         temp_stat = temp_stat << 8;
 
         while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot power consumption limit 
-        }
+        }        //This waits till another byte of data is available
 
-        temp_stat = temp_stat | temp;
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
         curr_ref.set_robot_power_lim(temp_stat);
 
