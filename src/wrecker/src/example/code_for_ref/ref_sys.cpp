@@ -13,6 +13,7 @@ bool ref_sys::read_serial(){
     byte enter_code, temp;          //These 3 lines initialize all our temporary variables
     uint16_t data_length, cmd_id, unix_time, temp_hp, rem_proj, temp_max_hp, temp_stat;  
     uint8_t seq, crc, comp_stat, warning_level, robo_id, robot_level;
+    uint32_t temp_launch_speed;
 
     ref_sys curr_ref;           //Setting up an instance of our ref_sys class
   
@@ -704,12 +705,27 @@ bool ref_sys::read_serial(){
 
         Serial.println("received cmd_id inside 516"); 
 
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available
+
+
+        if(temp[0] == 1){
+            curr_ref.set_robot_buff('0');
+        }else if(temp[1] == 1){
+            curr_ref.set_robot_buff('1');
+        }else if(temp[2] == 1){
+            curr_ref.set_robot_buff('2');
+        }else if(temp[3] == 1){
+            curr_ref.set_robot_buff('3');
+        }
+
         Serial.flush();
 
         
         }else if(cmd_id == 518){  //damage stats
 
         Serial.println("received cmd_id inside 518"); 
+
 
         Serial.flush();
 
@@ -718,6 +734,55 @@ bool ref_sys::read_serial(){
 
         Serial.println("received cmd_id inside 519"); 
 
+        ///////////////////////////////////////////////////////////////////
+
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available        //Skipping 2 bytes of data
+
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available
+
+        ///////////////////////////////////////////////////////////////////
+
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available
+
+
+        comp_stat = int(temp);
+
+        curr_ref.set_launch_freq(comp_stat);
+
+        //////////////////////////////////////////////////////////////////
+
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available
+
+        temp_launch_speed = temp;
+        temp_launch_speed << 8;
+
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available        //This section reads in 4 bytes and assigns them to one uint32 variable
+
+        temp_launch_speed = temp_launch_speed | temp;
+        temp_launch_speed << 8;
+
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available
+
+        temp_launch_speed = temp_launch_speed | temp;
+        temp_launch_speed << 8;
+
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available
+
+        temp_launch_speed = temp_launch_speed | temp;
+        temp_launch_speed << 8;
+
+
+        /////////////////////////////////////////////////////////////////
+
+        curr_ref.set_launch_speed(temp_launch_speed);
+
         Serial.flush();
 
         
@@ -725,12 +790,44 @@ bool ref_sys::read_serial(){
 
         Serial.println("received cmd_id inside 520"); 
 
+        ////////////////////////////////////////////////////////////////////////
+
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available
+
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+        temp_stat = temp_stat << 8;
+
+        while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot power consumption limit 
+        }        //This waits till another byte of data is available
+
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+
+        curr_ref.set_rem_17_proj(temp_stat);
+
+        /////////////////////////////////////////////////////////////////////////
+
+        while(Serial1.readBytes(&temp, 1) != 1){ 
+        }        //This waits till another byte of data is available
+
+        temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+        temp_stat = temp_stat << 8;
+
+        while(Serial1.readBytes(&temp, 1) != 1){    //Setting robot power consumption limit 
+        }        //This waits till another byte of data is available
+
+        temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+
+        curr_ref.set_rem_42_proj(temp_stat);
+
+        /////////////////////////////////////////////////////////////////////////
+
         Serial.flush();
 
         
         }else if(cmd_id == 521){  //RFID stat
 
-        Serial.println("received cmd_id inside 521"); 
+        Serial.println("received cmd_id inside 521");           //I am not sure if I need to record this
 
         Serial.flush();
 
@@ -1083,4 +1180,36 @@ return run_data->robot_buff;
 
 void ref_sys::set_robot_buff(int temp){
 run_data->robot_buff = temp;
+}
+
+int ref_sys::get_launch_freq(){
+    return run_data->launch_freq;
+}
+
+int ref_sys::get_launch_speed(){
+    return run_data -> launch_speed;
+}
+
+void ref_sys::set_launch_freq(int temp){
+    run_data->launch_freq = temp;
+}
+
+void ref_sys::set_launch_speed(int temp){
+    run_data -> launch_speed = temp;
+}
+
+int ref_sys::get_rem_17_proj(){
+    return run_data -> rem_17_proj;
+}
+
+int ref_sys::get_rem_42_proj(){
+    return run_data -> rem_42_proj;
+}
+
+void ref_sys::set_rem_17_proj(int temp){
+    run_data -> rem_17_proj = temp;
+}
+    
+void ref_sys::set_rem_42_proj(int temp){
+    run_data -> rem_42_proj = temp;
 }
