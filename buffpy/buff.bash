@@ -33,8 +33,12 @@ fi
 
 # Only export if if not already in path
 
-if [[ "${PYTHONPATH}" != *"${HOME}/.local/lib/python3.6/dist-packages"* ]]; then	
-	export PYTHONPATH="${HOME}/.local/lib/python3.6/dist-packages:${PYTHONPATH}" 
+if [[ "${PYTHONPATH}" != *"/lib/python3.6/dist-packages"* ]]; then
+	if [[ "${HOSTNAME}" != "docker-desktop" ]]; then
+		
+		# export PYTHONPATH="/usr/local/lib/python3.6/dist-packages:${PYTHONPATH}" 
+		export PYTHONPATH="${HOME}/.local/lib/python3.6/dist-packages:${PYTHONPATH}" 
+	fi
 fi
 
 # Only needed if we are using ros packages
