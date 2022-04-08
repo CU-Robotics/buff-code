@@ -49,6 +49,12 @@ struct ref_data{
 
     int robot_buff;
 
+    int launch_freq;
+    int launch_speed;
+
+    int rem_17_proj;
+    int rem_42_proj;
+
 
 };
 
@@ -221,6 +227,22 @@ class ref_sys{
     int get_robot_buff();
 
     void set_robot_buff(int temp);
+
+    int get_launch_freq();
+
+    int get_launch_speed();
+
+    void set_launch_freq(int temp);
+
+    void set_launch_speed(int temp);
+
+    int get_rem_17_proj();
+
+    int get_rem_42_proj();
+
+    void set_rem_17_proj(int temp);
+    
+    void set_rem_42_proj(int temp);
 
     private:
 
