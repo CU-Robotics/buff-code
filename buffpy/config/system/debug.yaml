@@ -22,11 +22,7 @@ NODES:
   #     - '-a'
   #     - '-x /rosout'
   #     - '-o /home/cu-robotics/buff-code/data/'
-
-  DEBUG_VIEW:   # Opens an image view pane
-    FILE: 'rqt_image_view'
-    PACKAGE: 'rqt_image_view'
-  RQT_GRAPH:    # Opens an rqt_graph
-    FILE: 'rqt_graph'
-    PACKAGE: 'rqt_graph'        
+  RQT_GUI:    # Opens an rqt_graph
+    FILE: 'rqt_gui'
+    PACKAGE: 'rqt_gui'        
 
