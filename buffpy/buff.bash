@@ -7,20 +7,27 @@ if [[ "${PWD}" != */buff-code ]]; then
 fi
 
 #		Setup robot params
+export DOCKER=False
 export PROJECT_ROOT=${PWD}
 export HOSTNAME=$HOSTNAME 
 
+if grep -q docker /proc/1/cgroup; then 
+   DOCKER=True
+fi
 
-if [[ "$(uname)" == "MINGW"* ]]; then
-	alias spinup="winpty docker run -it \
-	-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
-	-e DISPLAY=host.docker.internal:0 \
-	--net=host "
-else
-	alias spinup="docker run -it \
-	-e DISPLAY=host.docker.internal:0 \
-	-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
-	--net=host "
+
+if [[ "${DOCKER}" == "False" ]]; then
+	if [[ "$(uname)" == "MINGW"* ]]; then
+		alias spinup="winpty docker run -it \
+		-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
+		-e DISPLAY=host.docker.internal:0 \
+		--net=host "
+	else
+		alias spinup="docker run -it \
+		-e DISPLAY=host.docker.internal:0 \
+		-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
+		--net=host "
+	fi
 fi
 
 PYTHONPATH=
@@ -31,15 +38,13 @@ if [[ -f /opt/ros/melodic/setup.bash ]]; then
 	source /opt/ros/melodic/setup.bash
 fi
 
-# Only export if if not already in path
 
-if [[ "${PYTHONPATH}" != *"/lib/python3.6/dist-packages"* ]]; then
-	if [[ "${HOSTNAME}" != "docker-desktop" ]]; then
-		
-		# export PYTHONPATH="/usr/local/lib/python3.6/dist-packages:${PYTHONPATH}" 
-		export PYTHONPATH="${HOME}/.local/lib/python3.6/dist-packages:${PYTHONPATH}" 
-	fi
-fi
+#	DEPRECATED
+# if [[ "${DOCKER}" == "False" ]]; then
+# 	export PYTHONPATH="${HOME}/.local/lib/python3.6/dist-packages:${PYTHONPATH}" 
+# # else
+# # 	export PYTHONPATH="/usr/local/lib/python3.6/dist-packages:${PYTHONPATH}" 
+# fi
 
 # Only needed if we are using ros packages
 # if [[ -d ${PROJECT_ROOT}/install ]]; then

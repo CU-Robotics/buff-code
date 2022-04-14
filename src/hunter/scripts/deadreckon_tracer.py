@@ -26,6 +26,7 @@ class Dead_Reckon_Tracer:
 		self.measure = None
 		self.m = config_data['M']
 		self.b = config_data['B']
+		self.a = config_data['A']
 		self.d_scale = config_data['DSCALE']
 		self.t_offset = config_data['LEAD_TIME']
 
@@ -56,8 +57,8 @@ class Dead_Reckon_Tracer:
 		rospy.init_node('dr_tracer', anonymous=True)
 		self.rate = rospy.Rate(30)
 
-		self.detect_sub = rospy.Subscriber(
-			topics['DETECTION'], Float64MultiArray, self.detection_callback, queue_size=5)
+		# self.detect_sub = rospy.Subscriber(
+		# 	topics['DETECTION'], Float64MultiArray, self.detection_callback, queue_size=5)
 
 		self.aim_heading_sub = rospy.Subscriber(
 			topics['AIM_HEADING'], Float64MultiArray)
@@ -96,7 +97,7 @@ class Dead_Reckon_Tracer:
 				image = cv2.circle(image, target, 10, (0,255,0), 2)
 
 		x,y = self.pose
-		pose = (int(origin[0] + y), int(origin[1] + x))
+		pose = (int(origin[0] + x), int(origin[1] + y))
 		image = cv2.circle(image, pose, 10, (0,0,255))
 
 		msg = self.bridge.cv2_to_imgmsg(image, encoding='rgb8')
@@ -137,7 +138,6 @@ class Dead_Reckon_Tracer:
 			vector (x,y): body frame position of the detection
 		"""
 		d = self.a * np.exp(self.m * (pose[2] + self.b))
-		rospy.loginfo(f'{d} {pose[2]} {pose[3]}')
 		alpha = np.radians((pose[0] / self.image_size[0]) * self.FOV) / 2
 		return d * np.array([np.cos(self.psi + alpha), np.sin(self.psi + alpha)])
 
@@ -189,6 +189,9 @@ class Dead_Reckon_Tracer:
 			if time.time() - self.t > 5:
 				self.history = np.ones((4,2), dtype=np.float64) * -1
 				self.trajectory = np.zeros((3,2), dtype=np.float64)
+
+			self.measure = np.array([50, 50 * np.sin(self.t)])
+			rospy.loginfo(self.measure)
 
 			self.publish_prediction()
 
