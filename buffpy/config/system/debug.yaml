@@ -22,6 +22,8 @@ NODES:
   #     - '-a'
   #     - '-x /rosout'
   #     - '-o /home/cu-robotics/buff-code/data/'
+  LUXONIS:
+    REQUIRED: False
   RQT_GUI:    # Opens an rqt_graph
     FILE: 'rqt_gui'
     PACKAGE: 'rqt_gui'        
