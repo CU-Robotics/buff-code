@@ -4,7 +4,7 @@
 #
 
 # change this to select ARM or x86_64
-ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04 # 
+ARG BASE_IMAGE=ubuntu:18.04 # nvcr.io/nvidia/l4t-base:r32.6.1 # 
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=ros-base
@@ -31,7 +31,7 @@ RUN apt update && \
 		htop=2.1.0-3 \
 		tmux=2.6-3ubuntu0.2 \
 		wget=1.19.4-1ubuntu2.2 \ 
-		git=1:2.17.1-1ubuntu0.9 \
+		git=1:2.17.1-1ubuntu0.10 \
 		gnupg2=2.2.4-1ubuntu1.4 \
 		curl=7.58.0-2ubuntu3.16 \
 		python3-dev=3.6.7-1~18.04 \
@@ -115,7 +115,8 @@ RUN cd /home/cu-robotics && mkdir opencv_ws && cd opencv_ws && \
 	bash /opt/ros/melodic/setup.sh && catkin init && \
 	catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
 	catkin build cv_bridge && \
-	cp -r /home/cu-robotics/opencv_ws/install/lib/python3/dist-packages /usr/local/lib/python3.6 && \
+	rm -rf /opt/ros/melodic/lib/python2.7/dist-packages/cv_bridge* && \
+	cp -r /home/cu-robotics/opencv_ws/install/lib/python3/dist-packages/* /opt/ros/melodic/lib/python2.7/dist-packages/ && \
 	rm -rf /home/cu-robotics/opencv_ws
 
 
