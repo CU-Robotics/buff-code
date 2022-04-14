@@ -204,7 +204,7 @@ def load_install_params():
 
 	# Don't install from edge devices (robot)
 	if 'edge' in os.getenv('HOSTNAME'):
-		print(f'Can\'t isntall from device: {os.getenv("HOSTNAME")}')
+		print(f'Can\'t install from device: {os.getenv("HOSTNAME")}')
 		return
 
 	devices = get_devices()

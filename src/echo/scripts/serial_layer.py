@@ -89,9 +89,6 @@ class SerialLayer():
 			  msg: ??? - the msg to send
 		"""
 		packet = self.device.readline().decode().rstrip().split(',')
-		
-		if self.debug:
-			rospy.loginfo(packet)
 
 		for item in packet:
 			name, val = item.split(':')
