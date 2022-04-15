@@ -46,25 +46,25 @@ c620PWM::c620PWM(uint8_t input, uint8_t output) {
 //useful conversions of uS to pwm dutycycle
 // 1000-2000
 // 16378-32757
-
+//
 // 1000-1500
 // 16378-24567
-
+//
 // 1500-2000
 // 24567-32757
-
+//
 // 1080-1480
 // 17688-24240
-
+//
 // 1520-1920
 // 24894-31447
-
+//
 // 0-1
 // 0-16.3785
-
+//
 // 0-20
 // 0-327
-
+//
 // 0-80
 // 0-1310
 
@@ -101,7 +101,7 @@ float c620PWM::getAngle() {
 }
 
 
-c610Enc::c610Enc(short tempID, CAN_message_t* msg ,uint8_t encPin) {
+c610Enc::c610Enc(short tempID, CAN_message_t* mySendMsgPtr ,uint8_t encPin) {
   id = motorId;
   byteNum = id - 1;
   sendMsgPtr = mySendMsgPtr;
