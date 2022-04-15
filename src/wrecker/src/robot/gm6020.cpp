@@ -8,7 +8,9 @@
 
 #include "gm6020.h"
 
-gm6020::gm6020(short tempID, CAN_message_t* msg) : sendMsg(*msg) {
+gm6020::gm6020(){}
+
+void gm6020::init(short tempID, CAN_message_t* msg) : sendMsg(*msg) {
   id = motorId;
   byteNum = id - 1;
   if(byteNum > 3) {
