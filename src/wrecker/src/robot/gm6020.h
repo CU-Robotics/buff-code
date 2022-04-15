@@ -1,6 +1,6 @@
 #ifndef RMMOTOR_H
 #include "rmMotor.h"
-#endif
+
 
 #ifndef CONSTANTS_H
 #include "constants.h"
@@ -20,3 +20,5 @@ class gm6020 : public rmMotor {
         void init(short tempID, CAN_message_t* msg)
         void setPower(float power);
 }
+
+#endif
