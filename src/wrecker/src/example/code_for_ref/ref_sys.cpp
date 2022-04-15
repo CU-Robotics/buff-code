@@ -1,6 +1,15 @@
 #include <iostream>
 #include "ref_sys.h"
 
+/*
+The methods in this code have been tested on a partial ref system, but this particular code has not been 
+a full ref system. I attempted to test it on a full game mode system using the ref system simulation but, I could
+not get the servers to work. There was also trouble getting this up and running since, all the documentation for this
+simulation and the UI itself is in Chinese. The way in which I wrote the code was tested on part of the ref system, but it seemed to
+only be sending 2-3 particular messages and I could not test the full scope of the code. I feel I will be able to more
+accurately test the code when I have a fully up and running ref system. 
+*/
+
 ref_sys::ref_sys(){
 
     Serial.begin(115200);
