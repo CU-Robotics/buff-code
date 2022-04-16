@@ -1,5 +1,0 @@
-buffpy
-/home/mdyse/buff-code/devel/.private/buffpy/cmake.lock /home/mdyse/buff-code/devel/./cmake.lock
-/home/mdyse/buff-code/devel/.private/buffpy/share/buffpy/cmake/buffpyConfig-version.cmake /home/mdyse/buff-code/devel/share/buffpy/cmake/buffpyConfig-version.cmake
-/home/mdyse/buff-code/devel/.private/buffpy/share/buffpy/cmake/buffpyConfig.cmake /home/mdyse/buff-code/devel/share/buffpy/cmake/buffpyConfig.cmake
-/home/mdyse/buff-code/devel/.private/buffpy/lib/pkgconfig/buffpy.pc /home/mdyse/buff-code/devel/lib/pkgconfig/buffpy.pc

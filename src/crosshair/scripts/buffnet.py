@@ -20,18 +20,18 @@ from gdrive_handler import GD_Handler
 from std_msgs.msg import Float64MultiArray
 
 class BuffNet:
-	def __init__(self, configData=None):
+	def __init__(self, config_data=None):
 		"""
 			Define all the parameters of the model here.
 			Can be initialized with a config file, a system launch
 			or manually from a terminal. will exit if not enough params
 			exist.
 		"""
-		if 'DEBUG' in configData:
+		if 'DEBUG' in config_data:
 			self.debug = True
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, configData['MODEL'])
+		model_path = os.path.join(model_dir, config_data['MODEL'])
 
 		if not os.path.exists(model_path):
 			gdrive = GD_Handler()
@@ -39,36 +39,29 @@ class BuffNet:
 
 		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
 
-		if not rospy.is_shutdown():
-			self.debug = rospy.get_param('/buffbot/DEBUG')
-			topics = rospy.get_param('/buffbot/TOPICS')
-			self.topics = [topics[t] for t in configData['TOPICS']]
-			# Only spin up image sub if core is running
-			if len(self.topics) > 0:
+		rospy.loginfo
 
-				self.bridge = CvBridge()
-				rospy.init_node('buffnet', anonymous=True)
-				self.target_pub = rospy.Publisher(self.topics[1], Float64MultiArray, queue_size=1)
+		self.bridge = CvBridge()
+		rospy.init_node('buffnet', anonymous=True)
+		self.debug = rospy.get_param('/buffbot/DEBUG')
 
-				if self.debug and len(self.topics) > 2:
-					self.debug_pub = rospy.Publisher(self.topics[2], Image, queue_size=1)
+		topics = rospy.get_param('/buffbot/TOPICS')
+		pubs = [topics[t] for t in config_data['TOPICS']['PUBLISH']]
+		subs = [topics[t] for t in config_data['TOPICS']['SUBSCRIBE']]
 
-				self.im_subscriber = rospy.Subscriber(self.topics[0], Image, self.imageCallBack, queue_size=1)
+		if len(pubs) > 0:
+			self.target_pub = rospy.Publisher(pubs[0], Float64MultiArray, queue_size=1)
+			if self.debug and len(pubs) > 1:
+				self.debug_pub = rospy.Publisher(pubs[1], Image, queue_size=1)
 
-		elif 'TOPICS' in configData:
-			self.topics = configData['TOPICS']
-		
-		else:
-			self.topics = []
+		if len(subs) > 0:
+			self.im_subscriber = rospy.Subscriber(subs[0], Image, self.imageCallBack, queue_size=1)
 
-		if 'IMAGE_SIZE' in configData:
-			self.image_size = configData['IMAGE_SIZE']
+		if 'CAMERA' in config_data:
+			w, h, d = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
+			self.image_size = (w, d)
 		else:
 			self.image_size = (416, 416)
-
-		if configData is None:
-			# there is no config for the model to load from
-			return None
 
 
 	def detect(self, image):
@@ -168,19 +161,19 @@ class BuffNet:
 		self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg))
 
 
-def main(configData):
+def main(config_data):
 
-	if configData is None:
+	if config_data is None:
 		return
 
-	detector = BuffNet(configData=configData)
+	detector = BuffNet(config_data=config_data)
 
-	if 'TOPICS' in configData:
+	if 'TOPICS' in config_data:
 		rospy.spin()
 
-	if 'DATA' in configData:	
+	if 'DATA' in config_data:	
 		# run independantly
-		data = bv.load_data(path=os.path.join(os.get_env('PROJECT_ROOT'), 'data', configData['DATA']))
+		data = bv.load_data(path=os.path.join(os.get_env('PROJECT_ROOT'), 'data', config_data['DATA']))
 
 		for image, labels in data[0:5]:
 			detector.detect_and_annotate(image)
@@ -188,20 +181,10 @@ def main(configData):
 
 if __name__=='__main__':
 	if len(sys.argv) < 2:
-		main({})
-	if sys.argv[1][-5:] == '.yaml':
-		path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'lib', sys.argv[1])
-		with open(path, 'r') as f:
+		print(f'No Data: BuffNet exiting ...')
+	elif '/buffbot' in sys.argv[1]:
+		main(rospy.get_param(sys.argv[1]))
+	elif '.yaml' in sys.argv[1]:
+		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
 			data = yaml.safe_load(f)
 		main(data)
-	elif '/buffbot' in sys.argv[1]:
-			main(rospy.get_param(sys.argv[1]))
-	else:
-		rospy.logerr('Unsupported call: use this with a rosparam component name or a yaml config')
-
-
-
-
-
-
-

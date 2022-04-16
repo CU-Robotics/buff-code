@@ -1,7 +1,36 @@
-# Buff-Code
-### CU Robotics' development repo
+![alt text](https://github.com/CU-Robotics/buff-code/blob/master/buffcode-card.png?raw=true)
 
-Buff-Code is Multi-Agent build and deployment system. Buff-Code is supported in Ubuntu18 or on a Jetson device (Also we support docker). 
+
+### TODO
+
+Omega
+- Wrote camera/video publisher
+- ROS package will be deprecated soon (Luxonis through Crosshair)
+Crosshair
+- Write a program to detect armor plates in an image
+    - developed YOLOv5 in demo notebook (trained with NYU's dataset)
+    - integrated model download and execution script
+    - setup debug topic (image_annotated)
+- Convert detection script to the input output handler of the Luxonis camera (temporary, Hunter's ros package will take over) 
+Hunter
+- Write a program that tracks and computes a control signal for the turret.
+    - developed 2d tracking demo notebook (dead reckoning)
+    - integrated tracker with repo
+    - setup generic equations for trajectory updating (on detections) and yaw pitch control signals
+- Needs to be tuned for our robots
+- Need to write a diagnostic program
+- Move detections and tracking onto Luxonis hardware (requires debug/diagnostic modifications)
+Echo
+- Wrote a serial to ROS script
+    - publishes data from the serial port to a topic defined by the serial message
+    - subscribes to a set of topics and writes the message to the serial device
+- Needs hardware testing
+- Will integrate with the firmware once it's functional
+
+
+### CU Robotics' Development Repository
+
+Buff-Code is Multi-Agent build, deployment and management system. Buff-Code is supported in Ubuntu18 or on a Jetson device (Also we support docker). 
 
 This repo provides a few tools that users should become familiar with. The tools are in the python3 package BuffPy in the project's root. The two most useful tools are BuffPy and Run. BuffPy is used to build/clean, install to a robot, ssh to a robot and hopefully soon flash a microcontroller. It's really just a collection of ros and linux tools in a python CLI. The novel part of Buff-Code is the ability to debug and manage multiple robots. 
 
@@ -18,23 +47,26 @@ Now run the install from the root of the project
 
 	source buffpy/scripts/install.bash 
 
-First always load the environment variables, if you're not sure if you did just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo (usually /home/$USER/buff-code).
+First always load the environment variables, if you're not sure if you did, just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo (usually /home/$USER/buff-code).
 
 	source buffpy/buff.bash
 	
 The majority of functionality is based in the buffpy package. This package is setup as a command line tool in buff.bash. All you need to utilize this package is call 'buffpy' from the command line.
 
-	usage: buffpy [-h] [--sshBot] [--GDrive ACTION FOLDER_ID] [--installKeys] [--launch LOCATION]
-						[--botPull] [--build PROFILE] [--clean] [--flash FQBN FW]
+	usage: /home/m_dyse/buff-code/buffpy/bin/buffpy [-h] [--installKeys] [--launch LOCATION] [--botPull] [--build PROFILE] [--install] [--diagnostic] [--initialize] [--clean]
 
-	CU-Robotics Digital House-Keeper
+        CU-Robotics Multi-Agent Deployment Manager
 
-	optional arguments:
-	-h, --help            show this help message and exit
-	--installKeys         Push local sshkeys to the robot at ROBOT_IP
-	--botPull             Pull data from the robot at ROBOT_IP
-	--build PROFILE       Builds the workspace locally (debug) or to the robot_ip (install)
-	--clean               Clean the current bin and data, NOT recoverable; only run this if you are sure you want to
+        optional arguments:
+          -h, --help         show this help message and exit
+          --installKeys      Push local sshkeys to the robots
+          --launch LOCATION  Launch the robots software on robots
+          --botPull          Pull data from the robot at ROBOT_IP
+          --build PROFILE    Builds the workspace locally (use profile debug)
+          --install          Installs build to the registered robots
+          --diagnostic       Tests a workspace installation and tools
+          --initialize       Initializes registered devices
+          --clean            Clean the current bin and data, NOT recoverable; only run this if you are sure you want to
 	
 To launch a system use the run command:
 
@@ -53,12 +85,15 @@ buff-code
     - lib: installed files (only python3 atm)
     - config: A place for any and all setup/configuration/secret files
       - install: Files containing install info
-      - lib: File containing misc info
+      - system: Folder of system yamls
+      - data: Folder containing misc info for programs
       - sensitive: shhh... it's a secret
     - scripts: arbitrary scripts (installs & entrypoints)
     - buff.bash: a setup script (needs to be run every development session, docker runs this automatically)
   - data: a Temporary folder for handling data (should get cleared regularly, if missing will cause issues)
-  - docs: A better verion of this document (moving to wiki)
+  - docs: Removing soon, I swear ...
+  - container
+    - Base image dockerfile, the dev image needs a base
   - src: The source code for our controllers
     - buff_ros
       - Our misc ros package
@@ -76,6 +111,7 @@ buff-code
       - N/A
   - README.md: you're reading it
   - .gitignore: keeps the secrets safe
+  - Dockerfile: The dev file for our docker image (requires base image)
 
 ## Dev Notes
 
@@ -86,9 +122,23 @@ When working on this project
   - Do not push broken changes, this will break things for everyone
   - The more documentation the better 
 
+Version info
+  - Major number: increments when large dependency changes occur (eg python3.6 -> python3.9, or Melodic -> Noetic)
+  - Minor number: increments with patches and edits to workspace tools
+
 ## CHANGES
 *Changes include all PRs that modify the directory structure, the installed binaries and any changes that will effect workspace usage*
- - Version 0.05
+ - Version 0.06
+   - Date: March 17, 2022
+   - Editor: Mitchell D Scott
+   - Status: Mostly tested (issues with buffnet and serial understood)
+   - Description: 
+      - Split yamls into seperate folder (system, data)
+      - Major Install patches runs successfully on Jetson and Ubuntu 18, remote initialize not ready
+      - BuffPy upgrades, needed to handle new installation
+      - Docker containers are now out of date and need an upgrade (should be functional though)
+      - Systemd service created but untested and likely not functional yet
+- Version 0.05
    - Date: February 19, 2022
    - Editor: Mitchell D Scott
    - Status: Mostly tested (docker, run, all sub-systems)
