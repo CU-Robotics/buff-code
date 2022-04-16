@@ -2,56 +2,39 @@
 #include <FlexCAN_T4.h>
 #endif
 
-#include "c620.h"
+#include "structs.h"
 
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+#include "gimbal.h"
 
-CAN_message_t msg;
-CAN_message_t recMsg;
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> chassisCAN;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> SuperStructureCAN;
 
-short angle;
-short torque;
-short rpm;
+CAN_message_t chassisSendMsg;
+CAN_message_t chassisRecMsg;
 
+CAN_message_t superStructureSendMsg;
+CAN_message_t superStructureRecMsg;
 
-c620CAN myMotor(1, &msg);
-// c620 myMotor();
+struct RobotConfig config;
+struct RobotInput input;
+
+gimbal gimbal(config, input);
+
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  can1.begin();
-  can1.setBaudRate(1000000);
+  chassisCAN.begin();
+  SuperStructureCAN.begin();
+  chassisCAN.setBaudRate(1000000);
+  SuperStructureCAN.setBaudRate(1000000);
   Serial.begin(9600);
-  // myMotor.setPower(0.5);
+
+  gimbal.init()
 }
 
 void loop() {
-  // Serial.print("id: ");
-  // Serial.println(msg.id, HEX);
-  myMotor.setPower(1);
-  Serial.print("send id: ");
-  Serial.println(msg.id, HEX);
-  Serial.println("send power: ");
-  short temp = msg.buf[4];
-  temp = temp << 8;
-  temp = temp | msg.buf[5];
-  Serial.println(temp);
-  // Serial.println(myMotor.getTemp());
-  can1.write(msg);
-
-
-  if(can1.read(recMsg)) { //parsed with motor class
-    myMotor.updateMotor(recMsg);
-    Serial.print("angle: ")
-    Serial.println(myMotor.getAngle());
-    Serial.print("rpm: ");
-    Serial.println(myMotor.getRPM());
-    Serial.print("torque: ");
-    Serial.println(myMotor.getTorque());
-    Serial.print("temp: ")
-    Serial.println(myMotor.getTemp());
-  }
-
-  delay(10);
+  gimbal.update();
+  
+  
 }

@@ -7,10 +7,6 @@
 ARG BASE_IMAGE=mdsdev0/buffbox:x86_64-base # mdsdev0/buffbox:aarch64-base # 
 FROM ${BASE_IMAGE}
 
-ENV ROS_PKG=desktop
-ENV ROS_DISTRO=melodic
-ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
-
 ENV PROJECT_ROOT=/home/cu-robotics/buff-code
 
 #
@@ -29,7 +25,7 @@ RUN apt-get update && \
 #
 # Set up the environment
 # not sure how to utilize the project_root variable
-# hard coding = bad
+# hard coding = bad, doesn't really matter tho
 RUN echo "source /home/cu-robotics/buff-code/buffpy/buff.bash" >> /root/.bashrc
 CMD ["bash"]
 ENTRYPOINT ["/home/cu-robotics/buff-code/buffpy/scripts/buff_entrypoint.sh"]

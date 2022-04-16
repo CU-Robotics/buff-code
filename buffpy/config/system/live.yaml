@@ -1,0 +1,37 @@
+DEBUG:
+  False
+  
+
+TOPICS:
+  IMAGE:
+    'image_raw'
+  DETECTION:
+    'detected_object'
+  TARGET:
+    'target'
+  AIM_HEADING:
+    'yaw_pitch'
+
+
+NODES:
+  # ROSBAGGER:    # This will record all system runs and allow us to play them back
+  #   FILE:
+  #     'record'
+  #   PACKAGE:
+  #     'rosbag'
+  #   ARGS:       # -a record all  -x ignore -o output prefix
+  #     - '-a'
+  #     - '-x /rosout'
+  #     - '-o /home/cu-robotics/buff-code/data/'
+  LUXONIS: # spawns our detector node
+    FILE: "luxnet.py"
+    CONFIG: "luxonis_settings.yaml"
+    PACKAGE: "buffpy"
+  TRACKER:     # spawns our tracker node
+    FILE: 'deadreckon_tracer.py'
+    CONFIG: 'deadreckon_settings.yaml'
+    PACKAGE: 'buffpy'
+  SERIAL:
+    FILE: 'serial_layer.py'
+    CONFIG: 'serial_settings.yaml'
+    PACKAGE: 'buffpy'

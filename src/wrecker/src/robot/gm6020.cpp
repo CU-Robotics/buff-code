@@ -1,4 +1,4 @@
-#ifndef CONSTANTS_H
+#ifndef CONSTANTS_H //can probably remove this
 #include "constants.h"
 #endif
 
@@ -8,14 +8,16 @@
 
 #include "gm6020.h"
 
-gm6020::gm6020(short tempID, CAN_message_t* msg) : sendMsg(*msg) {
+gm6020::gm6020(){}
+
+void gm6020::init(short tempID, CAN_message_t* msg) : sendMsg(*msg) {
   id = motorId;
   byteNum = id - 1;
   if(byteNum > 3) {
     byteNum -= 4;
-    sendMsg.id = 0x2FF;   //ID for all c620s 4-7
+    sendMsg.id = 0x2FF;   //ID for all gm6020s 4-7
   } else {
-    sendMsg.id = 0x1FF;   //ID for all c620s 0-3
+    sendMsg.id = 0x1FF;   //ID for all gm6020s 0-3
   }
 }
 

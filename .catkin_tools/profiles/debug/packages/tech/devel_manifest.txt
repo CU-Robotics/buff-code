@@ -1,5 +1,0 @@
-tech
-/home/cu-robotics/buff-code/devel/.private/tech/cmake.lock /home/cu-robotics/buff-code/devel/./cmake.lock
-/home/cu-robotics/buff-code/devel/.private/tech/lib/pkgconfig/tech.pc /home/cu-robotics/buff-code/devel/lib/pkgconfig/tech.pc
-/home/cu-robotics/buff-code/devel/.private/tech/share/tech/cmake/techConfig-version.cmake /home/cu-robotics/buff-code/devel/share/tech/cmake/techConfig-version.cmake
-/home/cu-robotics/buff-code/devel/.private/tech/share/tech/cmake/techConfig.cmake /home/cu-robotics/buff-code/devel/share/tech/cmake/techConfig.cmake

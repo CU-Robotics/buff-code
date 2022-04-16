@@ -7,13 +7,13 @@
 ARG BASE_IMAGE=ubuntu:18.04 # nvcr.io/nvidia/l4t-base:r32.6.1 # 
 FROM ${BASE_IMAGE}
 
-ENV ROS_PKG=desktop
+ENV ROS_PKG=ros-base
 ENV ROS_DISTRO=melodic
-ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
-
-ENV PROJECT_ROOT=/home/cu-robotics/buff-code
-
 ENV DEBIAN_FRONTEND=noninteractive
+ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
+ENV PROJECT_ROOT=/home/cu-robotics/buff-code
+ENV PATH=/home/cu-robotics/.local/bin:${PATH}
+ENV PYTHONPATH=/home/cu-robotics/.local/lib/python3.6/dist-packages:${PYTHONPATH}
 
 
 #
@@ -21,80 +21,100 @@ ENV DEBIAN_FRONTEND=noninteractive
 #
 RUN useradd -ms /bin/bash cu-robotics
 
+
 #
 # Install Dependencies
 #
-RUN apt-get update && \
-		apt-get install -y --no-install-recommends \
-		vim=2:8.0.1453-1ubuntu1.8 \
+RUN apt update && \
+	apt upgrade -y && \
+	apt install -y --no-install-recommends \
+		htop=2.1.0-3 \
+		tmux=2.6-3ubuntu0.2 \
+		wget=1.19.4-1ubuntu2.2 \ 
 		git=1:2.17.1-1ubuntu0.9 \
-		curl=7.58.0-2ubuntu3.16 \
-		wget=1.19.4-1ubuntu2.2 \
-		cmake=3.10.2-1ubuntu2.18.04.2 \ 
 		gnupg2=2.2.4-1ubuntu1.4 \
-		jupyter=4.4.0-2 \
-		python3-pip \
-		lsb-release=9.20170808ubuntu1 \ 
-		python3-opencv=3.2.0+dfsg-4ubuntu0.1 \ 
+		curl=7.58.0-2ubuntu3.16 \
+		python3-dev=3.6.7-1~18.04 \
+		vim=2:8.0.1453-1ubuntu1.8 \
 		build-essential=12.4ubuntu1 \
-		ca-certificates=20210119~18.04.2 \
-		python3-setuptools=39.0.1-2 \
-		openssh-server \
-		openssh-client \
-		iputils-ping \ 
-		htop \
-		tmux && \
-		rm -rf /var/lib/apt/lists/*
+		lsb-release=9.20170808ubuntu1 \ 
+		iputils-ping=3:20161105-1ubuntu3 \
+		ca-certificates=20210119~18.04.2 \ 
+		openssh-client=1:7.6p1-4ubuntu0.6 \
+		openssh-server=1:7.6p1-4ubuntu0.6
 
-# Needed for l4t build to fix matplotlib issue
-#ENV MPLLOCALFREETYPE=1
+
+#
+#	Clean apt
+#
+
+RUN apt update && \
+	apt clean && \
+	apt autoremove -y
+
 
 # 
 # Install ROS 
 #   see ros install script for more info
 #	Also installs our python reqs
+
  RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
 	curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
-	apt-get update && \
-	apt-get install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} && \
-	python3 -m pip install --upgrade pip==21.3.1 && \
-	apt-get remove -y python3-pip && \
-	python3 -m pip install \
+	apt update && \
+	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} python-rosdep \
+	ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins && \
+	curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && \
+	python3 get-pip.py
+
+USER cu-robotics
+
+RUN pip install \
+		pyyaml==6.0 \
 		torch==1.9.0 \
 		tqdm==4.62.3 \
+		numpy==1.19.5 \
 		pandas==1.1.5 \
 		pillow==8.4.0 \
+		pyserial==3.5 \
 		pydrive==1.3.1 \
-		cython==0.29.26 \
 		seaborn==0.11.2 \
-		matplotlib==3.2.2 \
+		cython==0.29.26 \
+		protobuf==3.12.4 \
+		requests==2.27.1 \
 		torchvision==0.10.0 \
-		rosdep==0.21.0 \
+		opencv-python==4.5.5.64 \
 		wstool==0.1.17 \
 		rosinstall==0.7.8 \
 		defusedxml==0.7.1 \
 		catkin-tools==0.8.2 \
-		rosinstall-generator==0.1.22 && \
-	apt-get update && \
-	rm -rf /var/lib/apt/lists/* && \
-	cd /opt/ros/${ROS_DISTRO} && \
+		rosinstall-generator==0.1.22
+
+RUN cd /opt/ros/${ROS_DISTRO} && \
 	rosdep init && \
-	rosdep update && \
-	rm -rf /var/lib/apt/lists/*
+	rosdep update
+
 
 #
-# setup catkin and cv_bridge
+#	Clean apt
 #
+
 RUN apt update && \
-	cd /home/cu-robotics && mkdir opencv_ws && cd opencv_ws && \
-	git clone https://github.com/ros-perception/vision_opencv.git src/vision_opencv && \
-	cd src/vision_opencv && git checkout 1.13.0 && cd ../.. && \
-	bash /opt/ros/melodic/setup.sh && \
-	catkin init && \
+	apt clean && \
+	apt autoremove -y
+
+
+#
+# 	Setup catkin and cv_bridge
+# so blocky eww
+
+RUN cd /home/cu-robotics && mkdir opencv_ws && cd opencv_ws && \
+	git clone -b noetic https://github.com/ros-perception/vision_opencv.git src/vision_opencv && \
+	cd src/vision_opencv && sed -i 's/python37/python3/g' cv_bridge/CMakeLists.txt && cd ../.. && \
+	bash /opt/ros/melodic/setup.sh && catkin init && \
 	catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
 	catkin build cv_bridge && \
-	cp -r install/lib/python3/dist-packages/* /usr/lib/python3/dist-packages/ && \
-	cd /home/cu-robotics && rm -rf opencv_ws
+	cp -r /home/cu-robotics/opencv_ws/install/lib/python3/dist-packages /usr/.local/lib/python3.6 && \
+	rm -rf /home/cu-robotics/opencv_ws
 
 
 #
@@ -102,11 +122,11 @@ RUN apt update && \
 #   see install script for more info
 #   sublime in docker is slow when using ARM64
 #   for reasons unknown
-RUN wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | apt-key add - && \
-	echo "deb https://download.sublimetext.com/ apt/stable/" | tee /etc/apt/sources.list.d/sublime-text.list && \
-	apt-get update && \
-	apt-get install -y --no-install-recommends apt-transport-https \
-		sublime-text
+# RUN wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | apt-key add - && \
+# 	echo "deb https://download.sublimetext.com/ apt/stable/" | tee /etc/apt/sources.list.d/sublime-text.list && \
+#	apt update && \
+#	apt install -y --no-install-recommends apt-transport-https \
+#		sublime-text
 
 
 #
@@ -115,14 +135,17 @@ RUN wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | apt-key add 
 
 
 #
-#	Clean APT/Cache
+#	Clean apt
 #
-RUN apt-get update && \
-	apt-get autoremove --purge -y && \
-	apt-get clean -y
+
+RUN apt update && \
+	apt clean && \
+	apt autoremove -y
+
 
 # 
 # setup entrypoint
 #
+
 CMD ["bash"]
-WORKDIR /home/cu-robotics
+WORKDIR /home/cu-robotics/buff-code
