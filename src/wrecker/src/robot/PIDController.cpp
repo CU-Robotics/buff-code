@@ -1,5 +1,6 @@
 #include "PIDController.h"
-#include <cmath>
+// #include <cmath>  //this isn't in arduino (maybe)
+#include <math.h>
 
 PIDController::PIDController(float kP, float kI, float kD) {
   this->kP = kP;
@@ -17,7 +18,7 @@ PIDController::PIDController(float kP, float kI, float kD, float kF) {
 float PIDController::calculate(float pos, float setpoint, float deltaTime) {
   float error = setpoint - pos;
   if (this->continuousInput) {
-    float oppositeError = this->continuousInputMax - abs(error);
+    float oppositeError = this->continuousInputMax - fabs(error);
     if (oppositeError < error) {
       if (setpoint >= pos) {
         error = -oppositeError;

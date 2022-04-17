@@ -14,6 +14,6 @@ class gimbal {
 
         gm6020 pitchMotor();
         gm6020 yawMotor();
-}
+};
 
 #endif

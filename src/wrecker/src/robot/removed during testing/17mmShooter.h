@@ -1,7 +1,7 @@
 #include "Subsystem.h"
 #include "RobotInput.h"
 #include "RobotConfig.h"
-#include "M2006.h"
+#include "c620.h"
 #include "Snail.h"
 #include "PIDController.h"
 

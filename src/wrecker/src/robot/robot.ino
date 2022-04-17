@@ -6,6 +6,8 @@
 
 #include "gimbal.h"
 
+unsigned long deltaT = 0; //variable to store time between loops
+
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> chassisCAN;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> SuperStructureCAN;
 
@@ -15,10 +17,10 @@ CAN_message_t chassisRecMsg;
 CAN_message_t superStructureSendMsg;
 CAN_message_t superStructureRecMsg;
 
-struct RobotConfig config;
-struct RobotInput input;
+struct RobotConfig roboConfig;
+struct RobotInput roboInput;
 
-gimbal gimbal(config, input);
+gimbal gimbal(&roboConfig, &roboInput);
 
 
 void setup() {
@@ -30,11 +32,11 @@ void setup() {
   SuperStructureCAN.setBaudRate(1000000);
   Serial.begin(9600);
 
-  gimbal.init()
+  gimbal.init();
 }
 
 void loop() {
-  gimbal.update();
+  gimbal.update(deltaT);
   
   
 }
