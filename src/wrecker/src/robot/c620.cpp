@@ -102,7 +102,7 @@ float c620PWM::getAngle() {
 
 
 c610Enc::c610Enc(short tempID, CAN_message_t* mySendMsgPtr ,uint8_t encPin) {
-  id = motorId;
+  id = tempID;
   byteNum = id - 1;
   sendMsgPtr = mySendMsgPtr;
   if(byteNum > 3) {

@@ -13,12 +13,12 @@
 class gm6020 : public rmMotor {
     private:
         short id;
-        CAN_message_t& sendMsg;
+        CAN_message_t *sendMsg;
         int byteNum;
     public:
-        gm6020();
-        void init(short tempID, CAN_message_t* msg)
+        gm6020(CAN_message_t* msg);
+        void init(short tempID);
         void setPower(float power);
-}
+};
 
 #endif
