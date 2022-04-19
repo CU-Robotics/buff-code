@@ -1,4 +1,3 @@
-#ifndef GM6020_H
 #include "gimbal.h"
 
 #ifndef _FLEXCAN_T4_H_
@@ -10,13 +9,13 @@ gimbal::gimbal(RobotConfig *tempConfig, RobotInput *tempInput) {
     input = tempInput;
 }
 
-gimbal::init() {
-    pitchMotor.init(config.pitchID, superStructureSendMsg);
-    yawMotor.init(config.yawID, superStructureSendMsg);
+void gimbal::init(CAN_message_t* sendMsg) {
+    // this->pitchMotor = new gm6020();
+    pitchMotor.init(config->pitchID, sendMsg);
+    yawMotor.init(config->yawID, sendMsg);
 }
 
-gimbal::update(float deltaTime) {
+void gimbal::update(float deltaTime) {
 
 }
 
-#endif
