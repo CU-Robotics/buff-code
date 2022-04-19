@@ -2,7 +2,9 @@
 #include <FlexCAN_T4.h>
 #endif
 
+#ifndef STRUCTS_H
 #include "structs.h"
+#endif
 
 #include "gimbal.h"
 
@@ -32,7 +34,7 @@ void setup() {
   SuperStructureCAN.setBaudRate(1000000);
   Serial.begin(9600);
 
-  gimbal.init();
+  gimbal.init(&superStructureSendMsg);
 }
 
 void loop() {

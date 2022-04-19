@@ -12,11 +12,12 @@
 
 // }
 
-gm6020::gm6020(CAN_message_t* msg) {
-  sendMsg = msg;
+gm6020::gm6020() {
+  
 }
 
-void gm6020::init(short tempID){
+void gm6020::init(short tempID, CAN_message_t* msg){
+  sendMsg = msg;
   id = tempID;
   byteNum = id - 1;
   if(byteNum > 3) {
@@ -31,6 +32,6 @@ void gm6020::setPower(float power) {
     short newPower = (short)(power * GM6020_MAX_VALUE);
     byte byteOne = highByte(newPower);
     byte byteTwo = lowByte(newPower);
-    sendMsg.buf[byteNum] = byteOne;
-    sendMsg.buf[byteNum + 1] = byteTwo;
+    sendMsg->buf[byteNum] = byteOne;
+    sendMsg->buf[byteNum + 1] = byteTwo;
 }
