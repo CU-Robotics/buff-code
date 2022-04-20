@@ -9,6 +9,8 @@
 #include "gimbal.h"
 
 unsigned long deltaT = 0; //variable to store time between loops
+unsigned long lastTime = 0;
+
 
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> chassisCAN;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> SuperStructureCAN;
@@ -38,6 +40,8 @@ void setup() {
 }
 
 void loop() {
+  deltaT = micros() - lastTime;
+  lastTime = micros();
   gimbal.update(deltaT);
   
   
