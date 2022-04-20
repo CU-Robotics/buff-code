@@ -7,8 +7,17 @@
 struct RobotConfig {
     short pitchID;
     short yawID;
+
+    float pitchP;
+    float pitchI;
+    float pitchD;
+
+    float yawP;
+    float yawI;
+    float yawD;
 };
 
 struct RobotInput {
-    bool forward;
+    float gimbalPitch;
+    float gimbalYaw;
 };

@@ -1,5 +1,9 @@
-#ifndef GIMBAL_H
+// #ifndef GIMBAL_H
 #define GIMBAL_H
+
+#ifndef PIDCONTROLLER_H
+#include "PIDController.h"
+#endif
 
 #ifndef STRUCTS_H
 #include "structs.h"
@@ -18,6 +22,9 @@ class gimbal {
 
         gm6020 pitchMotor;
         gm6020 yawMotor;
+
+        PIDController pitchController;
+        PIDController yawController;
 };
 
-#endif
+// #endif
