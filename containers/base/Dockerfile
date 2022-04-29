@@ -31,7 +31,7 @@ RUN apt update && \
 		htop=2.1.0-3 \
 		tmux=2.6-3ubuntu0.2 \
 		wget=1.19.4-1ubuntu2.2 \ 
-		git=1:2.17.1-1ubuntu0.9 \
+		git=1:2.17.1-1ubuntu0.10 \
 		gnupg2=2.2.4-1ubuntu1.4 \
 		curl=7.58.0-2ubuntu3.16 \
 		python3-dev=3.6.7-1~18.04 \
@@ -58,17 +58,17 @@ RUN apt update && \
 #   see ros install script for more info
 #	Also installs our python reqs
 
+
  RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
 	curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
 	apt update && \
 	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} python-rosdep \
 	ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins && \
 	curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && \
-	python3 get-pip.py
+	python3 get-pip.py && \
+	rm get-pip.py
 
-USER cu-robotics
-
-RUN pip install \
+RUN pip3 install \
 		pyyaml==6.0 \
 		torch==1.9.0 \
 		tqdm==4.62.3 \
@@ -81,8 +81,10 @@ RUN pip install \
 		cython==0.29.26 \
 		protobuf==3.12.4 \
 		requests==2.27.1 \
+		depthai==2.15.2.0 \
 		torchvision==0.10.0 \
 		opencv-python==4.5.5.64 \
+		rospkg==1.4.0 \
 		wstool==0.1.17 \
 		rosinstall==0.7.8 \
 		defusedxml==0.7.1 \
@@ -113,7 +115,8 @@ RUN cd /home/cu-robotics && mkdir opencv_ws && cd opencv_ws && \
 	bash /opt/ros/melodic/setup.sh && catkin init && \
 	catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
 	catkin build cv_bridge && \
-	cp -r /home/cu-robotics/opencv_ws/install/lib/python3/dist-packages /usr/.local/lib/python3.6 && \
+	rm -rf /opt/ros/melodic/lib/python2.7/dist-packages/cv_bridge* && \
+	cp -r /home/cu-robotics/opencv_ws/install/lib/python3/dist-packages/* /opt/ros/melodic/lib/python2.7/dist-packages/ && \
 	rm -rf /home/cu-robotics/opencv_ws
 
 
@@ -121,7 +124,7 @@ RUN cd /home/cu-robotics && mkdir opencv_ws && cd opencv_ws && \
 # Install sublime text
 #   see install script for more info
 #   sublime in docker is slow when using ARM64
-#   for reasons unknown
+#   for reasons unknown...
 # RUN wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | apt-key add - && \
 # 	echo "deb https://download.sublimetext.com/ apt/stable/" | tee /etc/apt/sources.list.d/sublime-text.list && \
 #	apt update && \
