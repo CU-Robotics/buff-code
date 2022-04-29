@@ -214,7 +214,7 @@ def launch_system(target_path, config):
 				args = ''
 
 			if 'REQUIRED' in node:
-				required = True
+				required = node['REQUIRED']
 
 			else:
 				required = False

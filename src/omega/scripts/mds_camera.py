@@ -81,17 +81,14 @@ class cv2_Camera:
 
 					rospy.sleep(1)
 
-					self.camera = cv2.VideoCapture(self.config_data)
+					self.camera = cv2.VideoCapture(self.config_data['DEVICE'])
 
 			self.camera.release()
 			return
 
-		if 'DATA_DEFAULT' in self.config_data:
+		elif 'DATA_DEFAULT' in self.config_data:
 			self.lives -= 1
-			self.config_data['DEVICE'] = os.path.join(os.getenv('PROJECT_ROOT'), 'data', self.config_data['DATA_DEFAULT'])
-			self.camera.release()
-			self.init_camera()
-			self.stream()
+			return 1
 
 
 def main(config_data):
@@ -102,8 +99,12 @@ def main(config_data):
 	# Stream the video
 	ret = camera.stream()
 
-	if ret == 1:
-		rospy.logerr('Couldn\'t open camera: Exiting...')
+	if ret == 1 and 'DATA_DEFAULT' in config_data:
+		rospy.logerr('Couldn\'t open camera: Trying video...')
+		camera.config_data['DEVICE'] = os.path.join(os.getenv('PROJECT_ROOT'), 'data', config_data['DATA_DEFAULT'])
+		camera.camera.release()
+		camera.init_camera()
+		camera.stream()
 
 
 if __name__=='__main__':
