@@ -1,8 +1,13 @@
+#define PIDCONTROLLER_H
+
 class PIDController {
   public:
     // Configures the PID controller with tuned gain constants. Includes an optional "FeedForward" parameter.
-    PIDController(float kP, float kI, float kD);
-    PIDController(float kP, float kI, float kD, float kF);
+    PIDController();
+    // PIDController();
+
+    void init(float kP, float kI, float kD);
+    void init(float kP, float kI, float kD, float kF);
 
     // Returns the result of a PID calculation. Must pass in a current position, a setpoint, and a deltaTime (time since this controller's calculate() was last called).
     float calculate(float pos, float setpoint, float deltaTime);

@@ -50,4 +50,4 @@ class recSerial {
         bool rightMousePressed();
         bool leftMousePressed();
         bool keyPressed(String key);
-}
+};
