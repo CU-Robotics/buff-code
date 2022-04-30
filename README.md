@@ -6,12 +6,14 @@
 Omega
 - Wrote camera/video publisher
 - ROS package will be deprecated soon (Luxonis through Crosshair)
+
 Crosshair
 - Write a program to detect armor plates in an image
     - developed YOLOv5 in demo notebook (trained with NYU's dataset)
     - integrated model download and execution script
     - setup debug topic (image_annotated)
 - Convert detection script to the input output handler of the Luxonis camera (temporary, Hunter's ros package will take over) 
+
 Hunter
 - Write a program that tracks and computes a control signal for the turret.
     - developed 2d tracking demo notebook (dead reckoning)
@@ -20,6 +22,7 @@ Hunter
 - Needs to be tuned for our robots
 - Need to write a diagnostic program
 - Move detections and tracking onto Luxonis hardware (requires debug/diagnostic modifications)
+
 Echo
 - Wrote a serial to ROS script
     - publishes data from the serial port to a topic defined by the serial message
