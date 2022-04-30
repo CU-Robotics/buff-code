@@ -20,4 +20,23 @@ struct RobotConfig {
 struct RobotInput {
     float gimbalPitch;
     float gimbalYaw;
+
+
+    //controller input
+    //Sticks
+    int CH0;
+    int CH1;
+    int CH2;
+    int CH3;
+
+    //switches
+    byte S1;
+    byte S2;
+
+    //keys
+    bool w;
+    bool a;
+    bool s;
+    bool d;
+    bool f;
 };
