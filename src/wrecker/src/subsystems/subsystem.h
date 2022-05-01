@@ -1,11 +1,11 @@
-#include "RobotInput.h"
-#include "RobotConfig.h"
+#include "../state/config.h"
+#include "../state/state.h"
 
 class Subsystem {
   public:
-    void init(RobotConfig constants);
-    void loop(RobotInput input, float deltaTime);
+    void setup(struct config, struct *state);
+    void loop(float deltaTime);
 
   private:
-    RobotConfig *config;
+    struct *state;
 };

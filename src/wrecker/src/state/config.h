@@ -1,6 +1,22 @@
 #define CONFIG_H
 
+struct C_Teensy {
+  int loopStall = 1000; // microseconds
+};
+
 struct C_SwerveChassis {
+  float currentLimitLvl0;
+  float currentLimitLvl1;
+  float currentLimitLvl2;
+  float currentLimitLvl3;
+
+  C_SwerveModule moduleFR;
+  C_SwerveModule moduleFL;
+  C_SwerveModule moduleBL;
+  C_SwerveModule moduleBR;
+};
+
+struct C_SwerveModule {
   short moduleID;
 
   float steerVelP;
@@ -17,11 +33,6 @@ struct C_SwerveChassis {
   float driveVelI;
   float driveVelD;
   float driveVelF;
-
-  float currentLimitLvl0;
-  float currentLimitLvl1;
-  float currentLimitLvl2;
-  float currentLimitLvl3;
 };
 
 struct C_RailChassis {
