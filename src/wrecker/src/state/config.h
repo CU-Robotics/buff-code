@@ -5,6 +5,9 @@ struct C_Teensy {
 };
 
 struct C_SwerveChassis {
+  float drivebaseWidth;
+  float drivebaseLength;
+
   float currentLimitLvl0;
   float currentLimitLvl1;
   float currentLimitLvl2;
@@ -18,6 +21,8 @@ struct C_SwerveChassis {
 
 struct C_SwerveModule {
   short moduleID;
+
+  int alignment[9];
 
   float steerVelP;
   float steerVelI;

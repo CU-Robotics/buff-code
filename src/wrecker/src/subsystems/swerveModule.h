@@ -5,13 +5,21 @@
 #include "../drivers/c620.h"
 #include "../algorithms/PIDController.h"
 
-class SwerveChassis: public Subsystem {
+class SwerveModule: public Subsystem {
  public:
-    void setup(C_SwerveModule config, S_SwerveChassis *state);
-    void loop(float deltaTime);
+    void setup(C_SwerveModule config);
+    void update(float deltaTime);
 
   private:
-    S_SwerveChassis *state;
+    C_SwerveModule config;
     c610Enc steerMotor;
     c620CAN driveMotor;
+
+    float steerAngle;
+    float steerOffset;
+    float steerRollover;
+
+    void calibrate();
+    void findCalibrationMatch();
+    void motorAngleToWheelAngle();
 };
