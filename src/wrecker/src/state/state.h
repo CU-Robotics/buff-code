@@ -9,7 +9,7 @@ struct S_SwerveChassis {
 };
 
 struct S_RailChassis {
-  float position;
+  float pos;
   float vel;
   float accel;
 };
@@ -29,6 +29,13 @@ struct S_42mmShooter {
 };
 
 struct S_DriverInput {
+  float leftStickX;
+  float leftStickY;
+  float rightStickX;
+  float rightStickY;
+  short leftSwitch;
+  short rightSwitch;
+
   float mouseX;
   float mouseY;
 
@@ -51,5 +58,5 @@ struct S_DriverInput {
 
 struct S_RefSystem {
   short robotLevel;
-  int matchTimer;
+  int matchTime;
 };
