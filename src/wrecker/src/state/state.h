@@ -1,5 +1,16 @@
 #define STATE_H
 
+struct S_Robot {
+  S_SwerveChassis s_swerveChassis;
+  S_RailChassis s_railChassis;
+  S_Gimbal s_gimbal;
+  S_17mmShooter S_17mmShooter;
+  S_42mmShooter S_42mmShooter;
+
+  S_DriverInput s_driverInput;
+  S_RefSystem s_refSystem;
+};
+
 struct S_SwerveChassis {
   float heading;
   float rpm;

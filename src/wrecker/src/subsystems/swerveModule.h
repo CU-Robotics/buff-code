@@ -7,11 +7,12 @@
 
 class SwerveModule: public Subsystem {
  public:
-    void setup(C_SwerveModule config);
-    void update(float deltaTime);
+    void setup(C_SwerveModule *config, S_Robot *state);
+    void calibrate();
+    void update(float speed, float angle, float deltaTime);
 
   private:
-    C_SwerveModule config;
+    C_SwerveModule *config;
     c610Enc steerMotor;
     c620CAN driveMotor;
 
@@ -19,7 +20,6 @@ class SwerveModule: public Subsystem {
     float steerOffset;
     float steerRollover;
 
-    void calibrate();
     void findCalibrationMatch();
     void motorAngleToWheelAngle();
 };
