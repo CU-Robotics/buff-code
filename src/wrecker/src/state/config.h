@@ -1,10 +1,14 @@
 #define CONFIG_H
 
-struct C_Teensy {
+struct C_Config {
+
+};
+
+struct C_Teensy: C_Config {
   int loopStall = 1000; // microseconds
 };
 
-struct C_SwerveChassis {
+struct C_SwerveChassis: C_Config {
   float drivebaseWidth;
   float drivebaseLength;
 
@@ -19,7 +23,7 @@ struct C_SwerveChassis {
   C_SwerveModule moduleBR;
 };
 
-struct C_SwerveModule {
+struct C_SwerveModule: C_Config {
   short moduleID;
 
   int alignment[9];
@@ -40,7 +44,7 @@ struct C_SwerveModule {
   float driveVelF;
 };
 
-struct C_RailChassis {
+struct C_RailChassis: C_Config {
   float VelP;
   float VelI;
   float VelD;
@@ -55,7 +59,7 @@ struct C_RailChassis {
   int numNodes;
 };
 
-struct C_Gimbal {
+struct C_Gimbal: C_Config {
   float maxPitch;
   float minPitch;
 
@@ -70,7 +74,7 @@ struct C_Gimbal {
   float yawF;
 };
 
-struct C_17mmShooter {
+struct C_17mmShooter: C_Config {
   float feedRateLow;
   float feedRateHigh;
   float feedRateBurst;
@@ -81,7 +85,7 @@ struct C_17mmShooter {
   float flywheelPowerLvl3;
 };
 
-struct C_42mmShooter {
+struct C_42mmShooter: C_Config {
   float feedRateLow;
   float feedRateHigh;
   float feedRateBurst;

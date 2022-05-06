@@ -3,9 +3,11 @@
 
 class Subsystem {
   public:
-    void setup(struct config, struct *state);
+    Subsystem();
+    void setup(C_Config *config, S_Robot *state);
     void loop(float deltaTime);
 
   private:
-    struct *state;
+    C_Config *config;
+    S_Robot *state;
 };

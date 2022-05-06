@@ -5,12 +5,12 @@
 
 class SwerveChassis: public Subsystem {
  public:
-    void setup(C_SwerveChassis config);
+    void setup(C_SwerveChassis *config, S_Robot *state);
     void loop(float deltaTime);
 
   private:
-    C_SwerveChassis config;
-    S_SwerveChassis *state;
+    C_SwerveChassis *config;
+    S_Robot *state;
 
     SwerveModule moduleFR;
     SwerveModule moduleFL;
