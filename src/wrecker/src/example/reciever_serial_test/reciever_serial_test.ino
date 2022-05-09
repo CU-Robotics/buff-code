@@ -5,16 +5,16 @@ int temp2;
 
 void setup() {
   Serial.begin(115200); //usb serial
-  Serial1.begin(115200, SERIAL_8E1_RXINV_TXINV);  //reciever serial
+  Serial5.begin(115200, SERIAL_8E1_RXINV_TXINV);  //reciever serial
   Serial.println("Reciever serial test");
 
 }
 
 void loop() {
-  if(Serial1.available() >= 14) {
-//    Serial.println(Serial1.available());
+  if(Serial5.available() >= 14) {
+//    Serial.println(Serial5.available());
     //parse packet
-    Serial1.readBytes(buf, 14);
+    Serial5.readBytes(buf, 14);
 /////////////////////////////////////////
 //    for(int i = 0; i < 14; i++) {
 ////      Serial.print(buf[i], BIN);
@@ -44,8 +44,8 @@ void loop() {
 
   ////////////////
   delay(100);
-    while(Serial1.available()) {
-      Serial1.read();
+    while(Serial5.available()) {
+      Serial5.read();
     }
   }
 
