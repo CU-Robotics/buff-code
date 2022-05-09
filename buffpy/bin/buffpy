@@ -20,19 +20,15 @@
 
 	TODO:
 	  - Improve quality and scope of the diagnostic
-	  - There are plans to overdevelop the shit out of 
-	  	the install (less install on edge devices through 
-	  	converting buffpy to a virtual env for python3.6)
 	  - Implement multi agent debug (ie buffpy --debug $HOSTNAME
 	  	will open debug dialog with HOSTNAME)
-	  - Cached install, check check file to see which files do not 
+	  - Cached install, check buffpy to see which files do not 
 	  	need to be installed
-	  - Multi-threaded initialization, don't wait for install on 
+	  - Parallel initialization, don't wait for install on 
 	  	each device. Instead run simultaneously while monitoring 
 	  	progress and errors
 
 	NOTES:
-		So unstable it hurts
 		Need better testing protocols (not diagnostic)
 """
 
@@ -54,7 +50,7 @@ def clear_directory(path):
 
 	# 		Idoit Security
 	#  this function could wipe the entire disk
-	# if not used with caution. It's probably not safe but if
+	# if not used with caution. It's probably not safe because if
 	# PROJECT_ROOT changes there could be catastrophic effects.
 	if len(path.split('/')) < 3:
 		print(f'Illegal Directory: cannot remove {path}')
@@ -204,7 +200,7 @@ def load_install_params():
 
 	# Don't install from edge devices (robot)
 	if 'edge' in os.getenv('HOSTNAME'):
-		print(f'Can\'t isntall from device: {os.getenv("HOSTNAME")}')
+		print(f'Can\'t install from device: {os.getenv("HOSTNAME")}')
 		return
 
 	devices = get_devices()
