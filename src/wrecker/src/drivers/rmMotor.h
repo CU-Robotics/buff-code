@@ -3,8 +3,6 @@
 
 #include <FlexCAN_T4.h>
 
-#include "constants.h"
-
 class rmMotor {
   public:
     short getTorque();
