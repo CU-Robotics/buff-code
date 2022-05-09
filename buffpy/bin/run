@@ -21,6 +21,8 @@
 
 	TODO:
 	  - Wait until the migration for major developments
+	  - Don't loop after starting processes, just wait for 
+	  	them to finish.
 
 	NOTES:
 		It's been awhile, I'll get back to you
@@ -214,7 +216,7 @@ def launch_system(target_path, config):
 				args = ''
 
 			if 'REQUIRED' in node:
-				required = True
+				required = node['REQUIRED']
 
 			else:
 				required = False
