@@ -13,6 +13,7 @@ class SwerveModule: public Subsystem {
 
   private:
     C_SwerveModule *config;
+    S_Robot *state;
     c610Enc steerMotor;
     c620CAN driveMotor;
 
