@@ -1,4 +1,4 @@
-#include "InfantryShooter.h"
+#include "17mmShooter.h"
 #include "RobotInput.h"
 #include "RobotConfig.h"
 #include "M2006.h"
