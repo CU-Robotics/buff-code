@@ -60,6 +60,11 @@ struct C_RailChassis: C_Config {
 };
 
 struct C_Gimbal: C_Config {
+  float sensitivity = 1.0;
+
+  float pitchOffset = 12;
+  float yawOffset = 90;
+
   float maxPitch;
   float minPitch;
 

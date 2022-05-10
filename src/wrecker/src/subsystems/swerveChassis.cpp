@@ -15,7 +15,7 @@ void SwerveChassis::setup(C_SwerveChassis *config, S_Robot *state) {
   this->calibrate();
 }
 
-void SwerveChassis::loop(float deltaTime) {
+void SwerveChassis::update(float deltaTime) {
   drive(0, 0, 0.5, deltaTime);
 }
 

@@ -7,7 +7,7 @@
 class SwerveChassis: public Subsystem {
  public:
     void setup(C_SwerveChassis *config, S_Robot *state);
-    void loop(float deltaTime);
+    void update(float deltaTime);
 
   private:
     C_SwerveChassis *config;
