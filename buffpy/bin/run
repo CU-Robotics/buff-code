@@ -200,14 +200,38 @@ def launch_system(target_path, config):
 					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', node['CONFIG']), 'r') as f:
 						data = yaml.safe_load(f)
 						if not data is None:
-							node.update(data) # Add the data yaml to the nodes system definition
+							node.update(data) # Add the yaml data to the roslaunch node
 
 
 				rospy.set_param(args, node)
 
 			elif 'ARGS' in node:
 				# can use args tag to send args to non-buffpy packages
-				args = ' '.join(node['ARGS'])
+				is_opened = False
+				args = ''
+				for arg in node['ARGS']:
+					items = arg.split()
+					args += items[0] + ' '
+
+					if '${' in items[1]:		# Need to pass env vars sometimes
+						substr = ''
+						if '$' != items[1][0]:
+							substr += items[1][0]
+
+						for i,c in enumerate(items[1][1:]):
+							if c == '{' and items[1][i] == '$':
+								is_opened = True
+							elif c == '}' and is_opened:
+								args += os.getenv(substr)
+								substr = ''
+								is_opened = False
+							elif is_opened:
+								substr += c
+							else:
+								args += c
+
+					else:
+						args += items[1]
 
 			else:
 				# no args passed
