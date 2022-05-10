@@ -46,25 +46,25 @@ c620PWM::c620PWM(uint8_t input, uint8_t output) {
 //useful conversions of uS to pwm dutycycle
 // 1000-2000
 // 16378-32757
-
+//
 // 1000-1500
 // 16378-24567
-
+//
 // 1500-2000
 // 24567-32757
-
+//
 // 1080-1480
 // 17688-24240
-
+//
 // 1520-1920
 // 24894-31447
-
+//
 // 0-1
 // 0-16.3785
-
+//
 // 0-20
 // 0-327
-
+//
 // 0-80
 // 0-1310
 
@@ -101,8 +101,8 @@ float c620PWM::getAngle() {
 }
 
 
-c610Enc::c610Enc(short tempID, CAN_message_t* msg ,uint8_t encPin) {
-  id = motorId;
+c610Enc::c610Enc(short tempID, CAN_message_t* mySendMsgPtr, uint8_t encPin) {
+  id = tempID;
   byteNum = id - 1;
   sendMsgPtr = mySendMsgPtr;
   if(byteNum > 3) {
@@ -113,8 +113,8 @@ c610Enc::c610Enc(short tempID, CAN_message_t* msg ,uint8_t encPin) {
   }
 
   
-  //On the Teensy 4.1 input can be pin 0-9,22-25,28,29,33,36,37,42-47, 48-50(dups),51, 52-53 (dups), 54
-  if ((input >= 0 && input <= 9) || (input >= 22 && input <= 25) || input == 28 || input == 29 || input == 33 || input == 36 || input == 37 || (input >= 42 && input <= 54))
+  //On the Teensy 4.1 encPin can be pin 0-9,22-25,28,29,33,36,37,42-47, 48-50(dups),51, 52-53 (dups), 54
+  if ((encPin >= 0 && encPin <= 9) || (encPin >= 22 && encPin <= 25) || encPin == 28 || encPin == 29 || encPin == 33 || encPin == 36 || encPin == 37 || (encPin >= 42 && encPin <= 54))
   {
     inPin = encPin;
     pinMode(inPin, INPUT); //set the pin used to measure the encoder to be an input

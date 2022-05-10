@@ -21,6 +21,8 @@
 
 	TODO:
 	  - Wait until the migration for major developments
+	  - Don't loop after starting processes, just wait for 
+	  	them to finish.
 
 	NOTES:
 		It's been awhile, I'll get back to you
