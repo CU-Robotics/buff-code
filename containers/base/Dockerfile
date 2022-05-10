@@ -4,7 +4,7 @@
 #
 
 # change this to select ARM or x86_64
-ARG BASE_IMAGE=ubuntu:18.04 # nvcr.io/nvidia/l4t-base:r32.6.1 # 
+ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04 # 
 FROM ${BASE_IMAGE}
 
 ENV ROS_PKG=ros-base
@@ -63,7 +63,7 @@ RUN apt update && \
 	curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
 	apt update && \
 	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} python-rosdep \
-	ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins && \
+	ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins  ros-${ROS_DISTRO}-rqt-robot-plugins && \
 	curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && \
 	python3 get-pip.py && \
 	rm get-pip.py
@@ -91,7 +91,8 @@ RUN pip3 install \
 		catkin-tools==0.8.2 \
 		rosinstall-generator==0.1.22
 
-RUN cd /opt/ros/${ROS_DISTRO} && \
+
+RUN cd ${ROS_ROOT} && \
 	rosdep init && \
 	rosdep update
 

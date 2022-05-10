@@ -11,8 +11,10 @@ export DOCKER=False
 export PROJECT_ROOT=${PWD}
 export HOSTNAME=$HOSTNAME 
 
-if grep -q docker /proc/1/cgroup; then 
-   DOCKER=True
+if [[ -f /proc/1/cgroup ]]; then
+	if grep -q docker /proc/1/cgroup; then 
+	   DOCKER=True
+	fi
 fi
 
 
@@ -46,6 +48,7 @@ fi
 # # 	export PYTHONPATH="/usr/local/lib/python3.6/dist-packages:${PYTHONPATH}" 
 # fi
 
+# DEPRECATED
 # Only needed if we are using ros packages
 # if [[ -d ${PROJECT_ROOT}/install ]]; then
 # 	source {PROJECT_ROOT}/install/setup.bash

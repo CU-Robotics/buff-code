@@ -190,9 +190,6 @@ class Dead_Reckon_Tracer:
 				self.history = np.ones((4,2), dtype=np.float64) * -1
 				self.trajectory = np.zeros((3,2), dtype=np.float64)
 
-			self.measure = np.array([50, 50 * np.sin(self.t)])
-			rospy.loginfo(self.measure)
-
 			self.publish_prediction()
 
 			if not self.measure is None:
