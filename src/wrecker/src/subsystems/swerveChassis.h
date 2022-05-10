@@ -1,11 +1,16 @@
-#include "subsystem.h"
 #include "swerveModule.h"
 
-#include "../state/config.h"
-#include "../state/state.h"
+#ifndef CONFIG_H
+#include "state/config.h"
+#endif
+
+#ifndef STATE_H
+#include "state/state.h"
+#endif
 
 class SwerveChassis: public Subsystem {
  public:
+    SwerveChassis();
     void setup(C_SwerveChassis *config, S_Robot *state);
     void update(float deltaTime);
 

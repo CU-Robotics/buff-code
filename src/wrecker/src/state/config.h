@@ -8,21 +8,6 @@ struct C_Teensy: C_Config {
   int loopStall = 1000; // microseconds
 };
 
-struct C_SwerveChassis: C_Config {
-  float drivebaseWidth = 14.5;
-  float drivebaseLength = 14.5;
-
-  float currentLimitLvl0 = 40.0 / 24.0;
-  float currentLimitLvl1 = 60.0 / 24.0;
-  float currentLimitLvl2 = 80.0 / 24.0;
-  float currentLimitLvl3 = 100.0 / 24.0;
-
-  C_SwerveModule moduleFR;
-  C_SwerveModule moduleFL;
-  C_SwerveModule moduleBL;
-  C_SwerveModule moduleBR;
-};
-
 struct C_SwerveModule: C_Config {
   short moduleID;
 
@@ -42,6 +27,21 @@ struct C_SwerveModule: C_Config {
   float driveVelI;
   float driveVelD;
   float driveVelF;
+};
+
+struct C_SwerveChassis: C_Config {
+  float drivebaseWidth = 14.5;
+  float drivebaseLength = 14.5;
+
+  float currentLimitLvl0 = 40.0 / 24.0;
+  float currentLimitLvl1 = 60.0 / 24.0;
+  float currentLimitLvl2 = 80.0 / 24.0;
+  float currentLimitLvl3 = 100.0 / 24.0;
+
+  C_SwerveModule moduleFR;
+  C_SwerveModule moduleFL;
+  C_SwerveModule moduleBL;
+  C_SwerveModule moduleBR;
 };
 
 struct C_RailChassis: C_Config {

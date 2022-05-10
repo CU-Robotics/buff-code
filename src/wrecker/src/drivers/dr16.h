@@ -1,7 +1,7 @@
 #define DR16_H
 
-#ifndef STRUCTS_H
-#include "structs.h"
+#ifndef CONFIG_H
+#include "state/config.h"
 #endif
 
 class dr16 {
