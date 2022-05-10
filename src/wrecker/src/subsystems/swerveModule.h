@@ -1,4 +1,5 @@
 #include "subsystem.h"
+
 #include "../state/config.h"
 #include "../state/state.h"
 
@@ -8,8 +9,8 @@
 class SwerveModule: public Subsystem {
  public:
     void setup(C_SwerveModule *config, S_Robot *state);
-    void calibrate();
     void update(float speed, float angle, float deltaTime);
+    void calibrate();
 
   private:
     C_SwerveModule *config;
