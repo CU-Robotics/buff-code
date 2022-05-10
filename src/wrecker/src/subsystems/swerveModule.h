@@ -1,13 +1,19 @@
 #include "subsystem.h"
 
-#include "../state/config.h"
-#include "../state/state.h"
+#ifndef CONFIG_H
+#include "state/config.h"
+#endif
 
-#include "../drivers/c620.h"
-#include "../algorithms/PIDController.h"
+#ifndef STATE_H
+#include "state/state.h"
+#endif
+
+#include "drivers/c620.h"
+#include "algorithms/PIDController.h"
 
 class SwerveModule: public Subsystem {
  public:
+    SwerveModule();
     void setup(C_SwerveModule *config, S_Robot *state);
     void update(float speed, float angle, float deltaTime);
     void calibrate();
