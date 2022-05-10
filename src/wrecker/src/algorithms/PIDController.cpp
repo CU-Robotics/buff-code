@@ -36,13 +36,9 @@ void PIDController::init(float kP, float kI, float kD, float kF) {
 float PIDController::calculate(float pos, float setpoint, float deltaTime) {
   float error = setpoint - pos;
   if (this->continuousInput) {
-    float oppositeError = this->continuousInputMax - fabs(error);
-    if (oppositeError < error) {
-      if (setpoint >= pos) {
-        error = -oppositeError;
-      } else {
-        error = oppositeError;
-      }
+    float oppositeError =  error - this->continuousInputMax;
+    if (fabs(oppositeError) < error) {
+      error = oppositeError;
     }
   }
 
@@ -58,12 +54,16 @@ float PIDController::calculate(float pos, float setpoint, float deltaTime) {
     iTerm = this->integratorRangeLow;
   }
 
+  /*if (error < 0.5) {
+    this->integralSum = 0;
+  }*/
+
   // Derivative term
   float dTerm = kD * ((error - this->prevError) / deltaTime);
   this->prevError = error;
 
   // Feedforward term
-  float fTerm = kF * error;
+  float fTerm = kF;
 
   // Sum terms, clamp, and return
   float output = pTerm + iTerm + dTerm + fTerm;
