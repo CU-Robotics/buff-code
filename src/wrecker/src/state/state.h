@@ -9,23 +9,28 @@ struct S_PID {
 
 void dump_PID_State(S_PID*, char*);
 
-struct S_SwerveChassis {
-  float heading;
+struct S_SwerveModule {
+  float steer_angle;
+  float steer_speed;
+  float drive_speed;
+  float drive_accel;
+};
+
+void dump_Swerve_State(S_SwerveModule*, char*);
+
+struct S_Chassis {
+  float heading; // naming needs to be more consistent (greek letters, descriptive or units)
   float rpm;
   float alpha; // angular acceleration
-  float xAccel;
-  float yAccel;
+  float a[2];
+  S_SwerveModule fl;
+  S_SwerveModule fr;
+  S_SwerveModule rr;
+  S_SwerveModule rl;
+
 };
 
-void dump_SwerveChassis_State(S_SwerveChassis*, char*);
-
-struct S_RailChassis {
-  float pos;
-  float vel;
-  float accel;
-};
-
-void dump_RailChassis_State(S_RailChassis*, char*);
+void dump_Chassis_State(S_Chassis*, char*);
 
 struct S_Gimbal {
   float yaw;
@@ -82,8 +87,7 @@ struct S_RefSystem {
 void dump_RefSystem_State(S_RefSystem*, char*);
 
 struct S_Robot {
-  S_SwerveChassis swerve_chassis;
-  S_RailChassis rail_chassis;
+  S_Chassis chassis;
   S_Gimbal gimbal;
   S_Shooter Shooter17;
   S_Shooter Shooter42;

@@ -5,10 +5,7 @@ import sys
 import time
 import rospy
 import numpy as np
-import buffvision as bv
-from std_msgs.msg import Bool
 from cv_bridge import CvBridge
-import matplotlib.pyplot as plt
 from sensor_msgs.msg import Image
 from std_msgs.msg import String, Float64MultiArray
 
@@ -210,7 +207,7 @@ class Dead_Reckon_Tracer:
 
 
 def main(config_data):
-
+	exit(0)
 	tracker = Dead_Reckon_Tracer(config_data)
 	tracker.spin()
 

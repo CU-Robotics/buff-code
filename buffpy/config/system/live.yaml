@@ -3,14 +3,10 @@ DEBUG:
   
 
 TOPICS:
-  IMAGE:
-    'image_raw'
-  DETECTION:
-    'detected_object'
-  TARGET:
-    'target'
-  AIM_HEADING:
-    'yaw_pitch'
+  TARGET: 'target'
+  IMAGE: 'image_raw'
+  SERIAL_OUT: 'serial_write'
+  DETECTION: 'detected_object'
 
 
 NODES:
