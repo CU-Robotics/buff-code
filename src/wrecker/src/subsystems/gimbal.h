@@ -16,8 +16,8 @@ class Gimbal: public Subsystem {
     C_Gimbal *config;
     S_Robot *state;
 
-    float pitchSetpoint;
-    float yawSetpoint;
+    float pitchSum;
+    float yawSum;
 
     gm6020 pitchMotor;
     gm6020 yawMotor; 

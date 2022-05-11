@@ -18,13 +18,15 @@ void Gimbal::setup(C_SwerveChassis *config, S_Robot *state) {
 }
 
 void Gimbal::update(float deltaTime) {
-  this->pitchSetpoint += this->state->s_driverInput.mouseY * this->sensitivity;
-  this->yawSetpoint += this->state->s_driverInput.mouseX * this->sensitivity;
+  this->pitchSum += this->state->s_driverInput.mouseY * this->sensitivity;
+  this->yawSum += this->state->s_driverInput.mouseX * this->sensitivity;
+
+  float yawSetpoint = yawSum - this->state->s_swerveChassis.heading;
 
   if (this->pitchSetpoint > this->config->maxPitch) {
-      this->pitchSetpoint = this->config->maxPitch;
+    this->pitchSetpoint = this->config->maxPitch;
   } else if (this->pitchSetpoint < this->config->minPitch) {
-      this->pitchSetpoint = this->config->minPitch;
+    this->pitchSetpoint = this->config->minPitch;
   }
 
   float pitchAngle = realizePitchEncoder(pitchMotor.getAngle());
@@ -35,9 +37,11 @@ void Gimbal::update(float deltaTime) {
 }
 
 float Gimbal::realizeYawEncoder(float angle) {
-    return (angle - this->config->yawOffset) * 0.5;
+  float value = (angle - this->config->yawOffset) * 0.5;
+  value = value % 360;
 }
 
 float Gimbal::realizePitchEncoder(float angle) {
-    return (angle - this->config->pitchOffset);
+  return (angle - this->config->pitchOffset);
+  value = value % 360;
 }

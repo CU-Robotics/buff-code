@@ -42,7 +42,7 @@ void setup() {
 
 // Runs continuously
 void loop() {
-  swerveChassisSubsystem.loop(deltaT);
+  swerveChassisSubsystem.update(deltaT);
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
