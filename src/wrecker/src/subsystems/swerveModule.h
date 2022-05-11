@@ -23,10 +23,10 @@ class SwerveModule: public Subsystem {
     PIDController steerPosPID;
     PIDController drivePID;
 
-    float steerPrevAngle;
+    float prevRawSteerAngle;
     float steerOffset;
     float steerRollover;
 
-    void findCalibrationMatch();
+    int findCalibrationMatch(int currValue, int* alignmentTable, int tableSize);
     void motorAngleToWheelAngle();
 };

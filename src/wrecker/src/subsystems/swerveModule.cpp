@@ -11,7 +11,8 @@ void SwerveModule::setup(C_SwerveModule *config, S_Robot *state) {
 }
 
 void SwerveModule::calibrate() {
-  
+  this->steerOffset = findCalibrationMatch(this->steerMotor.getAngle(), this->config->alignment, 9);
+  this->steerRollover = 0;
 }
 
 void SwerveModule::update(float speed, float angle, float deltaTime) {
@@ -19,30 +20,40 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   float rpm = this->steerMotor.getRpm();
 
   // POS PID
-  float rawPos = this->steerMotor.getAngle();
-  float pos = ((rawPos + this->steerRollover * 360) - this->steerOffset) * (9.0/25.0);
+  float rawSteerAngle = this->steerMotor.getAngle();
 
-  if ((rawPos - this->steerPrevAngle) > 180) {
+  if ((rawSteerAngle - this->prevRawSteerAngle) > 180) {
     this->steerRollover--;
-    pos = ((rawPos + this->steerRollover * 360) - this->steerOffset) * (9.0/25.0);
-  } else if ((this->steerPrevAngle - rawPos) > 180) {
+  } else if ((this->prevRawSteerAngle - rawSteerAngle) > 180) {
     this->steerRollover++;
-    pos = ((rawPos + this->steerRollover * 360) - this->steerOffset) * (9.0/25.0);
   }
 
-  int posTemp = int(pos * 100);
-  posTemp = posTemp % 36000;
-  pos = posTemp / 100.0;
+  float steerAngle = ((rawSteerAngle + this->steerRollover * 360) - this->steerOffset) * (9.0/25.0);
 
-  pos -= 45;
-
-  if (pos < 0) {
-    pos += 360;
+  int tempSteerAngle = int(steerAngle * 100);
+  tempSteerAngle = tempSteerAngle % 36000;
+  steerAngle = tempSteerAngle / 100.0;
+  
+  if (steerAngle < 0) {
+    steerAngle += 360;
   }
 
-  float newPower = steerPosPID.calculate(pos, angle, deltaTime);
+  float newPower = steerPosPID.calculate(steerAngle, angle, deltaTime);
   float velPower = steerVelPID.calculate(rpm, -newPower * 10000, deltaTime);
   steerMotor.setPower(velPower);
 
-  this->steerPrevAngle = rawPos;
+  this->prevRawSteerAngle = rawSteerAngle;
+}
+
+int SwerveModule::findCalibrationMatch(int currValue, int* alignmentTable, int tableSize) {
+  int smallestDistance = 360;
+  int bestOffset = 0;
+  for (int i = 0; i < tableSize; i++) {
+    int distance = abs(currValue - alignmentTable[i]);
+    if (distance < smallestDistance) {
+      smallestDistance = distance;
+      bestOffset = alignmentTable[i];
+    }
+  }
+  return bestOffset;
 }
