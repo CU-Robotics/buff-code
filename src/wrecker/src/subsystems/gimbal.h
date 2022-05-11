@@ -1,4 +1,3 @@
-#include "subsystem.h"
 #include "state/state.h"
 #include "state/config.h"
 #include "drivers/gm6020.h"
