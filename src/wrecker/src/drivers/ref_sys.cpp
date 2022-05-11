@@ -720,11 +720,11 @@ bool ref_sys::read_serial(){
 
         if((temp & 0b00000001) == 1){
             set_robot_buff('0');
-        }else if(temp[1] == 1){
+        }else if((temp & 0b00000010) == 1){
             set_robot_buff('1');
-        }else if(temp[2] == 1){
+        }else if((temp & 0b00000100) == 1){
             set_robot_buff('2');
-        }else if(temp[3] == 1){
+        }else if((temp & 0b00001000) == 1){
             set_robot_buff('3');
         }
 
