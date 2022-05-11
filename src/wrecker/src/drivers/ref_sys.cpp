@@ -32,7 +32,7 @@ bool ref_sys::read_serial(){
 
         bool gotStartByte = false;
 
-        while(!gotStartByte && Serial2.available() > 1){
+        while(Serial2.available() > 1){
             enter_code = Serial2.read();    //It will read in the first byte of data
             
             if(enter_code == 0xA5){         //It looks for this value that signifies that there is about to be a transmission of data
@@ -44,13 +44,13 @@ bool ref_sys::read_serial(){
                 }
                 
                 data_length = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                data_length = data_length << 8;
+                // data_length = data_length << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){        //This waits till another byte of data is available
                 }
             
 
-                data_length = data_length | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+                data_length = data_length | (temp << 8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
                 Serial.println(data_length);
 
@@ -68,19 +68,19 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 cmd_id = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                cmd_id = cmd_id << 8;
+                // cmd_id = cmd_id << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){
                 }        //This waits till another byte of data is available
 
-                cmd_id = cmd_id | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+                cmd_id = cmd_id | (temp << 8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-                Serial.println(cmd_id);
+                Serial.println(cmd_id, HEX);
 
 
                 if(cmd_id == 514){   //power and heat data   
                     
-                Serial.println("received cmd_id inside 514"); 
+                Serial.println("received cmd_id, inside 514"); 
 
                 ////////////////////////////////////////////////////////////////////////////
 
