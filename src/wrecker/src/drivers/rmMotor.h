@@ -18,6 +18,7 @@ class rmMotor {
     byte temp = -1;
   protected:
     short id = -1;
+    uint8_t canBusNum;
     short MAX_VALUE;
     short byteNum = -1;
     CAN_message_t *sendMsgPtr = NULL;

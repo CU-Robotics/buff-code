@@ -2,7 +2,10 @@
 
 #include "state/state.h"
 #include "state/config.h"
+
+#ifndef SWERVEMODULE_H
 #include "swerveModule.h"
+#endif
 
 
 SwerveModule::SwerveModule() {
