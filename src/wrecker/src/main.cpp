@@ -1,5 +1,7 @@
 #include <Arduino.h>
+#ifndef _FLEXCAN_T4_H_
 #include <FlexCAN_T4.h>
+#endif
 
 #include "state/state.h"
 #include "state/config.h"
@@ -11,8 +13,9 @@ unsigned long deltaT = 0;
 unsigned long lastTime = 0;
 
 // CAN
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> chassisCAN;
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> superStructureCAN;
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
 // State
 S_Robot robot_state;
@@ -26,10 +29,13 @@ void setup() {
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  chassisCAN.begin();
-  superStructureCAN.begin();
-  chassisCAN.setBaudRate(1000000);
-  superStructureCAN.setBaudRate(1000000);
+  can1.begin();
+  can2.begin();
+  can3.begin();
+
+  can1.setBaudRate(1000000);
+  can2.setBaudRate(1000000);
+  can3.setBaudRate(1000000);
 
   // Subsystem setup
   swerve_Chassis.setup(&swerve_config, &robot_state);

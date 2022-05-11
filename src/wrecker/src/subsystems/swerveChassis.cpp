@@ -1,7 +1,11 @@
 #include <Arduino.h>
 
 #include "state/state.h"
+
+#ifndef SWERVEMODULE_H
 #include "swerveModule.h"
+#endif
+
 #include "state/config.h"
 #include "swerveChassis.h"
 

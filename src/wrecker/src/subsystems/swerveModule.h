@@ -1,5 +1,11 @@
+#define SWERVEMODULE_H
+
 #include "state/state.h"
+
+#ifndef C620_H
 #include "drivers/c620.h"
+#endif
+
 #include "state/config.h"
 #include "algorithms/PID_Filter.h"
 
