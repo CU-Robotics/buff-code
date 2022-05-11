@@ -107,6 +107,10 @@ void SwerveModule_serial_event(C_SwerveModule sm_config){
   } 
 }
 
+void dump_Swerve_Config(C_SwerveModule sm_config, String ID){
+  
+}
+
 void dump_Swerve_State(S_SwerveModule sm_state, String ID){
   Serial.print(ID); Serial.print("_swerve_module:");
   Serial.print(sm_state.steer_angle); Serial.print(",");
@@ -114,9 +118,9 @@ void dump_Swerve_State(S_SwerveModule sm_state, String ID){
   Serial.print(sm_state.drive_speed); Serial.print(",");
   Serial.println(sm_state.drive_accel);
 
-  dump_PID_State(sm_state.steerPos, ID + "_swerve_module");
-  dump_PID_State(sm_state.steerVel, ID + "_swerve_module");
-  dump_PID_State(sm_state.driveVel, ID + "_swerve_module");
+  dump_PID_State(sm_state.steerPos, ID + "_swerve_module_pid");
+  dump_PID_State(sm_state.steerVel, ID + "_swerve_module_pid");
+  dump_PID_State(sm_state.driveVel, ID + "_swerve_module_pid");
 }
 
 void SwerveChassis_serial_event(){
