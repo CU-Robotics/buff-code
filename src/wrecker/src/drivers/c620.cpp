@@ -2,6 +2,9 @@
 #include "drivers/c620.h"
 #endif
 
+extern FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+extern FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+extern FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
 CAN_message_t c6x0Messages[3][2];
 
@@ -67,7 +70,7 @@ void c610Enc::init(short tempID, uint8_t tempCanBusNum, uint8_t encPin) {
   canBusNum = tempCanBusNum;
   id = tempID;
   byteNum = id - 1;
-  sendMsgPtr = msg;
+  // sendMsgPtr = msg;
   if(byteNum > 3) {
     byteNum -= 4;
     sendMsgPtr = &c6x0Messages[canBusNum-1][0];
