@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <iostream>
 #include "ref_sys.h"
 
@@ -12,7 +13,6 @@ accurately test the code when I have a fully up and running ref system.
 
 ref_sys::ref_sys(){
 
-    Serial.begin(115200);
     Serial2.begin(115200);
 
 }
@@ -718,7 +718,7 @@ bool ref_sys::read_serial(){
         }        //This waits till another byte of data is available
 
 
-        if(temp[0] == 1){
+        if((temp & 0b00000001) == 1){
             set_robot_buff('0');
         }else if(temp[1] == 1){
             set_robot_buff('1');
