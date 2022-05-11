@@ -9,11 +9,10 @@
 class gm6020 : public rmMotor {
     public:
         gm6020();
-        void init(short tempID, CAN_message_t* msg);
+        void init(short tempID, uint8_t tempCanBusNum);
         void setPower(float power);
     private:
         short id;
-        CAN_message_t *sendMsg;
         int byteNum;
 };
 
