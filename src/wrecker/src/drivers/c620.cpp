@@ -1,5 +1,9 @@
 #include "c620.h"
 
+c620CAN::c620CAN() {
+
+}
+
 c620CAN::c620CAN(short motorId, CAN_message_t* mySendMsgPtr){
   id = motorId;
   byteNum = id - 1;
@@ -13,7 +17,7 @@ c620CAN::c620CAN(short motorId, CAN_message_t* mySendMsgPtr){
 }
 
 void c620CAN::setPower(float power) {
-    short newPower = (short)(power * C620_MAX_VALUE);
+    short newPower = (short)(power * MAX_VALUE);
     byte byteOne = highByte(newPower);
     byte byteTwo = lowByte(newPower);
     sendMsgPtr->buf[byteNum << 1] = byteOne;
@@ -101,6 +105,10 @@ float c620PWM::getAngle() {
 }
 
 
+c610Enc::c610Enc() {
+  
+}
+
 c610Enc::c610Enc(short tempID, CAN_message_t* mySendMsgPtr, uint8_t encPin) {
   id = tempID;
   byteNum = id - 1;
@@ -126,7 +134,7 @@ c610Enc::c610Enc(short tempID, CAN_message_t* mySendMsgPtr, uint8_t encPin) {
 }
 
 void c610Enc::setPower(float power) {
-    short newPower = (short)(power * C620_MAX_VALUE);
+    short newPower = (short)(power * MAX_VALUE);
     byte byteOne = highByte(newPower);
     byte byteTwo = lowByte(newPower);
     sendMsgPtr->buf[byteNum << 1] = byteOne;

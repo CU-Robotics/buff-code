@@ -1,13 +1,17 @@
 #include <Arduino.h>
 
+#include "state/state.h"
+#include "state/config.h"
 #include "swerveModule.h"
 
-#include "../state/config.h"
-#include "../state/state.h"
 
-void SwerveModule::setup(C_SwerveModule *config, S_Robot *state) {
-  this->config = config;
-  this->state = state;
+SwerveModule::SwerveModule() {
+  
+}
+
+void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state) {
+  config = data;
+  state = r_state;
 }
 
 void SwerveModule::calibrate() {

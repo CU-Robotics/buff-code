@@ -1,17 +1,14 @@
 #include "subsystem.h"
-
-#ifndef CONFIG_H
-#include "state/config.h"
-#endif
-
-#ifndef STATE_H
 #include "state/state.h"
-#endif
-
 #include "drivers/c620.h"
-#include "algorithms/PIDController.h"
+#include "state/config.h"
+#include "algorithms/PID_Filter.h"
 
-class SwerveModule: public Subsystem {
+
+#ifndef SWERVE_MODULE 
+#define SWERVE_MODULE
+
+class SwerveModule {
  public:
     SwerveModule();
     void setup(C_SwerveModule *config, S_Robot *state);
@@ -21,6 +18,7 @@ class SwerveModule: public Subsystem {
   private:
     C_SwerveModule *config;
     S_Robot *state;
+    
     c610Enc steerMotor;
     c620CAN driveMotor;
 
@@ -31,3 +29,5 @@ class SwerveModule: public Subsystem {
     void findCalibrationMatch();
     void motorAngleToWheelAngle();
 };
+
+#endif // SWERVE_MODULE
