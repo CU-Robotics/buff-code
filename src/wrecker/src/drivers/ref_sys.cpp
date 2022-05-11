@@ -114,7 +114,7 @@ bool ref_sys::read_serial(){
 
                 ////////////////////////////////////////////////////////////////////////////
 
-                Serial.flush();
+                
                     
                 }
 
@@ -166,7 +166,7 @@ bool ref_sys::read_serial(){
 
                 set_rem_time(int(unix_time));
 
-                Serial.flush();
+                
 
                     
                 }else if(cmd_id == 2){   //results for 2
@@ -332,7 +332,7 @@ bool ref_sys::read_serial(){
 
                 set_blue_sentry_hp(temp_hp);
 
-                Serial.flush();
+                
 
                 ///////////////////////////////////////////////////////////////
             
@@ -409,7 +409,7 @@ bool ref_sys::read_serial(){
 
                 set_blue_two_rem_proj(temp_hp);
 
-                Serial.flush();
+                
 
                 ///////////////////////////////////////////////////////////////
                     
@@ -444,7 +444,7 @@ bool ref_sys::read_serial(){
 
                 set_foul_robot_id(int(robo_id));
 
-                Serial.flush();
+                
                 
 
                 }else if(cmd_id == 201){ //robo stat
@@ -705,7 +705,7 @@ bool ref_sys::read_serial(){
 
                 set_robot_power_lim(temp_stat);
 
-                Serial.flush();
+                
 
                 ////////////////////////////////////////////////////////////////////////////
 
@@ -732,7 +732,7 @@ bool ref_sys::read_serial(){
                     set_robot_buff('3');
                 }
 
-                Serial.flush();
+                
 
                 
                 }else if(cmd_id == 518){  //damage stats
@@ -740,7 +740,7 @@ bool ref_sys::read_serial(){
                 Serial.println("received cmd_id inside 518"); 
 
 
-                Serial.flush();
+                
 
                 
                 }else if(cmd_id == 519){  //RT launch info
@@ -796,7 +796,7 @@ bool ref_sys::read_serial(){
 
                 set_launch_speed(temp_launch_speed);
 
-                Serial.flush();
+                
 
                 
                 }else if(cmd_id == 520){  //remaining proj.
@@ -835,14 +835,14 @@ bool ref_sys::read_serial(){
 
                 /////////////////////////////////////////////////////////////////////////
 
-                Serial.flush();
+                
 
                 
                 }else if(cmd_id == 521){  //RFID stat
 
                 Serial.println("received cmd_id inside 521");           //I am not sure if I need to record this
 
-                Serial.flush();
+                
         
         }
         
