@@ -1,3 +1,5 @@
+#ifndef REF_SYS_H
+#define REF_SYS_H
 
 struct ref_data{
 
@@ -250,3 +252,5 @@ class ref_sys{
 
 
 };
+
+#endif
