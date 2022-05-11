@@ -26,9 +26,9 @@ struct S_RailChassis {
 };
 
 struct S_Gimbal {
-  float pitch;
-  float yaw;
-  float yawGlobal;
+  float pitch = 0;
+  float yaw = 0;
+  float yawGlobal = 0;
 };
 
 struct S_17mmShooter {

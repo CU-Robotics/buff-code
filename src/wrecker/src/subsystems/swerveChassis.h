@@ -18,7 +18,7 @@ class SwerveChassis: public Subsystem {
     SwerveModule moduleBL;
     SwerveModule moduleBR;
 
-    float drivebaseRadius;
+    float drivebaseConstant;
 
     void calibrate();
     void drive(float driveX, float driveY, float spin, float deltaTime);
