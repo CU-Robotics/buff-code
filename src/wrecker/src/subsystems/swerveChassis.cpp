@@ -1,12 +1,8 @@
 #include <Arduino.h>
 
 #include "state/state.h"
-
-#ifndef SWERVEMODULE_H
-#include "swerveModule.h"
-#endif
-
 #include "state/config.h"
+#include "swerveModule.h"
 #include "swerveChassis.h"
 
 SwerveChassis::SwerveChassis() {

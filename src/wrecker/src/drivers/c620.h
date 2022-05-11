@@ -1,16 +1,14 @@
 #define C620_H
 
+#include <FlexCAN_T4.h>
 #include <FreqMeasureMulti.h>
 
-#ifndef _FLEXCAN_T4_H_
-#include <FlexCAN_T4.h>
-#endif
-
-#ifndef RMMOTOR_H
 #include "drivers/rmMotor.h"
-#endif
 
 // extern CAN_message_t c6x0Messages[3][2];
+
+#ifndef C620_H
+#define C620_H
 
 class c620CAN : public rmMotor {
     public:
@@ -32,3 +30,5 @@ class c610Enc : public rmMotor {
         void setPower(float power);
         float getAngle();
 };
+
+#endif // C620_H
