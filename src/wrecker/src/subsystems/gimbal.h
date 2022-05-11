@@ -20,8 +20,13 @@ class Gimbal
     S_Robot* state;
     C_Gimbal* config;
 
+
     float yaw_Reference;
     float pitch_Reference;
+
+    float pitchSum;
+    float yawSum;
+
 
     gm6020 yawMotor; 
     gm6020 pitchMotor;

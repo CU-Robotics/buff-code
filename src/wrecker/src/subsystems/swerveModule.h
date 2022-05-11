@@ -17,15 +17,16 @@ class SwerveModule {
     void calibrate();
 
   private:
-    C_SwerveModule *config;
     S_Robot *state;
-    
+    C_SwerveModule *config;
+    S_SwerveModule *moduleState;
+
     c610Enc steerMotor;
     c620CAN driveMotor;
 
-    float steerAngle;
     float steerOffset;
     float steerRollover;
+    float steerPrevAngle;
 
     void findCalibrationMatch();
     void motorAngleToWheelAngle();

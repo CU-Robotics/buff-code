@@ -1,8 +1,4 @@
-#include "drivers/c620.h"
-
-
-CAN_message_t c6x0Messages[3][2];
-
+#include "c620.h"
 
 c620CAN::c620CAN() {
 
@@ -26,10 +22,10 @@ void c620CAN::init(uint8_t motorId, uint8_t tempCanBusNum) {
   byteNum = id - 1;
   if(byteNum > 3) {
     byteNum -= 4;
-    sendMsgPtr = &c6x0Messages[canBusNum-1][0];
+    //sendMsgPtr = &c6x0Messages[canBusNum-1][0];
     sendMsgPtr->id = 0x1FF;   //ID for all c620s 4-7
   } else {
-    sendMsgPtr = &c6x0Messages[canBusNum-1][1];
+    //sendMsgPtr = &c6x0Messages[canBusNum-1][1];
     sendMsgPtr->id = 0x200;   //ID for all c620s 0-3
   }
 }
@@ -40,17 +36,17 @@ void c620CAN::setPower(float power) {
     byte byteTwo = lowByte(newPower);
     sendMsgPtr->buf[byteNum << 1] = byteOne;
     sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
-    switch (canBusNum) {
-        case 1:
-          can1.write(*sendMsgPtr);
-          break;
-        case 2:
-          can2.write(*sendMsgPtr);
-          break;
-        case 3:
-          can3.write(*sendMsgPtr);
-          break;
-    }
+    // switch (canBusNum) {
+    //     case 1:
+    //       can1.write(*sendMsgPtr);
+    //       break;
+    //     case 2:
+    //       can2.write(*sendMsgPtr);
+    //       break;
+    //     case 3:
+    //       can3.write(*sendMsgPtr);
+    //       break;
+    // }
 }
 
 
@@ -65,13 +61,14 @@ void c610Enc::init(short tempID, uint8_t tempCanBusNum, uint8_t encPin) {
   canBusNum = tempCanBusNum;
   id = tempID;
   byteNum = id - 1;
-  sendMsgPtr = msg;
+
   if(byteNum > 3) {
     byteNum -= 4;
-    sendMsgPtr = &c6x0Messages[canBusNum-1][0];
+    //sendMsgPtr = &c6x0Messages[canBusNum-1][0];
     sendMsgPtr->id = 0x1FF;   //ID for all c620s 4-7
-  } else {
-    sendMsgPtr = &c6x0Messages[canBusNum-1][1];
+  } 
+  else {
+    //sendMsgPtr = &c6x0Messages[canBusNum-1][1];
     sendMsgPtr->id = 0x200;   //ID for all c620s 0-3
   }
 
@@ -94,17 +91,17 @@ void c610Enc::setPower(float power) {
     byte byteTwo = lowByte(newPower);
     sendMsgPtr->buf[byteNum << 1] = byteOne;
     sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
-    switch (canBusNum) {
-        case 1:
-          can1.write(*sendMsgPtr);
-          break;
-        case 2:
-          can2.write(*sendMsgPtr);
-          break;
-        case 3:
-          can3.write(*sendMsgPtr);
-          break;
-    }
+    // switch (canBusNum) {
+    //     case 1:
+    //       can1.write(*sendMsgPtr);
+    //       break;
+    //     case 2:
+    //       can2.write(*sendMsgPtr);
+    //       break;
+    //     case 3:
+    //       can3.write(*sendMsgPtr);
+    //       break;
+    // }
 }
 
 //investigate using interrupts to handle keeping the angle up to date instead of getting into a while loop
@@ -120,3 +117,7 @@ float c610Enc::getAngle() {
   
   return angle;
 }
+
+
+
+

@@ -12,15 +12,15 @@ class SwerveChassis {
     void update(float deltaTime);
 
   private:
-    C_SwerveChassis *config;
     S_Robot *state;
+    C_SwerveChassis *config;
 
     SwerveModule moduleFR;
     SwerveModule moduleFL;
     SwerveModule moduleBL;
     SwerveModule moduleBR;
 
-    float drivebaseRadius;
+    float drivebaseConstant;
 
     void calibrate();
     void drive(float driveX, float driveY, float spin, float deltaTime);

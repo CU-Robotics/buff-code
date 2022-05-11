@@ -57,8 +57,8 @@ class Dead_Reckon_Tracer:
 		# self.detect_sub = rospy.Subscriber(
 		# 	topics['DETECTION'], Float64MultiArray, self.detection_callback, queue_size=5)
 
-		self.aim_heading_sub = rospy.Subscriber(
-			topics['AIM_HEADING'], Float64MultiArray)
+		self.gimbal_sub = rospy.Subscriber(
+			topics['GIMBAL_STATE'], Float64MultiArray)
 
 		self.prediction_pub = rospy.Publisher(
 			topics['TARGET'], String, queue_size=1)
@@ -109,7 +109,7 @@ class Dead_Reckon_Tracer:
 		self.predict()
 		psi = np.arctan(self.pose[1] / self.pose[0]) # arctan of x,y is yaw
 		phi = self.d_scale * np.linalg.norm(self.pose) # phi is this needs to be tuned function of distance
-		msg = String(f'aim_control:{phi},{psi}')
+		msg = String(f':{phi},{psi}')
 		self.prediction_pub.publish(msg)
 
 	def detection_callback(self, msg):
