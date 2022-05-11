@@ -58,8 +58,8 @@ void dr16::update() {
         input->rightStickX = (((buf[4] & 0b00000001) << 10) | (buf[3] << 2)) | (buf[2] & 0b00000011);
         input->rightStickY = ((buf[5] & 0b00001111) << 7) | (buf[4] & 0b11111110);
 
-        // input->s1 = ((buf[5] & 0b00110000) >> 4);
-        // input->s2 = ((buf[5] & 0b11000000) >> 6);
+        input->s1 = ((buf[5] & 0b00110000) >> 4);
+        input->s2 = ((buf[5] & 0b11000000) >> 6);
 
         // Serial.println(input->S1, BIN);
 
@@ -80,20 +80,20 @@ void dr16::update() {
         input->z = buf[15] & 0b00001000;
         input->x = buf[15] & 0b00010000;
         input->c = buf[15] & 0b00100000;
-        // input->v = buf[15] & 0b01000000;
-        // input->b = buf[15] & 0b10000000;
+        input->v = buf[15] & 0b01000000;
+        input->b = buf[15] & 0b10000000;
 
 
         //mouse
         input->mouseX = (buf[6] << 8) | buf[7];
         input->mouseY = (buf[8] << 8) | buf[9];
-        // input->mouseZ = (buf[10] << 8) | buf[11];
-        // input->mouseLeft = buf[12];
-        // input->mouseRight = buf[13];
+        input->mouseZ = (buf[10] << 8) | buf[11];
+        input->mouseLeft = buf[12];
+        input->mouseRight = buf[13];
 
 
         //remote wheel
-        //input->remoteWheel = (buf[17] << 8) | buf[16];
+        input->remoteWheel = (buf[17] << 8) | buf[16];
 
         // Serial.println(input->remoteWheel);
         // Serial.println(input->CH3); 

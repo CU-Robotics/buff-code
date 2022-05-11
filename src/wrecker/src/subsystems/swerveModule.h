@@ -1,4 +1,3 @@
-#include "subsystem.h"
 #include "state/state.h"
 #include "drivers/c620.h"
 #include "state/config.h"

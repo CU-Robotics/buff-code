@@ -50,9 +50,16 @@ struct DriverInput {
   float rightStickY;
   short leftSwitch;
   short rightSwitch;
+  uint16_t remoteWheel;
+
+  uint8_t s1;
+  uint8_t s2;
 
   float mouseX;
   float mouseY;
+  float mouseZ;
+  bool mouseLeft;
+  bool mouseRight;
 
   bool w;
   bool a;
@@ -66,7 +73,8 @@ struct DriverInput {
   bool z;
   bool x;
   bool c;
-  bool space;
+  bool v;
+  bool b;
   bool shift;
   bool ctrl;
   //byte keyboard[2] = 15 bit value
