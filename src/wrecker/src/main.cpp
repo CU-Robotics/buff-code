@@ -1,7 +1,5 @@
 #include <Arduino.h>
-#ifndef _FLEXCAN_T4_H_
 #include <FlexCAN_T4.h>
-#endif
 
 #include "state/state.h"
 #include "state/config.h"
@@ -46,7 +44,7 @@ void setup() {
 void loop() {
   //swerveChassisSubsystem.update(deltaT);
   dump_Robot_State(&robot_state);
-  delay(1);
+  delay(0.1);
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
   while (deltaT < 1000) {

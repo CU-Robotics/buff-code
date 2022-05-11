@@ -1,10 +1,6 @@
 #include "state/state.h"
-
-#ifndef SWERVEMODULE_H
-#include "swerveModule.h"
-#endif
-
 #include "state/config.h"
+#include "swerveModule.h"
 
 #ifndef SWERVE_CHASSIS_H
 #define SWERVE_CHASSIS_H

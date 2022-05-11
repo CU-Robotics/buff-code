@@ -20,4 +20,4 @@ class gm6020 : public rmMotor {
         int byteNum;
 };
 
-#endif
+#endif // GM6020_H

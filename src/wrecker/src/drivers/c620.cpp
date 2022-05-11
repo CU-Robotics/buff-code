@@ -1,6 +1,4 @@
-#ifndef C620_H
 #include "drivers/c620.h"
-#endif
 
 
 CAN_message_t c6x0Messages[3][2];
