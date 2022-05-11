@@ -1,6 +1,6 @@
-PORT:
-  '/dev/ttyACM0'
-BAUDRATE:
-  9600
-TIMEOUT:
-  3
+DEBUG: True
+
+LIVES: 4
+TIMEOUT: 3
+BAUDRATE: 9600
+PORT: '/dev/ttyACM0'
