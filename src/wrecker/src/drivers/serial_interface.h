@@ -34,4 +34,4 @@ void dump_DriverInput(DriverInput, String);
 
 void dump_RefSystem_State(S_RefSystem, String);
 
-void dump_Robot_State(S_Robot);
+void dump_Robot_State(S_Robot*);

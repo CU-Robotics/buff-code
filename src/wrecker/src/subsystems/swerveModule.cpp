@@ -68,8 +68,6 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
 
   PID_Filter(config->driveVel, moduleState->driveVel, deltaTime);
 
-  
-
   steerPrevAngle = rawPos;
 }
 

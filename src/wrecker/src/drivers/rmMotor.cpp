@@ -1,6 +1,5 @@
 #include "rmMotor.h"
 
-
 short rmMotor::getTorque() {
     return torque;
 }
