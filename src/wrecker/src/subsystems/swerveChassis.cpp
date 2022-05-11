@@ -1,18 +1,21 @@
 #include <Arduino.h>
 
+#include "state/state.h"
+#include "swerveModule.h"
+#include "state/config.h"
 #include "swerveChassis.h"
 
-#include "swerveModule.h"
-#include "../state/config.h"
-#include "../state/state.h"
+SwerveChassis::SwerveChassis() {
 
-void SwerveChassis::setup(C_SwerveChassis *config, S_Robot *state) {
-  this->config = config;
-  this->state = state;
+}
 
-  this->drivebaseRadius = sqrt(pow(this->config->drivebaseLength, 2) + pow(this->config->drivebaseWidth, 2));
+void SwerveChassis::setup(C_SwerveChassis *data, S_Robot *r_state) {
+  config = data;
+  state = r_state;
 
-  this->calibrate();
+  drivebaseRadius = sqrt(pow(config->drivebaseLength, 2) + pow(config->drivebaseWidth, 2));
+
+  calibrate();
 }
 
 void SwerveChassis::update(float deltaTime) {
@@ -27,10 +30,10 @@ void SwerveChassis::calibrate() {
 }
 
 void SwerveChassis::drive(float driveX, float driveY, float spin, float deltaTime) {
-  float A = driveX - spin * (this->config->drivebaseLength / this->drivebaseRadius);
-  float B = driveX + spin * (this->config->drivebaseLength / this->drivebaseRadius);
-  float C = driveY - spin * (this->config->drivebaseWidth / this->drivebaseRadius);
-  float D = driveY + spin * (this->config->drivebaseWidth / this->drivebaseRadius);
+  float A = driveX - spin * (config->drivebaseLength / drivebaseRadius);
+  float B = driveX + spin * (config->drivebaseLength / drivebaseRadius);
+  float C = driveY - spin * (config->drivebaseWidth / drivebaseRadius);
+  float D = driveY + spin * (config->drivebaseWidth / drivebaseRadius);
 
   float speedFR = sqrt(pow(B, 2) + pow(C, 2));
   float speedFL = sqrt(pow(B, 2) + pow(D, 2));
@@ -50,10 +53,10 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, float deltaTim
   float angleBL = radiansToDegrees(atan2(A, D));
   float angleBR = radiansToDegrees(atan2(A, C));
 
-  this->moduleFR.update(speedFR, angleFR, deltaTime);
-  this->moduleFL.update(speedFL, angleFL, deltaTime);
-  this->moduleBL.update(speedBL, angleBL, deltaTime);
-  this->moduleBR.update(speedBR, angleBR, deltaTime);
+  moduleFR.update(speedFR, angleFR, deltaTime);
+  moduleFL.update(speedFL, angleFL, deltaTime);
+  moduleBL.update(speedBL, angleBL, deltaTime);
+  moduleBR.update(speedBR, angleBR, deltaTime);
 }
 
 void SwerveChassis::driveSimple(float driveX, float driveY, float deltaTime) {
@@ -65,3 +68,4 @@ float SwerveChassis::radiansToDegrees(float radians) {
   degrees = radians * 180 / PI;
   return degrees;
 }
+

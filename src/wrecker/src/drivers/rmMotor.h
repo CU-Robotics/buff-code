@@ -1,7 +1,7 @@
+#include <FlexCAN_T4.h>
+
 #ifndef RMMOTOR_H
 #define RMMOTOR_H
-
-#include <FlexCAN_T4.h>
 
 class rmMotor {
   public:
@@ -18,6 +18,7 @@ class rmMotor {
     byte temp = -1;
   protected:
     short id = -1;
+    short MAX_VALUE;
     short byteNum = -1;
     CAN_message_t *sendMsgPtr = NULL;
 };

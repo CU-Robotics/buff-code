@@ -1,12 +1,8 @@
 #include <Arduino.h>
-
-#ifndef _FLEXCAN_T4_H_
 #include <FlexCAN_T4.h>
-#endif
 
-#include "state/config.h"
 #include "state/state.h"
-
+#include "state/config.h"
 #include "subsystems/swerveChassis.h"
 
 
@@ -19,11 +15,11 @@ FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> chassisCAN;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> superStructureCAN;
 
 // State
-S_Robot s_robot;
-C_SwerveChassis c_swerveChassis;
+S_Robot robot_state;
+C_SwerveChassis swerve_config;
 
 // Subsystems
-SwerveChassis swerveChassisSubsystem;
+SwerveChassis swerve_Chassis;
 
 // Runs once
 void setup() {
@@ -36,14 +32,15 @@ void setup() {
   superStructureCAN.setBaudRate(1000000);
 
   // Subsystem setup
-  swerveChassisSubsystem.setup(&c_swerveChassis, &s_robot);
+  swerve_Chassis.setup(&swerve_config, &robot_state);
 }
 
 
 // Runs continuously
 void loop() {
-  swerveChassisSubsystem.update(deltaT);
-
+  //swerveChassisSubsystem.update(deltaT);
+  dump_Robot_State(&robot_state);
+  delay(1);
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
   while (deltaT < 1000) {
@@ -51,3 +48,5 @@ void loop() {
   }
   lastTime = micros();
 }
+
+

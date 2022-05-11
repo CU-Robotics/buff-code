@@ -1,7 +1,3 @@
-#ifndef CONSTANTS_H //can probably remove this
-#include "constants.h"
-#endif
-
 #ifndef _FLEXCAN_T4_H_
 #include <FlexCAN_T4.h>
 #endif
@@ -29,7 +25,7 @@ void gm6020::init(short tempID, CAN_message_t* msg){
 }
 
 void gm6020::setPower(float power) {
-    short newPower = (short)(power * GM6020_MAX_VALUE);
+    short newPower = (short)(power * MAX_VALUE);
     byte byteOne = highByte(newPower);
     byte byteTwo = lowByte(newPower);
     sendMsg->buf[byteNum] = byteOne;

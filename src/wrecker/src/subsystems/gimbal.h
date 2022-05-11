@@ -1,30 +1,31 @@
 #include "subsystem.h"
+#include "state/state.h"
+#include "state/config.h"
+#include "drivers/gm6020.h"
+#include "algorithms/PID_Filter.h"
 
-#include "../state/config.h"
-#include "../state/state.h"
+#ifndef GIMBAL_H
+#define GIMBAL_H
 
-#include "../drivers/gm6020.h"
-
-#include "../algorithms/PIDController.h"
-
-class Gimbal: public Subsystem {
+class Gimbal 
+{
  public:
-    void setup(C_Gimbal *config, S_Robot *state);
-    void loop(float deltaTime);
+    Gimbal();
+    void setup(C_Gimbal *data, S_Robot *r_state);
+    void update(float deltaTime);
+
+    float realizeYawEncoder(float angle);
+    float realizePitchEncoder(float angle);
 
   private:
-    C_Gimbal *config;
-    S_Robot *state;
+    S_Robot* state;
+    C_Gimbal* config;
 
-    float pitchSetpoint;
-    float yawSetpoint;
+    float yaw_Reference;
+    float pitch_Reference;
 
-    gm6020 pitchMotor;
     gm6020 yawMotor; 
-
-    PIDController pitchController;
-    PIDController yawController;
-
-    float realizePitchEncoder(float angle);
-    float realizeYawEncoder(float angle);
+    gm6020 pitchMotor;
 };
+
+#endif // GIMBAL_H

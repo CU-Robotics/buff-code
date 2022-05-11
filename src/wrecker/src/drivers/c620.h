@@ -1,13 +1,15 @@
+#include <FreqMeasureMulti.h>
+
+#ifndef RMMOTOR_H
+#include "rmMotor.h"
+#endif
+
 #ifndef C620_H
 #define C620_H
 
-#include <FreqMeasureMulti.h>
-
-#include "rmMotor.h"
-
-
 class c620CAN : public rmMotor {
     public:
+        c620CAN();
         c620CAN(short tempID, CAN_message_t* msg);
         void setPower(float power);
 };
@@ -31,6 +33,7 @@ class c610Enc : public rmMotor {
         FreqMeasureMulti freq;
         float angle;
     public:
+        c610Enc();
         c610Enc(short tempID, CAN_message_t* msg, uint8_t encPin); //constructor
         void setPower(float power);
         float getAngle();
