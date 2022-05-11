@@ -24,7 +24,7 @@ bool ref_sys::read_serial(){
     uint8_t seq, crc, comp_stat, warning_level, robo_id, robot_level;
     uint32_t temp_launch_speed;
 
-    ref_sys curr_ref;           //Setting up an instance of our ref_sys class
+    // ref_sys curr_ref;           //Setting up an instance of our ref_sys class
   
   
     // put your main code here, to run repeatedly:
