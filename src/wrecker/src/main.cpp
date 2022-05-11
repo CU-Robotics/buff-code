@@ -10,10 +10,22 @@
 unsigned long deltaT = 0;
 unsigned long lastTime = 0;
 
-// CAN
+
+#ifndef CAN_BUSSES_INIT
+#define CAN_BUSSES_INIT
+
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+
+#endif // CAN_BUSSES_INIT
+
+#ifndef CAN_MESSAGE_INIT
+#define CAN_MESSAGE_INIT
+
+CAN_message_t c6x0Messages[3][2];
+
+#endif // CAN_MESSAGE_INIT
 
 // State
 S_Robot robot_state;
@@ -42,9 +54,10 @@ void setup() {
 
 // Runs continuously
 void loop() {
-  //swerveChassisSubsystem.update(deltaT);
+
   dump_Robot_State(&robot_state);
   delay(0.1);
+
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
   while (deltaT < 1000) {

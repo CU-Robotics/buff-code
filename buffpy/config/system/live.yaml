@@ -5,6 +5,7 @@ DEBUG:
 TOPICS:
   TARGET: 'target'
   IMAGE: 'image_raw'
+  GIMBAL_STATE: 'gimbal'
   SERIAL_OUT: 'serial_write'
   DETECTION: 'detected_object'
 

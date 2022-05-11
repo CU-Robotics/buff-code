@@ -1,11 +1,8 @@
-#define C620_H
-
 #include <FlexCAN_T4.h>
 #include <FreqMeasureMulti.h>
 
-#include "drivers/rmMotor.h"
+#include "rmMotor.h"
 
-// extern CAN_message_t c6x0Messages[3][2];
 
 #ifndef C620_H
 #define C620_H
@@ -16,8 +13,6 @@ class c620CAN : public rmMotor {
         void init(uint8_t motorId, uint8_t tempCanBusNum);
         void setPower(float power);
 };
-
-
 
 class c610Enc : public rmMotor {
     private:

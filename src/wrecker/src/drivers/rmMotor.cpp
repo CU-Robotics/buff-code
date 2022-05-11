@@ -1,19 +1,5 @@
 #include "rmMotor.h"
 
-#ifndef CAN_BUSSES_CREATED
-#define CAN_BUSSES_CREATED
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
-FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
-
-can1.begin();
-can2.begin();
-can3.begin();
-
-can1.setBaudRate(1000000);
-can2.setBaudRate(1000000);
-can3.setBaudRate(1000000);
-#endif
 
 short rmMotor::getTorque() {
     return torque;
