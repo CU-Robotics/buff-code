@@ -91,7 +91,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_chasis_volt(temp_stat);    
+        set_chasis_volt(temp_stat);    
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -106,7 +106,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_chasis_current(temp_stat);
+        set_chasis_current(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -125,28 +125,28 @@ bool ref_sys::read_serial(){
         comp_stat = comp_stat >> 4;
 
         if(comp_stat == 0){
-            curr_ref.set_curr_stage('P');  //pre comp stage
+            set_curr_stage('P');  //pre comp stage
             Serial.println("pre comp");
         }
 
         else if(comp_stat == 1){
-            curr_ref.set_curr_stage('S');   //Setup
+            set_curr_stage('S');   //Setup
         }
 
         else if(comp_stat == 2){
-            curr_ref.set_curr_stage('I');    //Init stage
+            set_curr_stage('I');    //Init stage
         }
 
         else if(comp_stat == 3){
-            curr_ref.set_curr_stage('F');   //5 sec countdown
+            set_curr_stage('F');   //5 sec countdown
         }
 
         else if(comp_stat == 4){
-            curr_ref.set_curr_stage('C');   //In combat
+            set_curr_stage('C');   //In combat
         }
 
         else if(comp_stat == 5){
-            curr_ref.set_curr_stage('R');   //calc comp results
+            set_curr_stage('R');   //calc comp results
         }
 
         while(Serial2.readBytes(&temp, 1) != 1){   
@@ -160,7 +160,7 @@ bool ref_sys::read_serial(){
 
         unix_time = unix_time | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_rem_time(int(unix_time));
+        set_rem_time(int(unix_time));
 
         Serial.flush();
 
@@ -176,15 +176,15 @@ bool ref_sys::read_serial(){
 
         if(comp_stat == 0){
 
-            curr_ref.set_comp_result('D');
+            set_comp_result('D');
             
         }else if(comp_stat == 1){
 
-            curr_ref.set_comp_result('R');
+            set_comp_result('R');
             
         }else if(comp_stat == 2){
 
-            curr_ref.set_comp_result('B');
+            set_comp_result('B');
             
         }
             
@@ -203,7 +203,7 @@ bool ref_sys::read_serial(){
 
         temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_red_hero_hp(temp_hp);
+        set_red_hero_hp(temp_hp);
 
         /////////////////////////////////////////////////////////////////
 
@@ -226,7 +226,7 @@ bool ref_sys::read_serial(){
 
         temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_red_infantry_hp(temp_hp);
+        set_red_infantry_hp(temp_hp);
 
         ///////////////////////////////////////////////////////////////
 
@@ -252,7 +252,7 @@ bool ref_sys::read_serial(){
 
         temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_red_sentry_hp(temp_hp);
+        set_red_sentry_hp(temp_hp);
 
         ///////////////////////////////////////////////////////////////
 
@@ -278,7 +278,7 @@ bool ref_sys::read_serial(){
 
         temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_blue_hero_hp(temp_hp);
+        set_blue_hero_hp(temp_hp);
 
         /////////////////////////////////////////////////////////////////
 
@@ -300,7 +300,7 @@ bool ref_sys::read_serial(){
 
         temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_blue_infantry_hp(temp_hp);
+        set_blue_infantry_hp(temp_hp);
 
         ///////////////////////////////////////////////////////////////
 
@@ -326,7 +326,7 @@ bool ref_sys::read_serial(){
 
         temp_hp = temp_hp | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_blue_sentry_hp(temp_hp);
+        set_blue_sentry_hp(temp_hp);
 
         Serial.flush();
 
@@ -358,7 +358,7 @@ bool ref_sys::read_serial(){
 
         rem_proj = rem_proj | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_red_one_rem_proj(temp_hp);
+        set_red_one_rem_proj(temp_hp);
 
         ///////////////////////////////////////////////////////////////
 
@@ -373,7 +373,7 @@ bool ref_sys::read_serial(){
 
         rem_proj = rem_proj | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_red_two_rem_proj(temp_hp);
+        set_red_two_rem_proj(temp_hp);
 
         ///////////////////////////////////////////////////////////////
 
@@ -388,7 +388,7 @@ bool ref_sys::read_serial(){
 
         rem_proj = rem_proj | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_blue_one_rem_proj(temp_hp);
+        set_blue_one_rem_proj(temp_hp);
 
         ///////////////////////////////////////////////////////////////
 
@@ -403,7 +403,7 @@ bool ref_sys::read_serial(){
 
         rem_proj = rem_proj | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_blue_two_rem_proj(temp_hp);
+        set_blue_two_rem_proj(temp_hp);
 
         Serial.flush();
 
@@ -421,15 +421,15 @@ bool ref_sys::read_serial(){
 
         if(warning_level == 1){
 
-            curr_ref.set_ref_warning('Y');
+            set_ref_warning('Y');
             
         }else if(warning_level == 2){
 
-            curr_ref.set_ref_warning('R');
+            set_ref_warning('R');
             
         }else if(warning_level == 3){
 
-            curr_ref.set_ref_warning('F');
+            set_ref_warning('F');
 
         }
 
@@ -438,7 +438,7 @@ bool ref_sys::read_serial(){
 
         robo_id = temp;
 
-        curr_ref.set_foul_robot_id(int(robo_id));
+        set_foul_robot_id(int(robo_id));
 
         Serial.flush();
         
@@ -492,62 +492,62 @@ bool ref_sys::read_serial(){
         if(int(robo_id) == 1){      //red hero
 
             if(int(robot_level) >= 1 && int(robot_level) <=3){
-            curr_ref.red_hero_set_robot_level(int(robot_level));
+            red_hero_set_robot_level(int(robot_level));
             }
 
-            curr_ref.set_red_hero_hp(temp_hp);
+            set_red_hero_hp(temp_hp);
 
-            curr_ref.set_red_hero_max_hp(temp_max_hp);
+            set_red_hero_max_hp(temp_max_hp);
             
         }else if(int(robo_id) == 3){    //red infantry
 
             if(int(robot_level) >= 1 && int(robot_level) <=3){
-            curr_ref.red_infantry_set_robot_level(int(robot_level));
+            red_infantry_set_robot_level(int(robot_level));
             }
 
-            curr_ref.set_red_infantry_hp(temp_hp);
+            set_red_infantry_hp(temp_hp);
 
-            curr_ref.set_red_infantry_max_hp(temp_max_hp);
+            set_red_infantry_max_hp(temp_max_hp);
             
         }else if(int(robo_id) == 7){    //red sentry
 
             if(int(robot_level) >= 1 && int(robot_level) <=3){
-            curr_ref.red_sentry_set_robot_level(int(robot_level));
+            red_sentry_set_robot_level(int(robot_level));
             }
 
-            curr_ref.set_red_sentry_hp(temp_hp);
+            set_red_sentry_hp(temp_hp);
 
-            curr_ref.set_red_sentry_max_hp(temp_max_hp);
+            set_red_sentry_max_hp(temp_max_hp);
             
         }else if(int(robo_id) == 101){    //blue hero
 
             if(int(robot_level) >= 1 && int(robot_level) <=3){
-            curr_ref.blue_hero_set_robot_level(int(robot_level));      
+            blue_hero_set_robot_level(int(robot_level));      
             }
 
-            curr_ref.set_blue_hero_hp(temp_hp);
+            set_blue_hero_hp(temp_hp);
 
-            curr_ref.set_blue_hero_max_hp(temp_max_hp);
+            set_blue_hero_max_hp(temp_max_hp);
             
         }else if(int(robo_id) == 103){    //blue infantry
 
             if(int(robot_level) >= 1 && int(robot_level) <=3){
-            curr_ref.blue_infantry_set_robot_level(int(robot_level));
+            blue_infantry_set_robot_level(int(robot_level));
             }
 
-            curr_ref.set_blue_infantry_hp(temp_hp);
+            set_blue_infantry_hp(temp_hp);
 
-            curr_ref.set_blue_infantry_max_hp(temp_max_hp);
+            set_blue_infantry_max_hp(temp_max_hp);
             
         }else if(int(robo_id) == 107){    //blue sentry
 
             if(int(robot_level) >= 1 && int(robot_level) <=3){
-            curr_ref.blue_sentry_set_robot_level(int(robot_level));
+            blue_sentry_set_robot_level(int(robot_level));
             }
 
-            curr_ref.set_blue_sentry_hp(temp_hp);
+            set_blue_sentry_hp(temp_hp);
             
-            curr_ref.set_blue_sentry_max_hp(temp_max_hp);
+            set_blue_sentry_max_hp(temp_max_hp);
             
         }
 
@@ -564,7 +564,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_1_cool_val(temp_stat);
+        set_robot_1_cool_val(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -579,7 +579,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_1_barr_heat_lim(temp_stat);
+        set_robot_1_barr_heat_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -594,7 +594,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_1_speed_lim(temp_stat);
+        set_robot_1_speed_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -609,7 +609,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_2_cool_val(temp_stat);
+        set_robot_2_cool_val(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -624,7 +624,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_2_barr_heat_lim(temp_stat);
+        set_robot_2_barr_heat_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -639,7 +639,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_2_speed_lim(temp_stat);
+        set_robot_2_speed_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -654,7 +654,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_42_cool_val(temp_stat);
+        set_robot_42_cool_val(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -669,7 +669,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_42_barr_heat_lim(temp_stat);
+        set_robot_42_barr_heat_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -684,7 +684,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_42_speed_lim(temp_stat);
+        set_robot_42_speed_lim(temp_stat);
 
         ////////////////////////////////////////////////////////////////////////////
 
@@ -699,7 +699,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_robot_power_lim(temp_stat);
+        set_robot_power_lim(temp_stat);
 
         Serial.flush();
 
@@ -719,13 +719,13 @@ bool ref_sys::read_serial(){
 
 
         if(temp[0] == 1){
-            curr_ref.set_robot_buff('0');
+            set_robot_buff('0');
         }else if(temp[1] == 1){
-            curr_ref.set_robot_buff('1');
+            set_robot_buff('1');
         }else if(temp[2] == 1){
-            curr_ref.set_robot_buff('2');
+            set_robot_buff('2');
         }else if(temp[3] == 1){
-            curr_ref.set_robot_buff('3');
+            set_robot_buff('3');
         }
 
         Serial.flush();
@@ -759,7 +759,7 @@ bool ref_sys::read_serial(){
 
         comp_stat = int(temp);
 
-        curr_ref.set_launch_freq(comp_stat);
+        set_launch_freq(comp_stat);
 
         //////////////////////////////////////////////////////////////////
 
@@ -790,7 +790,7 @@ bool ref_sys::read_serial(){
 
         /////////////////////////////////////////////////////////////////
 
-        curr_ref.set_launch_speed(temp_launch_speed);
+        set_launch_speed(temp_launch_speed);
 
         Serial.flush();
 
@@ -812,7 +812,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_rem_17_proj(temp_stat);
+        set_rem_17_proj(temp_stat);
 
         /////////////////////////////////////////////////////////////////////////
 
@@ -827,7 +827,7 @@ bool ref_sys::read_serial(){
 
         temp_stat = temp_stat | temp;       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-        curr_ref.set_rem_42_proj(temp_stat);
+        set_rem_42_proj(temp_stat);
 
         /////////////////////////////////////////////////////////////////////////
 
