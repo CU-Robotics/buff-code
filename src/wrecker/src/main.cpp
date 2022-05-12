@@ -16,9 +16,10 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 unsigned long deltaT = 0;
 unsigned long lastTime = 0;
 
-// State
+// Robot Objects
 S_Robot robot_state;
-C_SwerveChassis swerve_config;
+C_Robot robot_config;
+
 
 // Subsystems
 SwerveChassis swerve_Chassis;
@@ -30,15 +31,19 @@ void setup() {
   digitalWrite(LED_BUILTIN, HIGH);
 
   // Subsystem setup
-  swerve_Chassis.setup(&swerve_config, &robot_state);
+  swerve_Chassis.setup(&robot_config.swerveChassis, &robot_state);
+
+  Serial.begin(1000000);
 }
 
 
 // Runs continuously
 void loop() {
 
-  dump_Robot_State(&robot_state);
-  delay(0.1);
+  dump_Robot(&robot_state, &robot_config);
+  
+  if (Serial.available() > 0)
+    serial_event(&robot_state, &robot_config);
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
@@ -46,6 +51,7 @@ void loop() {
     deltaT = micros() - lastTime;
   }
   lastTime = micros();
+  delay(100);
 }
 
 

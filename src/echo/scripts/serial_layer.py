@@ -44,6 +44,7 @@ class SerialLayer():
 		s = ''
 		for l in msg.data:
 			s += str(l)
+		print(f'Writing {s}')
 		self.write_device(bytes(s, 'utf-8'))
 
 
@@ -83,11 +84,14 @@ class SerialLayer():
 		"""
 		packet = self.device.readline().decode().rstrip().split(':')
 
-		if len(packet) < 2:
-			return
+
+		if len(packet) == 2:
+			name, val = packet
+			if len(val.split('.')) - 1 > len(val.split(',')):
+				return
 
 		else:
-			name, val = packet[:2]
+			return
 
 		if not name in self.publishers:
 			self.publishers[name] = rospy.Publisher(name, Float64MultiArray, queue_size=10)
