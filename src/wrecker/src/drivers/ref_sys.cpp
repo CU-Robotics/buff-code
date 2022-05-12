@@ -15,7 +15,7 @@ ref_sys::ref_sys(){
     run_data -> curr_stage = 'Z';
     run_data -> comp_type= 'Z';
     run_data -> rem_time = 0;
-    run_data -> comp_result = "Z";
+    run_data -> comp_result = 'Z';
 
     run_data -> red_hero_hp = 0;
     run_data -> red_sentry_hp = 0;
