@@ -26,9 +26,9 @@ class SwerveModule {
 
     float steerOffset;
     float steerRollover;
-    float steerPrevAngle;
+    float prevRawSteerAngle;
 
-    void findCalibrationMatch();
+    int findCalibrationMatch(int currValue, int* alignmentTable, int tableSize);
     void motorAngleToWheelAngle();
 };
 
