@@ -15,9 +15,9 @@ struct S_SwerveModule {
   float drive_speed;
   float drive_accel;
 
-  S_PID steerVel;
-  S_PID steerPos;
-  S_PID driveVel;
+  S_PID *steerVel;
+  S_PID *steerPos;
+  S_PID *driveVel;
 };
 
 struct S_Chassis {

@@ -22,10 +22,10 @@ void c620CAN::init(uint8_t motorId, uint8_t tempCanBusNum) {
   byteNum = id - 1;
   if(byteNum > 3) {
     byteNum -= 4;
-    //sendMsgPtr = &c6x0Messages[canBusNum-1][0];
+    sendMsgPtr = &c6x0Messages[canBusNum-1][0];
     sendMsgPtr->id = 0x1FF;   //ID for all c620s 4-7
   } else {
-    //sendMsgPtr = &c6x0Messages[canBusNum-1][1];
+    sendMsgPtr = &c6x0Messages[canBusNum-1][1];
     sendMsgPtr->id = 0x200;   //ID for all c620s 0-3
   }
 }
@@ -77,21 +77,15 @@ void c610Enc::init(short tempID, uint8_t tempCanBusNum, uint8_t encPin) {
   canBusNum = tempCanBusNum;
   id = tempID;
   byteNum = id - 1;
-<<<<<<< HEAD
-
-=======
-  // sendMsgPtr = msg;
->>>>>>> origin/drivers
   if(byteNum > 3) {
     byteNum -= 4;
-    //sendMsgPtr = &c6x0Messages[canBusNum-1][0];
+    sendMsgPtr = &c6x0Messages[canBusNum-1][0];
     sendMsgPtr->id = 0x1FF;   //ID for all c620s 4-7
   } 
   else {
-    //sendMsgPtr = &c6x0Messages[canBusNum-1][1];
+    sendMsgPtr = &c6x0Messages[canBusNum-1][1];
     sendMsgPtr->id = 0x200;   //ID for all c620s 0-3
   }
-
 
   //On the Teensy 4.1 encPin can be pin 0-9,22-25,28,29,33,36,37,42-47, 48-50(dups),51, 52-53 (dups), 54
   if ((encPin >= 0 && encPin <= 9) || (encPin >= 22 && encPin <= 25) || encPin == 28 || encPin == 29 || encPin == 33 || encPin == 36 || encPin == 37 || (encPin >= 42 && encPin <= 54))
@@ -138,11 +132,6 @@ float c610Enc::getAngle() {
   return angle;
 }
 
-<<<<<<< HEAD
-
-
-
-=======
 void c610Enc::updateMotor() {
     CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id - 1];
     // angle = recMsg->buf[0];
@@ -159,4 +148,3 @@ void c610Enc::updateMotor() {
 
     temp = recMsg->buf[6];
 }
->>>>>>> origin/drivers
