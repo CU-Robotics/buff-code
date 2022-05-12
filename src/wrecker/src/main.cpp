@@ -8,8 +8,10 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
 #include "state/state.h"
 #include "state/config.h"
+#include "subsystems/gimbal.h"
 #include "drivers/serial_interface.h"
 #include "subsystems/swerveChassis.h"
+
 
 
 // Loop timing
@@ -22,6 +24,7 @@ C_Robot robot_config;
 
 
 // Subsystems
+Gimbal gimbal;
 SwerveChassis swerve_Chassis;
 
 // Runs once
@@ -31,9 +34,10 @@ void setup() {
   digitalWrite(LED_BUILTIN, HIGH);
 
   // Subsystem setup
+  gimbal.setup(&robot_config.gimbal, &robot_state);
   swerve_Chassis.setup(&robot_config.swerveChassis, &robot_state);
 
-  Serial.begin(1000000);
+  Serial.begin(9600);
 }
 
 
@@ -45,13 +49,16 @@ void loop() {
   if (Serial.available() > 0)
     serial_event(&robot_state, &robot_config);
 
+  gimbal.update(deltaT);
+  swerve_Chassis.update(deltaT);
+
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
-  while (deltaT < 1000) {
+  while (deltaT < 1000000) // 1 second
     deltaT = micros() - lastTime;
-  }
+  
   lastTime = micros();
-  delay(100);
+  Serial.println(deltaT);
 }
 
 

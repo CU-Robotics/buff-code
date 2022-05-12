@@ -3,6 +3,7 @@
 #include "state/state.h"
 #include "state/config.h"
 #include "swerveModule.h"
+#include "algorithms/PID_Filter.h"
 
 
 SwerveModule::SwerveModule() {
@@ -60,13 +61,13 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   }
 
   moduleState->steerPos.Y = pos;
-  PID_Filter(config->steerPos, moduleState->steerPos, deltaTime);
+  PID_Filter(&config->steerPos, &moduleState->steerPos, deltaTime);
 
   moduleState->steerVel.Y = rpm;
-  moduleState->steerVel.R = -moduleState->steerPos.Y * 10000;
-  PID_Filter(config->steerVel, moduleState->steerVel, deltaTime);
+  //moduleState->steerVel.R = -moduleState->steerPos.Y * 10000;
+  //PID_Filter(&config->steerVel, &moduleState->steerVel, deltaTime);
 
-  PID_Filter(config->driveVel, moduleState->driveVel, deltaTime);
+  //PID_Filter(&config->driveVel, &moduleState->driveVel, deltaTime);
 
   steerPrevAngle = rawPos;
 }

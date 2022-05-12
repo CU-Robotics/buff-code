@@ -4,6 +4,6 @@
 #ifndef PID_FILTER_H
 #define PID_FILTER_H
 
-void PID_Filter(C_PID, S_PID, long);
+void PID_Filter(C_PID*, S_PID*, long);
 
 #endif // PID_FILTER_H
