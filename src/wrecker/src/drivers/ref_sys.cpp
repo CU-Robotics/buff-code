@@ -12,7 +12,63 @@ accurately test the code when I have a fully up and running ref system.
 */
 
 ref_sys::ref_sys(){
+    run_data -> curr_stage = 'Z';
+    run_data -> comp_type= 'Z';
+    run_data -> rem_time = 0;
+    run_data -> comp_result = "Z";
 
+    run_data -> red_hero_hp = 0;
+    run_data -> red_sentry_hp = 0;
+    run_data -> red_infantry_hp = 0;
+    run_data -> blue_hero_hp = 0;
+    run_data -> blue_sentry_hp = 0;
+    run_data -> blue_infantry_hp = 0;
+    run_data -> red_hero_max_hp = 0;
+    run_data -> red_sentry_max_hp = 0;
+    run_data -> red_infantry_max_hp = 0;
+    run_data -> blue_hero_max_hp = 0;
+    run_data -> blue_sentry_max_hp = 0;
+    run_data -> blue_infantry_max_hp = 0;
+
+    run_data -> red_one_rem_proj = 0;
+    run_data -> red_two_rem_proj = 0;
+    run_data -> blue_one_rem_proj = 0;
+    run_data -> blue_two_rem_proj = 0;
+
+    run_data -> ref_warning = 'Z';
+    run_data -> foul_robot_id = 0;
+    
+    run_data -> red_hero_robot_level = 0;
+    run_data -> red_infantry_robot_level = 0;
+    run_data -> red_sentry_robot_level = 0;
+    run_data -> blue_hero_robot_level = 0;
+    run_data -> blue_infantry_robot_level = 0;
+    run_data -> blue_sentry_robot_level = 0;
+
+    run_data -> robot_1_cool_val = 0;       //17mm
+    run_data -> robot_1_barr_heat_lim = 0;       //17mm
+    run_data -> robot_1_speed_lim = 0;       //17mm
+
+    run_data -> robot_2_cool_val = 0;       //17mm
+    run_data -> robot_2_barr_heat_lim = 0;       //17mm
+    run_data -> robot_2_speed_lim = 0;       //17mm
+
+    run_data -> robot_42_cool_val = 0;
+    run_data -> robot_42_heat_lim = 0;
+    run_data -> robot_42_speed_lim = 0;  
+
+    run_data -> robot_power_lim = 0;
+
+    run_data -> chasis_volt = 0;
+    run_data -> chasis_current = 0;
+
+    run_data -> robot_buff = 0;
+
+    run_data -> launch_freq = 0;
+    run_data -> launch_speed = 0;
+
+    run_data -> rem_17_proj = 0;
+    run_data -> rem_42_proj = 0;
 }
 
 void ref_sys::init(S_RefSystem *tempInput) {
