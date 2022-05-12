@@ -16,10 +16,12 @@ FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
 ref_sys referee_system;
+S_RefSystem * temp_for_test;
 
 void setup() {
     Serial.begin(115200);
     Serial.println("Referee system test");
+    referee_system.init(temp_for_test);
 }
 
 void loop() {
@@ -31,6 +33,8 @@ Serial.print("end: ");
 Serial.println(micros());
 Serial.println();
 delay(10);
+Serial.println(temp_for_test -> comp_type);
+
 
 
 }
