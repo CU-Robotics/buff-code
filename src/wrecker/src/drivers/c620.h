@@ -27,3 +27,5 @@ class c610Enc : public rmMotor {
         float getAngle();
         void updateMotor();
 };
+
+#endif

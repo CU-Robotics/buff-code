@@ -24,9 +24,10 @@ class SwerveModule {
     c610Enc steerMotor;
     c620CAN driveMotor;
 
-    float steerOffset;
-    float steerRollover;
-    float prevRawSteerAngle;
+    float steerOffset = 0;
+    float steerRollover = 0;
+    float prevRawSteerAngle = 0;
+    float prevSteerAngle = 0;
 
     int findCalibrationMatch(int currValue, int* alignmentTable, int tableSize);
     void motorAngleToWheelAngle();

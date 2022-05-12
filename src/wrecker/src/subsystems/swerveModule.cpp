@@ -4,9 +4,10 @@
 #include "state/config.h"
 #include "swerveModule.h"
 
+#include "algorithms/PID_Filter.h"
 
 SwerveModule::SwerveModule() {
-  
+
 }
 
 void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state) {
@@ -26,7 +27,12 @@ void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state) {
     case 3:
       moduleState = &state->chassis.RL;
       break;
-    }
+    default:
+      moduleState = &state->chassis.FL;
+      break;
+  }
+
+  this->steerMotor.init(config->moduleID, 1, config->moduleID);
 }
 
 void SwerveModule::calibrate() {
@@ -35,10 +41,9 @@ void SwerveModule::calibrate() {
 }
 
 void SwerveModule::update(float speed, float angle, float deltaTime) {
-  // VEL PID
-  float rpm = steerMotor.getRpm();
+  Serial.println("Entered swervemodule update");
 
-  // POS PID
+  // POS PID CALCULATIONS
   float rawSteerAngle = this->steerMotor.getAngle();
 
   if ((rawSteerAngle - this->prevRawSteerAngle) > 180) {
@@ -56,15 +61,31 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   if (steerAngle < 0) {
     steerAngle += 360;
   }
-
-  moduleState->steerPos.Y = steerAngle;
-  PID_Filter(config->steerPos, moduleState->steerPos, deltaTime);
-  moduleState->steerVel.Y = rpm;
-  moduleState->steerVel.R = -moduleState->steerPos.Y * 10000;
-  PID_Filter(config->steerVel, moduleState->steerVel, deltaTime);
-  steerMotor.setPower(moduleState->steerVel.Y);
   
-  PID_Filter(config->driveVel, moduleState->driveVel, deltaTime);
+  // VEL PID CALCULATIONS
+  Serial.println("VEL PID CALCULATIONS");
+  float rpm = (steerAngle - this->prevSteerAngle) * deltaTime * 60000000;
+  this->prevSteerAngle = steerAngle;
+
+  moduleState->steerPos->Y = 0;
+  PID_Filter(&config->steerPos, moduleState->steerPos, deltaTime);
+  Serial.println("test point 3");
+  Serial.println(rpm);
+  Serial.println(moduleState->steerVel->Y);
+  moduleState->steerVel->Y = rpm;
+  Serial.println("test point 2");
+  moduleState->steerVel->R = -moduleState->steerPos->Y * 10000;
+  Serial.println("test point 1");
+  PID_Filter(&config->steerVel, moduleState->steerVel, deltaTime);
+  
+  steerMotor.setPower(moduleState->steerVel->Y);
+  Serial.print(this->config->moduleID);
+  Serial.print(" - ");
+  Serial.print(steerAngle);
+  Serial.print(" - ");
+  Serial.println(moduleState->steerVel->Y);
+  
+  PID_Filter(&config->driveVel, moduleState->driveVel, deltaTime);
 
   this->prevRawSteerAngle = rawSteerAngle;
 }
