@@ -37,13 +37,12 @@ bool ref_sys::read_serial(){
             if(enter_code == 0xA5){         //It looks for this value that signifies that there is about to be a transmission of data
                 gotStartByte = true;
 
-                Serial.println("Enter code received");
+                //Serial.println("Enter code received");
 
                 while(Serial2.readBytes(&temp, 1) != 1){        //This waits till another byte of data is available
                 }
                 
                 data_length = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                // data_length = data_length << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){        //This waits till another byte of data is available
                 }
@@ -66,7 +65,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 cmd_id = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                // cmd_id = cmd_id << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){
                 }        //This waits till another byte of data is available
@@ -78,7 +76,7 @@ bool ref_sys::read_serial(){
 
                 if(cmd_id == 514){   //power and heat data   
                     
-                Serial.println("received cmd_id, inside 514"); 
+                //Serial.println("received cmd_id, inside 514"); 
 
                 ////////////////////////////////////////////////////////////////////////////
 
@@ -86,7 +84,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_stat = temp_stat;
 
                 while(Serial2.readBytes(&temp, 1) != 1){    //Setting chasis output voltage 
                 }        //This waits till another byte of data is available
@@ -101,7 +98,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_stat = temp_stat << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){    //Setting chasis output current
                 }        //This waits till another byte of data is available
@@ -116,7 +112,7 @@ bool ref_sys::read_serial(){
 
                 else if(cmd_id == 1){  //stage 1
 
-                Serial.println("received cmd_id inside 1"); 
+                //Serial.println("received cmd_id inside 1"); 
 
                 while(Serial2.readBytes(&temp, 1) != 1){   
                 }        //This waits till another byte of data is available
@@ -153,7 +149,6 @@ bool ref_sys::read_serial(){
                 }
 
                 unix_time = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //unix_time = unix_time << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){    
                 }        //This waits till another byte of data is available
@@ -164,7 +159,7 @@ bool ref_sys::read_serial(){
                                     
                 }else if(cmd_id == 2){   //results for 2
 
-                Serial.println("received cmd_id inside 2"); 
+                //Serial.println("received cmd_id inside 2"); 
 
                 while(Serial2.readBytes(&temp, 1) != 1){ 
                 }        //This waits till another byte of data is available
@@ -187,13 +182,12 @@ bool ref_sys::read_serial(){
                     
                 }else if(cmd_id == 3){   //everyone hp
 
-                    Serial.println("received cmd_id inside 3"); 
+                    //Serial.println("received cmd_id inside 3"); 
 
                     while(Serial2.readBytes(&temp, 1) != 1){
                 }        //This waits till another byte of data is available
 
                 temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_hp = temp_hp << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){   
                 }        //This waits till another byte of data is available
@@ -216,7 +210,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_hp = temp_hp << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){            //red infantry hp  
                 }        //This waits till another byte of data is available
@@ -242,7 +235,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_hp = temp_hp << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){            //red infantry hp   
                 }        //This waits till another byte of data is available
@@ -268,7 +260,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_hp = temp_hp << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){    //Blue hero  
                 }        //This waits till another byte of data is available
@@ -290,7 +281,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_hp = temp_hp << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){            //blue infantry hp
                 }        //This waits till another byte of data is available
@@ -316,7 +306,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_hp = temp_hp << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){            //blue infantry hp  
                 }        //This waits till another byte of data is available
@@ -329,7 +318,7 @@ bool ref_sys::read_serial(){
             
                 }else if(cmd_id == 5){   //resto zone and everyone's projectivels
 
-                    Serial.println("received cmd_id inside 5"); 
+                    //Serial.println("received cmd_id inside 5"); 
 
                 ///////////////////////////////////////////////////////////////
 
@@ -346,7 +335,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 rem_proj = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //rem_proj = rem_proj << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){            //RED 1 remaining projectiles   
                 }        //This waits till another byte of data is available
@@ -361,7 +349,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 rem_proj = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //rem_proj = rem_proj << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){            //RED 2 remaining projectiles    
                 }        //This waits till another byte of data is available
@@ -376,7 +363,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 rem_proj = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //rem_proj = rem_proj << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){            //Blue one remaining projectiles
                 }        //This waits till another byte of data is available
@@ -391,7 +377,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 rem_proj = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //rem_proj = rem_proj << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){            //Blue two remaining projectiles  
                 }        //This waits till another byte of data is available
@@ -404,7 +389,7 @@ bool ref_sys::read_serial(){
                     
                 }else if(cmd_id == 260){ //ref warning
 
-                Serial.println("received cmd_id inside 260"); 
+                //Serial.println("received cmd_id inside 260"); 
 
 
                 while(Serial2.readBytes(&temp, 1) != 1){  
@@ -435,7 +420,7 @@ bool ref_sys::read_serial(){
 
                 }else if(cmd_id == 201){ //robo stat
 
-                Serial.println("received cmd_id inside 201"); 
+                //Serial.println("received cmd_id inside 201"); 
 
                 ////////////////////////////////////////////////////////////////////////////
 
@@ -455,7 +440,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_hp = temp_hp << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){
                 }        //This waits till another byte of data is available
@@ -468,7 +452,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_max_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_max_hp = temp_max_hp << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){  
                 }        //This waits till another byte of data is available
@@ -547,7 +530,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_stat = temp_stat << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){          //Robot 1 cooling value read in 
                 }        //This waits till another byte of data is available
@@ -562,7 +544,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_stat = temp_stat << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot one barrel heat limit 
                 }        //This waits till another byte of data is available
@@ -577,7 +558,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_stat = temp_stat << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot one speed limit 
                 }        //This waits till another byte of data is available
@@ -592,7 +572,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-                //temp_stat = temp_stat << 8;
 
                 while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot two cooling value  
                 }        //This waits till another byte of data is available
@@ -689,7 +668,7 @@ bool ref_sys::read_serial(){
               
                 }else if(cmd_id == 516){ //robot buffs
 
-                Serial.println("received cmd_id inside 516"); 
+                //Serial.println("received cmd_id inside 516"); 
 
                 while(Serial2.readBytes(&temp, 1) != 1){ 
                 }        //This waits till another byte of data is available
@@ -706,11 +685,11 @@ bool ref_sys::read_serial(){
                 
                 }else if(cmd_id == 518){  //damage stats
 
-                Serial.println("received cmd_id inside 518"); 
+                //Serial.println("received cmd_id inside 518"); 
 
                 }else if(cmd_id == 519){  //RT launch info
 
-                Serial.println("received cmd_id inside 519"); 
+                //Serial.println("received cmd_id inside 519"); 
 
                 ///////////////////////////////////////////////////////////////////
 
@@ -760,7 +739,7 @@ bool ref_sys::read_serial(){
                 
                 }else if(cmd_id == 520){  //remaining proj.
 
-                Serial.println("received cmd_id inside 520"); 
+                //Serial.println("received cmd_id inside 520"); 
 
                 ////////////////////////////////////////////////////////////////////////
 
@@ -794,7 +773,7 @@ bool ref_sys::read_serial(){
                 
                 }else if(cmd_id == 521){  //RFID stat
 
-                Serial.println("received cmd_id inside 521");           //I am not sure if I need to record this
+                //Serial.println("received cmd_id inside 521");           //I am not sure if I need to record this
 
                 
         
