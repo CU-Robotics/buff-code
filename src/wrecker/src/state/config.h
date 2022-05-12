@@ -22,6 +22,7 @@ struct C_Teensy {
 
 struct C_SwerveModule {
   int moduleID;
+  int cornerID;
   int alignment[9];
 
   C_PID steerVel;
@@ -48,8 +49,8 @@ struct C_RailChassis {
   int numNodes = 10;
   float nodes[10];
 
-  C_PID driveVel;
   C_PID drivePos;
+  C_PID driveVel;
 };
 
 struct C_Gimbal {
@@ -81,6 +82,14 @@ struct C_Shooter42 {
   float flywheelPowerLvl1 = 0.17;
   float flywheelPowerLvl2 = 0.2;
   float flywheelPowerLvl3 = 0.22;
+};
+
+struct C_Robot {
+  C_Gimbal gimbal;
+  C_Shooter17 shooter17;
+  C_Shooter42 shooter42;
+  C_RailChassis railChassis;
+  C_SwerveChassis swerveChassis;
 };
 
 #endif

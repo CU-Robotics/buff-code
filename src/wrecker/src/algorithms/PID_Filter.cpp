@@ -4,13 +4,16 @@
 
 void PID_Filter(C_PID* config, S_PID* state, long dt)
 {
+  if (dt == 0.0)
+    return;
+
   float error = state->R - state->Y;
   
   // Derivative term = change in error (X[0])
-  state->X[2] = (error - state->X[0]) / dt;
+  state->X[2] = (error - state->X[0]);
   
   // Integral term = sum of error
-  state->X[1] = max(config->Imin, min(config->Imax, state->X[1] + (state->X[0] * dt)));
+  state->X[1] = max(config->Imin, min(config->Imax, state->X[1] + (state->X[0])));
   
   // Proportional term = error (R - Y)
   state->X[0] = error;

@@ -9,11 +9,14 @@ FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
 #include "state/state.h"
-#include "state/config.h"
-#include "subsystems/swerveChassis.h"
 #include "drivers/dr16.h"
-
+#include "state/config.h"
 #include "drivers/ref_sys.h"
+#include "subsystems/gimbal.h"
+#include "drivers/serial_interface.h"
+#include "subsystems/swerveChassis.h"
+
+
 
 
 // Loop timing
@@ -24,18 +27,21 @@ unsigned long lastTime = 0;
 
 // State
 S_Robot robot_state;
-C_SwerveChassis swerve_config;
+C_Robot robot_config;
+
 
 // Subsystems
-SwerveChassis swerveChassis;
+Gimbal gimbal;
 dr16 reciever;
 ref_sys refSystem;
+SwerveModule sm;
+SwerveChassis swerveChassis;
 
 // Runs once
 void setup() {
   delay(1000);
-  Serial.begin(115200);
-  Serial.println("basic test");
+  Serial.begin(1000000);
+  //Serial.println("basic test");
 
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
@@ -51,27 +57,36 @@ void setup() {
   reciever.init(&robot_state.driverInput);
 
   // Subsystem setup
-  swerveChassis.setup(&swerve_config, &robot_state);
+
+  // Subsystem setup
+  // gimbal.setup(&robot_config.gimbal, &robot_state);
+  // swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+
+  sm.setup(&robot_config.swerveChassis.FR, &robot_state, &robot_state.chassis.FR);
+  dump_Swerve(&robot_state.chassis.FR, "Front_Right");
+
 }
 
 
 // Runs continuously
 void loop() {
-  Serial.println("test");
+  //Serial.println("test");
 
-  reciever.update();
+  dump_Robot(&robot_state, &robot_config);
+  
+  if (Serial.available() > 0)
+    serial_event(&robot_state, &robot_config);
 
-  Serial.println("Finished reciever update");
-
-  swerveChassis.update(deltaT);
-
-  Serial.println("finsished swervechassis update");
+  //reciever.update();
+  //gimbal.update(deltaT);
+  //swerveChassis.update(deltaT);
+  sm.update(0, 0, deltaT);
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
-  while (deltaT < 1000) {
+  while (deltaT < 1000000) // 1 second
     deltaT = micros() - lastTime;
-  }
+  
   lastTime = micros();
 }
 
