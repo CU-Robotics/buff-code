@@ -8,10 +8,10 @@ struct S_PID {
 };
 
 struct S_SwerveModule {
-  float steer_angle;
-  float steer_speed;
-  float drive_speed;
-  float drive_accel;
+  float steer_angle = 0.0f;
+  float steer_speed = 0.0f;
+  float drive_speed = 0.0f;
+  float drive_accel = 0.0f;
 
   S_PID steerVel;
   S_PID steerPos;
@@ -19,21 +19,22 @@ struct S_SwerveModule {
 };
 
 struct S_Chassis {
-  float heading; // naming needs to be more consistent (greek letters, descriptive or units)
-  float rpm;
-  float alpha; // angular acceleration
-  float a[2];
+  float rpm = 0.0f;
+  float alpha = 0.0f; // angular acceleration
+  float heading = 0.0f; // naming needs to be more consistent (greek letters, descriptive or units)
+  float a[2] = {0.0f, 0.0f};
+
   S_SwerveModule FL;
   S_SwerveModule FR;
   S_SwerveModule RR;
   S_SwerveModule RL;
-
 };
 
 struct S_Gimbal {
   float yaw = 0.0f;
   float pitch = 0.0f;
   float yawGlobal = 0.0f;
+
   S_PID yaw_PID;
   S_PID pitch_PID;
 };
@@ -43,45 +44,46 @@ struct S_Shooter {
 };
 
 struct DriverInput {
-  float leftStickX;
-  float leftStickY;
-  float rightStickX;
-  float rightStickY;
-  short leftSwitch;
-  short rightSwitch;
-  uint16_t remoteWheel;
+  float leftStickX = 0.0f;
+  float leftStickY = 0.0f;
+  float rightStickX = 0.0f;
+  float rightStickY = 0.0f;
+  short leftSwitch = 0.0f;
+  short rightSwitch = 0.0f;
+  uint16_t remoteWheel = 0;
 
-  uint8_t s1;
-  uint8_t s2;
+  uint8_t s1 = 0;
+  uint8_t s2 = 0;
 
-  float mouseX;
-  float mouseY;
-  float mouseZ;
-  bool mouseLeft;
-  bool mouseRight;
+  float mouseX = 0.0f;
+  float mouseY = 0.0f;
+  float mouseZ = 0.0f;
+  bool mouseLeft = false;
+  bool mouseRight = false;
 
-  bool w;
-  bool a;
-  bool s;
-  bool d;
-  bool q;
-  bool e;
-  bool r;
-  bool f;
-  bool g;
-  bool z;
-  bool x;
-  bool c;
-  bool v;
-  bool b;
-  bool shift;
-  bool ctrl;
+  bool w = false;
+  bool a = false;
+  bool s = false;
+  bool d = false;
+  bool q = false;
+  bool e = false;
+  bool r = false;
+  bool f = false;
+  bool g = false;
+  bool z = false;
+  bool x = false;
+  bool c = false;
+  bool v = false;
+  bool b = false;
+  bool shift = false;
+  bool ctrl = false;
   //byte keyboard[2] = 15 bit value
 };
 
 struct S_RefSystem {
-  short robotLevel;
-  int matchTime;
+  int health = 100;
+  int matchTime = 0;
+  short robotLevel = 0;
 };
 
 struct S_Robot {
