@@ -12,6 +12,7 @@ class c620CAN : public rmMotor {
         c620CAN();
         void init(uint8_t motorId, uint8_t tempCanBusNum);
         void setPower(float power);
+        void updateMotor();
 };
 
 class c610Enc : public rmMotor {
@@ -24,6 +25,5 @@ class c610Enc : public rmMotor {
         void init(short tempID, uint8_t tempCanBusNum, uint8_t encPin);
         void setPower(float power);
         float getAngle();
+        void updateMotor();
 };
-
-#endif // C620_H
