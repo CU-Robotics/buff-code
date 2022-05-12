@@ -15,16 +15,16 @@ void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state) {
 
   switch (config->moduleID) {
     case 0:
-      moduleState = &state->chassis.FL;
-      break;
-    case 1:
       moduleState = &state->chassis.FR;
       break;
+    case 1:
+      moduleState = &state->chassis.FL;
+      break;
     case 2:
-      moduleState = &state->chassis.RR; 
+      moduleState = &state->chassis.RL; 
       break;
     case 3:
-      moduleState = &state->chassis.RL;
+      moduleState = &state->chassis.RR;
       break;
     }
 }
