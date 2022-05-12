@@ -21,9 +21,9 @@ struct C_Teensy {
 };
 
 struct C_SwerveModule {
-  int moduleID;
-  int cornerID;
-  int alignment[9];
+  int moduleID = -1;
+  int cornerID = -1;
+  int alignment[9] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
 
   C_PID steerVel;
   C_PID steerPos;
@@ -47,7 +47,7 @@ struct C_SwerveChassis {
 
 struct C_RailChassis {
   int numNodes = 10;
-  float nodes[10];
+  float nodes[10] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
   C_PID drivePos;
   C_PID driveVel;
