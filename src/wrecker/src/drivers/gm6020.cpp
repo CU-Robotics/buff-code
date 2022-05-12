@@ -8,6 +8,8 @@ extern FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 extern FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 extern FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
+extern CAN_message_t canRecieveMessages[3][11];
+
 CAN_message_t gm6020Messages[3][2];
 
 gm6020::gm6020() {
@@ -44,4 +46,21 @@ void gm6020::setPower(float power) {
           can3.write(*sendMsgPtr);
           break;
     }
+}
+
+void gm6020::updateMotor() {
+    CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id + 4];
+    angle = recMsg->buf[0];
+    angle = angle << 8;
+    angle = angle | recMsg->buf[1];
+
+    rpm = recMsg->buf[2];
+    rpm = rpm << 8;
+    rpm = rpm | recMsg->buf[3];
+
+    torque = recMsg->buf[4];
+    torque = torque << 8;
+    torque = torque | recMsg->buf[5];
+
+    temp = recMsg->buf[6];
 }
