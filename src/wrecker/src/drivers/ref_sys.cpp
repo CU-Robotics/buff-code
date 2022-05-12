@@ -13,8 +13,11 @@ accurately test the code when I have a fully up and running ref system.
 
 ref_sys::ref_sys(){
 
-    Serial2.begin(115200);
+}
 
+void ref_sys::init(S_RefSystem *tempInput) {
+    run_data = tempInput;
+    Serial2.begin(115200);
 }
 
 bool ref_sys::read_serial(){
