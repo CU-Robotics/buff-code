@@ -1,10 +1,12 @@
-#ifndef C620_H
 #include "drivers/c620.h"
-#endif
+
+#include "state/state.h"
 
 extern FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 extern FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 extern FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+
+extern CAN_message_t canRecieveMessages[3][11];
 
 CAN_message_t c6x0Messages[3][2];
 
@@ -13,17 +15,6 @@ c620CAN::c620CAN() {
 
 }
 
-// c620CAN::c620CAN(short motorId, CAN_message_t* mySendMsgPtr){
-//   id = motorId;
-//   byteNum = id - 1;
-//   sendMsgPtr = mySendMsgPtr;
-//   if(byteNum > 3) {
-//     byteNum -= 4;
-//     sendMsgPtr->id = 0x1FF;   //ID for all c620s 4-7
-//   } else {
-//     sendMsgPtr->id = 0x200;   //ID for all c620s 0-3
-//   }
-// }
 
 void c620CAN::init(uint8_t motorId, uint8_t tempCanBusNum) {
   canBusNum = tempCanBusNum;
@@ -58,6 +49,22 @@ void c620CAN::setPower(float power) {
     }
 }
 
+void c620CAN::updateMotor() {
+    CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id - 1];
+    angle = recMsg->buf[0];
+    angle = angle << 8;
+    angle = angle | recMsg->buf[1];
+
+    rpm = recMsg->buf[2];
+    rpm = rpm << 8;
+    rpm = rpm | recMsg->buf[3];
+
+    torque = recMsg->buf[4];
+    torque = torque << 8;
+    torque = torque | recMsg->buf[5];
+
+    temp = recMsg->buf[6];
+}
 
 
 
@@ -124,4 +131,21 @@ float c610Enc::getAngle() {
   angle = map(round(freq.countToNanoseconds(freq.read())/1000), 1, 1024, 0, 360);
   
   return angle;
+}
+
+void c610Enc::updateMotor() {
+    CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id - 1];
+    // angle = recMsg->buf[0];
+    // angle = angle << 8;
+    // angle = angle | recMsg->buf[1];
+
+    rpm = recMsg->buf[2];
+    rpm = rpm << 8;
+    rpm = rpm | recMsg->buf[3];
+
+    torque = recMsg->buf[4];
+    torque = torque << 8;
+    torque = torque | recMsg->buf[5];
+
+    temp = recMsg->buf[6];
 }

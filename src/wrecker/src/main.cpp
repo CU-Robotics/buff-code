@@ -3,6 +3,11 @@
 #include <FlexCAN_T4.h>
 #endif
 
+CAN_message_t canRecieveMessages[3][11];  //used by motor objects to access recieved data
+#include "state/state.h"
+#include "drivers/c620.h"
+#include "drivers/gm6020.h"
+
 #include "drivers/ref_sys.h"
 
 // CAN
