@@ -22,8 +22,8 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   moduleBL.setup(&data->RL, state, &state->chassis.RL);
   moduleBR.setup(&data->RR, state, &state->chassis.RR);
 
-  float drivebaseRadius = sqrt(pow(config->drivebaseLength, 2) + pow(config->drivebaseWidth, 2));
-  drivebaseConstant = config->drivebaseLength / drivebaseRadius;
+  float baseRadius = sqrt(pow(config->baseLength, 2) + pow(config->baseWidth, 2));
+  drivebaseConstant = config->baseLength / baseRadius;
 
   calibrate();
 }

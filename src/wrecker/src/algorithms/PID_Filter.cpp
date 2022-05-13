@@ -26,7 +26,8 @@ void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt)
   }
 
   // Sum terms, clamp, and return
-  state->Y = max(config->Ymin, min(config->Ymax, (config->K[0] * state->X[0]) + (config->K[1] * state->X[1]) + (config->K[2] * state->X[2]) + config->K[3]));
+  float signal = (config->K[0] * state->X[0]) + (config->K[1] * state->X[1]) + (config->K[2] * state->X[2]);
+  state->Y = max(config->Ymin, min(config->Ymax, signal));
 }
 
 
