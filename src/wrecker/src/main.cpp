@@ -10,11 +10,9 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
 #include "state/state.h"
 #include "state/config.h"
-#include "subsystems/swerveChassis.h"
 #include "drivers/dr16.h"
-
 #include "drivers/ref_sys.h"
-
+#include "subsystems/swerveChassis.h"
 
 // Loop timing
 unsigned long deltaT = 0;
@@ -25,6 +23,7 @@ unsigned long lastTime = 0;
 // State
 S_Robot robot_state;
 C_SwerveChassis swerve_config;
+
 
 // Subsystems
 SwerveChassis swerveChassis;
@@ -75,5 +74,14 @@ void loop() {
   lastTime = micros();
 }
 
+
+Serial.print("start: ");
+Serial.println(micros());
+referee_system.read_serial();
+Serial.print("end: ");
+Serial.println(micros());
+Serial.println();
+delay(10);
+Serial.println(temp_for_test -> comp_type);
 
 
