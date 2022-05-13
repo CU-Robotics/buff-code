@@ -28,6 +28,9 @@ struct S_Chassis {
   S_SwerveModule FR;
   S_SwerveModule RR;
   S_SwerveModule RL;
+
+  S_PID drivePos;
+  S_PID driveVel;
 };
 
 struct S_Gimbal {
@@ -106,7 +109,7 @@ struct S_RefSystem {
     int blue_one_rem_proj = -1;
     int blue_two_rem_proj = -1;
 
-    char ref_warning = '/r';
+    char ref_warning = '\r';
     int foul_robot_id = -1;
     
     int red_hero_robot_level = -1;
@@ -145,8 +148,8 @@ struct S_RefSystem {
 struct S_Robot {
   S_Gimbal gimbal;
   S_Chassis chassis;
-  S_Shooter Shooter17;
-  S_Shooter Shooter42;
+  S_Shooter shooter17;
+  S_Shooter shooter42;
 
   S_RefSystem refSystem;
   DriverInput driverInput;
