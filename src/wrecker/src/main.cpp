@@ -92,6 +92,8 @@ void loop() {
 
   // Serial.println("finsished swervechassis update");
 
+  delay(1000);
+
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
   while (deltaT < 1000) {

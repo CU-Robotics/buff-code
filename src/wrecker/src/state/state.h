@@ -9,6 +9,9 @@ struct S_PID {
 
 struct S_SwerveModule {
   int moduleID;
+  int steerMotorID;
+  int steerEncoderID;
+  int driveMotorID;
 
   float steer_angle;
   float steer_speed;
@@ -25,11 +28,11 @@ struct S_Chassis {
   float rpm;
   float alpha; // angular acceleration
   float a[2];
+  
   S_SwerveModule FL;
   S_SwerveModule FR;
   S_SwerveModule RR;
   S_SwerveModule RL;
-
 };
 
 struct S_Gimbal {
