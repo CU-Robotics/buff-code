@@ -51,16 +51,13 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   float rpm = (steerAngle - prevSteerAngle) * deltaTime * 60000000;
   prevSteerAngle = steerAngle;
 
-  moduleState->steerPos.Y = 0;
-  moduleState->steerVel.Y = rpm;
+  moduleState->steerVel.R = - * 10000;
 
-  moduleState->steerVel.R = -moduleState->steerPos.Y * 10000;
+  PID_Filter(&config->steerPos, &moduleState->steerPos, steerAngle, deltaTime);
 
-  PID_Filter(&config->steerPos, &moduleState->steerPos, deltaTime);
-
-  PID_Filter(&config->steerVel, &moduleState->steerVel, deltaTime);
+  PID_Filter(&config->steerVel, &moduleState->steerVel, rpm, deltaTime);
   
-  PID_Filter(&config->driveVel, &moduleState->driveVel, deltaTime);
+  PID_Filter(&config->driveVel, &moduleState->driveVel, , deltaTime);
 
   prevRawSteerAngle = rawSteerAngle;
 }
