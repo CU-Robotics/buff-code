@@ -1,10 +1,6 @@
 #include "state/state.h"
-
-#ifndef SWERVEMODULE_H
-#include "swerveModule.h"
-#endif
-
 #include "state/config.h"
+#include "swerveModule.h"
 
 #ifndef SWERVE_CHASSIS_H
 #define SWERVE_CHASSIS_H
@@ -16,15 +12,15 @@ class SwerveChassis {
     void update(float deltaTime);
 
   private:
-    C_SwerveChassis *config;
     S_Robot *state;
+    C_SwerveChassis *config;
 
     SwerveModule moduleFR;
     SwerveModule moduleFL;
     SwerveModule moduleBL;
     SwerveModule moduleBR;
 
-    float drivebaseRadius;
+    float drivebaseConstant;
 
     void calibrate();
     void drive(float driveX, float driveY, float spin, float deltaTime);

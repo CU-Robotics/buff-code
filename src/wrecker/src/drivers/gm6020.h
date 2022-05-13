@@ -1,10 +1,7 @@
-#ifndef RMMOTOR_H
-#include "rmMotor.h"
-#endif
-
-#ifndef _FLEXCAN_T4_H_
 #include <FlexCAN_T4.h>
-#endif
+
+#include "rmMotor.h"
+
 
 #include "state/state.h"
 
@@ -22,4 +19,4 @@ class gm6020 : public rmMotor {
         int byteNum;
 };
 
-#endif
+#endif // GM6020_H

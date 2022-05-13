@@ -1,6 +1,4 @@
-#ifndef _FLEXCAN_T4_H_
 #include <FlexCAN_T4.h>
-#endif
 
 #include "gm6020.h"
 
