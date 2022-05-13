@@ -5,6 +5,8 @@
 #include "swerveModule.h"
 #include "swerveChassis.h"
 
+#include "algorithms/PID_Filter.h"
+
 SwerveChassis::SwerveChassis() {
 
 }
@@ -37,7 +39,7 @@ void SwerveChassis::setup(C_SwerveChassis *data, S_Robot *r_state) {
   {
     FL_Config.alignment[i] = fl_alignment[i];
   }
-  FL_Config.steerVel.K[0] = 0;
+  FL_Config.steerVel.K[0] = 10;
   FL_Config.steerVel.K[1] = 0;
   FL_Config.steerVel.K[2] = 0;
   FL_Config.steerPos.K[0] = 0;
@@ -94,11 +96,16 @@ void SwerveChassis::update(float deltaTime) {
   float driveX = (state->driverInput.w - state->driverInput.a) * cos(state->gimbal.yaw);
   float driveY = (state->driverInput.w - state->driverInput.a) * sin(state->gimbal.yaw);
 
-  float js = this->state->driverInput.leftStickX;
-  js = map(js, 364, 1684, 0, 1000) / 1000.0;
+  float js1 = this->state->driverInput.leftStickX;
+  float js2 = this->state->driverInput.leftStickY;
+  js1 = map(js1, 364, 1684, 0, 1000) / 1000.0;
+  js2 = map(js2, 364, 1684, 0, 1000) / 1000.0;
 
-  Serial.println("about to enter drive");
-  drive(0, 0, js, deltaTime);
+  // Serial.println("looking for js");
+  // Serial.print(js1);
+  // Serial.print(" - ");
+  // Serial.println(js2);
+  drive(js1, 0, 0, deltaTime);
 }
 
 void SwerveChassis::calibrate() {
@@ -139,9 +146,18 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, float deltaTim
   float angleBR = this->radiansToDegrees(atan2(A, D));
 
   this->moduleFR.update(speedFR, angleFR, deltaTime);
-  this->moduleFL.update(speedFL, angleFL, deltaTime);
-  this->moduleBL.update(speedBL, angleBL, deltaTime);
-  this->moduleBR.update(speedBR, angleBR, deltaTime);
+  //this->moduleFL.update(speedFL, angleFL, deltaTime);
+  //this->moduleBL.update(speedBL, angleBL, deltaTime);
+  //this->moduleBR.update(speedBR, angleBR, deltaTime);
+
+  // Serial.print(angleFR);
+  // Serial.print(" - ");
+  // Serial.print(angleFL);
+  // Serial.print(" - ");
+  // Serial.print(angleBL);
+  // Serial.print(" - ");
+  // Serial.print(angleBR);
+  // Serial.println(" - ");
 }
 
 float SwerveChassis::radiansToDegrees(float radians) {
