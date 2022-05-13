@@ -30,7 +30,7 @@ void PID_serial_event(C_PID* pid)
 
     case 'I':
       m = Serial.read();
-      
+
       pid->Imin = Serial.parseFloat();
       pid->Imax = Serial.parseFloat();
       break;
@@ -61,38 +61,36 @@ void PID_serial_event(S_PID* pid)
 
 void dump_PID(C_PID* pid, String ID)
 {
-  Serial.print(ID); Serial.print("Kp:");
+  Serial.print(ID); Serial.print("Kp: ");
   Serial.println(pid->K[0]); 
 
-  Serial.print(ID); Serial.print("Ki:"); 
+  Serial.print(ID); Serial.print("Ki: "); 
   Serial.println(pid->K[1]); 
 
-  Serial.print(ID); Serial.print("Kd");
+  Serial.print(ID); Serial.print("Kd: ");
   Serial.println(pid->K[2]); 
 
-  Serial.print(ID); Serial.print("_I:"); 
-  Serial.print(pid->Imin); Serial.print(",");
-  Serial.println(pid->Imax); 
+  Serial.print(ID); Serial.print("I: "); 
+  Serial.print(pid->Imin); Serial.print(","); Serial.println(pid->Imax); 
 
-  Serial.print(ID); Serial.print("_Yrange:"); 
-  Serial.print(pid->Ymin); Serial.print(",");
-  Serial.println(pid->Ymax); 
+  Serial.print(ID); Serial.print("Y: "); 
+  Serial.print(pid->Ymin); Serial.print(","); Serial.println(pid->Ymax); 
 
-  Serial.print(ID); Serial.print("_continuous:"); 
+  Serial.print(ID); Serial.print("C: "); 
   Serial.println(pid->continuous);
 }
 
 void dump_PID(S_PID* pid, String ID)
 {
-  Serial.print(ID); Serial.print("_X:"); 
+  Serial.print(ID); Serial.print("_X: "); 
   Serial.print(pid->X[0]); Serial.print(","); 
   Serial.print(pid->X[1]); Serial.print(",");
   Serial.println(pid->X[2]); 
 
-  Serial.print(ID); Serial.print("_Y:");
+  Serial.print(ID); Serial.print("_Y: ");
   Serial.println(pid->Y);
 
-  Serial.print(ID); Serial.print("_R:");
+  Serial.print(ID); Serial.print("_R: ");
   Serial.println(pid->R);
 }
 
@@ -116,6 +114,18 @@ void SwerveModule_serial_event(C_SwerveModule* sm_config){
       sm_config->steerEncoderID = Serial.parseInt();
       break;
 
+    case 'A':
+      sm_config->alignment[0] = Serial.parseInt();
+      sm_config->alignment[1] = Serial.parseInt();
+      sm_config->alignment[2] = Serial.parseInt();
+      sm_config->alignment[3] = Serial.parseInt();
+      sm_config->alignment[4] = Serial.parseInt();
+      sm_config->alignment[5] = Serial.parseInt();
+      sm_config->alignment[6] = Serial.parseInt();
+      sm_config->alignment[7] = Serial.parseInt();
+      sm_config->alignment[8] = Serial.parseInt();
+      break;
+
     case 'P':
       PID_serial_event(&sm_config->steerPos);
       break;
@@ -127,28 +137,23 @@ void SwerveModule_serial_event(C_SwerveModule* sm_config){
     case 'D':
       PID_serial_event(&sm_config->driveVel);
       break;
-
-    case 'A':
-      sm_config->alignment[0] = Serial.parseInt();
-      sm_config->alignment[1] = Serial.parseInt();
-      sm_config->alignment[2] = Serial.parseInt();
-      sm_config->alignment[3] = Serial.parseInt();
-      sm_config->alignment[4] = Serial.parseInt();
-      sm_config->alignment[5] = Serial.parseInt();
-      sm_config->alignment[6] = Serial.parseInt();
-      sm_config->alignment[7] = Serial.parseInt();
-      sm_config->alignment[8] = Serial.parseInt();
-
-      break;
   }
 }
 
 void dump_Swerve(C_SwerveModule* sm, String ID){
-  Serial.print(ID); Serial.print("_swerve_module_config:");
-  Serial.print(sm->moduleID); Serial.print(",");
-  Serial.print(sm->steerMotorID); Serial.print(",");
-  Serial.print(sm->driveMotorID); Serial.print(",");
-  Serial.print(sm->driveEncoderID); Serial.print(",");
+  Serial.print(ID); Serial.print("M: ");
+  Serial.println(sm->moduleID); 
+
+  Serial.print(ID); Serial.print("R: ");
+  Serial.println(sm->driveMotorID);
+
+  Serial.print(ID); Serial.print("T: ");
+  Serial.println(sm->steerMotorID);
+
+  Serial.print(ID); Serial.print("E: ");
+  Serial.println(sm->steerEncoderID);
+
+  Serial.print(ID); Serial.print("A: ");
   Serial.print(sm->alignment[0]); Serial.print(",");
   Serial.print(sm->alignment[1]); Serial.print(",");
   Serial.print(sm->alignment[2]); Serial.print(",");
@@ -159,9 +164,9 @@ void dump_Swerve(C_SwerveModule* sm, String ID){
   Serial.print(sm->alignment[7]); Serial.print(",");
   Serial.println(sm->alignment[8]);
 
-  dump_PID(&sm->steerPos, ID + "_sm_steer_pos_pid");
-  dump_PID(&sm->steerVel, ID + "_sm_steer_vel_pid");
-  dump_PID(&sm->driveVel, ID + "_sm_drive_vel_pid");
+  dump_PID(&sm->steerPos, ID + "P");
+  dump_PID(&sm->steerVel, ID + "V");
+  dump_PID(&sm->driveVel, ID + "D");
 }
 
 void dump_Swerve(S_SwerveModule* sm, String ID){
@@ -178,30 +183,20 @@ void dump_Swerve(S_SwerveModule* sm, String ID){
 
 
 void SwerveChassis_serial_event(C_SwerveChassis* sc){
+  int m;
   char cmd = Serial.read();
   switch (cmd)
   {
     case 'W':
-      sc->drivebaseWidth = Serial.parseFloat();
+      sc->baseWidth = Serial.parseFloat();
       break;
 
     case 'L':
-      sc->drivebaseLength = Serial.parseFloat();
+      sc->baseLength = Serial.parseFloat();
 
-    case '0':
-      sc->currentLimitLvl0 = Serial.parseFloat();
-      break;
-
-    case '1':
-      sc->currentLimitLvl1 = Serial.parseFloat();
-      break;
-
-    case '2':
-      sc->currentLimitLvl2 = Serial.parseFloat();
-      break;
-
-    case '3':
-      sc->currentLimitLvl3 = Serial.parseFloat();
+    case 'I':
+      m = Serial.parseInt();
+      sc->currentLimit[m] = Serial.parseFloat();
       break;
 
     case 'A':
@@ -223,11 +218,13 @@ void SwerveChassis_serial_event(C_SwerveChassis* sc){
 }
 
 void RailChassis_serial_event(C_RailChassis* rc){
+  int m;
   char cmd = Serial.read();
   switch (cmd)
   {
     case 'N':
-      rc->numNodes = Serial.parseInt();
+      m = Serial.parseInt();
+      rc->nodes[m] = Serial.parseFloat();
       break;
 
     case 'P':
@@ -276,18 +273,19 @@ void dump_RailChassis(C_RailChassis* rc){
 
 void dump_SwerveChassis(C_SwerveChassis* sc){
   /* Need to know strings to use rostopic, std.msgs.dict?  */
-  Serial.print("/swerve_chassis_config:"); 
-  Serial.print(sc->drivebaseWidth); Serial.print(","); 
-  Serial.print(sc->drivebaseLength); Serial.print(","); 
-  Serial.print(sc->currentLimitLvl0); Serial.print(","); 
-  Serial.print(sc->currentLimitLvl1); Serial.print(",");
-  Serial.print(sc->currentLimitLvl2); Serial.print(",");
-  Serial.println(sc->currentLimitLvl3);
+  Serial.print("@SW: "); Serial.println(sc->baseWidth);
+  Serial.print("@SL: "); Serial.println(sc->baseLength);
 
-  dump_Swerve(&sc->FL, "/fl");
-  dump_Swerve(&sc->FR, "/fr");
-  dump_Swerve(&sc->RR, "/rr");
-  dump_Swerve(&sc->RL, "/rl");
+  Serial.print("@SI: ");
+  Serial.print(sc->currentLimit[0]); Serial.print(","); 
+  Serial.print(sc->currentLimit[1]); Serial.print(",");
+  Serial.print(sc->currentLimit[2]); Serial.print(",");
+  Serial.println(sc->currentLimit[3]);
+
+  dump_Swerve(&sc->FR, "@SA");
+  dump_Swerve(&sc->FL, "@SB");
+  dump_Swerve(&sc->RL, "@SC");
+  dump_Swerve(&sc->RR, "@SD");
 }
 
 void Gimbal_serial_event(C_Gimbal* gm){
@@ -339,13 +337,13 @@ void dump_Gimbal(S_Gimbal* gm){
 }
 
 void dump_Gimbal(C_Gimbal* gm){
-  Serial.print("@BS:"); 
+  Serial.print("@BS: "); 
   Serial.println(gm->sensitivity); 
 
-  Serial.print("@B1"); 
+  Serial.print("@B1: "); 
   Serial.println(gm->yawOffset); 
 
-  Serial.print("@B2");
+  Serial.print("@B2: ");
   Serial.println(gm->pitchOffset);
 
   dump_PID(&gm->yaw_PID, "@BY");
@@ -353,6 +351,7 @@ void dump_Gimbal(C_Gimbal* gm){
 }
 
 void Shooter17_serial_event(C_Shooter17* sh){
+  int m;
   char cmd = Serial.read();
   switch (cmd)
   {
@@ -368,25 +367,15 @@ void Shooter17_serial_event(C_Shooter17* sh){
       sh->feedRPMBurst = Serial.parseInt();
       break;
 
-    case '0':
-      sh->flywheelPowerLvl0 = Serial.parseFloat();
-      break;
-
-    case '1':
-      sh->flywheelPowerLvl1 = Serial.parseFloat();
-      break;
-
-    case '2':
-      sh->flywheelPowerLvl2 = Serial.parseFloat();
-      break;
-
-    case '3':
-      sh->flywheelPowerLvl3 = Serial.parseFloat();
+    case 'P':
+      m = Serial.parseInt();
+      sh->flywheelPower[m] = Serial.parseFloat();
       break;
   }
 }
 
 void Shooter42_serial_event(C_Shooter42* sh){
+  int m;
   char cmd = Serial.read();
   switch (cmd)
   {
@@ -394,20 +383,9 @@ void Shooter42_serial_event(C_Shooter42* sh){
       sh->feedTimeout = Serial.parseInt();
       break;
 
-    case '0':
-      sh->flywheelPowerLvl0 = Serial.parseFloat();
-      break;
-
-    case '1':
-      sh->flywheelPowerLvl1 = Serial.parseFloat();
-      break;
-
-    case '2':
-      sh->flywheelPowerLvl2 = Serial.parseFloat();
-      break;
-
-    case '3':
-      sh->flywheelPowerLvl3 = Serial.parseFloat();
+    case 'P':
+      m = Serial.parseInt();
+      sh->flywheelPower[m] = Serial.parseFloat();
       break;
   }
 }
