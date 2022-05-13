@@ -3,5 +3,7 @@
 
 #ifndef PID_FILTER_H
 #define PID_FILTER_H
-void PID_Filter(C_PID*, S_PID*, long);
+
+void PID_Filter(C_PID* config, S_PID* state, long dt);
+
 #endif // PID_FILTER_H

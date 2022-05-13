@@ -1,12 +1,8 @@
 #define SWERVEMODULE_H
 
 #include "state/state.h"
-
-#ifndef C620_H
-#include "drivers/c620.h"
-#endif
-
 #include "state/config.h"
+#include "drivers/c620.h"
 #include "algorithms/PID_Filter.h"
 
 
@@ -21,17 +17,22 @@ class SwerveModule {
     void calibrate();
 
   private:
-    C_SwerveModule *config;
     S_Robot *state;
-    
+    C_SwerveModule *config;
+    S_SwerveModule *moduleState;
+
+    S_PID tmp_steerVel;
+    S_PID tmp_steerPos;
+
     c610Enc steerMotor;
     c620CAN driveMotor;
 
-    float steerAngle;
-    float steerOffset;
-    float steerRollover;
+    float steerOffset = 0;
+    float steerRollover = 0;
+    float prevRawSteerAngle = 0;
+    float prevSteerAngle = 0;
 
-    void findCalibrationMatch();
+    int findCalibrationMatch(int currValue, int* alignmentTable, int tableSize);
     void motorAngleToWheelAngle();
 };
 

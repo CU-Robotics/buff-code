@@ -16,23 +16,18 @@ struct C_PID
   bool continuous = false;
 };
 
-void PID_serial_event(C_PID*);
-void dump_PID_config(C_PID*, char*);
-
 struct C_Teensy {
   int loopStall = 1000; // microseconds
 };
 
 struct C_SwerveModule {
-  short moduleID;
+  int moduleID;
   int alignment[9];
 
   C_PID steerVel;
   C_PID steerPos;
   C_PID driveVel;
 };
-
-void SwerveModule_serial_event(C_SwerveModule*);
 
 struct C_SwerveChassis {
   float drivebaseWidth = 14.5;
@@ -43,14 +38,11 @@ struct C_SwerveChassis {
   float currentLimitLvl2 = 80.0 / 24.0;
   float currentLimitLvl3 = 100.0 / 24.0;
 
-  C_SwerveModule moduleFR;
-  C_SwerveModule moduleFL;
-  C_SwerveModule moduleBL;
-  C_SwerveModule moduleBR;
+  C_SwerveModule FR;
+  C_SwerveModule FL;
+  C_SwerveModule RL;
+  C_SwerveModule RR;
 };
-
-void SwerveChassis_serial_event(C_SwerveChassis*);
-
 
 struct C_RailChassis {
   int numNodes = 10;
@@ -59,9 +51,6 @@ struct C_RailChassis {
   C_PID driveVel;
   C_PID drivePos;
 };
-
-void RailChassis_serial_event(C_RailChassis*);
-
 
 struct C_Gimbal {
   float sensitivity = 1.0;
@@ -72,8 +61,6 @@ struct C_Gimbal {
   C_PID pitch_PID;
   C_PID yaw_PID;
 };
-
-void Gimbal_serial_event(C_Gimbal*);
 
 // Configured for cooling focus by default
 struct C_Shooter17 {
@@ -87,8 +74,6 @@ struct C_Shooter17 {
   float flywheelPowerLvl3 = 0.22;
 };
 
-void Shooter17_serial_event(C_Shooter17*);
-
 struct C_Shooter42 {
   float feedTimeout = 0.5; // Minimum time between consecutive shots, in seconds
 
@@ -97,7 +82,5 @@ struct C_Shooter42 {
   float flywheelPowerLvl2 = 0.2;
   float flywheelPowerLvl3 = 0.22;
 };
-
-void Shooter42_serial_event(C_Shooter42*);
 
 #endif

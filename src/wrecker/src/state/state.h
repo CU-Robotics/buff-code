@@ -7,49 +7,50 @@ struct S_PID {
   float X[3] = {0.0f, 0.0f, 0.0f};
 };
 
-void dump_PID_State(S_PID*, char*);
+struct S_SwerveModule {
+  int moduleID;
 
-struct S_SwerveChassis {
-  float heading;
+  float steer_angle;
+  float steer_speed;
+  float drive_speed;
+  float drive_accel;
+
+  S_PID steerVel;
+  S_PID steerPos;
+  S_PID driveVel;
+};
+
+struct S_Chassis {
+  float heading; // naming needs to be more consistent (greek letters, descriptive or units)
   float rpm;
   float alpha; // angular acceleration
-  float xAccel;
-  float yAccel;
+  float a[2];
+  S_SwerveModule FL;
+  S_SwerveModule FR;
+  S_SwerveModule RR;
+  S_SwerveModule RL;
+
 };
-
-void dump_SwerveChassis_State(S_SwerveChassis*, char*);
-
-struct S_RailChassis {
-  float pos;
-  float vel;
-  float accel;
-};
-
-void dump_RailChassis_State(S_RailChassis*, char*);
 
 struct S_Gimbal {
-  float yaw;
-  float pitch;
-  float yawGlobal;
+  float yaw = 0.0f;
+  float pitch = 0.0f;
+  float yawGlobal = 0.0f;
   S_PID yaw_PID;
   S_PID pitch_PID;
 };
 
-void dump_Gimbal_State(S_Gimbal*, char*);
-
 struct S_Shooter {
-  bool firing;
+  bool firing = false;
 };
 
-void dump_Shooter_State(S_Shooter*, char*);
-
 struct DriverInput {
-  float leftStickX;
-  float leftStickY;
-  float rightStickX;
-  float rightStickY;
-  short leftSwitch;
-  short rightSwitch;
+  float leftStickX = 0;
+  float leftStickY = 0;
+  float rightStickX = 0;
+  float rightStickY = 0;
+  short leftSwitch = 0;
+  short rightSwitch = 0;
   uint16_t remoteWheel;
 
   uint8_t s1;
@@ -79,8 +80,6 @@ struct DriverInput {
   bool ctrl;
   //byte keyboard[2] = 15 bit value
 };
-
-void dump_DriverInput(DriverInput*, char*);
 
 struct S_RefSystem {
     char curr_stage;
@@ -142,19 +141,14 @@ struct S_RefSystem {
     int rem_42_proj;
 };
 
-void dump_RefSystem_State(S_RefSystem*, char*);
-
 struct S_Robot {
-  S_SwerveChassis swerve_chassis;
-  S_RailChassis rail_chassis;
   S_Gimbal gimbal;
+  S_Chassis chassis;
   S_Shooter Shooter17;
   S_Shooter Shooter42;
 
-  DriverInput driverInput;
   S_RefSystem refSystem;
+  DriverInput driverInput;
 };
-
-void dump_Robot_State(S_Robot*);
 
 #endif // STATE_H
