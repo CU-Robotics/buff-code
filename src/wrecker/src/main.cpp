@@ -57,7 +57,7 @@ void setup() {
   // gimbal.setup(&robot_config.gimbal, &robot_state);
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
 
-  dump_Robot(&robot_state, &robot_config);
+  dump_Robot(&robot_config, &robot_state);
 }
 
 
@@ -77,10 +77,10 @@ void loop() {
   // while (can3.read(tempMessage))
   //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
   
-  dump_Robot(&robot_state, &robot_config);
+  dump_Robot(&robot_config, &robot_state);
   
   if (Serial.available() > 0)
-    serial_event(&robot_state, &robot_config);
+    serial_event(&robot_config, &robot_state);
 
   //reciever.update();
   //gimbal.update(deltaT);
