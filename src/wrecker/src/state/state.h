@@ -82,63 +82,64 @@ struct DriverInput {
 };
 
 struct S_RefSystem {
-    char curr_stage;
-    char comp_type;
-    int rem_time;
-    char comp_result;
+    char curr_stage = '\r';
+    char comp_type = '\r';
+    char comp_result = '\r';
 
-    int red_hero_hp;
-    int red_sentry_hp;
-    int red_infantry_hp;
-    int blue_hero_hp;
-    int blue_sentry_hp;
-    int blue_infantry_hp;
-    int red_hero_max_hp;
-    int red_sentry_max_hp;
-    int red_infantry_max_hp;
-    int blue_hero_max_hp;
-    int blue_sentry_max_hp;
-    int blue_infantry_max_hp;
+    int rem_time = -1;
 
-    int red_one_rem_proj;
-    int red_two_rem_proj;
-    int blue_one_rem_proj;
-    int blue_two_rem_proj;
+    int red_hero_hp = -1;
+    int red_sentry_hp = -1;
+    int red_infantry_hp = -1;
+    int blue_hero_hp = -1;
+    int blue_sentry_hp = -1;
+    int blue_infantry_hp = -1;
+    int red_hero_max_hp = -1;
+    int red_sentry_max_hp = -1;
+    int red_infantry_max_hp = -1;
+    int blue_hero_max_hp = -1;
+    int blue_sentry_max_hp = -1;
+    int blue_infantry_max_hp = -1;
 
-    char ref_warning;
-    int foul_robot_id;
+    int red_one_rem_proj = -1;
+    int red_two_rem_proj = -1;
+    int blue_one_rem_proj = -1;
+    int blue_two_rem_proj = -1;
+
+    char ref_warning = '/r';
+    int foul_robot_id = -1;
     
-    int red_hero_robot_level;
-    int red_infantry_robot_level;
-    int red_sentry_robot_level;
-    int blue_hero_robot_level;
-    int blue_infantry_robot_level;
-    int blue_sentry_robot_level;
+    int red_hero_robot_level = -1;
+    int red_infantry_robot_level = -1;
+    int red_sentry_robot_level = -1;
+    int blue_hero_robot_level = -1;
+    int blue_infantry_robot_level = -1;
+    int blue_sentry_robot_level = -1;
 
-    int robot_1_cool_val;       //17mm
-    int robot_1_barr_heat_lim;       //17mm
-    int robot_1_speed_lim;       //17mm
+    int robot_1_cool_val = -1;       //17mm
+    int robot_1_barr_heat_lim = -1;       //17mm
+    int robot_1_speed_lim = -1;       //17mm
 
-    int robot_2_cool_val;       //17mm
-    int robot_2_barr_heat_lim;       //17mm
-    int robot_2_speed_lim;       //17mm
+    int robot_2_cool_val = -1;       //17mm
+    int robot_2_barr_heat_lim = -1;       //17mm
+    int robot_2_speed_lim = -1;       //17mm
 
-    int robot_42_cool_val;
-    int robot_42_heat_lim;
-    int robot_42_speed_lim;  
+    int robot_42_cool_val = -1;
+    int robot_42_heat_lim = -1;
+    int robot_42_speed_lim = -1;  
 
-    int robot_power_lim;
+    int robot_power_lim = -1;
 
-    int chasis_volt;
-    int chasis_current;
+    int chasis_volt = -1;
+    int chasis_current = -1;
 
-    int robot_buff;
+    int robot_buff = -1;
 
-    int launch_freq;
-    int launch_speed;
+    int launch_freq = -1;
+    int launch_speed = -1;
 
-    int rem_17_proj;
-    int rem_42_proj;
+    int rem_17_proj = -1;
+    int rem_42_proj = -1;
 };
 
 struct S_Robot {
