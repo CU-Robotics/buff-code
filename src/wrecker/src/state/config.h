@@ -7,8 +7,8 @@ struct C_PID
 {
   float K[3] = {0.5f, 0.5f, 0.25f};
 
-  float Imin = -45.0f;
-  float Imax = 45.0f;
+  float Imin = -0.0f;
+  float Imax = 0.0f;
 
   float Ymin = -180.0f;
   float Ymax = 180.0f;
@@ -22,7 +22,9 @@ struct C_Teensy {
 
 struct C_SwerveModule {
   int moduleID = -1;
-  int cornerID = -1;
+  int driveMotorID = -1;
+  int steerMotorID = -1;
+  int steerEncoderID = -1;
   int alignment[9] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
 
   C_PID steerVel;
@@ -54,13 +56,12 @@ struct C_RailChassis {
 };
 
 struct C_Gimbal {
+  float yawOffset = 90;
+  float pitchOffset = 12;
   float sensitivity = 1.0;
 
-  float pitchOffset = 12;
-  float yawOffset = 90;
-
-  C_PID pitch_PID;
   C_PID yaw_PID;
+  C_PID pitch_PID;
 };
 
 // Configured for cooling focus by default

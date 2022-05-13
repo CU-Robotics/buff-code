@@ -7,6 +7,8 @@
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+CAN_message_t canRecieveMessages[3][11];
+CAN_message_t tempMessage;
 
 #include "state/state.h"
 #include "drivers/dr16.h"
@@ -20,7 +22,7 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
 
 // Loop timing
-unsigned long deltaT = 0;
+unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
 
 
@@ -34,8 +36,8 @@ C_Robot robot_config;
 // Gimbal gimbal;
 // dr16 reciever;
 // ref_sys refSystem;
-SwerveModule sm;
-// SwerveChassis swerveChassis;
+// SwerveModule sm;
+SwerveChassis swerveChassis;
 
 // Runs once
 void setup() {
@@ -54,37 +56,49 @@ void setup() {
   can2.setBaudRate(1000000);
   can3.setBaudRate(1000000);
 
-  reciever.init(&robot_state.driverInput);
 
   // Subsystem setup
 
   // Subsystem setup
+  // reciever.init(&robot_state.driverInput);
   // gimbal.setup(&robot_config.gimbal, &robot_state);
-  // swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
 
-  sm.setup(&robot_config.swerveChassis.FR, &robot_state, &robot_state.chassis.FR);
-  dump_Swerve(&robot_state.chassis.FR, "Front_Right");
-
+  dump_Robot(&robot_state, &robot_config);
 }
 
 
 // Runs continuously
 void loop() {
-  //Serial.println("test");
 
-  // dump_Robot(&robot_state, &robot_config);
-  dump_Swerve(&robot_state.chassis.FR, "Front_Right");
+  //Necesary for motors to recieve data over CAN
+  while (can1.read(tempMessage))
+  {
+    canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
+  }
+  
+  while (can2.read(tempMessage))
+  {
+    canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
+  }
+
+  while (can3.read(tempMessage))
+  {
+    canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
+  }
+  
+  dump_Robot(&robot_state, &robot_config);
   
   if (Serial.available() > 0)
     serial_event(&robot_state, &robot_config);
 
   //reciever.update();
   //gimbal.update(deltaT);
-  //swerveChassis.update(deltaT);
-  sm.update(0, 0, deltaT);
+  swerveChassis.update(deltaT);
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
+
   while (deltaT < 1000000) // 1 second
     deltaT = micros() - lastTime;
   
