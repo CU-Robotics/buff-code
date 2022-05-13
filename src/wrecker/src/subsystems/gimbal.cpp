@@ -19,11 +19,11 @@ void Gimbal::update(float deltaTime) {
   state->gimbal.yaw_PID.R += state->driverInput.mouseX * config->sensitivity;
   state->gimbal.pitch_PID.R += state->driverInput.mouseY * config->sensitivity;
 
-  state->gimbal.yaw_PID.Y = realizeYawEncoder(yawMotor.getAngle());
-  state->gimbal.pitch_PID.Y = realizePitchEncoder(pitchMotor.getAngle());
+  float yawAngle = realizeYawEncoder(yawMotor.getAngle());
+  float pitchAngle = realizePitchEncoder(pitchMotor.getAngle());
 
-  PID_Filter(&config->yaw_PID, &state->gimbal.yaw_PID, deltaTime);
-  PID_Filter(&config->pitch_PID, &state->gimbal.pitch_PID, deltaTime);
+  PID_Filter(&config->yaw_PID, &state->gimbal.yaw_PID, yawAngle, deltaTime);
+  PID_Filter(&config->pitch_PID, &state->gimbal.pitch_PID, pitchAngle, deltaTime);
 
   // Set motor power here?
   // yawMotor.setPower(config->yaw_PID->Y);

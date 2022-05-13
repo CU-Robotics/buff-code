@@ -36,7 +36,6 @@ class SerialLayer():
 		if not self.device is None:
 			self.device.write(packet)
 
-
 	def writer_callback(self, msg):
 		"""
 		  Callback for writing messages to the teensy
@@ -46,7 +45,6 @@ class SerialLayer():
 			s += str(l)
 		print(f'Writing {s}')
 		self.write_device(bytes(s, 'utf-8'))
-
 
 	def try_connect(self):
 		"""
@@ -71,7 +69,6 @@ class SerialLayer():
 
 		return True
 
-
 	def parse_packet(self):
 		"""
 		  Create a new msg to publish.
@@ -84,7 +81,6 @@ class SerialLayer():
 		"""
 		packet = self.device.readline().decode().rstrip().split(':')
 
-
 		if len(packet) == 2:
 			name, val = packet
 			if len(val.split('.')) - 1 > len(val.split(',')):
@@ -93,12 +89,15 @@ class SerialLayer():
 		else:
 			return
 
-		if not name in self.publishers:
-			self.publishers[name] = rospy.Publisher(name, Float64MultiArray, queue_size=10)
+		if name[0] == '@':
+			rospy.set_param()
 
-		msg = Float64MultiArray(data=np.array(val.split(','), dtype=np.float64))
-		self.publishers[name].publish(msg)
+		else:
+			if not name in self.publishers:
+				self.publishers[name] = rospy.Publisher(name, Float64MultiArray, queue_size=10)
 
+			msg = Float64MultiArray(data=np.array(val.split(','), dtype=np.float64))
+			self.publishers[name].publish(msg)
 
 	def spin(self):
 		"""
@@ -130,14 +129,12 @@ class SerialLayer():
 					time.sleep(2)
 
 
-def main(config_data):
+def main(data):
 
-	layer = SerialLayer(config_data)
+	layer = SerialLayer(data)
 	layer.spin()
 
 		
-
-
 if __name__=='__main__':
 	if len(sys.argv) < 2:
 		print(f'No Data: Serial Layer exiting')

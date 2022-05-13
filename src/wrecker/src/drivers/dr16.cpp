@@ -43,15 +43,15 @@ void dr16::update() {
         numBytes = 0;
 
         //debugging
-        for (int i = 0; i < 18; i++)
-        {
-            for (int j = 7; j >= 0; j--)
-            {
-                Serial.print(bitRead(buf[i], j));
-            }
-            Serial.print(" ");
-        }
-        Serial.println();
+        // for (int i = 0; i < 18; i++)
+        // {
+        //     for (int j = 7; j >= 0; j--)
+        //     {
+        //         Serial.print(bitRead(buf[i], j));
+        //     }
+        //     Serial.print(" ");
+        // }
+        // Serial.println();
         
         input->leftStickX = ((buf[1] & 0b00000111) << 8) | buf[0];
         input->leftStickY = ((buf[2] & 0b11111100) << 5) | ((buf[1] & 0b11111000) >> 3);
@@ -94,33 +94,5 @@ void dr16::update() {
 
         //remote wheel
         input->remoteWheel = (buf[17] << 8) | buf[16];
-
-        // Serial.println(input->remoteWheel);
-        // Serial.println(input->CH3); 
-        // Serial.println();
-        // Serial.print(input->r);
-        // Serial.print(", ");
-        // Serial.print(input->f);
-        // Serial.print(", ");
-        // Serial.print(input->g);
-        // Serial.print(", ");
-        // Serial.print(input->z);
-        // Serial.print(", ");
-        // Serial.print(input->x);
-        // Serial.print(", ");
-        // Serial.print(input->c);
-        // Serial.print(", ");
-        // Serial.print(input->v);
-        // Serial.print(", ");
-        // Serial.print(input->b);
-
-        // Serial.print(input->s1);
-        // Serial.print(", ");
-        // Serial.print(input->s2);
-
-        // Serial.print(input->mouseLeft);
-        // Serial.print(", ");
-        // Serial.print(input->mouseRight);
-        // Serial.println();
     }
 }

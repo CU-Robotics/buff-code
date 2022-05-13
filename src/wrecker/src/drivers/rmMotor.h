@@ -23,7 +23,7 @@ class rmMotor {
     uint8_t canBusNum;
     short MAX_VALUE;
     short byteNum = -1;
-    CAN_message_t *sendMsgPtr = NULL;
+    CAN_message_t *sendMsgPtr;
 };
 
 #endif // RMMOTOR_H

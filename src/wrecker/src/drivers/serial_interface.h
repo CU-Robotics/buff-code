@@ -1,16 +1,15 @@
-
+#include "state/state.h"
+#include "state/config.h"
 
 void PID_serial_event(C_PID*);
 void PID_serial_event(S_PID*);
-void dump_PID_Config(C_PID*, String);
-void dump_PID_State(S_PID*, String);
-
+void dump_PID(C_PID*, String);
+void dump_PID(S_PID*, String);
 
 void SwerveModule_serial_event(C_SwerveModule*);
 void SwerveModule_serial_event(S_SwerveModule*);
 void dump_Swerve(C_SwerveModule*, String);
 void dump_Swerve(S_SwerveModule*, String);
-
 
 void RailChassis_serial_event(C_RailChassis*);
 void SwerveChassis_serial_event(C_SwerveChassis*);
