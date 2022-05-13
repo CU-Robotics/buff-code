@@ -12,6 +12,10 @@ SwerveChassis::SwerveChassis() {
 }
 
 void SwerveChassis::setup(C_SwerveChassis *data, S_Robot *r_state) {
+  // Normal Setup
+  config = data;
+  state = r_state;
+
   int bl_alignment[9] = {18, 60, 99, 139, 179, 220, 260, 299, 341};
   int br_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
   int fr_alignment[9] = {23, 63, 102, 142, 182, 222, 261, 301, 340};
@@ -19,62 +23,78 @@ void SwerveChassis::setup(C_SwerveChassis *data, S_Robot *r_state) {
 
   // FRONT RIGHT
   C_SwerveModule FR_Config;
-  FR_Config.moduleID = 4;
+  FR_Config.moduleID = 1;
+  FR_Config.steerMotorID = 4;
+  FR_Config.steerEncoderID = 5;
   for (int i = 0; i < 9; i++)
   {
     FR_Config.alignment[i] = fr_alignment[i];
   }
-  FR_Config.steerVel.K[0] = 0;
+  FR_Config.steerVel.K[0] = 0.1;
   FR_Config.steerVel.K[1] = 0;
   FR_Config.steerVel.K[2] = 0;
-  FR_Config.steerPos.K[0] = 0;
+  FR_Config.steerPos.K[0] = 1;
   FR_Config.steerPos.K[1] = 0;
   FR_Config.steerPos.K[2] = 0;
 
   // FRONT LEFT
   C_SwerveModule FL_Config;
-  FL_Config.moduleID = 3;
+  FL_Config.moduleID = 0;
+  FL_Config.steerMotorID = 3;
+  FL_Config.steerEncoderID = 2;
   // FL_Config.alignment = {2, 42, 85, 125, 166, 206, 246, 288, 327};
   for (int i = 0; i < 9; i++)
   {
     FL_Config.alignment[i] = fl_alignment[i];
   }
-  FL_Config.steerVel.K[0] = 10;
+  FL_Config.steerVel.K[0] = 0.1;
   FL_Config.steerVel.K[1] = 0;
   FL_Config.steerVel.K[2] = 0;
-  FL_Config.steerPos.K[0] = 0;
+  FL_Config.steerPos.K[0] = 1;
   FL_Config.steerPos.K[1] = 0;
   FL_Config.steerPos.K[2] = 0;
 
   // BACK LEFT
   C_SwerveModule BL_Config;
-  BL_Config.moduleID = 2;
+  BL_Config.moduleID = 3;
+  BL_Config.steerMotorID = 2;
+  BL_Config.steerEncoderID = 3;
   // BL_Config.alignment = {18, 60, 99, 139, 179, 220, 260, 299, 341};
   for (int i = 0; i < 9; i++)
   {
     BL_Config.alignment[i] = bl_alignment[i];
   }
-  BL_Config.steerVel.K[0] = 0;
+  BL_Config.steerVel.K[0] = 0.1;
   BL_Config.steerVel.K[1] = 0;
   BL_Config.steerVel.K[2] = 0;
-  BL_Config.steerPos.K[0] = 0;
+  BL_Config.steerPos.K[0] = 1;
   BL_Config.steerPos.K[1] = 0;
   BL_Config.steerPos.K[2] = 0;
 
   // BACK RIGHT
   C_SwerveModule BR_Config;
-  BR_Config.moduleID = 1;
+  BR_Config.moduleID = 2;
+  BR_Config.steerMotorID = 1;
+  BR_Config.steerEncoderID = 4;
   // BR_Config.alignment = {20, 60, 100, 140, 181, 221, 261, 302, 341};
   for (int i = 0; i < 9; i++)
   {
     BR_Config.alignment[i] = br_alignment[i];
   }
-  BR_Config.steerVel.K[0] = 0;
+  BR_Config.steerVel.K[0] = 0.1;
   BR_Config.steerVel.K[1] = 0;
   BR_Config.steerVel.K[2] = 0;
-  BR_Config.steerPos.K[0] = 0;
+  BR_Config.steerPos.K[0] = 1;
   BR_Config.steerPos.K[1] = 0;
   BR_Config.steerPos.K[2] = 0;
+
+  // Serial.print(moduleFR.getSteerId());
+  // Serial.print(", ");
+  // Serial.print(moduleFL.getSteerId());
+  // Serial.print(", ");
+  // Serial.print(moduleBL.getSteerId());
+  // Serial.print(", ");
+  // Serial.println(moduleBR.getSteerId());
 
   // Init modules
   moduleFR.setup(&FR_Config, state);
@@ -82,17 +102,46 @@ void SwerveChassis::setup(C_SwerveChassis *data, S_Robot *r_state) {
   moduleBL.setup(&BL_Config, state);
   moduleBR.setup(&BR_Config, state);
 
-  // Normal Setup
-  config = data;
-  state = r_state;
+  Serial.print(moduleFR.getSteerId());
+  Serial.print(", ");
+  Serial.print(moduleFL.getSteerId());
+  Serial.print(", ");
+  Serial.print(moduleBL.getSteerId());
+  Serial.print(", ");
+  Serial.println(moduleBR.getSteerId());
 
   float drivebaseRadius = sqrt(pow(config->drivebaseLength, 2) + pow(this->config->drivebaseWidth, 2));
   drivebaseConstant = config->drivebaseLength / drivebaseRadius;
 
   calibrate();
+
+  Serial.print(moduleFR.getSteerId());
+  Serial.print(", ");
+  Serial.print(moduleFL.getSteerId());
+  Serial.print(", ");
+  Serial.print(moduleBL.getSteerId());
+  Serial.print(", ");
+  Serial.println(moduleBR.getSteerId());
+  Serial.println("leaving setup");
 }
 
-void SwerveChassis::update(float deltaTime) {
+void SwerveChassis::update(unsigned long deltaTime) {
+  // if (moduleBR.getSteerId() == 1)
+  // {
+  //   Serial.println("moduleBR id good");
+  // } else {
+  //   Serial.println("moduleBR id bad");
+  // }
+  
+  Serial.println("entered update");
+  Serial.print(moduleFR.getSteerId());
+  Serial.print(", ");
+  Serial.print(moduleFL.getSteerId());
+  Serial.print(", ");
+  Serial.print(moduleBL.getSteerId());
+  Serial.print(", ");
+  Serial.println(moduleBR.getSteerId());
+
   float driveX = (state->driverInput.w - state->driverInput.a) * cos(state->gimbal.yaw);
   float driveY = (state->driverInput.w - state->driverInput.a) * sin(state->gimbal.yaw);
 
@@ -115,7 +164,14 @@ void SwerveChassis::calibrate() {
   moduleBR.calibrate();
 }
 
-void SwerveChassis::drive(float driveX, float driveY, float spin, float deltaTime) {
+void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long deltaTime) {
+  Serial.print(moduleFR.getSteerId());
+  Serial.print(", ");
+  Serial.print(moduleFL.getSteerId());
+  Serial.print(", ");
+  Serial.print(moduleBL.getSteerId());
+  Serial.print(", ");
+  Serial.println(moduleBR.getSteerId());
 
   float gimbalAngle = 0;
 
@@ -145,10 +201,11 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, float deltaTim
   float angleBL = this->radiansToDegrees(atan2(A, C));
   float angleBR = this->radiansToDegrees(atan2(A, D));
 
-  this->moduleFR.update(speedFR, angleFR, deltaTime);
-  //this->moduleFL.update(speedFL, angleFL, deltaTime);
-  //this->moduleBL.update(speedBL, angleBL, deltaTime);
-  //this->moduleBR.update(speedBR, angleBR, deltaTime);
+
+  // this->moduleFR.update(speedFR, angleFR, deltaTime);
+  // this->moduleFL.update(speedFL, angleFL, deltaTime);
+  this->moduleBL.update(speedBL, angleBL, deltaTime);
+  // this->moduleBR.update(speedBR, angleBR, deltaTime);
 
   // Serial.print(angleFR);
   // Serial.print(" - ");

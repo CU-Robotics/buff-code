@@ -7,8 +7,8 @@ struct C_PID
 {
   float K[3] = {0.5f, 0.5f, 0.25f};
 
-  float Imin = -45.0f;
-  float Imax = 45.0f;
+  float Imin = -0.0f;
+  float Imax = 0.0f;
 
   float Ymin = -180.0f;
   float Ymax = 180.0f;
@@ -22,6 +22,10 @@ struct C_Teensy {
 
 struct C_SwerveModule {
   int moduleID;
+  int steerMotorID;
+  int steerEncoderID;
+  int driveMotorID;
+
   int alignment[9];
 
   C_PID steerVel;

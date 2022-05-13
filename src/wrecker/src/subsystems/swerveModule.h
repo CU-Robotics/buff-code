@@ -15,6 +15,7 @@ class SwerveModule {
     void setup(C_SwerveModule *config, S_Robot *state);
     void update(float speed, float angle, float deltaTime);
     void calibrate();
+    int getSteerId();
 
   private:
     S_Robot *state;
