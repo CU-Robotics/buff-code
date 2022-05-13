@@ -15,9 +15,9 @@ struct S_SwerveModule {
   float drive_speed;
   float drive_accel;
 
-  S_PID *steerVel;
-  S_PID *steerPos;
-  S_PID *driveVel;
+  S_PID steerVel;
+  S_PID steerPos;
+  S_PID driveVel;
 };
 
 struct S_Chassis {
@@ -45,12 +45,12 @@ struct S_Shooter {
 };
 
 struct DriverInput {
-  float leftStickX;
-  float leftStickY;
-  float rightStickX;
-  float rightStickY;
-  short leftSwitch;
-  short rightSwitch;
+  float leftStickX = 0;
+  float leftStickY = 0;
+  float rightStickX = 0;
+  float rightStickY = 0;
+  short leftSwitch = 0;
+  short rightSwitch = 0;
   uint16_t remoteWheel;
 
   uint8_t s1;

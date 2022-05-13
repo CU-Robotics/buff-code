@@ -41,7 +41,7 @@ void SwerveModule::calibrate() {
 }
 
 void SwerveModule::update(float speed, float angle, float deltaTime) {
-  Serial.println("Entered swervemodule update");
+  //Serial.println("Entered swervemodule update");
 
   // POS PID CALCULATIONS
   float rawSteerAngle = this->steerMotor.getAngle();
@@ -63,29 +63,29 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   }
   
   // VEL PID CALCULATIONS
-  Serial.println("VEL PID CALCULATIONS");
-  float rpm = (steerAngle - this->prevSteerAngle) * deltaTime * 60000000;
+  //Serial.println("VEL PID CALCULATIONS");
+  float rpm = steerMotor.getRpm() / 100.0;
   this->prevSteerAngle = steerAngle;
 
-  moduleState->steerPos->Y = 0;
-  PID_Filter(&config->steerPos, moduleState->steerPos, deltaTime);
-  Serial.println("test point 3");
+  // tmp_steerPos.R = angle;
+  // tmp_steerPos.Y = steerAngle;
+  // PID_Filter(&config->steerPos, &tmp_steerPos, deltaTime);
+  config->steerVel.K[0] = 100;
+
+  tmp_steerVel.R = speed * 150; //-tmp_steerPos.Y * 10000;
+  tmp_steerVel.Y = rpm;
+  PID_Filter(&config->steerVel, &tmp_steerVel, deltaTime);
+  
+  Serial.print(tmp_steerVel.R);
+  Serial.print(" ... ");
+  Serial.print(tmp_steerVel.Y);
+  Serial.print(" ... ");
   Serial.println(rpm);
-  Serial.println(moduleState->steerVel->Y);
-  moduleState->steerVel->Y = rpm;
-  Serial.println("test point 2");
-  moduleState->steerVel->R = -moduleState->steerPos->Y * 10000;
-  Serial.println("test point 1");
-  PID_Filter(&config->steerVel, moduleState->steerVel, deltaTime);
+
+  steerMotor.setPower(tmp_steerVel.Y);
+  steerMotor.updateMotor();
   
-  steerMotor.setPower(moduleState->steerVel->Y);
-  Serial.print(this->config->moduleID);
-  Serial.print(" - ");
-  Serial.print(steerAngle);
-  Serial.print(" - ");
-  Serial.println(moduleState->steerVel->Y);
-  
-  PID_Filter(&config->driveVel, moduleState->driveVel, deltaTime);
+  //PID_Filter(&config->driveVel, &moduleState->driveVel, deltaTime);
 
   this->prevRawSteerAngle = rawSteerAngle;
 }

@@ -21,6 +21,9 @@ class SwerveModule {
     C_SwerveModule *config;
     S_SwerveModule *moduleState;
 
+    S_PID tmp_steerVel;
+    S_PID tmp_steerPos;
+
     c610Enc steerMotor;
     c620CAN driveMotor;
 
