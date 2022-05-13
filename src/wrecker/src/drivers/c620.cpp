@@ -1,6 +1,5 @@
-#include "drivers/c620.h"
-
 #include "state/state.h"
+#include "drivers/c620.h"
 
 extern FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 extern FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
@@ -77,6 +76,7 @@ void c610Enc::init(short tempID, uint8_t tempCanBusNum, uint8_t encPin) {
   canBusNum = tempCanBusNum;
   id = tempID;
   byteNum = id - 1;
+
   if(byteNum > 3) {
     byteNum -= 4;
     sendMsgPtr = &c6x0Messages[canBusNum-1][0];

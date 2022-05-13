@@ -9,6 +9,7 @@ SwerveChassis::SwerveChassis() {
 
 }
 
+<<<<<<< HEAD
 void SwerveChassis::setup(C_SwerveChassis *data, S_Robot *r_state) {
   int bl_alignment[9] = {18, 60, 99, 139, 179, 220, 260, 299, 341};
   int br_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
