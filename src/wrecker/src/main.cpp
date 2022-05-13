@@ -31,11 +31,11 @@ C_Robot robot_config;
 
 
 // Subsystems
-Gimbal gimbal;
-dr16 reciever;
-ref_sys refSystem;
+// Gimbal gimbal;
+// dr16 reciever;
+// ref_sys refSystem;
 SwerveModule sm;
-SwerveChassis swerveChassis;
+// SwerveChassis swerveChassis;
 
 // Runs once
 void setup() {
@@ -72,7 +72,8 @@ void setup() {
 void loop() {
   //Serial.println("test");
 
-  dump_Robot(&robot_state, &robot_config);
+  // dump_Robot(&robot_state, &robot_config);
+  dump_Swerve(&robot_state.chassis.FR, "Front_Right");
   
   if (Serial.available() > 0)
     serial_event(&robot_state, &robot_config);

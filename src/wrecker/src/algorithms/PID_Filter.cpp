@@ -2,12 +2,12 @@
 
 #include "algorithms/PID_Filter.h"
 
-void PID_Filter(C_PID* config, S_PID* state, long dt)
+void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt)
 {
   if (dt == 0.0)
     return;
 
-  float error = state->R - state->Y;
+  float error = state->R - feedback;
   
   // Derivative term = change in error (X[0])
   state->X[2] = (error - state->X[0]);
