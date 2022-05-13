@@ -5,11 +5,16 @@
 #include "swerveModule.h"
 #include "swerveChassis.h"
 
+#include "algorithms/PID_Filter.h"
+
 SwerveChassis::SwerveChassis() {
 
 }
 
 void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
+
+  config = data;
+  state = r_state;
 
   // // Init modules
   moduleFR.setup(&data->FR, state, &state->chassis.FR);
@@ -17,24 +22,23 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   moduleBL.setup(&data->RL, state, &state->chassis.RL);
   moduleBR.setup(&data->RR, state, &state->chassis.RR);
 
-  // Normal Setup
-  config = data;
-  state = r_state;
-
-  float drivebaseRadius = sqrt(pow(config->drivebaseLength, 2) + pow(this->config->drivebaseWidth, 2));
+  float drivebaseRadius = sqrt(pow(config->drivebaseLength, 2) + pow(config->drivebaseWidth, 2));
   drivebaseConstant = config->drivebaseLength / drivebaseRadius;
 
   calibrate();
 }
 
-void SwerveChassis::update(float deltaTime) {
-  float driveX = (state->driverInput.w - state->driverInput.a) * cos(state->gimbal.yaw);
-  float driveY = (state->driverInput.w - state->driverInput.a) * sin(state->gimbal.yaw);
+void SwerveChassis::update(unsigned long deltaTime) {
 
-  float js = this->state->driverInput.leftStickX;
-  js = map(js, 364, 1684, 0, 1000) / 1000.0;
+  // float driveX = (state->driverInput.w - state->driverInput.a) * cos(state->gimbal.yaw);
+  // float driveY = (state->driverInput.w - state->driverInput.a) * sin(state->gimbal.yaw);
 
-  drive(0, 0, js, deltaTime);
+  float js1 = state->driverInput.leftStickX;
+  float js2 = state->driverInput.leftStickY;
+  js1 = map(js1, 364, 1684, 0, 1000) / 1000.0;
+  js2 = map(js2, 364, 1684, 0, 1000) / 1000.0;
+
+  drive(js1, 0, 0, deltaTime);
 }
 
 void SwerveChassis::calibrate() {
@@ -44,7 +48,7 @@ void SwerveChassis::calibrate() {
   moduleBR.calibrate();
 }
 
-void SwerveChassis::drive(float driveX, float driveY, float spin, float deltaTime) {
+void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long deltaTime) {
 
   float gimbalAngle = 0;
 
@@ -69,15 +73,16 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, float deltaTim
     speedBR /= speedMax;
   }
 
-  float angleFR = this->radiansToDegrees(atan2(B, D));
-  float angleFL = this->radiansToDegrees(atan2(B, C));
-  float angleBL = this->radiansToDegrees(atan2(A, C));
-  float angleBR = this->radiansToDegrees(atan2(A, D));
+  float angleFR = radiansToDegrees(atan2(B, D));
+  float angleFL = radiansToDegrees(atan2(B, C));
+  float angleBL = radiansToDegrees(atan2(A, C));
+  float angleBR = radiansToDegrees(atan2(A, D));
 
-  this->moduleFR.update(speedFR, angleFR, deltaTime);
-  this->moduleFL.update(speedFL, angleFL, deltaTime);
-  this->moduleBL.update(speedBL, angleBL, deltaTime);
-  this->moduleBR.update(speedBR, angleBR, deltaTime);
+
+  moduleFR.update(speedFR, angleFR, deltaTime);
+  moduleFL.update(speedFL, angleFL, deltaTime);
+  moduleBL.update(speedBL, angleBL, deltaTime);
+  moduleBR.update(speedBR, angleBR, deltaTime);
 }
 
 float SwerveChassis::radiansToDegrees(float radians) {

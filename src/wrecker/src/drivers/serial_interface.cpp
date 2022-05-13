@@ -29,6 +29,8 @@ void PID_serial_event(C_PID* pid)
       break;
 
     case 'I':
+      m = Serial.read();
+      
       pid->Imin = Serial.parseFloat();
       pid->Imax = Serial.parseFloat();
       break;
@@ -36,6 +38,9 @@ void PID_serial_event(C_PID* pid)
     case 'Y':
       pid->Ymin = Serial.parseFloat();
       pid->Ymax = Serial.parseFloat();
+
+    case 'C':
+      pid->continuous = !pid->continuous;
   }  
 }
 
@@ -56,18 +61,25 @@ void PID_serial_event(S_PID* pid)
 
 void dump_PID(C_PID* pid, String ID)
 {
-  Serial.print(ID); Serial.print("_K:"); 
-  Serial.print(pid->K[0]); Serial.print(","); 
-  Serial.print(pid->K[1]); Serial.print(",");
+  Serial.print(ID); Serial.print("Kp:");
+  Serial.println(pid->K[0]); 
+
+  Serial.print(ID); Serial.print("Ki:"); 
+  Serial.println(pid->K[1]); 
+
+  Serial.print(ID); Serial.print("Kd");
   Serial.println(pid->K[2]); 
 
-  Serial.print(ID); Serial.print("_Irange:"); 
+  Serial.print(ID); Serial.print("_I:"); 
   Serial.print(pid->Imin); Serial.print(",");
   Serial.println(pid->Imax); 
 
   Serial.print(ID); Serial.print("_Yrange:"); 
   Serial.print(pid->Ymin); Serial.print(",");
   Serial.println(pid->Ymax); 
+
+  Serial.print(ID); Serial.print("_continuous:"); 
+  Serial.println(pid->continuous);
 }
 
 void dump_PID(S_PID* pid, String ID)
@@ -92,6 +104,18 @@ void SwerveModule_serial_event(C_SwerveModule* sm_config){
       sm_config->moduleID = Serial.parseInt();
       break;
 
+    case 'R':
+      sm_config->driveMotorID = Serial.parseInt();
+      break;
+
+    case 'T':
+      sm_config->steerMotorID = Serial.parseInt();
+      break;
+
+    case 'E':
+      sm_config->steerEncoderID = Serial.parseInt();
+      break;
+
     case 'P':
       PID_serial_event(&sm_config->steerPos);
       break;
@@ -103,12 +127,28 @@ void SwerveModule_serial_event(C_SwerveModule* sm_config){
     case 'D':
       PID_serial_event(&sm_config->driveVel);
       break;
-  } 
+
+    case 'A':
+      sm_config->alignment[0] = Serial.parseInt();
+      sm_config->alignment[1] = Serial.parseInt();
+      sm_config->alignment[2] = Serial.parseInt();
+      sm_config->alignment[3] = Serial.parseInt();
+      sm_config->alignment[4] = Serial.parseInt();
+      sm_config->alignment[5] = Serial.parseInt();
+      sm_config->alignment[6] = Serial.parseInt();
+      sm_config->alignment[7] = Serial.parseInt();
+      sm_config->alignment[8] = Serial.parseInt();
+
+      break;
+  }
 }
 
 void dump_Swerve(C_SwerveModule* sm, String ID){
   Serial.print(ID); Serial.print("_swerve_module_config:");
   Serial.print(sm->moduleID); Serial.print(",");
+  Serial.print(sm->steerMotorID); Serial.print(",");
+  Serial.print(sm->driveMotorID); Serial.print(",");
+  Serial.print(sm->driveEncoderID); Serial.print(",");
   Serial.print(sm->alignment[0]); Serial.print(",");
   Serial.print(sm->alignment[1]); Serial.print(",");
   Serial.print(sm->alignment[2]); Serial.print(",");
@@ -119,21 +159,21 @@ void dump_Swerve(C_SwerveModule* sm, String ID){
   Serial.print(sm->alignment[7]); Serial.print(",");
   Serial.println(sm->alignment[8]);
 
-  dump_PID(&sm->steerPos, ID + "_swerve_module_pid");
-  dump_PID(&sm->steerVel, ID + "_swerve_module_pid");
-  dump_PID(&sm->driveVel, ID + "_swerve_module_pid");
+  dump_PID(&sm->steerPos, ID + "_sm_steer_pos_pid");
+  dump_PID(&sm->steerVel, ID + "_sm_steer_vel_pid");
+  dump_PID(&sm->driveVel, ID + "_sm_drive_vel_pid");
 }
 
 void dump_Swerve(S_SwerveModule* sm, String ID){
-  Serial.print(ID); Serial.print("_swerve_module_state:");
+  Serial.print(ID); Serial.print("_sm_state:");
   Serial.print(sm->steer_angle); Serial.print(",");
   Serial.print(sm->steer_speed); Serial.print(",");
   Serial.print(sm->drive_speed); Serial.print(",");
   Serial.println(sm->drive_accel);
 
-  dump_PID(&sm->steerPos, ID + "_swerve_module_pid");
-  dump_PID(&sm->steerVel, ID + "_swerve_module_pid");
-  dump_PID(&sm->driveVel, ID + "_swerve_module_pid");
+  dump_PID(&sm->steerPos, ID + "_sm_steer_pos_pid");
+  dump_PID(&sm->steerVel, ID + "_sm_steer_vel_pid");
+  dump_PID(&sm->driveVel, ID + "_sm_drive_vel_pid");
 }
 
 
@@ -210,10 +250,10 @@ void dump_Chassis(S_Chassis* ch){
   Serial.print(ch->a[0]); Serial.print(","); 
   Serial.println(ch->a[1]);
 
-  dump_Swerve(&ch->FL, "/front_left");
-  dump_Swerve(&ch->FR, "/front_right");
-  dump_Swerve(&ch->RR, "/rear_right");
-  dump_Swerve(&ch->RL, "/rear_left");
+  dump_Swerve(&ch->FL, "/fl");
+  dump_Swerve(&ch->FR, "/fr");
+  dump_Swerve(&ch->RR, "/rr");
+  dump_Swerve(&ch->RL, "/rl");
 }
 
 void dump_RailChassis(C_RailChassis* rc){
@@ -230,8 +270,8 @@ void dump_RailChassis(C_RailChassis* rc){
   Serial.print(rc->nodes[8]); Serial.print(",");
   Serial.println(rc->nodes[9]);
 
-  dump_PID(&rc->drivePos, "/rail_chassis_drive_pos_pid");
-  dump_PID(&rc->driveVel, "/rail_chassis_drive_vel_pid");
+  dump_PID(&rc->drivePos, "/rc_drive_pos_pid");
+  dump_PID(&rc->driveVel, "/rc_drive_vel_pid");
 }
 
 void dump_SwerveChassis(C_SwerveChassis* sc){
@@ -244,10 +284,10 @@ void dump_SwerveChassis(C_SwerveChassis* sc){
   Serial.print(sc->currentLimitLvl2); Serial.print(",");
   Serial.println(sc->currentLimitLvl3);
 
-  dump_Swerve(&sc->FL, "/front_left");
-  dump_Swerve(&sc->FR, "/front_right");
-  dump_Swerve(&sc->RR, "/rear_right");
-  dump_Swerve(&sc->RL, "/rear_left");
+  dump_Swerve(&sc->FL, "/fl");
+  dump_Swerve(&sc->FR, "/fr");
+  dump_Swerve(&sc->RR, "/rr");
+  dump_Swerve(&sc->RL, "/rl");
 }
 
 void Gimbal_serial_event(C_Gimbal* gm){
@@ -299,13 +339,17 @@ void dump_Gimbal(S_Gimbal* gm){
 }
 
 void dump_Gimbal(C_Gimbal* gm){
-  Serial.print("/gimbal_config:"); 
-  Serial.print(gm->sensitivity); Serial.print(","); 
-  Serial.print(gm->yawOffset); Serial.print(",");
+  Serial.print("@BS:"); 
+  Serial.println(gm->sensitivity); 
+
+  Serial.print("@B1"); 
+  Serial.println(gm->yawOffset); 
+
+  Serial.print("@B2");
   Serial.println(gm->pitchOffset);
 
-  dump_PID(&gm->yaw_PID, "/gimbal_yaw_pid");
-  dump_PID(&gm->pitch_PID, "/gimbal_pitch_pid");
+  dump_PID(&gm->yaw_PID, "@BY");
+  dump_PID(&gm->pitch_PID, "@BP");
 }
 
 void Shooter17_serial_event(C_Shooter17* sh){

@@ -77,6 +77,7 @@ struct DriverInput {
   bool b = false;
   bool shift = false;
   bool ctrl = false;
+
   //byte keyboard[2] = 15 bit value
 };
 

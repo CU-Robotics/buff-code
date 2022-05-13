@@ -4,7 +4,6 @@
 #include "state/config.h"
 #include "swerveModule.h"
 #include "algorithms/PID_Filter.h"
-
 #include "drivers/serial_interface.h"
 
 
@@ -15,9 +14,9 @@ SwerveModule::SwerveModule() {
 void SwerveModule::setup(C_SwerveModule* data, S_Robot* r_state, S_SwerveModule* sm_state) {
   config = data;
   state = r_state;
+
   moduleState = sm_state;
-  Serial.print("Setup:\n"); dump_Swerve(moduleState, "ModuelState");
-  steerMotor.init(config->moduleID, 1, config->moduleID);
+  steerMotor.init(config->steerMotorID, 1, config->steerEncoderID);
 }
 
 void SwerveModule::calibrate() {
@@ -26,40 +25,35 @@ void SwerveModule::calibrate() {
 }
 
 void SwerveModule::update(float speed, float angle, float deltaTime) {
-  //Serial.println("Entered swervemodule update");
 
   // POS PID CALCULATIONS
   float rawSteerAngle = steerMotor.getAngle();
 
-  if ((rawSteerAngle - prevRawSteerAngle) > 180) {
+  float steeringDifference = prevRawSteerAngle - rawSteerAngle;
+
+  if (steeringDifference < -180) {
     steerRollover--;
-  } else if ((prevRawSteerAngle - rawSteerAngle) > 180) {
+  } else if (steeringDifference > 180) {
     steerRollover++;
   }
+  prevRawSteerAngle = rawSteerAngle;
 
   float steerAngle = ((rawSteerAngle + steerRollover * 360) - steerOffset) * (9.0/25.0);
-
-  int tempSteerAngle = int(steerAngle * 100);
-  tempSteerAngle = tempSteerAngle % 36000;
-  steerAngle = tempSteerAngle / 100.0;
   
   if (steerAngle < 0) {
     steerAngle += 360;
   }
+  prevSteerAngle = steerAngle;
   
   // VEL PID CALCULATIONS
-  float rpm = (steerAngle - prevSteerAngle) * deltaTime * 60000000;
-  prevSteerAngle = steerAngle;
+  //Serial.println("VEL PID CALCULATIONS");
+  float rpm = steerMotor.getRpm() / 100.0;
 
-  moduleState->steerVel.R = - * 10000;
+  moduleState->steerPos.R = speed * 360; //angle;
+  PID_Filter(&config->steerPos, &moduleState->steerPos, steerAngle, deltaTime); 
 
-  PID_Filter(&config->steerPos, &moduleState->steerPos, steerAngle, deltaTime);
-
+  moduleState->steerVel.R = -moduleState->steerPos.Y; //(speed * 300) - 150; //-tmp_steerPos.Y * 10000;
   PID_Filter(&config->steerVel, &moduleState->steerVel, rpm, deltaTime);
-  
-  PID_Filter(&config->driveVel, &moduleState->driveVel, , deltaTime);
-
-  prevRawSteerAngle = rawSteerAngle;
 }
 
 int SwerveModule::findCalibrationMatch(int currValue, int* alignmentTable, int tableSize) {
@@ -73,4 +67,9 @@ int SwerveModule::findCalibrationMatch(int currValue, int* alignmentTable, int t
     }
   }
   return bestOffset;
+}
+
+
+int SwerveModule::getSteerId() {
+  return config->steerMotorID;
 }
