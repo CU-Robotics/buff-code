@@ -12,15 +12,18 @@
 class SwerveModule {
  public:
     SwerveModule();
-    void setup(C_SwerveModule* config, S_Robot* state, S_SwerveModule* sm_state);
+    void setup(C_SwerveModule *config, S_Robot *state, S_SwerveModule *modState);
     void update(float speed, float angle, float deltaTime);
     void calibrate();
     int getSteerId();
 
   private:
-    S_Robot* state;
-    C_SwerveModule* config;
-    S_SwerveModule* moduleState;
+    S_Robot *state;
+    C_SwerveModule *config;
+    S_SwerveModule *moduleState;
+
+    S_PID tmp_steerVel;
+    S_PID tmp_steerPos;
 
     c610Enc steerMotor;
     c620CAN driveMotor;
