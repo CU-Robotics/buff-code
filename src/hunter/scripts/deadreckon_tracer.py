@@ -5,10 +5,7 @@ import sys
 import time
 import rospy
 import numpy as np
-import buffvision as bv
-from std_msgs.msg import Bool
 from cv_bridge import CvBridge
-import matplotlib.pyplot as plt
 from sensor_msgs.msg import Image
 from std_msgs.msg import String, Float64MultiArray
 
@@ -60,8 +57,8 @@ class Dead_Reckon_Tracer:
 		# self.detect_sub = rospy.Subscriber(
 		# 	topics['DETECTION'], Float64MultiArray, self.detection_callback, queue_size=5)
 
-		self.aim_heading_sub = rospy.Subscriber(
-			topics['AIM_HEADING'], Float64MultiArray)
+		self.gimbal_sub = rospy.Subscriber(
+			topics['GIMBAL_STATE'], Float64MultiArray)
 
 		self.prediction_pub = rospy.Publisher(
 			topics['TARGET'], String, queue_size=1)
@@ -112,7 +109,7 @@ class Dead_Reckon_Tracer:
 		self.predict()
 		psi = np.arctan(self.pose[1] / self.pose[0]) # arctan of x,y is yaw
 		phi = self.d_scale * np.linalg.norm(self.pose) # phi is this needs to be tuned function of distance
-		msg = String(f'aim_control:{phi},{psi}')
+		msg = String(f':{phi},{psi}')
 		self.prediction_pub.publish(msg)
 
 	def detection_callback(self, msg):
@@ -190,9 +187,6 @@ class Dead_Reckon_Tracer:
 				self.history = np.ones((4,2), dtype=np.float64) * -1
 				self.trajectory = np.zeros((3,2), dtype=np.float64)
 
-			self.measure = np.array([50, 50 * np.sin(self.t)])
-			rospy.loginfo(self.measure)
-
 			self.publish_prediction()
 
 			if not self.measure is None:
@@ -213,7 +207,7 @@ class Dead_Reckon_Tracer:
 
 
 def main(config_data):
-
+	exit(0)
 	tracker = Dead_Reckon_Tracer(config_data)
 	tracker.spin()
 

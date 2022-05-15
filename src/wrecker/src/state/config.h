@@ -1,14 +1,35 @@
+#include "Arduino.h"
+
+#ifndef CONFIG_H
 #define CONFIG_H
 
-struct C_Config {
+struct C_PID
+{
+  float K[3] = {0.5f, 0.5f, 0.25f};
 
+  float Imin = -45.0f;
+  float Imax = 45.0f;
+
+  float Ymin = -180.0f;
+  float Ymax = 180.0f;
+
+  bool continuous = false;
 };
 
-struct C_Teensy: C_Config {
+struct C_Teensy {
   int loopStall = 1000; // microseconds
 };
 
-struct C_SwerveChassis: C_Config {
+struct C_SwerveModule {
+  int moduleID;
+  int alignment[9];
+
+  C_PID steerVel;
+  C_PID steerPos;
+  C_PID driveVel;
+};
+
+struct C_SwerveChassis {
   float drivebaseWidth = 14.5;
   float drivebaseLength = 14.5;
 
@@ -17,65 +38,32 @@ struct C_SwerveChassis: C_Config {
   float currentLimitLvl2 = 80.0 / 24.0;
   float currentLimitLvl3 = 100.0 / 24.0;
 
-  C_SwerveModule moduleFR;
-  C_SwerveModule moduleFL;
-  C_SwerveModule moduleBL;
-  C_SwerveModule moduleBR;
+  C_SwerveModule FR;
+  C_SwerveModule FL;
+  C_SwerveModule RL;
+  C_SwerveModule RR;
 };
 
-struct C_SwerveModule: C_Config {
-  short moduleID;
+struct C_RailChassis {
+  int numNodes = 10;
+  float nodes[10];
 
-  int alignment[9];
-
-  float steerVelP;
-  float steerVelI;
-  float steerVelD;
-  float steerVelF;
-
-  float steerPosP;
-  float steerPosI;
-  float steerPosD;
-  float steerPosF;
-
-  float driveVelP;
-  float driveVelI;
-  float driveVelD;
-  float driveVelF;
+  C_PID driveVel;
+  C_PID drivePos;
 };
 
-struct C_RailChassis: C_Config {
-  float VelP;
-  float VelI;
-  float VelD;
-  float VelF;
+struct C_Gimbal {
+  float sensitivity = 1.0;
 
-  float PosP;
-  float PosI;
-  float PosD;
-  float PosF;
+  float pitchOffset = 12;
+  float yawOffset = 90;
 
-  float* nodes;
-  int numNodes;
-};
-
-struct C_Gimbal: C_Config {
-  float maxPitch;
-  float minPitch;
-
-  float pitchP;
-  float pitchI;
-  float pitchD;
-  float pitchF;
-
-  float yawP;
-  float yawI;
-  float yawD;
-  float yawF;
+  C_PID pitch_PID;
+  C_PID yaw_PID;
 };
 
 // Configured for cooling focus by default
-struct C_17mmShooter: C_Config {
+struct C_Shooter17 {
   float feedRPMLow = 10;
   float feedRPMHigh = 25;
   float feedRPMBurst = 50;
@@ -86,11 +74,13 @@ struct C_17mmShooter: C_Config {
   float flywheelPowerLvl3 = 0.22;
 };
 
-struct C_42mmShooter: C_Config {
-  float feedTimeout = 0.5; // Maximum time between consecutive shots, in seconds
+struct C_Shooter42 {
+  float feedTimeout = 0.5; // Minimum time between consecutive shots, in seconds
 
   float flywheelPowerLvl0 = 0.15;
   float flywheelPowerLvl1 = 0.17;
   float flywheelPowerLvl2 = 0.2;
   float flywheelPowerLvl3 = 0.22;
 };
+
+#endif
