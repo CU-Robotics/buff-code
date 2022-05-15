@@ -8,6 +8,7 @@ class flywheel {
     public:
         flywheel();
         void init(byte tempPinNum);
+        void setPower(float newPower);
 };
 
 #endif
