@@ -1,27 +1,31 @@
-#include "subsystem.h"
+#include "state/state.h"
+#include "state/config.h"
 #include "swerveModule.h"
 
-#include "../state/config.h"
-#include "../state/state.h"
+#ifndef SWERVE_CHASSIS_H
+#define SWERVE_CHASSIS_H
 
-class SwerveChassis: public Subsystem {
+class SwerveChassis {
  public:
-    void setup(C_SwerveChassis *config, S_Robot *state);
-    void loop(float deltaTime);
+    SwerveChassis();
+    void setup(C_SwerveChassis *data, S_Robot *r_state);
+    void update(float deltaTime);
 
   private:
-    C_SwerveChassis *config;
     S_Robot *state;
+    C_SwerveChassis *config;
 
     SwerveModule moduleFR;
     SwerveModule moduleFL;
     SwerveModule moduleBL;
     SwerveModule moduleBR;
 
-    float drivebaseRadius;
+    float drivebaseConstant;
 
     void calibrate();
     void drive(float driveX, float driveY, float spin, float deltaTime);
     void driveSimple(float driveX, float driveY, float deltaTime);
     float radiansToDegrees(float radians);
 };
+
+#endif // SWERVE_CHASSIS_H

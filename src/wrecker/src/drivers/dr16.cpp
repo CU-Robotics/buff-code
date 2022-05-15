@@ -4,7 +4,7 @@ dr16::dr16() {
     
 }
 
-void dr16::init(RobotInput *tempInput) {
+void dr16::init(DriverInput *tempInput) {
     input = tempInput;
     Serial5.begin(100000, SERIAL_8E1_RXINV_TXINV);  //reciever serial
 }
@@ -43,20 +43,20 @@ void dr16::update() {
         numBytes = 0;
 
         //debugging
-        for (int i = 0; i < 18; i++)
-        {
-            for (int j = 7; j >= 0; j--)
-            {
-                Serial.print(bitRead(buf[i], j));
-            }
-            Serial.print(" ");
-        }
-        Serial.println();
+        // for (int i = 0; i < 18; i++)
+        // {
+        //     for (int j = 7; j >= 0; j--)
+        //     {
+        //         Serial.print(bitRead(buf[i], j));
+        //     }
+        //     Serial.print(" ");
+        // }
+        // Serial.println();
         
-        input->CH0 = ((buf[1] & 0b00000111) << 8) | buf[0];
-        input->CH1 = ((buf[2] & 0b11111100) << 5) | ((buf[1] & 0b11111000) >> 3);
-        input->CH2 = (((buf[4] & 0b00000001) << 10) | (buf[3] << 2)) | (buf[2] & 0b00000011);
-        input->CH3 = ((buf[5] & 0b00001111) << 7) | (buf[4] & 0b11111110);
+        input->leftStickX = ((buf[1] & 0b00000111) << 8) | buf[0];
+        input->leftStickY = ((buf[2] & 0b11111100) << 5) | ((buf[1] & 0b11111000) >> 3);
+        input->rightStickX = (((buf[4] & 0b00000001) << 10) | (buf[3] << 2)) | (buf[2] & 0b00000011);
+        input->rightStickY = ((buf[5] & 0b00001111) << 7) | (buf[4] & 0b11111110);
 
         input->s1 = ((buf[5] & 0b00110000) >> 4);
         input->s2 = ((buf[5] & 0b11000000) >> 6);
@@ -118,9 +118,9 @@ void dr16::update() {
         // Serial.print(", ");
         // Serial.print(input->s2);
 
-        Serial.print(input->mouseLeft);
-        Serial.print(", ");
-        Serial.print(input->mouseRight);
-        Serial.println();
+        // Serial.print(input->mouseLeft);
+        // Serial.print(", ");
+        // Serial.print(input->mouseRight);
+        // Serial.println();
     }
 }
