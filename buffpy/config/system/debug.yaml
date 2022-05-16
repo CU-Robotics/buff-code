@@ -5,12 +5,9 @@ FROM:
   'live.yaml'
 
 TOPICS:
-  TRACKING_ERROR:
-    'tracking_error'
-  TARGET_MAP:
-    'target_map'
-  IMAGE_DEBUG:
-    'image_debug'
+  TRACKING_ERROR: 'tracking_error'
+  TARGET_MAP: 'target_map'
+  IMAGE_DEBUG: 'image_debug'
 
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
@@ -24,8 +21,10 @@ NODES:
   #     - '-o /home/cu-robotics/buff-code/data/'
   LUXONIS:
     REQUIRED: False
+  TRACKER:     # spawns our tracker node
+    FILES: ['target_map.py']
   RQT_GUI:    # Opens an rqt_graph
-    FILE: 'rqt_gui'
+    FILES: ['rqt_gui']
     PACKAGE: 'rqt_gui'
     ARGS:
       - '--perspective-file ${PROJECT_ROOT}/buffpy/config/data/buff_view.perspective'

@@ -3,11 +3,11 @@ DEBUG:
   
 
 TOPICS:
-  TARGET: 'target'
   IMAGE: 'image_raw'
-  GIMBAL_STATE: 'gimbal'
+  GIMBAL_STATE: 'gimbal_state'
   SERIAL_OUT: 'serial_write'
-  DETECTION: 'detected_object'
+  DETECTION_PIXEL: 'image_detection'
+  DETECTION_WORLD: 'world_detection'
 
 
 NODES:
@@ -21,15 +21,15 @@ NODES:
   #     - '-x /rosout'
   #     - '-o /home/cu-robotics/buff-code/data/'
   LUXONIS: # spawns our detector node
-    FILE: "luxnet.py"
-    CONFIG: "luxonis_settings.yaml"
-    PACKAGE: "buffpy"
+    FILES: ['luxnet.py']
+    CONFIG: 'luxonis_settings.yaml'
+    PACKAGE: 'buffpy'
     REQUIRED: True
   TRACKER:     # spawns our tracker node
-    FILE: 'deadreckon_tracer.py'
-    CONFIG: 'deadreckon_settings.yaml'
+    FILES: ['deadreckon_tracer.py', 'projector.py']
+    CONFIG: 'tracker_settings.yaml'
     PACKAGE: 'buffpy'
   SERIAL:
-    FILE: 'serial_layer.py'
+    FILES: ['serial_layer.py']
     CONFIG: 'serial_settings.yaml'
     PACKAGE: 'buffpy'

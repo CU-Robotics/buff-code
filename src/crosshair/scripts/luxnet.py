@@ -15,7 +15,6 @@ import torch
 import numpy as np
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from gdrive_handler import GD_Handler
 from std_msgs.msg import Float64MultiArray
 
 import depthai as dai
@@ -188,7 +187,7 @@ class DepthAI_Device:
 		
 		rospy.init_node('buffnet', anonymous=True)
 		self.det_pub = rospy.Publisher(
-			topics['DETECTION'], Float64MultiArray, queue_size=1)
+			topics['DETECTION_PIXEL'], Float64MultiArray, queue_size=1)
 
 		self.image_pub = rospy.Publisher(
 			topics['IMAGE'], Image, queue_size=1)
