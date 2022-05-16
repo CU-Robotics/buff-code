@@ -14,6 +14,8 @@ export HOSTNAME=$HOSTNAME
 if [[ -f /proc/1/cgroup ]]; then
 	if grep -q docker /proc/1/cgroup; then 
 	   DOCKER=True
+	elif [[ "${HOSTNAME}" == "docker-desktop" ]]; then
+		DOCKER=True
 	fi
 fi
 
@@ -30,6 +32,9 @@ if [[ "${DOCKER}" == "False" ]]; then
 		-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
 		--net=host "
 	fi
+else
+	export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
 fi
 
 PYTHONPATH=
