@@ -32,14 +32,14 @@ void c620CAN::init(uint8_t motorId, uint8_t tempCanBusNum) {
 }
 
 void c620CAN::setPower(float power) {
-  if (power > 1)
+  if (power > 1.0)
   {
-    power = 1;
-  } else if (power < -1) {
-    power = -1;
+    power = 1.0;
+  } else if (power < -1.0) {
+    power = -1.0;
   }
   
-  short newPower = (short)(power * MAX_VALUE);
+  int16_t newPower = (int16_t)(power * 16384);
   byte byteOne = highByte(newPower);
   byte byteTwo = lowByte(newPower);
   sendMsgPtr->buf[byteNum << 1] = byteOne;
