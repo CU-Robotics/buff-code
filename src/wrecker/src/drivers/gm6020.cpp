@@ -28,6 +28,13 @@ void gm6020::init(short tempID, uint8_t tempCanBusNum){
 }
 
 void gm6020::setPower(float power) {
+    if (power > 1)
+    {
+      power = 1;
+    } else if (power < -1) {
+      power = -1;
+    }
+    
     short newPower = (short)(power * MAX_VALUE);
     byte byteOne = highByte(newPower);
     byte byteTwo = lowByte(newPower);
