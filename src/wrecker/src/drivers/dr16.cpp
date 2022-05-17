@@ -94,33 +94,5 @@ void dr16::update() {
 
         //remote wheel
         input->remoteWheel = (buf[17] << 8) | buf[16];
-
-        // Serial.println(input->remoteWheel);
-        // Serial.println(input->CH3); 
-        // Serial.println();
-        // Serial.print(input->r);
-        // Serial.print(", ");
-        // Serial.print(input->f);
-        // Serial.print(", ");
-        // Serial.print(input->g);
-        // Serial.print(", ");
-        // Serial.print(input->z);
-        // Serial.print(", ");
-        // Serial.print(input->x);
-        // Serial.print(", ");
-        // Serial.print(input->c);
-        // Serial.print(", ");
-        // Serial.print(input->v);
-        // Serial.print(", ");
-        // Serial.print(input->b);
-
-        // Serial.print(input->s1);
-        // Serial.print(", ");
-        // Serial.print(input->s2);
-
-        // Serial.print(input->mouseLeft);
-        // Serial.print(", ");
-        // Serial.print(input->mouseRight);
-        // Serial.println();
     }
 }

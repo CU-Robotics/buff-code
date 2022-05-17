@@ -2,15 +2,18 @@
 
 #include "algorithms/PID_Filter.h"
 
-void PID_Filter(C_PID* config, S_PID* state, long dt)
+void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt)
 {
-  float error = state->R - state->Y;
+  if (dt == 0.0)
+    return;
+
+  float error = state->R - feedback;
   
   // Derivative term = change in error (X[0])
-  state->X[2] = (error - state->X[0]) / dt;
+  // state->X[2] = (error - state->X[0]) / dt;
   
   // Integral term = sum of error
-  state->X[1] = max(config->Imin, min(config->Imax, state->X[1] + (state->X[0] * dt)));
+  // state->X[1] = max(config->Imin, min(config->Imax, state->X[1] + (state->X[0] * dt)));
   
   // Proportional term = error (R - Y)
   state->X[0] = error;
@@ -23,7 +26,8 @@ void PID_Filter(C_PID* config, S_PID* state, long dt)
   }
 
   // Sum terms, clamp, and return
-  state->Y = max(config->Ymin, min(config->Ymax, (config->K[0] * state->X[0]) + (config->K[1] * state->X[1]) + (config->K[2] * state->X[2]) + config->K[3]));
+  float signal = (config->K[0] * state->X[0]) + (config->K[1] * state->X[1]) + (config->K[2] * state->X[2]);
+  state->Y = max(config->Ymin, min(config->Ymax, signal));
 }
 
 

@@ -1,6 +1,7 @@
-#include "drivers/c620.h"
+#include <Arduino.h>
 
 #include "state/state.h"
+#include "drivers/c620.h"
 
 extern FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 extern FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
@@ -36,17 +37,17 @@ void c620CAN::setPower(float power) {
     byte byteTwo = lowByte(newPower);
     sendMsgPtr->buf[byteNum << 1] = byteOne;
     sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
-    // switch (canBusNum) {
-    //     case 1:
-    //       can1.write(*sendMsgPtr);
-    //       break;
-    //     case 2:
-    //       can2.write(*sendMsgPtr);
-    //       break;
-    //     case 3:
-    //       can3.write(*sendMsgPtr);
-    //       break;
-    // }
+    switch (canBusNum) {
+        case 1:
+          can1.write(*sendMsgPtr);
+          break;
+        case 2:
+          can2.write(*sendMsgPtr);
+          break;
+        case 3:
+          can3.write(*sendMsgPtr);
+          break;
+    }
 }
 
 void c620CAN::updateMotor() {
@@ -77,13 +78,14 @@ void c610Enc::init(short tempID, uint8_t tempCanBusNum, uint8_t encPin) {
   canBusNum = tempCanBusNum;
   id = tempID;
   byteNum = id - 1;
+
   if(byteNum > 3) {
     byteNum -= 4;
     sendMsgPtr = &c6x0Messages[canBusNum-1][0];
     sendMsgPtr->id = 0x1FF;   //ID for all c620s 4-7
   } 
   else {
-    sendMsgPtr = &c6x0Messages[canBusNum-1][1];
+    sendMsgPtr = &c6x0Messages[canBusNum - 1][1];
     sendMsgPtr->id = 0x200;   //ID for all c620s 0-3
   }
 
@@ -100,22 +102,26 @@ void c610Enc::init(short tempID, uint8_t tempCanBusNum, uint8_t encPin) {
 }
 
 void c610Enc::setPower(float power) {
-    short newPower = (short)(power * MAX_VALUE);
+    int16_t newPower = (int16_t)(power * 16384);
     byte byteOne = highByte(newPower);
     byte byteTwo = lowByte(newPower);
     sendMsgPtr->buf[byteNum << 1] = byteOne;
     sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
-    // switch (canBusNum) {
-    //     case 1:
-    //       can1.write(*sendMsgPtr);
-    //       break;
-    //     case 2:
-    //       can2.write(*sendMsgPtr);
-    //       break;
-    //     case 3:
-    //       can3.write(*sendMsgPtr);
-    //       break;
-    // }
+    // Serial.println(newPower);
+    // Serial.print(byteOne,HEX);
+    // Serial.print(", ");
+    // Serial.println(byteTwo, HEX);
+    switch (canBusNum) {
+        case 1:
+          can1.write(*sendMsgPtr);
+          break;
+        case 2:
+          can2.write(*sendMsgPtr);
+          break;
+        case 3:
+          can3.write(*sendMsgPtr);
+          break;
+    }
 }
 
 //investigate using interrupts to handle keeping the angle up to date instead of getting into a while loop
@@ -126,9 +132,13 @@ float c610Enc::getAngle() {
   {
     freq.read();
   }
-  
-  angle = map(round(freq.countToNanoseconds(freq.read())/1000), 1, 1024, 0, 360);
-  
+  int16_t temp = map(round(freq.countToNanoseconds(freq.read())/1000), 1, 1024, 0, 360);
+
+  if (temp >= 0 && temp <= 360)
+  {
+    angle = temp;
+  }
+
   return angle;
 }
 

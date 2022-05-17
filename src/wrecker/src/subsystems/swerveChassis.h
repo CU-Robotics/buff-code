@@ -9,7 +9,7 @@ class SwerveChassis {
  public:
     SwerveChassis();
     void setup(C_SwerveChassis *data, S_Robot *r_state);
-    void update(float deltaTime);
+    void update(unsigned long deltaTime);
 
   private:
     S_Robot *state;
@@ -23,7 +23,7 @@ class SwerveChassis {
     float drivebaseConstant;
 
     void calibrate();
-    void drive(float driveX, float driveY, float spin, float deltaTime);
+    void drive(float driveX, float driveY, float spin, unsigned long deltaTime);
     void driveSimple(float driveX, float driveY, float deltaTime);
     float radiansToDegrees(float radians);
 };
