@@ -28,44 +28,45 @@ void gm6020::init(short tempID, uint8_t tempCanBusNum){
 }
 
 void gm6020::setPower(float power) {
-    if (power > 1)
-    {
-      power = 1;
-    } else if (power < -1) {
-      power = -1;
-    }
-    
-    short newPower = (short)(power * MAX_VALUE);
-    byte byteOne = highByte(newPower);
-    byte byteTwo = lowByte(newPower);
-    sendMsgPtr->buf[byteNum] = byteOne;
-    sendMsgPtr->buf[byteNum + 1] = byteTwo;
-    switch (canBusNum) {
-        case 1:
-          can1.write(*sendMsgPtr);
-          break;
-        case 2:
-          can2.write(*sendMsgPtr);
-          break;
-        case 3:
-          can3.write(*sendMsgPtr);
-          break;
-    }
+  if (power > 1)
+  {
+    power = 1;
+  } else if (power < -1) {
+    power = -1;
+  }
+  
+  short newPower = (short)(power * MAX_VALUE);
+  byte byteOne = highByte(newPower);
+  byte byteTwo = lowByte(newPower);
+  sendMsgPtr->buf[byteNum] = byteOne;
+  sendMsgPtr->buf[byteNum + 1] = byteTwo;
+  switch (canBusNum) {
+    case 1:
+      can1.write(*sendMsgPtr);
+      break;
+    case 2:
+      can2.write(*sendMsgPtr);
+      break;
+    case 3:
+      can3.write(*sendMsgPtr);
+      break;
+  }
+  updateMotor();
 }
 
 void gm6020::updateMotor() {
-    CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id + 4];
-    angle = recMsg->buf[0];
-    angle = angle << 8;
-    angle = angle | recMsg->buf[1];
+  CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id + 4];
+  angle = recMsg->buf[0];
+  angle = angle << 8;
+  angle = angle | recMsg->buf[1];
 
-    rpm = recMsg->buf[2];
-    rpm = rpm << 8;
-    rpm = rpm | recMsg->buf[3];
+  rpm = recMsg->buf[2];
+  rpm = rpm << 8;
+  rpm = rpm | recMsg->buf[3];
 
-    torque = recMsg->buf[4];
-    torque = torque << 8;
-    torque = torque | recMsg->buf[5];
+  torque = recMsg->buf[4];
+  torque = torque << 8;
+  torque = torque | recMsg->buf[5];
 
-    temp = recMsg->buf[6];
+  temp = recMsg->buf[6];
 }
