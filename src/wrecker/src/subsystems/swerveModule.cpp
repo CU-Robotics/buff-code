@@ -101,8 +101,8 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
 
   if (calibrated) {
     //steerMotor.setPower(tmp_steerVel.Y);
-    steerMotor.updateMotor();
-    driveMotor.setPower(speed * 0.3);
+    //steerMotor.updateMotor();
+    driveMotor.setPower(0.4);
     driveMotor.updateMotor();
     Serial.println(driveMotor.getRpm());
   }
