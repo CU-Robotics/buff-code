@@ -32,6 +32,13 @@ void c620CAN::init(uint8_t motorId, uint8_t tempCanBusNum) {
 }
 
 void c620CAN::setPower(float power) {
+    if (power > 1)
+    {
+      power = 1;
+    } else if (power < -1) {
+      power = -1;
+    }
+    
     short newPower = (short)(power * MAX_VALUE);
     byte byteOne = highByte(newPower);
     byte byteTwo = lowByte(newPower);
