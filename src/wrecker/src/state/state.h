@@ -139,6 +139,11 @@ struct S_RefSystem {
 
     int rem_17_proj;
     int rem_42_proj;
+
+    //following lines are so that code will compile
+    int health = 100;
+    int matchTime = 0;
+    short robotLevel = 0;
 };
 
 struct S_Robot {
