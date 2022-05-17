@@ -32,22 +32,30 @@ void c620CAN::init(uint8_t motorId, uint8_t tempCanBusNum) {
 }
 
 void c620CAN::setPower(float power) {
-    short newPower = (short)(power * MAX_VALUE);
-    byte byteOne = highByte(newPower);
-    byte byteTwo = lowByte(newPower);
-    sendMsgPtr->buf[byteNum << 1] = byteOne;
-    sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
-    switch (canBusNum) {
-        case 1:
-          can1.write(*sendMsgPtr);
-          break;
-        case 2:
-          can2.write(*sendMsgPtr);
-          break;
-        case 3:
-          can3.write(*sendMsgPtr);
-          break;
-    }
+  if (power > 1.0)
+  {
+    power = 1.0;
+  } else if (power < -1.0) {
+    power = -1.0;
+  }
+  
+  int16_t newPower = (int16_t)(power * 16384);
+  byte byteOne = highByte(newPower);
+  byte byteTwo = lowByte(newPower);
+  sendMsgPtr->buf[byteNum << 1] = byteOne;
+  sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
+  switch (canBusNum) {
+    case 1:
+      can1.write(*sendMsgPtr);
+      break;
+    case 2:
+      can2.write(*sendMsgPtr);
+      break;
+    case 3:
+      can3.write(*sendMsgPtr);
+      break;
+  }
+  updateMotor();
 }
 
 void c620CAN::updateMotor() {
@@ -102,26 +110,27 @@ void c610Enc::init(short tempID, uint8_t tempCanBusNum, uint8_t encPin) {
 }
 
 void c610Enc::setPower(float power) {
-    int16_t newPower = (int16_t)(power * 16384);
-    byte byteOne = highByte(newPower);
-    byte byteTwo = lowByte(newPower);
-    sendMsgPtr->buf[byteNum << 1] = byteOne;
-    sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
-    // Serial.println(newPower);
-    // Serial.print(byteOne,HEX);
-    // Serial.print(", ");
-    // Serial.println(byteTwo, HEX);
-    switch (canBusNum) {
-        case 1:
-          can1.write(*sendMsgPtr);
-          break;
-        case 2:
-          can2.write(*sendMsgPtr);
-          break;
-        case 3:
-          can3.write(*sendMsgPtr);
-          break;
-    }
+  int16_t newPower = (int16_t)(power * 16384);
+  byte byteOne = highByte(newPower);
+  byte byteTwo = lowByte(newPower);
+  sendMsgPtr->buf[byteNum << 1] = byteOne;
+  sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
+  // Serial.println(newPower);
+  // Serial.print(byteOne,HEX);
+  // Serial.print(", ");
+  // Serial.println(byteTwo, HEX);
+  switch (canBusNum) {
+    case 1:
+      can1.write(*sendMsgPtr);
+      break;
+    case 2:
+      can2.write(*sendMsgPtr);
+      break;
+    case 3:
+      can3.write(*sendMsgPtr);
+      break;
+  }
+  updateMotor();
 }
 
 //investigate using interrupts to handle keeping the angle up to date instead of getting into a while loop
