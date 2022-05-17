@@ -34,6 +34,7 @@ struct C_SwerveModule {
 
   //  Alignment data ???
   int alignment[9] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+  int absolute_offset = 0;
 
   // PIDs
   C_PID steerVel;
