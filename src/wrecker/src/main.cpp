@@ -56,7 +56,7 @@ void setup() {
   // gimbal.setup(&robot_config.gimbal, &robot_state);
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
 
-  dump_Robot(&robot_state, &robot_config);
+  //dump_Robot(&robot_state, &robot_config);
 }
 
 
