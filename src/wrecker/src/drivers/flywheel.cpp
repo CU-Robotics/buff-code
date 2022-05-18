@@ -10,7 +10,7 @@ void flywheel::init(byte tempPinNum) {
     analogWriteFrequency(pinNum, 16000);
 }
 
-void setPower(float newPower) {
+void flywheel::setPower(float newPower) {
     if (newPower > 1)
     {
         newPower = 1;
