@@ -36,6 +36,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->FR.steerPos.K[0] = 1.2;
   data->FR.steerPos.K[1] = 0;
   data->FR.steerPos.K[2] = 0;
+  data->FR.driveVel.K[0] = 0.0006;
 
   // FRONT LEFT
   data->FL.cornerID = 1;
@@ -53,6 +54,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->FL.steerPos.K[0] = 1.2;
   data->FL.steerPos.K[1] = 0;
   data->FL.steerPos.K[2] = 0;
+  data->FL.driveVel.K[0] = 0.0006;
 
   // BACK LEFT
   data->RL.cornerID = 2;
@@ -70,6 +72,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->RL.steerPos.K[0] = 1.2;
   data->RL.steerPos.K[1] = 0;
   data->RL.steerPos.K[2] = 0;
+  data->RL.driveVel.K[0] = 0.0006;
 
   // BACK RIGHT
   data->RR.cornerID = 3;
@@ -87,6 +90,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->RR.steerPos.K[0] = 1.2;
   data->RR.steerPos.K[1] = 0;
   data->RR.steerPos.K[2] = 0;
+  data->RR.driveVel.K[0] =  0.0006;
 
   // // Init modules
   moduleFR.setup(&data->FR, state, &state->chassis.FR);

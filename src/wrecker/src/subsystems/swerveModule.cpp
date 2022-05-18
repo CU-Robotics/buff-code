@@ -17,7 +17,7 @@ void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state, S_SwerveModule 
   moduleState = modState;
 
   this->steerMotor.init(config->steerMotorID, 1, config->steerEncoderID);
-  this->driveMotor.init(config->driveMotorID, 1);
+  this->driveMotor.init(config->driveMotorID, 2);
 }
 
 void SwerveModule::calibrate() {
@@ -69,6 +69,9 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
   }
 
+  moduleState->driveVel.R = speed * 2000;
+  PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
+
   // Serial.print(inputAngle);
   // Serial.print(" ... ");
   // Serial.print(speed);
@@ -100,10 +103,8 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   // Serial.println(rawSteerAngle);
 
   if (calibrated) {
-    //steerMotor.setPower(tmp_steerVel.Y);
-    //steerMotor.updateMotor();
-    driveMotor.setPower(0.4);
-    driveMotor.updateMotor();
+    steerMotor.setPower(tmp_steerVel.Y);
+    driveMotor.setPower(moduleState->driveVel.Y);
     Serial.println(driveMotor.getRpm());
   }
 
