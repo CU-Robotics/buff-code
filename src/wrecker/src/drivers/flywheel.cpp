@@ -7,10 +7,16 @@ flywheel::flywheel() {
 void flywheel::init(byte tempPinNum) {
     pinNum = tempPinNum;
     pinMode(pinNum, OUTPUT);
-    analogWriteFrequency(pinNum, 16000);
+    analogWriteFrequency(pinNum, 250);
+
+    analogWriteResolution(10);
+
+    analogWrite(pinNum, 512);
+    delay(3500);
+    analogWrite(pinNum, 256);
 }
 
-void setPower(float newPower) {
+void flywheel::setPower(float newPower) {
     if (newPower > 1)
     {
         newPower = 1;
@@ -18,6 +24,6 @@ void setPower(float newPower) {
         newPower = 0;
     }
     int sendPower = 0;
-    sendPower = map(newPower * 1000, 0, 1000, 0, 255);
+    sendPower = map(newPower * 1000, 0, 1000, 256, 512);
     analogWrite(pinNum, sendPower);
 }
