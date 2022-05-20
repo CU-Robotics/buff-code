@@ -1,5 +1,6 @@
 #ifndef STATE_H
 #define STATE_H
+#include <stdint.h>
 
 struct S_PID {
   float R = 0.0f;
@@ -41,6 +42,8 @@ struct S_Gimbal {
 
 struct S_Shooter {
   bool firing = false;
+
+  S_PID feedPID;
 };
 
 struct DriverInput {

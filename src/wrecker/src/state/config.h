@@ -87,6 +87,8 @@ struct C_Shooter17 {
 
   //  Flywheel power for lvl: lvl0, lvl1, lvl2, lvl3
   float flywheelPower[4] = {0.15, 0.17, 0.2, 0.22};
+
+  C_PID feedPID;
 };
 
 struct C_Shooter42 {
