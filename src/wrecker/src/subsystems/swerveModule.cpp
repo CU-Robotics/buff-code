@@ -28,8 +28,6 @@ void SwerveModule::calibrate() {
 }
 
 void SwerveModule::update(float speed, float angle, float deltaTime) {
-  //Serial.println("Entered swervemodule update");
-
   float inputAngle = angle + config->absolute_offset;
   if (inputAngle < 0) {
     inputAngle += 360;
@@ -50,16 +48,15 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
 
   float steerAngle = convertSteerAngle(rawSteerAngle);
   this->prevSteerAngle = steerAngle;
-  
+
   // VEL PID CALCULATIONS
-  //Serial.println("VEL PID CALCULATIONS");
   float rpm = steerMotor.getRpm() / 100.0;
 
   config->steerPos.continuous = true;
-  tmp_steerPos.R = inputAngle;//speed * 360; //angle;
+  tmp_steerPos.R = inputAngle;
   PID_Filter(&config->steerPos, &tmp_steerPos, steerAngle, deltaTime); 
 
-  tmp_steerVel.R = -tmp_steerPos.Y; //(speed * 300) - 150; //-tmp_steerPos.Y * 10000;
+  tmp_steerVel.R = -tmp_steerPos.Y;
   PID_Filter(&config->steerVel, &tmp_steerVel, rpm, deltaTime);
   if (tmp_steerVel.Y > 1.0) {
     tmp_steerVel.Y = 1.0;
@@ -69,46 +66,15 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
   }
 
-  moduleState->driveVel.R = speed * 2000;
+  moduleState->driveVel.R = speed * 4000;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
-  // Serial.print(inputAngle);
-  // Serial.print(" ... ");
-  // Serial.print(speed);
-  // Serial.print(" ... ");
-  // Serial.print(tmp_steerPos.R);
-  // Serial.print(" ... ");
-  // Serial.print(rpm);
-  // Serial.print(" ... ");
-  // Serial.println(tmp_steerVel.Y);
-
-  int calibMatch = findCalibrationMatch(this->steerMotor.getAngle(), this->config->alignment, 9);
-  // Serial.print(this->steerMotor.getAngle());
-  // Serial.print(" ... ");
-  // Serial.print(this->steerOffset);
-  // Serial.print(" ... ");
-  // Serial.print(this->steerRollover);
-  // Serial.print(" ... ");
-  // Serial.print(steerAngle);
-  // Serial.print(" ... ");
-  // Serial.println(calibMatch);
-
-  //Serial.println(config->steerPos.K[0]);
-  //Serial.println(config->steerPos.continuous);
-
-  // Serial.print(config->steerMotorID);
-  // Serial.print(" ... ");
-  // Serial.print(tmp_steerVel.Y);
-  // Serial.print(" ... ");
-  // Serial.println(rawSteerAngle);
-
+  // Set motor power
+  // steerMotor.setPower(0.5);
   if (calibrated) {
     steerMotor.setPower(tmp_steerVel.Y);
     driveMotor.setPower(moduleState->driveVel.Y);
-    Serial.println(driveMotor.getRpm());
   }
-
-  //PID_Filter(&config->driveVel, &moduleState->driveVel, deltaTime);
 }
 
 int SwerveModule::findCalibrationMatch(int currValue, int* alignmentTable, int tableSize) {
