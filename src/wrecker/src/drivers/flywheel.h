@@ -9,6 +9,7 @@ class flywheel {
         flywheel();
         void init(byte tempPinNum);
         void setPower(float newPower);
+        void initCal(byte tempPinNum);
 };
 
 #endif
