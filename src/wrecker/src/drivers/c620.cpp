@@ -110,6 +110,13 @@ void c610Enc::init(short tempID, uint8_t tempCanBusNum, uint8_t encPin) {
 }
 
 void c610Enc::setPower(float power) {
+  if (power > 1.0)
+  {
+    power = 1.0;
+  } else if (power < -1.0) {
+    power = -1.0;
+  }
+  
   int16_t newPower = (int16_t)(power * 16384);
   byte byteOne = highByte(newPower);
   byte byteTwo = lowByte(newPower);
