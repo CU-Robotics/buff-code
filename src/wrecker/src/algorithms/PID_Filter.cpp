@@ -2,8 +2,7 @@
 
 #include "algorithms/PID_Filter.h"
 
-void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt)
-{
+void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt) {
   if (dt == 0.0)
     return;
 
@@ -18,10 +17,9 @@ void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt)
   // Proportional term = error (R - Y)
   state->X[0] = error;
   if (config->continuous) {
-    float shadow = 360.0 - fabs(error);
-    if (shadow < error) {
-      if (state->R >= state->Y)
-        state->X[0] = -shadow;
+    float shadow = error - 360.0;
+    if (fabs(shadow) < error) {
+      state->X[0] = -shadow;
     }
   }
 

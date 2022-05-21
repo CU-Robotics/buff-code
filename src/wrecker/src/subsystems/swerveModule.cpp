@@ -28,14 +28,12 @@ void SwerveModule::calibrate() {
 }
 
 void SwerveModule::update(float speed, float angle, float deltaTime) {
+  // Convert sensor and input units
   float inputAngle = angle + config->absolute_offset;
-  if (inputAngle < 0) {
+  if (inputAngle < 0)
     inputAngle += 360;
-  }
 
-  // POS PID CALCULATIONS
   float rawSteerAngle = this->steerMotor.getAngle();
-
   if (calibrated) {
     float steeringDifference = this->prevRawSteerAngle - rawSteerAngle;
     if (steeringDifference < -180) {
@@ -45,35 +43,51 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     }
   }
   this->prevRawSteerAngle = rawSteerAngle;
-
   float steerAngle = convertSteerAngle(rawSteerAngle);
   this->prevSteerAngle = steerAngle;
 
-  // VEL PID CALCULATIONS
-  float rpm = steerMotor.getRpm() / 100.0;
+  float rpm = steerMotor.getRpm() / 100.0; // 100.0 is based on the gear ratio of the motor and the steer belt
 
+  // Inversion logic
+  int inversion = 1;
+  float error = inputAngle - steerAngle;
+  float shadow = error - 360.0;
+  if (fabs(shadow) < error)
+    error = shadow;
+  if (abs(error) > 90) {
+    inversion = -1;
+    steerAngle -= 180;
+    if (steerAngle < 0)
+      steerAngle += 360;
+  }
+
+  // Steer Velocity PID
   config->steerPos.continuous = true;
   tmp_steerPos.R = inputAngle;
   PID_Filter(&config->steerPos, &tmp_steerPos, steerAngle, deltaTime); 
 
+  // Steer Position PID
   tmp_steerVel.R = -tmp_steerPos.Y;
   PID_Filter(&config->steerVel, &tmp_steerVel, rpm, deltaTime);
-  if (tmp_steerVel.Y > 1.0) {
+
+  if (tmp_steerVel.Y > 1.0)
     tmp_steerVel.Y = 1.0;
-  }
-
-  if (tmp_steerVel.Y < -1.0) {
+  if (tmp_steerVel.Y < -1.0)
     tmp_steerVel.Y = -1.0;
-  }
 
+  // Drive Velocity PID
   moduleState->driveVel.R = speed * 4000;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
   // Set motor power
-  // steerMotor.setPower(0.5);
   if (calibrated) {
     steerMotor.setPower(tmp_steerVel.Y);
-    driveMotor.setPower(moduleState->driveVel.Y);
+
+    // Only drive if sufficiently close to target angle
+    if (abs(inputAngle - steerAngle) > 20.0)
+      driveMotor.setPower(moduleState->driveVel.Y * inversion);
+    else
+      driveMotor.setPower(0.0);
   }
 }
 
