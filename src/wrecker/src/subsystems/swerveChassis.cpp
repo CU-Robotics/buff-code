@@ -108,19 +108,10 @@ void SwerveChassis::update(unsigned long deltaTime) {
   if (state->driverInput.f && !calibrated) {
     calibrate();
     calibrated = true;
-    Serial.println("Calibrate");
   }
 
-  // float driveX = (state->driverInput.w - state->driverInput.a) * cos(state->gimbal.yaw);
-  // float driveY = (state->driverInput.w - state->driverInput.a) * sin(state->gimbal.yaw);
-
-  float js1 = state->driverInput.leftStickX;
-  float js2 = state->driverInput.leftStickY;
-  js1 = map(js1, 364, 1684, 0, 1000) / 1000.0;
-  js2 = map(js2, 364, 1684, 0, 1000) / 1000.0;
-
-  int x = state->driverInput.w - state->driverInput.s;
-  int y = state->driverInput.d - state->driverInput.a;
+  int x = state->driverInput.d - state->driverInput.a;
+  int y = state->driverInput.w - state->driverInput.s;
   int s = state->driverInput.q - state->driverInput.e;
 
   drive(x, y, s, deltaTime);
