@@ -2,6 +2,7 @@
 import os
 import cv2
 import sys
+import glob
 import numpy as np
 import buffvision as bv
 
@@ -21,17 +22,17 @@ def click_event(event, x, y, flags, param):
 def run_stats(pixels):
 	std = [0,0,0]
 	n = len(pixels)
+	if n == 0:
+		return [0,0], [0,0]
+
 	average = np.mean(pixels, axis=0)
 	for pixel in pixels:
 		for i in range(len(pixel)):
-			std[i] += (pixel[i] - average[i])**2
-
-	for i in range(len(std)):
-		std[i] = std[i] / n
+			std[i] += (pixel[i] - average[i])**2 / n
 
 	return average, std
 
-def main():
+def main(data_dir):
 	global pixels
 
 	all_values = []
@@ -41,13 +42,14 @@ def main():
 	cv2.namedWindow("image")
 	cv2.setMouseCallback("image", click_event)
 
-	data = bv.load_data(os.path.join(os.getenv('PROJECT_ROOT'), 'data'))
+	project_root = os.getenv('PROJECT_ROOT')
+	data_path = os.path.join(project_root, 'data', data_dir)
+	data = bv.load_data(path=data_path)
 
-	for i, (image, labels, filepath) in enumerate(data[0:5]):
-		print('{}: image {} shape: {} '.format(i, filepath,image.shape))
-		hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
-		cv2.imshow('image', image)
-		cv2.waitKey()
+	for i, (image, label) in enumerate(data[0:100]):
+		print(f'{i}: image shape: {image.shape} ')
+		hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+		bv.display_annotated(image, label * image.shape[0])
 	
 		for x, y in pixels:
 			h, s, v = hsv[y,x]
@@ -73,8 +75,9 @@ def main():
 
 
 
-if __name__=='__main__':
-	main()
+if __name__ == '__main__':
+	if len(sys.argv) > 1:
+		main(sys.argv[1])
 
 
 
