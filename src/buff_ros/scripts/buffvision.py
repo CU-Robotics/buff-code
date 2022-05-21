@@ -15,12 +15,12 @@ import sys
 import time
 import glob
 import yaml
-import rospy
+#import rospy
 import datetime
 import traceback
 import numpy as np
-from cv_bridge import CvBridge
-from sensor_msgs.msg import Image
+#from cv_bridge import CvBridge
+#from sensor_msgs.msg import Image
 import xml.etree.ElementTree as ET
 
 def buffshow(title, image, wait=0):
@@ -39,26 +39,6 @@ def buffshow(title, image, wait=0):
 	cv2.waitKey(wait)
 	cv2.destroyAllWindows()
 
-def get_bounding_from_label(label):
-	"""
-		Gets the bounding box from the label obj.
-		@PARAMS
-			label: The label object (a dict like)
-		@RETURNS
-			bounding: [(Xmin, Ymin), (Xmax, Ymax)], intergers between (0, 0) and Image.Size.
-				These define the pixel coords of the bounding box.
-	"""
-	bounds = []
-	boundingboxes = label.findall('object')
-	for boundary in boundingboxes:
-		bound = boundary.find('bndbox')
-		xmin = int(bound.find('xmin').text)
-		ymin = int(bound.find('ymin').text)
-		xmax = int(bound.find('xmax').text)
-		ymax = int(bound.find('ymax').text)
-		bounds.append([(xmin, ymin), (xmax, ymax)])
-	return bounds
-
 def display_annotated_raw(data_point):
 	"""
 		Uses buffshow to display an image with its annotation
@@ -74,14 +54,7 @@ def display_annotated_raw(data_point):
 		
 	buffshow('annotated', image)
 
-def load_images(path):
-	#	Deprecated
-	# this is now handled in the data
-	# loader function
-	filenames = glob.glob(path)
-	return [(file.split('/')[-1], cv2.imread(file)) for file in filenames] # by saving the image with its filename we can properly match it to the data
-
-def load_labels(path):
+def load_label(path):
 	"""
 		Load all labels from a directory.
 		@PARAMS
@@ -89,18 +62,14 @@ def load_labels(path):
 		@RETURNS
 			labels: array of the label objects (see ElementTree docs)
 	"""
-	filenames = glob.glob(path)
-	return [ET.parse(file) for file in filenames]
+	labels = []
 
-def get_image_file_from_label(label):
-	"""
-		Gets the file name from the label obj.
-		@PARAMS
-			label: The label object (a dict like)
-		@RETURNS
-			filename: the name of the image file (string)
-	"""
-	return label.find('filename').text
+	with open(path, 'r') as f:
+		lines = f.readlines()
+		for line in lines:
+			labels.append(np.array(line.split(' '), dtype=np.float64))
+
+	return np.array(labels)
 	
 def load_data(path='../data'): # default path only works in jupyter notebook or from project root
 	"""
@@ -111,24 +80,21 @@ def load_data(path='../data'): # default path only works in jupyter notebook or 
 		@RETURNS
 			None
 	"""
-	# images = load_images(os.path.join(path, '*.jpg'))
-	labels = load_labels(os.path.join(path, '*.xml'))
-	if labels is None:
-		print('couldn\'t find any labels')
-	# if len(images) - len(labels):
-	# 	print(f'mismatched: images {len(images)} != labels {len(labels)}')
-		
+	m = len(path) + len('labels') + 2
+	label_paths = glob.glob(os.path.join(path, 'labels', '*.txt'))
+	
 	data = []
-	for label in labels:
-		imfile = get_image_file_from_label(label)
-		impath = os.path.join(path, imfile)
-		if os.path.exists(impath):
-			image = cv2.cvtColor(cv2.imread(impath), cv2.COLOR_BGR2RGB)
-			data.append((image, get_bounding_from_label(label), imfile, ))
+	for labelf in label_paths:
+
+		imfile = os.path.join(path, 'images', labelf[m:-4] + '.jpg')
+		if os.path.exists(imfile):
+			image = cv2.imread(imfile)
+			label = load_label(labelf)
+			data.append([image, label])
 				
 	return data
 
-def display_annotated(data):
+def display_annotated(image, labels):
 	"""
 		Displays an image with its annotation using buffshow.
 		@PARAMS
@@ -136,10 +102,9 @@ def display_annotated(data):
 		@RETURNS
 			None
 	"""
-	image, bounds = data
-	for bound in bounds:
+	for c,x,y,w,h in labels:
 		# Draw a rectangle on the image, green 2px thick
-		image = cv2.rectangle(image, bound[0], bound[1], (0,255,0), 2)
+		image = cv2.rectangle(image, (int(x - (w/2)), int(y - (h/2))), (int(x + (w/2)), int(y + (h/2))), (0,255,0), 2)
 		
 	buffshow('annotated', image)
 
@@ -313,13 +278,13 @@ def load_config_from_system_launch(args):
 if __name__=='__main__':
 	"""
 		Spawn vision nodes here
-	"""
-	# single_image_capture_cv()
-	# capture_video()
+	# """
+	# # single_image_capture_cv()
+	# # capture_video()
 
-	ROS_cv2_publisher()
+	# ROS_cv2_publisher()
 
-	#cv2_stream_test()
+	# #cv2_stream_test()
 
 	
 		

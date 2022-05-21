@@ -99,7 +99,7 @@ def load_build_config(build):
 	base_config = os.path.join(config_path, 'build', f'{build}.yaml')
 	
 	if not os.path.exists(base_config):
-		print('No build specified exiting:...')
+		print(f'Could not find {base_config}')
 		return
 
 	with open(base_config, 'r') as f:
@@ -390,7 +390,7 @@ def main(ap):
 		initialize_devices()
 
 	if ap.build:
-		build_buffpy(ap.build)
+		build_buffpy(ap.build[0])
 
 	if ap.install:
 		deploy_all_devices()

@@ -1,3 +1,4 @@
 PYTHON3_SCRIPTS:
-  'crosshair': ['interactive_thresholder.py']
+  'buff_ros': ['buffvision.py']
+  'crosshair': ['interactive_thresholder.py', 'image_generator.py']
   'tech': ['gdrive_handler.py']
