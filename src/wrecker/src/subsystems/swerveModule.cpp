@@ -36,11 +36,10 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   float rawSteerAngle = this->steerMotor.getAngle();
   if (calibrated) {
     float steeringDifference = this->prevRawSteerAngle - rawSteerAngle;
-    if (steeringDifference < -180) {
+    if (steeringDifference < -180)
       this->steerRollover--;
-    } else if (steeringDifference > 180) {
+    else if (steeringDifference > 180)
       this->steerRollover++;
-    }
   }
   this->prevRawSteerAngle = rawSteerAngle;
   float steerAngle = convertSteerAngle(rawSteerAngle);
