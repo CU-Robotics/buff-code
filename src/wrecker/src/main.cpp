@@ -20,6 +20,9 @@ CAN_message_t tempMessage;
 // Loop timing
 unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
+unsigned long dumpRate = 100000.0;
+
+IntervalTimer serialDumpTmr;
 
 // State
 S_Robot robot_state;
@@ -33,6 +36,10 @@ dr16 reciever;
 SwerveChassis swerveChassis;
 Shooter shooter;
 
+void dump(){
+  dump_Robot(&robot_config, &robot_state);
+}
+
 // Runs once
 void setup() {
   delay(1000);
@@ -42,24 +49,24 @@ void setup() {
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  can1.begin();
-  can2.begin();
-  can3.begin();
 
-  can1.setBaudRate(1000000);
-  can2.setBaudRate(1000000);
-  can3.setBaudRate(1000000);
+  // can1.begin();
+  // can2.begin();
+  // can3.begin();
+
+  // can1.setBaudRate(1000000);
+  // can2.setBaudRate(1000000);
+  // can3.setBaudRate(1000000);
 
 
   // Subsystem setup
 
   // Subsystem setup
+
   reciever.init(&robot_state.driverInput);
   // gimbal.setup(&robot_config.gimbal, &robot_state);
   //swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
-
-  //dump_Robot(&robot_state, &robot_config);
 }
 
 
@@ -79,7 +86,6 @@ void loop() {
   while (can3.read(tempMessage))
     canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
   
-  // dump_Robot(&robot_state, &robot_config);
   
   if (Serial.available() > 0)
     serial_event(&robot_state, &robot_config);
