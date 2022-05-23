@@ -15,6 +15,9 @@ import sys
 import time
 import glob
 import yaml
+import string
+import random
+import shutil
 #import rospy
 import datetime
 import traceback
@@ -102,13 +105,19 @@ def display_annotated(image, labels):
 		@RETURNS
 			None
 	"""
+	colors = [(255,0,0), (0,0,255), (0,255,0)]
+
 	for c,x,y,w,h in labels:
 		# Draw a rectangle on the image, green 2px thick
-		image = cv2.rectangle(image, (int(x - (w/2)), int(y - (h/2))), (int(x + (w/2)), int(y + (h/2))), (0,255,0), 2)
-		
+		[x, w] = np.array([x, w]) * image.shape[1]
+		[y, h] = np.array([y, h]) * image.shape[0]
+
+		image = cv2.rectangle(image, (int(x - (w/2)), int(y - (h/2))), (int(x + (w/2)), int(y + (h/2))), colors[int(c)], 2)
+		image = cv2.putText(image, f'{c}', (int(x - (w/2)), int(y - (h/2))-15), cv2.FONT_HERSHEY_SIMPLEX, 
+                   1, (255,255,255), 2, cv2.LINE_AA)
 	buffshow('annotated', image)
 
-def dateFilledPath(fileExt='.png'):
+def dateFilledPath(fileName='00'):
 	"""
 		create a date and time stamped filepath. Root is always PROJECT_ROOT/data
 		@PARAMS
@@ -116,175 +125,71 @@ def dateFilledPath(fileExt='.png'):
 		@RETURNS
 			date filled filepath
 	"""
-	return os.path.join(os.getenv('PROJECT_ROOT'), 'data', datetime.datetime.now() + ext)
+	return f'{fileName}{datetime.datetime.now()}'.replace(' ', '').replace('.', '-')
 
-def save_image(image, filepath=None):
-	"""
-		Use openCV to save an image.
-		@PARAMS
-			image: the image to save (np array, cv2.mat... etc)
-			filepath: place to save the image, if None will become a date
-				timestamp and be saved in data (if it exists).
-		@RETURNS
-			None
-	"""
-	if not filepath is None:
-		cv2.imwrite(filepath, image)
-	else:
-		cv2.imwrite(dateFilledPath(), image)
+def write_sample(save_path, key, image, label):
+	date_string = dateFilledPath(fileName=f'{key}',)
 
-def single_image_capture_cv():
-	"""
-		Use openCV to create a stream to a camera and capture a single image.
-		@PARAMS
-			None
-		@RETURNS
-			None
-	"""
-	camera = cv2.VideoCapture(0)
+	image_path = os.path.join(save_path, 'images')
+	image_date_path = os.path.join(image_path, date_string + '.jpg')
+	cv2.imwrite(image_date_path, image)
 
-	if camera.isOpened():
-		read, frame = camera.read()
-		save_image(frame)
-
-	camera.release()
-
-def capture_video(duration=10):
-	"""
-		Use openCV to create a stream to a camera and record a video.
-		@PARAMS
-			duration: length in seconds of the video (not exact)
-		@RETURNS
-			None
-	"""
-	ext = 'avi'
-	cap = cv2.VideoCapture(0)
-	size=(int(cap.get(3)), int(cap.get(4)))
-	out = cv2.VideoWriter(datefilledPath('video', fileExt='.{}'.format(ext)), cv2.VideoWriter_fourcc('M','J','P','G'), 30, size)
-
-	if cap.isOpened():
-		start = time.time()
-		while True:
-			ret, frame = cap.read()
-			out.write(frame)
-
-			if time.time() - start > duration:
-				break
-
-	cap.release()
-	out.release()
-
-def cv2_stream_test(device=0):
-	"""
-		Use openCV to create a stream to a camera and display fps
-		Crucial to use while not rospy.is_shutdown
-		@PARAMS
-			None
-		@RETURNS
-			None
-	"""
-
-	# Create the image stream
-	cap = cv2.VideoCapture(device)
-	# Set a size variable (resolution)
-	size=(int(cap.get(3)), int(cap.get(4)))
-
-	# used to count frames and print FPS
-	n = 0
-	start = time.time()
-	# If the stream is open and ROS is running
-	if cap.isOpened():
-		while not rospy.is_shutdown():
-
-			# Capture frame
-			ret, frame = cap.read()
-
-			# Run stats
-			n += 1
-			elapsed = time.time() - start 
-			print('elapsed time: {}, n frames: {}, FPS: {}'.format(elapsed, n, n / elapsed))
-
-def ROS_cv2_publisher(topic='image_raw'):
-	"""
-		Use openCV to create a stream to a camera and publish the images
-		to a ROS topic.
-		@PARAMS
-			topic: the name of the topic the image will publish to
-		@RETURNS
-			None
-	"""
-
-	# Create the image stream and set its capture rate to 30 FPS
-	cap = cv2.VideoCapture(0)
-	cap.set(cv2.CAP_PROP_FPS, 30)
-
-	# Set a size variable (resolution)
-	size=(int(cap.get(3)), int(cap.get(4)))
-
-	# Create the image publisher
-	pub = rospy.Publisher(topic, Image, queue_size=1)
-	# Init this program as a ROS node
-	# anonymous sets a unique node ID
-	rospy.init_node('image_streamer', anonymous=True)
-
-	# Initialize the bridge object
-	# CvBridge is used to conver cv images to sensor_msgs/Image
-	bridge = CvBridge()
-
-	rospy.loginfo('Streaming camera')
-	# If the stream is open and ROS is running
-	if cap.isOpened():
-		while not rospy.is_shutdown():
-
-			# Capture frame
-			ret, frame = cap.read()
-
-			# Convert the cv frame to a ROS message
-			imgMsg = bridge.cv2_to_imgmsg(frame, "bgr8")
-
-			# Publish the message
-			pub.publish(imgMsg)
+	label_path = os.path.join(save_path, 'labels')
+	label_date_path = os.path.join(label_path, date_string + '.txt')
+	with open(label_date_path, 'w+') as f:
+		for c, x, y, w, h in label:
+			f.write(f'{c} {x/image.shape[1]} {y/image.shape[0]} {w/image.shape[1]} {h/image.shape[0]}\n')
 
 
-def load_config_from_system_launch(args):
-	"""
-		DEPRECATED
-		Used to handle input from a system launch
-		PARAMS:
-			args: list of args from system launch ([Program, Debug, Config, Topics...])
-		RETURNS:
-			program: filename of program
-			debug: T/F debug or naaa
-			data: dict of config data
-			topics: dict of ros topics (name : type)
-	"""
-	program, _, debug, config = args[:4]
+def save_txt_label_data(images, labels, gen_path):
 
-	if debug == 'True':
-		debug = True
+	for i, (image,label) in enumerate(zip(images,labels)):
 
-	filepath = os.path.join(os.getenv('PROJECT_ROOT'), 'config', 'lib', config)
+		key = ''.join(random.choice(string.ascii_uppercase) for i in range(5))
 
-	if os.path.exists(filepath):
-		with open(filepath, 'r') as f:
-			data = yaml.safe_load(f)
+		if np.random.rand() > 0.95:
+			write_sample(os.path.join(gen_path, 'test'), key, image, label)
 
-	else:
-		data = None
+		elif np.random.rand() > 0.8:
+			write_sample(os.path.join(gen_path, 'valid'), key, image, label)
+		
+		else:
+			write_sample(os.path.join(gen_path, 'train'), key, image, label)
 
-	# exclude node names and logs for now
-	return program, debug, data, args[4:-2]
+def clear_generated(gen_path):
+	if os.path.exists(gen_path):
+		shutil.rmtree(gen_path)
 
-if __name__=='__main__':
-	"""
-		Spawn vision nodes here
-	# """
-	# # single_image_capture_cv()
-	# # capture_video()
+def make_generated(gen_path):
 
-	# ROS_cv2_publisher()
+	title = gen_path.split('/')[-1]
 
-	# #cv2_stream_test()
+	train_path = os.path.join(gen_path, 'train')
+	valid_path = os.path.join(gen_path, 'valid')
+	test_path = os.path.join(gen_path, 'test')
+
+	if not os.path.exists(gen_path):
+		os.mkdir(gen_path)
+
+	os.mkdir(train_path)
+	os.mkdir(valid_path)
+	os.mkdir(test_path)
+
+	data_file = os.path.join(gen_path, 'data.yaml')
+
+	with open(data_file, 'w+') as f:
+		f.write(f'train: /content/{title}/train/\nval: /content/{title}/valid\n\nnc: 3\nnames: [\'blue-armor\', \'red-armor\', \'robot\']')
+
+	os.mkdir(os.path.join(train_path, 'images'))
+	os.mkdir(os.path.join(train_path, 'labels'))
+
+	os.mkdir(os.path.join(valid_path, 'images'))
+	os.mkdir(os.path.join(valid_path, 'labels'))
+
+	os.mkdir(os.path.join(test_path, 'images'))
+	os.mkdir(os.path.join(test_path, 'labels'))
+
+
 
 	
 		

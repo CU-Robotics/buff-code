@@ -34,7 +34,7 @@ def load_backgrounds(data_path):
 
 	return images
 
-def augment_image(image, c, x, y, w, h, backgrounds):
+def generate_images(image, c, x, y, w, h, backgrounds):
 
 	n_samples = 3
 	augmented_images = []
@@ -52,20 +52,23 @@ def augment_image(image, c, x, y, w, h, backgrounds):
 	mask_h,mask_w,mask_c = rgb_mask.shape
 
 	while mask_h > 40:
-		mask_shape = np.array(mask.shape) * 0.4
+		mask_shape = np.array(mask.shape) * (0.3 + np.random.rand())
 		mask = cv2.resize(mask, mask_shape.astype(int))
 		rgb_mask = cv2.resize(rgb_mask, mask_shape.astype(int))
 		mask_h,mask_w,mask_c = rgb_mask.shape
 
-		for background in backgrounds:
+		background_idx = (len(backgrounds) - 1) * np.random.rand(4)
+
+		for i in background_idx:
+			background = backgrounds[int(i)]
 			for x in np.linspace(0, background.shape[1] - mask_w, n_samples):
 				for y in np.linspace(0, background.shape[0] - mask_h, n_samples):
 
-					x = max(0, min(background.shape[1] - mask_w, x + np.random.rand() * 30))
-					y = max(0, min(background.shape[0] - mask_h, y + np.random.rand() * 30))
+					x = max(0, min(background.shape[1] - mask_w, x + (np.random.rand() - 0.5) * (background.shape[1] - mask_w) / 3))
+					y = max(0, min(background.shape[0] - mask_h, y + (np.random.rand() - 0.5) * (background.shape[1] - mask_w) / 3))
 
 					zero_mask = np.zeros(background.shape[:2], dtype=np.uint8)
-					zero_mask[int(y):int(y+mask_h),int(x):int(x+mask_w)] = mask
+					zero_mask[round(y):round(y+mask_h),round(x):round(x+mask_w)] = mask
 					inv_zero_mask = cv2.bitwise_not(zero_mask)
 
 					object_image = np.zeros(background.shape, dtype=np.uint8)
@@ -88,65 +91,42 @@ def augment_image(image, c, x, y, w, h, backgrounds):
 
 	return augmented_images, augmented_labels
 
-def save_generated_data(images, labels, n):
-	key = n
-	train_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data', 'Generated', 'train')
-	valid_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data', 'Generated', 'valid')
 
-	for i, (image,label) in enumerate(zip(images,labels)):
-		key += 1
-		if np.random.rand() > 0.9:
-			image_path = os.path.join(valid_path, 'images', f'{key}.jpg')
-			cv2.imwrite(image_path, image)
-			label_path = os.path.join(valid_path, 'labels', f'{key}.txt')
-			with open(label_path, 'w') as f:
-				for item in label:
-					f.write(f'{item[0]} {item[1]/image.shape[1]} {item[2]/image.shape[0]} {item[3]/image.shape[1]} {item[4]/image.shape[0]}\n')
-			
-		else:
-			image_path = os.path.join(train_path, 'images', f'{key}.jpg')
-			cv2.imwrite(image_path, image)
-			label_path = os.path.join(train_path, 'labels', f'{key}.txt')
-			with open(label_path, 'w') as f:
-				for item in label:
-					f.write(f'{item[0]} {item[1]/image.shape[1]} {item[2]/image.shape[0]} {item[3]/image.shape[1]} {item[4]/image.shape[0]}\n')
-			
-	return key
 
 def main(data_dir):
 	project_root = os.getenv('PROJECT_ROOT')
 	data_path = os.path.join(project_root, 'data', data_dir)
 
-	train_path = os.path.join(data_path, 'Generated', 'train')
-	valid_path = os.path.join(data_path, 'Generated', 'valid')
+	gen_path = os.path.join(project_root, 'data', 'Generated')
+	train_path = os.path.join(gen_path, 'train')
+	valid_path = os.path.join(gen_path, 'valid')
 
-	for file in glob.glob(os.path.join(train_path, 'images', '*.jpg')):
-		os.remove(file)
-
-	for file in glob.glob(os.path.join(train_path, 'labels', '*.txt')):
-		os.remove(file)
-
-	for file in glob.glob(os.path.join(valid_path, 'images', '*.jpg')):
-		os.remove(file)
-
-	for file in glob.glob(os.path.join(valid_path, 'labels', '*.txt')):
-		os.remove(file)
+	bv.clear_generated(gen_path)
+	bv.make_generated(gen_path)
 	
-	data = bv.load_data(path=data_path)
 	backgrounds = load_backgrounds(data_path)
 
-	print(f'Data samples: {len(data)}')
-	print(f'Image shape: {data[0][0].shape}')
-	print(f'Label shape: {data[0][1].shape}')
 	print(f'Backgrounds: {len(backgrounds)}')
 
 	generated_samples = -1
 
-	for image, [[c,x,y,w,h]] in data:
+	m = len(data_path) + len('labels') + 2
+	label_paths = glob.glob(os.path.join(data_path, 'labels', '*.txt'))
+	
+	for labelf in label_paths:
+		imfile = os.path.join(data_path, 'images', labelf[m:-4] + '.jpg')
+		if os.path.exists(imfile):
+			image = cv2.imread(imfile)
+			[[c, x, y, w, h]] = bv.load_label(labelf)
 
-		images, labels = augment_image(image, c, x, y, w, h, backgrounds)
-		print('Saving batch')
-		generated_samples = save_generated_data(images, labels, generated_samples)
+			if generated_samples == -1:
+				print(f'Data samples: {len(label_paths)}')
+				print(f'Image shape: {image.shape}')
+
+			images, labels = generate_images(image, c, x, y, w, h, backgrounds)
+
+			print('Saving batch')
+			bv.save_txt_label_data(images, labels, gen_path)
 
 	print(f'Generated {generated_samples} images and labels')
 		
