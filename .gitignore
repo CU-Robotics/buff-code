@@ -1,7 +1,6 @@
 data/*
 .vscode
 **/.pio
-**/.vscode/
 **/.DS_store
 buffpy/lib/*
 buffpy/build/*
