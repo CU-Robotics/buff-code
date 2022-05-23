@@ -74,25 +74,49 @@ def clean_buffpy():
 	project_root = os.getenv('PROJECT_ROOT')
 	data_path = os.path.join(project_root, 'data')
 	lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	build_config = os.path.join(project_root, 'buffpy', 'config', 'build', 'build.yaml')
+	firmware_config = os.path.join(project_root, 'buffpy', 'config', 'build', 'firmware.yaml')
 	
-	if not os.path.exists(build_config):
+	if not os.path.exists(firmware_config):
 		print('No build specified exiting:...')
 		return
 
-	with open(build_config, 'r') as f:
+	with open(firmware_config, 'r') as f:
 		data = yaml.safe_load(f)
 
 	if not 'edge' in os.getenv('HOSTNAME'):
 		clear_directory(lib_path)
-		firmware_pkg = data['FIRMWARE_INI']
 		for firmware_pkg in data['FIRMWARE_INI']:
 			firmware_ini_path = os.path.join(project_root, 'src', firmware_pkg, data['FIRMWARE_INI'][firmware_pkg])
 			result = subprocess.run(['platformio', 'run', '-t', 'clean', '-c', firmware_ini_path])
 
 	clear_directory(data_path)
 	
+def load_build_config(build):
 
+	project_root = os.getenv('PROJECT_ROOT')
+	lib_path = os.path.join(project_root, 'buffpy', 'lib')
+	config_path = os.path.join(project_root, 'buffpy', 'config')
+	base_config = os.path.join(config_path, 'build', f'{build}.yaml')
+	
+	if not os.path.exists(base_config):
+		print(f'Could not find {base_config}')
+		return
+
+	with open(base_config, 'r') as f:
+		data = yaml.safe_load(f)
+		if 'INCLUDE' in data:
+			for file in data['INCLUDE']:
+				child_config = os.path.join(config_path, 'build', file)
+				with open(child_config, 'r') as fc:
+					child_data = yaml.safe_load(fc)
+					for item in child_data:
+						if item in data:
+							data[item].update(child_data[item])
+
+						else:
+							data[item] = child_data[item]
+
+	return data
 
 def build_buffpy(build):
 	"""
@@ -102,16 +126,10 @@ def build_buffpy(build):
 	"""
 	project_root = os.getenv('PROJECT_ROOT')
 	lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	build_config = os.path.join(project_root, 'buffpy', 'config', 'build', 'build.yaml')
 	
-	if not os.path.exists(build_config):
-		print('No build specified exiting:...')
-		return
-
-	with open(build_config, 'r') as f:
-		data = yaml.safe_load(f)
-
-	if build == 'all' or build == 'scripts':
+	data = load_build_config(build)
+	
+	if 'PYTHON3_SCRIPTS' in data:
 		for pkg in data['PYTHON3_SCRIPTS']:
 			for file in data['PYTHON3_SCRIPTS'][pkg]:
 				dest = os.path.join(lib_path, file)
@@ -121,7 +139,7 @@ def build_buffpy(build):
 				print(f'Installing {f_path}')
 
 	# Build the Firmware with pio 
-	if build == 'all' or build == 'firmware':
+	if 'FIRMWARE_INI' in data:
 		for firmware_pkg in data['FIRMWARE_INI']:
 			firmware_ini_path = os.path.join(project_root, 'src', firmware_pkg, data['FIRMWARE_INI'][firmware_pkg])
 			result = subprocess.run(['platformio', 'run', '-c', firmware_ini_path])
@@ -339,7 +357,7 @@ def parse_arguments():
 	parser.add_argument('--build', 
 		nargs=1,
 		metavar='PROFILE',
-		default='all',
+		default='',
 		help='Builds the workspace locally')
 	parser.add_argument('--install', 
 		action='store_true',
