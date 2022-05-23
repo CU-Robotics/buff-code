@@ -1,10 +1,10 @@
-data/
+data/*
 .vscode
 **/.pio
 **/.vscode/
+**/.DS_store
 buffpy/lib/*
 buffpy/build/*
-**/.DS_store
 **/__pycache__
 **/sensitive/*
-**/.catkin_tools
+**/.catkin_tools/
