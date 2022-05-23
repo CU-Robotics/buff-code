@@ -1,15 +1,21 @@
+#include "Arduino.h"
+
+#include "state/state.h"
+
+
+#ifndef DR16_H
 #define DR16_H
 
-#ifndef STRUCTS_H
-#include "structs.h"
-#endif
-
 class dr16 {
-    private:
-        RobotInput * input;
-        byte buf[14];
     public:
         dr16();
-        void init(RobotInput *tempInput);
+        void init(DriverInput *tempInput);
         void update();
+    private:
+        DriverInput* input;
+        byte buf[18];
+        unsigned long lastTime;
+        int numBytes;
 };
+
+#endif // DR16_H

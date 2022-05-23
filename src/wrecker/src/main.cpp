@@ -1,53 +1,101 @@
 #include <Arduino.h>
-
-#ifndef _FLEXCAN_T4_H_
 #include <FlexCAN_T4.h>
-#endif
 
-#include "state/config.h"
 #include "state/state.h"
-
+#include "drivers/dr16.h"
+#include "state/config.h"
+#include "drivers/ref_sys.h"
+#include "subsystems/gimbal.h"
+#include "drivers/serial_interface.h"
 #include "subsystems/swerveChassis.h"
-
-
-// Loop timing
-unsigned long deltaT = 0;
-unsigned long lastTime = 0;
+#include "subsystems/shooter.h"
 
 // CAN
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> chassisCAN;
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> superStructureCAN;
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+CAN_message_t canRecieveMessages[3][11];
+CAN_message_t tempMessage;
+
+// Loop timing
+unsigned long deltaT = 5000;
+unsigned long lastTime = 0;
 
 // State
-S_Robot s_robot;
-C_SwerveChassis c_swerveChassis;
+S_Robot robot_state;
+C_Robot robot_config;
 
 // Subsystems
-SwerveChassis swerveChassisSubsystem;
+// Gimbal gimbal;
+dr16 reciever;
+// ref_sys refSystem;
+// SwerveModule sm;
+SwerveChassis swerveChassis;
+Shooter shooter;
 
 // Runs once
 void setup() {
+  delay(1000);
+  Serial.begin(1000000);
+  //Serial.println("basic test");
+
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  chassisCAN.begin();
-  superStructureCAN.begin();
-  chassisCAN.setBaudRate(1000000);
-  superStructureCAN.setBaudRate(1000000);
+  can1.begin();
+  can2.begin();
+  can3.begin();
+
+  can1.setBaudRate(1000000);
+  can2.setBaudRate(1000000);
+  can3.setBaudRate(1000000);
+
 
   // Subsystem setup
-  swerveChassisSubsystem.setup(&c_swerveChassis, &s_robot);
+
+  // Subsystem setup
+  reciever.init(&robot_state.driverInput);
+  // gimbal.setup(&robot_config.gimbal, &robot_state);
+  //swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  shooter.setup(&robot_config.shooter17, &robot_state);
+
+  //dump_Robot(&robot_state, &robot_config);
 }
 
 
 // Runs continuously
 void loop() {
-  swerveChassisSubsystem.loop(deltaT);
+
+  // Necesary for motors to recieve data over CAN
+  // Needs to have usage
+  //  can.update(XXX, YYY);
+  //
+  while (can1.read(tempMessage))
+    canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
+  
+  while (can2.read(tempMessage))
+    canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
+  
+  while (can3.read(tempMessage))
+    canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
+  
+  // dump_Robot(&robot_state, &robot_config);
+  
+  if (Serial.available() > 0)
+    serial_event(&robot_state, &robot_config);
+
+  reciever.update();
+  //gimbal.update(deltaT);
+  //swerveChassis.update(deltaT);
+  shooter.update(deltaT);
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
-  while (deltaT < 1000) {
+
+  while (deltaT < 1000) // 1 ms
     deltaT = micros() - lastTime;
-  }
+  
   lastTime = micros();
 }
+
+

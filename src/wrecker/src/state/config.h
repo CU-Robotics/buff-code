@@ -1,96 +1,110 @@
+#include "Arduino.h"
+
+#ifndef CONFIG_H
 #define CONFIG_H
 
-struct C_Config {
+struct C_PID
+{
+  //  Kp, Ki, Kd
+  float K[3] = {0.5, 0.0, 0.25};
 
+  // Integrator low, high
+  float Imin = -0.1f;
+  float Imax = 0.1f;
+
+  // Output low, high
+  float Ymin = -180.0f;
+  float Ymax = 180.0f;
+
+  // Continuous output
+  bool continuous = false;
 };
 
-struct C_Teensy: C_Config {
+struct C_Teensy {
   int loopStall = 1000; // microseconds
 };
 
-struct C_SwerveChassis: C_Config {
-  float drivebaseWidth = 14.5;
-  float drivebaseLength = 14.5;
+struct C_SwerveModule {
+  //  Unique module Identifiers
+  int moduleID = -1;
+  int cornerID = -1;
+  int steerMotorID = -1;
+  int driveMotorID = -1;
+  int steerEncoderID = -1;
 
-  float currentLimitLvl0 = 40.0 / 24.0;
-  float currentLimitLvl1 = 60.0 / 24.0;
-  float currentLimitLvl2 = 80.0 / 24.0;
-  float currentLimitLvl3 = 100.0 / 24.0;
+  //  Alignment data ???
+  int alignment[9] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+  int absolute_offset = 0;
 
-  C_SwerveModule moduleFR;
-  C_SwerveModule moduleFL;
-  C_SwerveModule moduleBL;
-  C_SwerveModule moduleBR;
+  // PIDs
+  C_PID steerVel;
+  C_PID steerPos;
+  C_PID driveVel;
 };
 
-struct C_SwerveModule: C_Config {
-  short moduleID;
+struct C_SwerveChassis {
 
-  int alignment[9];
+  float baseWidth = 14.5;
+  float baseLength = 14.5;
 
-  float steerVelP;
-  float steerVelI;
-  float steerVelD;
-  float steerVelF;
+  //  Current limit for level: lvl0, lvl1, lvl2, lvl3
+  float currentLimit[4] = {40.0 / 24.0, 60.0 / 24.0, 80.0 / 24.0, 100.0 / 24.0};
 
-  float steerPosP;
-  float steerPosI;
-  float steerPosD;
-  float steerPosF;
-
-  float driveVelP;
-  float driveVelI;
-  float driveVelD;
-  float driveVelF;
+  //  SwerveModules
+  C_SwerveModule FR;
+  C_SwerveModule FL;
+  C_SwerveModule RL;
+  C_SwerveModule RR;
 };
 
-struct C_RailChassis: C_Config {
-  float VelP;
-  float VelI;
-  float VelD;
-  float VelF;
+struct C_RailChassis {
+  // Stopping nodes (UNIMPLEMENTED)
+  float nodes[10] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
-  float PosP;
-  float PosI;
-  float PosD;
-  float PosF;
-
-  float* nodes;
-  int numNodes;
+  // PIDs
+  C_PID drivePos;
+  C_PID driveVel;
 };
 
-struct C_Gimbal: C_Config {
-  float maxPitch;
-  float minPitch;
+struct C_Gimbal {
 
-  float pitchP;
-  float pitchI;
-  float pitchD;
-  float pitchF;
+  float sensitivity = 0.001;
 
-  float yawP;
-  float yawI;
-  float yawD;
-  float yawF;
+  //  angle offset for motors: yaw, pitch
+  float yawOffset = 90.0;
+  float pitchOffset = 12.0;
+
+  C_PID yaw_PID;
+  C_PID pitch_PID;
 };
 
 // Configured for cooling focus by default
-struct C_17mmShooter: C_Config {
-  float feedRPMLow = 10;
-  float feedRPMHigh = 25;
-  float feedRPMBurst = 50;
+struct C_Shooter17 {
+  //  Feeder RPM for: low, high, burst
+  float feedRPMLow = 10.0;
+  float feedRPMHigh = 25.0;
+  float feedRPMBurst = 50.0;
 
-  float flywheelPowerLvl0 = 0.15;
-  float flywheelPowerLvl1 = 0.17;
-  float flywheelPowerLvl2 = 0.2;
-  float flywheelPowerLvl3 = 0.22;
+  //  Flywheel power for lvl: lvl0, lvl1, lvl2, lvl3
+  float flywheelPower[4] = {0.15, 0.17, 0.2, 0.22};
+
+  C_PID feedPID;
 };
 
-struct C_42mmShooter: C_Config {
-  float feedTimeout = 0.5; // Maximum time between consecutive shots, in seconds
+struct C_Shooter42 {
+  //  Feeder timeout
+  float feedTimeout = 0.5; // Minimum time between consecutive shots, in seconds
 
-  float flywheelPowerLvl0 = 0.15;
-  float flywheelPowerLvl1 = 0.17;
-  float flywheelPowerLvl2 = 0.2;
-  float flywheelPowerLvl3 = 0.22;
+  //  Flywheel power for lvl: lvl0, lvl1, lvl2, lvl3
+  float flywheelPower[4] = {0.15, 0.17, 0.2, 0.22};
 };
+
+struct C_Robot {
+  C_Gimbal gimbal;
+  C_Shooter17 shooter17;
+  C_Shooter42 shooter42;
+  C_RailChassis railChassis;
+  C_SwerveChassis swerveChassis;
+};
+
+#endif

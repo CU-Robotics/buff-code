@@ -278,6 +278,8 @@ def diagnostic():
 		print(f'numpy import success')
 		import pydrive 		# Test pydrive import
 		print(f'pydrive import success')
+		from cv_bridge import CvBridge	# Test cv_bridge
+		print(f'CV bridge import success')
 		import rospy		# Test rospy import
 		print(f'rospy import success')
 

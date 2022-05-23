@@ -9,34 +9,25 @@ from std_msgs.msg import String, Float64MultiArray
 
 
 class SerialLayer():
-	def __init__(self, config_data):
+	def __init__(self, data):
 
-		self.lives = 4
-
-		self.timeout = 0
-		self.debug = False
 		self.device = None
-		self.baudrate = -1
 		self.publishers = {}
-		self.subscribers = {}
 		self.connected = False
-		self.port = '/dev/ttyACM0'
 
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 
-		self.port = config_data['PORT']
-		self.timeout = config_data['TIMEOUT']
-		self.baudrate = config_data['BAUDRATE']
+		self.port = data['PORT']
+		self.lives = data['LIVES']
+		self.timeout = data['TIMEOUT']
+		self.baudrate = data['BAUDRATE']
 
 		self.try_connect()
 
 		topics = rospy.get_param('/buffbot/TOPICS')
-		self.aim_sub = rospy.Subscriber(topics['TARGET'], String, self.writer_callback, queue_size=1)
+		self.writer_sub = rospy.Subscriber(topics['SERIAL_OUT'], String, self.writer_callback, queue_size=10)
 
 		rospy.init_node('echo-serial', anonymous=True)
-
-		self.publishers['aim'] = rospy.Publisher(topics['AIM_HEADING'], Float64MultiArray, queue_size=1)
-
 
 	def write_device(self, packet):
 		"""
@@ -45,7 +36,6 @@ class SerialLayer():
 		if not self.device is None:
 			self.device.write(packet)
 
-
 	def writer_callback(self, msg):
 		"""
 		  Callback for writing messages to the teensy
@@ -53,8 +43,8 @@ class SerialLayer():
 		s = ''
 		for l in msg.data:
 			s += str(l)
+		print(f'Writing {s}')
 		self.write_device(bytes(s, 'utf-8'))
-
 
 	def try_connect(self):
 		"""
@@ -77,6 +67,7 @@ class SerialLayer():
 		else:
 			rospy.loginfo('Device Connected: Reading...')
 
+		return True
 
 	def parse_packet(self):
 		"""
@@ -88,17 +79,25 @@ class SerialLayer():
 			Returns:
 			  msg: ??? - the msg to send
 		"""
-		packet = self.device.readline().decode().rstrip().split(',')
+		packet = self.device.readline().decode().rstrip().split(':')
 
-		for item in packet:
-			name, val = item.split(':')
-			
+		if len(packet) == 2:
+			name, val = packet
+			if len(val.split('.')) - 1 > len(val.split(',')):
+				return
+
+		else:
+			return
+
+		if name[0] == '@':
+			rospy.set_param()
+
+		else:
 			if not name in self.publishers:
 				self.publishers[name] = rospy.Publisher(name, Float64MultiArray, queue_size=10)
 
 			msg = Float64MultiArray(data=np.array(val.split(','), dtype=np.float64))
 			self.publishers[name].publish(msg)
-
 
 	def spin(self):
 		"""
@@ -125,20 +124,17 @@ class SerialLayer():
 				print(e)
 				if self.device:
 					self.device.close()
-				print('Possible I/O Disconnect: Reseting...')
-				time.sleep(2)
-				if not self.try_connect():
-					return
+					self.device = None
+					print('Possible I/O Disconnect: Reseting...')
+					time.sleep(2)
 
 
-def main(config_data):
+def main(data):
 
-	layer = SerialLayer(config_data)
+	layer = SerialLayer(data)
 	layer.spin()
 
 		
-
-
 if __name__=='__main__':
 	if len(sys.argv) < 2:
 		print(f'No Data: Serial Layer exiting')
