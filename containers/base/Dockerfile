@@ -4,8 +4,8 @@
 #
 
 # change this to select ARM or x86_64
-ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04 # 
-FROM ${BASE_IMAGE}
+# nvcr.io/nvidia/l4t-base:r32.6.1 # ubuntu:18.04
+FROM nvcr.io/nvidia/l4t-base:r32.6.1
 
 ENV ROS_PKG=ros-base
 ENV ROS_DISTRO=melodic
@@ -25,23 +25,24 @@ RUN useradd -ms /bin/bash cu-robotics
 #
 # Install Dependencies
 #
+
 RUN apt update && \
 	apt upgrade -y && \
 	apt install -y --no-install-recommends \
 		htop=2.1.0-3 \
 		tmux=2.6-3ubuntu0.2 \
 		wget=1.19.4-1ubuntu2.2 \ 
-		git=1:2.17.1-1ubuntu0.10 \
 		gnupg2=2.2.4-1ubuntu1.4 \
-		curl=7.58.0-2ubuntu3.16 \
+		curl=7.58.0-2ubuntu3.18 \
+		git=1:2.17.1-1ubuntu0.11 \
 		python3-dev=3.6.7-1~18.04 \
 		vim=2:8.0.1453-1ubuntu1.8 \
 		build-essential=12.4ubuntu1 \
 		lsb-release=9.20170808ubuntu1 \ 
 		iputils-ping=3:20161105-1ubuntu3 \
 		ca-certificates=20210119~18.04.2 \ 
-		openssh-client=1:7.6p1-4ubuntu0.6 \
-		openssh-server=1:7.6p1-4ubuntu0.6
+		openssh-client=1:7.6p1-4ubuntu0.7 \
+		openssh-server=1:7.6p1-4ubuntu0.7
 
 
 #
@@ -82,6 +83,7 @@ RUN pip3 install \
 		protobuf==3.12.4 \
 		requests==2.27.1 \
 		depthai==2.15.2.0 \
+		platformio==6.0.1 \
 		torchvision==0.10.0 \
 		opencv-python==4.5.5.64 \
 		rospkg==1.4.0 \
@@ -119,23 +121,6 @@ RUN cd /home/cu-robotics && mkdir opencv_ws && cd opencv_ws && \
 	rm -rf /opt/ros/melodic/lib/python2.7/dist-packages/cv_bridge* && \
 	cp -r /home/cu-robotics/opencv_ws/install/lib/python3/dist-packages/* /opt/ros/melodic/lib/python2.7/dist-packages/ && \
 	rm -rf /home/cu-robotics/opencv_ws
-
-
-#
-# Install sublime text
-#   see install script for more info
-#   sublime in docker is slow when using ARM64
-#   for reasons unknown...
-# RUN wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | apt-key add - && \
-# 	echo "deb https://download.sublimetext.com/ apt/stable/" | tee /etc/apt/sources.list.d/sublime-text.list && \
-#	apt update && \
-#	apt install -y --no-install-recommends apt-transport-https \
-#		sublime-text
-
-
-#
-#	Teensy Loader Install
-#   Excluded for now, requires device access which is not currently available
 
 
 #
