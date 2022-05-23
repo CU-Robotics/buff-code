@@ -44,7 +44,7 @@ class SerialLayer():
 		s = ''
 		for l in msg.data:
 			s += str(l)
-		print(f'Writing {s}')
+
 		self.write_device(bytes(s, 'utf-8'))
 
 	def try_connect(self):
@@ -105,8 +105,10 @@ class SerialLayer():
 
 		
 		if name[0] == '/':
+			topic = self.access_2_string(name[1:])
+			topic = '/' + '_'.join(topic.split('/'))[1:]
 			if not name in self.publishers:
-				topic = self.access_2_string(name[1:])
+				topic 
 				self.publishers[name] = rospy.Publisher(topic, Float64MultiArray, queue_size=10)
 
 			msg = Float64MultiArray(data=np.array(val.split(','), dtype=np.float64))

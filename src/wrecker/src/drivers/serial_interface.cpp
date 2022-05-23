@@ -420,11 +420,11 @@ void serial_event(C_Robot* config, S_Robot* state){
 }
 
 void dump_Robot(C_Robot* r_config, S_Robot* r_state){
-  dump_Chassis(&r_state->chassis);
+  // dump_Chassis(&r_state->chassis);
   // dump_RailChassis(r_config->railChassis);
-  dump_SwerveChassis(&r_config->swerveChassis);
+  // dump_SwerveChassis(&r_config->swerveChassis);
 
-  // dump_Gimbal(&r_state->gimbal);
+  dump_Gimbal(&r_state->gimbal);
   // dump_Gimbal(&r_config->gimbal);
 
   // dump_RefSystem_State(r_state->refSystem);

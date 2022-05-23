@@ -17,6 +17,7 @@ void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state, S_SwerveModule 
   moduleState = modState;
 
   this->steerMotor.init(config->steerMotorID, 1, config->steerEncoderID);
+
   this->driveMotor.init(config->driveMotorID, 2);
 }
 

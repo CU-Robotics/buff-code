@@ -183,11 +183,10 @@ def launch_system(target_path, config):
 			node = config['NODES'][name]
 
 			# If missing package type or filename skip
-			if not 'PACKAGE' in node or not 'FILE' in node:
+			if not 'PACKAGE' in node or not 'FILES' in node:
 				rospy.logerr(f'{node} Has an invalid definition')
 				continue
 
-			program = node['FILE']
 			package = node['PACKAGE']
 
 			# Not all packages handle our launch params
@@ -246,8 +245,9 @@ def launch_system(target_path, config):
 				required = False
 
 			# launch the process and add it to the pool
-			process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=required)
-			pool.append(launch.launch(process))
+			for program in node['FILES']:
+				process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=required)
+				pool.append(launch.launch(process))
 
 	return core_process, pool, launch
 
@@ -287,6 +287,7 @@ def spin(config, target_path, target_args):
 		print(f'Failed to load target: {target_path}')
 		exit(0)
 
+	launch = None
 	core_process = None
 	# Try to catch user kill and other errors
 	try: 
@@ -322,18 +323,15 @@ def spin(config, target_path, target_args):
 	except KeyboardInterrupt as e:
 		print(e)
 		print('Terminate Recieved:...')
-		# Kill all launched pool
-		# for proc in pool:
-		# 	proc.stop()
-
-		# Kill core
-		os.kill(core_process.pid, signal.SIGTERM)
 
 	except Exception as e:
-		# In event of an error kill the core
-		os.kill(core_process.pid, signal.SIGTERM)
 		print(e)
 		print('Killed due to error')
+
+	rospy.sleep(3)
+
+	if not core_process is None:
+		core_process.kill()
 
 def main(args):
 	"""

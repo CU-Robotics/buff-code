@@ -11,4 +11,5 @@ seaborn==0.11.2
 requests==2.27.1
 protobuf==3.12.4 
 torchvision==0.10.0
+platformio
 opencv-python==4.5.5.64
