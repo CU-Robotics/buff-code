@@ -214,7 +214,6 @@ bool ref_sys::read_serial(){
 
                 unix_time = unix_time | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-
                 run_data -> rem_time = int(unix_time);
                                     
                 }else if(cmd_id == 2){   //results for 2
@@ -372,7 +371,6 @@ bool ref_sys::read_serial(){
 
                 temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-
                 run_data -> blue_sentry_hp = temp_hp;
                
                 ///////////////////////////////////////////////////////////////
@@ -476,7 +474,6 @@ bool ref_sys::read_serial(){
                 }        //This waits till another byte of data is available
 
                 robo_id = temp;
-
 
                 run_data -> foul_robot_id = int(robo_id);
 
@@ -724,7 +721,6 @@ bool ref_sys::read_serial(){
 
                 temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-
                 run_data -> robot_power_lim = temp_stat;
 
                 /////////////////////////////////////////////////////////////////////////////
@@ -797,7 +793,6 @@ bool ref_sys::read_serial(){
                 // temp_launch_speed << 8;
 
                 /////////////////////////////////////////////////////////////////
-
 
                 run_data -> launch_speed = temp_launch_speed;
                 

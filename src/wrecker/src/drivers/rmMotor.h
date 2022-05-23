@@ -19,7 +19,7 @@ class rmMotor {
     short rpm = -1;
     short angle = -1;
     byte temp = -1;
-    short id = -1;
+    uint8_t id = -1;
     uint8_t canBusNum;
     short MAX_VALUE;
     short byteNum = -1;
