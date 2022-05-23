@@ -2,9 +2,9 @@ data/
 .vscode
 **/.pio
 **/.vscode/
-buffpy/lib/
+buffpy/lib/*
+buffpy/build/*
 **/.DS_store
 **/__pycache__
 **/sensitive/*
 **/.catkin_tools
-buffpy/bin/build
