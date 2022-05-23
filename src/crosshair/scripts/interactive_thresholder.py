@@ -44,27 +44,34 @@ def main(data_dir):
 
 	project_root = os.getenv('PROJECT_ROOT')
 	data_path = os.path.join(project_root, 'data', data_dir)
-	data = bv.load_data(path=data_path)
 
-	for i, (image, label) in enumerate(data[0:100]):
-		print(f'{i}: image shape: {image.shape} ')
-		hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-		bv.display_annotated(image, label * image.shape[0])
+	m = len(data_path) + len('labels') + 2
+	label_paths = glob.glob(os.path.join(data_path, 'labels', '*.txt'))
 	
-		for x, y in pixels:
-			h, s, v = hsv[y,x]
+	for i,labelf in enumerate(label_paths):
+		imfile = os.path.join(data_path, 'images', labelf[m:-4] + '.jpg')
+		if os.path.exists(imfile):
+			image = cv2.imread(imfile)
+			label = bv.load_label(labelf)
 
-			all_values.append([h,s,v])
+			print(f'{i}: image shape: {image.shape} ')
+			hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+			bv.display_annotated(image, label)
+		
+			for x, y in pixels:
+				h, s, v = hsv[y,x]
 
-			value_low[0] = min(value_low[0], h)
-			value_low[1] = min(value_low[1], s)
-			value_low[2] = min(value_low[2], v)
+				all_values.append([h,s,v])
 
-			value_high[0] = max(value_high[0], h)
-			value_high[1] = max(value_high[1], s)
-			value_high[2] = max(value_high[2], v)
+				value_low[0] = min(value_low[0], h)
+				value_low[1] = min(value_low[1], s)
+				value_low[2] = min(value_low[2], v)
 
-		pixels = []
+				value_high[0] = max(value_high[0], h)
+				value_high[1] = max(value_high[1], s)
+				value_high[2] = max(value_high[2], v)
+
+			pixels = []
 
 	avg, std = run_stats(all_values)
 
