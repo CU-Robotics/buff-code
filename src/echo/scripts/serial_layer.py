@@ -21,6 +21,7 @@ class SerialLayer():
 		self.lives = data['LIVES']
 		self.timeout = data['TIMEOUT']
 		self.baudrate = data['BAUDRATE']
+		self.serial_LUT = data['SERIAL_LUT']
 
 		self.try_connect()
 
@@ -69,6 +70,19 @@ class SerialLayer():
 
 		return True
 
+	def module_lookup(self, module, key):
+		data = self.serial_LUT[module][key[0]]
+		if 'TYPE' in data:
+			return '/' + data['NAME'] + self.module_lookup(data['TYPE'], key[1:])
+
+		else:
+			return '/' + data
+			
+	def access_2_string(self, key):
+		module = self.serial_LUT['SUBSYSTEM'][key[0]]['TYPE']
+		s = '/' + self.serial_LUT['SUBSYSTEM'][key[0]]['NAME']
+		return s + self.module_lookup(module, key[1:])
+
 	def parse_packet(self):
 		"""
 		  Create a new msg to publish.
@@ -89,15 +103,18 @@ class SerialLayer():
 		else:
 			return
 
-		if name[0] == '@':
-			rospy.set_param()
-
-		else:
+		
+		if name[0] == '/':
 			if not name in self.publishers:
-				self.publishers[name] = rospy.Publisher(name, Float64MultiArray, queue_size=10)
+				topic = self.access_2_string(name[1:])
+				self.publishers[name] = rospy.Publisher(topic, Float64MultiArray, queue_size=10)
 
 			msg = Float64MultiArray(data=np.array(val.split(','), dtype=np.float64))
 			self.publishers[name].publish(msg)
+
+		if name[0] == '@':
+			topic = self.access_2_string(name[1:])
+			rospy.set_param(topic, val.split(','))
 
 	def spin(self):
 		"""
