@@ -26,5 +26,8 @@ NODES:
     REQUIRED: False
   RQT_GUI:    # Opens an rqt_graph
     FILE: 'rqt_gui'
-    PACKAGE: 'rqt_gui'        
+    PACKAGE: 'rqt_gui'
+    ARGS:
+      - '--perspective-file ${PROJECT_ROOT}/buffpy/config/data/buff_view.perspective'
+
 
