@@ -14,14 +14,14 @@ from std_msgs.msg import String, Float64MultiArray
 	Uses dead-reckoning to track detected objects
 """
 
-
+	
 class Dead_Reckon_Tracer:
-  """
+	"""
 	Dead Reckon Tracer
 	dead reckoning means filtering a signal using
 	the most basic equations of motion. In this case
 	we use Newtons Equations:
-	  Xt = X0 + Vdt + 1/2Adt^2
+	Xt = X0 + Vdt + 1/2Adt^2
 	This class is basically just an integrator.
 	The tracer uses previous measurements to calculate
 	the trajectory of the function. Then using this trajectory 
@@ -29,7 +29,7 @@ class Dead_Reckon_Tracer:
 	This class assumes the detections it recieves lay in a 2D
 	grid world. To the tracer the world is unbounded, this may 
 	cause problems in the future.
-  """
+	"""
 	def __init__(self, debug=False):
 		self.t = 0 
 		self.debug = False
@@ -41,9 +41,9 @@ class Dead_Reckon_Tracer:
 
 	def predict(self, dt, pose=None):
 		"""
-		  make a prediction of where the target will be.
-		  t: float, simulation time to find position at
-		  
+			make a prediction of where the target will be.
+			t: float, simulation time to find position at
+			
 		"""
 		t_vect = np.array([dt, dt**2 / 2, dt**3 / 6])
 
@@ -56,8 +56,8 @@ class Dead_Reckon_Tracer:
 
 	def update_trajectory(self, t, measure, debug=False):
 		"""
-		  update the trajectory of a target, tracks up to a third derivative (jerk)
-		  t: float, time in simulation
+			update the trajectory of a target, tracks up to a third derivative (jerk)
+			t: float, time in simulation
 		"""
 		dt = t - self.t
 		if dt == 0:
@@ -107,7 +107,7 @@ class Dead_Reckon_Tracer:
 	# 	if self.debug:
 	# 		self.publish_debug()
 	# 	self.rate.sleep()
-	  
+		
 
 # class Dead_Reckon_Tracer:
 # 	def __init__(self, config_data):
