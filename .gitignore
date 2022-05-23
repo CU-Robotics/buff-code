@@ -1,10 +1,6 @@
-logs/
 data/
 .vscode
 **/.pio
-devel/
-build/
-install/
 **/.vscode/
 buffpy/lib/
 **/.DS_store
