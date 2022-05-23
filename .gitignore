@@ -4,7 +4,7 @@ data/*
 **/.DS_store
 buffpy/lib/*
 buffpy/build/*
-buffpy/models/*
+/buffpy/models/*
 **/__pycache__
 **/sensitive/*
 **/.catkin_tools/
