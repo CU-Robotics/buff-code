@@ -4,11 +4,11 @@
 #include "state/state.h"
 #include "drivers/dr16.h"
 #include "state/config.h"
-#include "drivers/dr16.h"
 #include "drivers/ref_sys.h"
 #include "subsystems/gimbal.h"
 #include "drivers/serial_interface.h"
 #include "subsystems/swerveChassis.h"
+#include "subsystems/shooter.h"
 
 // CAN
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
@@ -29,10 +29,12 @@ S_Robot robot_state;
 C_Robot robot_config;
 
 // Subsystems
-Gimbal gimbal;
-//dr16 reciever;
-//ref_sys refSystem;
+// Gimbal gimbal;
+dr16 reciever;
+// ref_sys refSystem;
+// SwerveModule sm;
 SwerveChassis swerveChassis;
+Shooter shooter;
 
 void dump(){
   dump_Robot(&robot_config, &robot_state);
@@ -60,12 +62,11 @@ void setup() {
   // Subsystem setup
 
   // Subsystem setup
-  //reciever.init(&robot_state.driverInput);
-  gimbal.setup(&robot_config.gimbal, &robot_state);
-  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
 
-  dump_Robot(&robot_config, &robot_state);
-
+  reciever.init(&robot_state.driverInput);
+  // gimbal.setup(&robot_config.gimbal, &robot_state);
+  //swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  shooter.setup(&robot_config.shooter17, &robot_state);
 }
 
 
@@ -76,24 +77,23 @@ void loop() {
   // Needs to have usage
   //  can.update(XXX, YYY);
   //
-  // while (can1.read(tempMessage))
-  //   canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
+  while (can1.read(tempMessage))
+    canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
   
-  // while (can2.read(tempMessage))
-  //   canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
+  while (can2.read(tempMessage))
+    canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
   
-  // while (can3.read(tempMessage))
-  //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
+  while (can3.read(tempMessage))
+    canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
   
   
   if (Serial.available() > 0)
-    serial_event(&robot_config, &robot_state);
+    serial_event(&robot_state, &robot_config);
 
-  dump_Robot(&robot_config, &robot_state);
-
-  //reciever.update();
-  gimbal.update(deltaT);
+  reciever.update();
+  //gimbal.update(deltaT);
   //swerveChassis.update(deltaT);
+  shooter.update(deltaT);
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
@@ -103,5 +103,4 @@ void loop() {
   
   lastTime = micros();
 }
-
 

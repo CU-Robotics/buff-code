@@ -33,8 +33,12 @@ class SwerveModule {
     float prevRawSteerAngle = 0;
     float prevSteerAngle = 0;
 
+    bool calibrated = false;
+    float absolute_offset = 0;
+
     int findCalibrationMatch(int currValue, int* alignmentTable, int tableSize);
     void motorAngleToWheelAngle();
+    float convertSteerAngle(float rawSteerAngle);
 };
 
 #endif // SWERVE_MODULE

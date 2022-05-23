@@ -34,6 +34,7 @@ struct C_SwerveModule {
 
   //  Alignment data ???
   int alignment[9] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+  int absolute_offset = 0;
 
   // PIDs
   C_PID steerVel;
@@ -67,7 +68,7 @@ struct C_RailChassis {
 
 struct C_Gimbal {
 
-  float sensitivity = 1.0;
+  float sensitivity = 0.001;
 
   //  angle offset for motors: yaw, pitch
   float yawOffset = 90.0;
@@ -86,6 +87,8 @@ struct C_Shooter17 {
 
   //  Flywheel power for lvl: lvl0, lvl1, lvl2, lvl3
   float flywheelPower[4] = {0.15, 0.17, 0.2, 0.22};
+
+  C_PID feedPID;
 };
 
 struct C_Shooter42 {
