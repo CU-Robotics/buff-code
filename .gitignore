@@ -1,10 +1,10 @@
-data/*
-.vscode
+**/.vscode
 **/.pio
 **/.DS_store
+**/__pycache__
+
+data/*
 buffpy/lib/*
 buffpy/build/*
-/buffpy/models/*
-**/__pycache__
-**/sensitive/*
-**/.catkin_tools/
+buffpy/models/*
+buffpy/config/sensitive/*
