@@ -88,7 +88,7 @@ void loop() {
   
   
   if (Serial.available() > 0)
-    serial_event(&robot_state, &robot_config);
+    serial_event(&robot_config, &robot_state);
 
   reciever.update();
   //gimbal.update(deltaT);

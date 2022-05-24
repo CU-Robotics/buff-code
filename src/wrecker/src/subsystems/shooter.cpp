@@ -26,7 +26,7 @@ void Shooter::update(unsigned long deltaTime) {
     this->bottomFlywheel.setPower(0.4);
 
     this->config->feedPID.K[0] = 0.05;
-    state->Shooter17.feedPID.R = 100;
-    PID_Filter(&config->feedPID, &state->Shooter17.feedPID, feedMotor.getRpm(), deltaTime);
+    state->shooter17.feedPID.R = 100;
+    PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
     //this->feedMotor.setPower(state->Shooter17.feedPID.R);
 }
