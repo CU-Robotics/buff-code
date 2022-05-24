@@ -35,6 +35,7 @@
 import os
 import sys
 import yaml
+import glob
 import shutil
 import argparse
 import subprocess
@@ -333,6 +334,73 @@ def diagnostic():
 	except Exception as e:
 		print(e)
 
+def train_model(model):
+
+	project_root = os.getenv('PROJECT_ROOT')
+	setup_script = os.path.join(project_root, 'buffpy', 'scripts', 'yolov5_setup.bash')
+
+	model_dir = os.path.join(project_root, 'buffpy', 'models')
+	yolo_dir = os.path.join(project_root, '..', 'yolov5')
+	data_dir = os.path.join(project_root, 'data')
+	output_dir = os.path.join(model_dir, 'runs')
+
+	model_path = os.path.join(model_dir, model)
+
+	if not os.path.exists(data_dir):
+		print('No training Data')
+		return
+	
+	if not os.path.exists(yolo_dir):
+		subprocess.run([setup_script])
+
+	default_args = ['--img', '320','--batch', '32', '--epochs', '50', '--cache', '--project', output_dir]
+
+	for dataset in glob.glob(os.path.join(data_dir, '*')):
+		args = []
+
+		if dataset[-4:] == '.zip':
+			shutil.unpack_archive(dataset, dataset[:-4])
+			data_file = os.path.join(dataset[:-4], 'data.yaml')
+			train_path = os.path.join(dataset[:-4], 'train')
+			valid_path = os.path.join(dataset[:-4], 'valid')
+			test_path = os.path.join(dataset[:-4], 'test')
+
+			with open(data_file, 'w+') as f:
+				if os.path.exists(train_path):
+					f.write(f'train: {train_path}\n')
+
+				if os.path.exists(valid_path):
+					f.write(f'val: {valid_path}\n')
+
+				if os.path.exists(test_path):
+					f.write(f'test: {test_path}\n')
+
+				f.write(f'\nnc: 3\nnames: [\'blue-armor\', \'red-armor\', \'robot\']')
+		
+		else:
+			data_file = os.path.join(dataset, 'data.yaml')
+
+
+		if not os.path.exists(data_file):
+			print(f'Dataset {dataset} data.yaml does not exist')
+			continue
+
+		if not os.path.exists(model_path):
+			args += ['--weights', '""']
+			args += ['--cfg', 'yolov5s.yaml']
+		
+		else:
+			args += ['--weights', model_path]
+
+		args += ['--data', data_file]
+
+		cmd = ['python3', os.path.join(yolo_dir, 'train.py')] + default_args + args
+		print(f'Executing {cmd}')
+		subprocess.run(cmd)
+
+		shutil.copy(os.path.join(output_dir, 'exp', 'weights', 'best.pt'), model_dir)
+		shutil.rmtree(os.path.join(output_dir, 'exp'))
+		model_path = os.path.join(model_dir, 'best.pt')
 
 def parse_arguments():
 	"""
@@ -360,6 +428,11 @@ def parse_arguments():
 		metavar='PROFILE',
 		default='',
 		help='Builds the workspace locally')
+	parser.add_argument('--train', 
+		nargs=1,
+		metavar='MODEL',
+		default='',
+		help='Trains a Yolov5 model locally')
 	parser.add_argument('--install', 
 		action='store_true',
 		help='Installs build to the registered robots')
@@ -375,7 +448,6 @@ def parse_arguments():
 
 	return parser.parse_args(sys.argv[1:])
 						
-
 def main(ap):
 
 	if ap.clean:
@@ -392,6 +464,9 @@ def main(ap):
 
 	if ap.build:
 		build_buffpy(ap.build[0])
+
+	if ap.train:
+		train_model(ap.train[0])
 
 	if ap.install:
 		deploy_all_devices()
