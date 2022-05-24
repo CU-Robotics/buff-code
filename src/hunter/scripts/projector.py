@@ -68,17 +68,26 @@ class Projector:
 	def height_2_distance(self, h):
 		return self.a * np.exp(self.m * (h + self.p))
 
-	def project(self, pose):
+	def project(self, detection):
 		"""
 		Projects a detection into the world frame
 		PARAMS:
-			pose: Float64MultiArray.data, [x,y,h,w,cf,cl] (detection msg)
+			pose: Float64MultiArray.data, [x1,y1,x2,y2,cf,cl] (detection msg)
 		RETURNS:
 			vector (x,y): body frame position of the detection
 		"""
-		d = self.height_2_distance(pose[2])
-		alpha = np.radians((1 - (pose[0] / self.image_size[0])) * self.FOV)
+
+		x1, y1, x2, y2, cf, cl = detection
+		xc = (x1 + x2) / 2
+		w = abs(x2 - x1)
+		h = abs(y2 - y1)
+		d = self.height_2_distance(h)
+		alpha = np.radians((1 - (xc / self.image_size[0])) * self.FOV)
+		print('=====')
+		print(h, d)
+		print(xc, alpha)
 		return d * np.cos(self.phi) * np.array([np.cos(self.psi + alpha), np.sin(self.psi + alpha)])
+
 
 def main(data):
 	projector = Projector(data)
@@ -86,9 +95,6 @@ def main(data):
 	try:
 		while not rospy.is_shutdown():
 			# for sim
-			r = 100 * np.array([np.cos(time.time()), np.sin(time.time())])
-			msg = Float64MultiArray(data=r)
-			projector.project_pub.publish(msg)
 			projector.rate.sleep()
 
 	except KeyboardInterrupt as e:

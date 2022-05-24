@@ -9,24 +9,16 @@
 import os
 import sys
 import cv2
+import time
 import yaml
 import rospy
 import torch
+import torchvision
 import numpy as np
+import depthai as dai
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64MultiArray
-
-import depthai as dai
-import time
-import numpy as np
-
-# functions taken from https://github.com/ultralytics/yolov5/blob/master/utils/general.py
-
-import torch
-import torchvision
-import time
-import numpy as np
 
 
 def xywh2xyxy(x):
@@ -117,16 +109,9 @@ def non_max_suppression(prediction, conf_thres=0.1, iou_thres=0.6, merge=False, 
 
 
 labelMap = [
-	'armor',
-	'base',
-	'car',
-	'target',
-	'target-blue',
-	'target-grey',
-	'target-grey-2',
-	'target-red',
-	'watcher',
-	'background'
+	'blue-armor',
+	'red-armor',
+	'robot'
 ]
 
 cam_options = ['rgb', 'left', 'right']
@@ -136,24 +121,25 @@ def draw_boxes(frame, boxes, total_classes):
 	if boxes is None or len(boxes) == 0:
 		return frame
 	else:
+		colors = [(255,0,0), (0,0,255), (0,255,0), (0, 0, 0)]
+		for box in boxes:
+			x1 = int(box[0])
+			y1 = int(box[1])
+			x2 = int(box[2])
+			y2 = int(box[3])
 
-		for i in range(boxes.shape[0]):
-			x1, y1, x2, y2 = int(boxes[i, 0]), int(
-				boxes[i, 1]), int(boxes[i, 2]), int(boxes[i, 3])
-			conf, cls = boxes[i, 4], int(boxes[i, 5])
+			conf, cl = box[4], int(box[5])
 
-			label = f"{labelMap[cls]}: {conf:.2f}"
-
-			frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
+			label = f"{labelMap[cl]}: {conf:.2f}"
+			frame = cv2.rectangle(frame, (x1, y1), (x2, y2), colors[cl], 1)
 
 			# Get the width and height of label for bg square
 			(w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.3, 1)
 
 			# Shows the text.
-			frame = cv2.rectangle(frame, (x1, y1 - 2*h),
-								  (x1 + w, y1), (0, 255, 0), -1)
-			frame = cv2.putText(frame, label, (x1, y1 - 5),
-								cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+			frame = cv2.rectangle(frame, (x1, y1 - 2*h), (x1 + w, y1), colors[cl], -1)
+			frame = cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+
 	return frame
 
 
@@ -240,11 +226,7 @@ class DepthAI_Device:
 				name="nn", maxSize=4, blocking=False)
 
 			start_time = time.time()
-			counter = 0
-			fps = 0
 			layer_info_printed = False
-
-			i = 0
 
 			rospy.loginfo("Starting the Stream")
 
@@ -253,7 +235,6 @@ class DepthAI_Device:
 				in_nn = q_nn.get()
 
 				frame = in_nn_input.getCvFrame()
-				layers = in_nn.getAllLayers()
 
 				# get the "output" layer
 				output = np.array(in_nn.getLayerFp16("output"))
@@ -269,32 +250,12 @@ class DepthAI_Device:
 					output, conf_thres=self.confidence, iou_thres=self.iou)
 
 				boxes = boxes[0]
-				# publish our detections
-
-				# if boxes is not None:
-				# 	boxes = boxes.numpy() 
-				# 	rospy.loginfo(boxes)
-				# 	target_msg = Float64MultiArray(data=np.array(boxes.flatten(), dtype=np.float64))
-				# 	self.det_pub.publish(target_msg)
-				# 	ann_frame = draw_boxes(frame, boxes, 9)
-
-				# 	ann_img_msg = self.bridge.cv2_to_imgmsg(ann_frame, "bgr8")
-				# 	self.ann_pub.publish(ann_img_msg)
-				# else:
-				# 	ann_img_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
-				# 	self.ann_pub.publish(ann_img_msg)
-				# 	# send an empty message of some kind
-				# 	pass
-
-				# # publish our images
-
-				# img_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
-				# self.raw_pub.publish(img_msg)
 
 				if boxes is not None:
 					boxes = boxes.numpy() 
-					target_msg = Float64MultiArray(data=np.array(boxes.flatten(), dtype=np.float64))
-					self.det_pub.publish(target_msg)
+					for box in boxes:
+						target_msg = Float64MultiArray(data=box)
+						self.det_pub.publish(target_msg)
 
 				image_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
 				self.image_pub.publish(image_msg)
