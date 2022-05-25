@@ -24,9 +24,9 @@ class Target_Map:
 		self.history = np.zeros((4,2), dtype=np.float64)
 
 		self.rate = data['RATE']
-		self.image_size = data['IMAGE_SIZE']
+		self.map_size = data['MAP_SIZE']
 
-		self.FOV = rospy.get_param('/buffbot/LUXONIS/CAMERA/FOV')
+		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
 
 		self.init_ros(data)
 
@@ -64,9 +64,9 @@ class Target_Map:
 
 	def publish_map(self):
 
-		d = (self.image_size[0] * 0.02, self.image_size[1] * 0.02)
-		image = np.ones(self.image_size, dtype=np.uint8) * 255
-		origin = (int(self.image_size[0] / 2), int(self.image_size[1] / 2))
+		d = (self.map_size[0] * 0.02, self.map_size[1] * 0.02)
+		image = np.ones(self.map_size, dtype=np.uint8) * 255
+		origin = (int(self.map_size[0] / 2), int(self.map_size[1] / 2))
 		bot_1 = (int(origin[0] - d[0]), int(origin[1] - d[1]))
 		bot_2 = (int(origin[0] + d[0]), int(origin[1] + d[1]))
 		fovr = (int(origin[0] + (5 * d[0] * np.cos(np.radians(self.psi + (self.FOV / 2))))), int(origin[1] - (5 * d[1] * np.sin(np.radians(self.psi + (self.FOV / 2))))))
