@@ -31,37 +31,33 @@ class BuffNet:
 			self.debug = True
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, config_data['MODEL'])
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/MODEL_FILE'))
 
 		if not os.path.exists(model_path):
 			gdrive = GD_Handler()
-			gdrive.downloadFile(file='BuffNetv2-exp14', path=model_dir, title='BuffNetv2-exp14.pt')
+			gdrive.downloadFile(file='BuffNetv3-exp5', path=model_dir, title='BuffNetv3-exp5.pt')
+			model_path = os.path.join(model_dir, 'BuffNetv3-exp5.pt')
 
 		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
-
-		rospy.loginfo
 
 		self.bridge = CvBridge()
 		rospy.init_node('buffnet', anonymous=True)
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 
 		topics = rospy.get_param('/buffbot/TOPICS')
-		pubs = [topics[t] for t in config_data['TOPICS']['PUBLISH']]
-		subs = [topics[t] for t in config_data['TOPICS']['SUBSCRIBE']]
 
-		if len(pubs) > 0:
-			self.target_pub = rospy.Publisher(pubs[0], Float64MultiArray, queue_size=1)
-			if self.debug and len(pubs) > 1:
-				self.debug_pub = rospy.Publisher(pubs[1], Image, queue_size=1)
+		self.target_pub = rospy.Publisher(topics['DETECTION_PIXEL'], Float64MultiArray, queue_size=1)
+		if self.debug and len(pubs) > 1:
+			self.debug_pub = rospy.Publisher(topics['IMAGE_DEBUG'], Image, queue_size=1)
 
 		if len(subs) > 0:
-			self.im_subscriber = rospy.Subscriber(subs[0], Image, self.imageCallBack, queue_size=1)
+			self.im_subscriber = rospy.Subscriber(['IMAGE'], Image, self.imageCallBack, queue_size=1)
 
 		if 'CAMERA' in config_data:
 			w, h, d = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 			self.image_size = (w, d)
 		else:
-			self.image_size = (416, 416)
+			self.image_size = (320, 320)
 
 
 	def detect(self, image):
@@ -168,15 +164,7 @@ def main(config_data):
 
 	detector = BuffNet(config_data=config_data)
 
-	if 'TOPICS' in config_data:
-		rospy.spin()
-
-	if 'DATA' in config_data:	
-		# run independantly
-		data = bv.load_data(path=os.path.join(os.get_env('PROJECT_ROOT'), 'data', config_data['DATA']))
-
-		for image, labels in data[0:5]:
-			detector.detect_and_annotate(image)
+	rospy.spin()
 
 
 if __name__=='__main__':

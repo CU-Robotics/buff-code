@@ -7,7 +7,6 @@ import rospy
 import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from gdrive_handler import GD_Handler
 
 
 class cv2_Camera:
@@ -16,12 +15,10 @@ class cv2_Camera:
 		self.config_data = config_data
 		self.init_camera()
 
-		out_topic = config_data['TOPICS']['PUBLISH'][0]
 		all_topics = rospy.get_param('/buffbot/TOPICS')
 
-
 		# Create the image publisher
-		self.pub = rospy.Publisher(all_topics[out_topic], Image, queue_size=1)
+		self.pub = rospy.Publisher(all_topics['IMAGE'], Image, queue_size=1)
 		# Init this program as a ROS node
 		# anonymous sets a unique node ID
 		rospy.init_node('omega_streamer', anonymous=True)
@@ -36,7 +33,7 @@ class cv2_Camera:
 		self.lives = 9
 		
 		if self.debug:
-			rospy.loginfo('Camera and publisher Initialized: {} {} {}'.format(self.config_data['DEVICE'], out_topic, self.fps))
+			rospy.loginfo('Camera and publisher Initialized: {} {} {}'.format(self.config_data['DEVICE'], all_topics['IMAGE'], self.fps))
 
 	def init_camera(self):
 		# init camera
