@@ -156,6 +156,9 @@ def launch_system(target_path, config):
 	pool = []	
 	cmd = 'roscore'
 	core_process = None
+
+	project_root = os.getenv('PROJECT_ROOT')
+	data_path = os.path.join(project_root, 'buffpy', 'config', 'data')
 		
 	# Set nodes and package
 	nodes = config['NODES']
@@ -164,7 +167,7 @@ def launch_system(target_path, config):
 
 	# Cant spawn pool without nodes
 	if nodes is None:
-		print(f'Missing NODES in config file {target}')
+		print(f'Missing NODES in config file {target_path}')
 
 	else:
 		namespace = '/buffbot'
@@ -182,27 +185,16 @@ def launch_system(target_path, config):
 		for name in nodes:
 			node = config['NODES'][name]
 
-			# If missing package type or filename skip
-			if not 'PACKAGE' in node or not 'FILES' in node:
-				rospy.logerr(f'{node} Has an invalid definition')
-				continue
-
-			package = node['PACKAGE']
-
 			# Not all packages handle our launch params
-			if package == 'buffpy':
-				# only arg needed is the node name, everything else is under the node name on the param server
+			if 'CONFIG' in node and not node['CONFIG'] is None:
 				args = f'{namespace}/{name}'
+				config_path = os.path.join(node['CONFIG'])
 
-				if 'CONFIG' in node and node['CONFIG'] is None:
-					node.pop('CONFIG')
+				with open(config_path, 'r') as f:
+					config_data = yaml.safe_load(f)
 
-				elif 'CONFIG' in node:
-					with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', node['CONFIG']), 'r') as f:
-						data = yaml.safe_load(f)
-						if not data is None:
-							node.update(data) # Add the yaml data to the roslaunch node
-
+				if not config_data is None:
+					node.update(config_data) # Add the yaml data to the roslaunch node
 
 				rospy.set_param(args, node)
 
@@ -237,6 +229,11 @@ def launch_system(target_path, config):
 			else:
 				# no args passed
 				args = ''
+
+			if 'PACKAGE' in node:
+				package = node['PACKAGE']
+			else:
+				package = 'buffpy'
 
 			if 'REQUIRED' in node:
 				required = node['REQUIRED']
