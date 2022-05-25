@@ -188,7 +188,7 @@ def launch_system(target_path, config):
 			# Not all packages handle our launch params
 			if 'CONFIG' in node and not node['CONFIG'] is None:
 				args = f'{namespace}/{name}'
-				config_path = os.path.join(node['CONFIG'])
+				config_path = os.path.join(data_path, node['CONFIG'])
 
 				with open(config_path, 'r') as f:
 					config_data = yaml.safe_load(f)
