@@ -9,7 +9,7 @@ from std_msgs.msg import String, Float64MultiArray
 
 
 class SerialLayer():
-	def __init__(self, data):
+	def __init__(self, name):
 
 		self.device = None
 		self.publishers = {}
@@ -17,16 +17,14 @@ class SerialLayer():
 
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 
-		self.port = data['PORT']
-		self.lives = data['LIVES']
-		self.timeout = data['TIMEOUT']
-		self.baudrate = data['BAUDRATE']
-		self.serial_LUT = data['SERIAL_LUT']
+		self.lives = 
+		self.serial_LUT = rospy.get_param(f'{name}/SERIAL_LUT')
 
 		self.try_connect()
 
 		topics = rospy.get_param('/buffbot/TOPICS')
-		self.writer_sub = rospy.Subscriber(topics['SERIAL_OUT'], String, self.writer_callback, queue_size=10)
+		self.writer_sub = rospy.Subscriber(topics['SERIAL_OUT'], 
+			String, self.writer_callback, queue_size=10)
 
 		rospy.init_node('echo-serial', anonymous=True)
 
@@ -55,14 +53,18 @@ class SerialLayer():
 			if self.device:
 				self.device.close()
 
-			self.device = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
+			self.device = serial.Serial(rospy.get_param(f'{name}/PORT'), 
+				rospy.get_param(f'{name}/BAUDRATE'), 
+				timeout=rospy.get_param(f'{name}/TIMEOUT'))
+
 			self.device.flush()
 
 		except Exception as e:
+			lives = int(rospy.get_param(f'{name}/LIVES'))
 			rospy.logerr(e)
-			rospy.logerr(f"Serial lives left {self.lives}")
-			self.lives -= 1
-			if self.lives < 1:
+			rospy.logerr(f"Serial lives left {lives}")
+			rospy.set_param(f'{name}/LIVES', lives-1)
+			if lives < 2:
 				return False
 
 		else:
@@ -158,9 +160,5 @@ if __name__=='__main__':
 	if len(sys.argv) < 2:
 		print(f'No Data: Serial Layer exiting')
 	elif '/buffbot' in sys.argv[1]:
-		main(rospy.get_param(sys.argv[1]))
-	elif '.yaml' in sys.argv[1]:
-		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
-			data = yaml.safe_load(f)
-		main(data)
+		main(sys.argv[1])
 

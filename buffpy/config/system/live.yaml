@@ -12,17 +12,12 @@ TOPICS:
 
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
-  #   FILE:
-  #     'record'
-  #   PACKAGE:
-  #     'rosbag'
+  #   FILE: 'record'
+  #   PACKAGE: 'rosbag'
   #   ARGS:       # -a record all  -x ignore -o output prefix
-  #     - '-a'
-  #     - '-x /rosout'
-  #     - '-o /home/cu-robotics/buff-code/data/'
+  #     ['-a', '-x /rosout', '-o /home/cu-robotics/buff-code/data/']
   LUXONIS: # spawns our detector node
     FILES: ['luxnet.py']
-    CONFIG: 'luxonis_settings.yaml'
     PACKAGE: 'buffpy'
     REQUIRED: True
   TRACKER:     # spawns our tracker node
@@ -33,3 +28,8 @@ NODES:
     FILES: ['serial_layer.py']
     CONFIG: 'serial_settings.yaml'
     PACKAGE: 'buffpy'
+
+  CAMERA:
+    CONFIG: 'camera_settings.yaml'
+  MODEL:
+    CONFIG: 'model_settings.yaml'

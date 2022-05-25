@@ -144,7 +144,7 @@ def draw_boxes(frame, boxes, total_classes):
 
 
 class DepthAI_Device:
-	def __init__(self, config_data=None):
+	def __init__(self, data=None):
 		"""
 				Define all the parameters of the model here.
 				Can be initialized with a config file, a system launch
@@ -153,12 +153,12 @@ class DepthAI_Device:
 		"""
 		# It is assumed that this script will only be called by the ols
 		# If the ols is used properly these will always be defined
-		self.FPS = config_data['CAMERA']['FPS']
-		self.iou = config_data['MODEL_INFO']['IOU']
+		topics = rospy.get_param('/buffbot/TOPICS')
 		self.debug = rospy.get_param('/buffbot/DEBUG')
-		self.image_size = config_data['CAMERA']['RESOLUTION']
-		self.model_file = config_data['MODEL_INFO']['MODEL_FILE']
-		self.confidence = config_data['MODEL_INFO']['CONFIDENCE']
+		self.iou = rospy.get_param('/buffbot/MODEL/IOU')
+		self.FPS = rospy.get_param('/buffbot/CAMERA/FPS')
+		self.confidence = rospy.get_param('/buffbot/MODEL/CONFIDENCE')
+		self.image_size = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
 		model_path = os.path.join(model_dir, self.model_file)
@@ -166,11 +166,8 @@ class DepthAI_Device:
 		self.bridge = CvBridge()
 
 		# Start defining a pipeline
-		self.init_depthai_pipeline(model_path)
+		self.init_depthai_pipeline(rospy.get_param('/buffbot/MODEL/MODEL_FILE'))
 
-		self.debug = rospy.get_param('/buffbot/DEBUG')
-		topics = rospy.get_param('/buffbot/TOPICS')
-		
 		rospy.init_node('buffnet', anonymous=True)
 		self.det_pub = rospy.Publisher(
 			topics['DETECTION_PIXEL'], Float64MultiArray, queue_size=1)

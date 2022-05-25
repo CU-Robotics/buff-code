@@ -39,8 +39,8 @@ class Dead_Reckon_Tracer:
 		self.trajectory = np.zeros((3,2), dtype=np.float64)
 
 		self.r_threshold = data['MATCH_THRESHOLD']
-		self.t_offset = data['LEAD_TIME']
 		self.d_offset = data['SHOOTER_DROP']
+		self.t_offset = data['LEAD_TIME']
 		self.rate_hz = data['RATE']
 
 		self.init_ros(data)

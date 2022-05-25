@@ -21,10 +21,9 @@ class Projector:
 		self.psi = 0.0
 		self.a = data['A']
 		self.m = data['M']
-		self.p = data['P']
 
-		self.FOV = rospy.get_param('/buffbot/LUXONIS/CAMERA/FOV')
-		image_res = rospy.get_param('/buffbot/LUXONIS/CAMERA/RESOLUTION')
+		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
+		image_res = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 		self.image_size = np.array([image_res, image_res, 3])
 
 		self.init_ros(data)
@@ -66,7 +65,7 @@ class Projector:
 		self.phi = state[1]
 
 	def height_2_distance(self, h):
-		return self.a * np.exp(self.m * (h + self.p))
+		return (self.a * h) + (self.m / h)
 
 	def project(self, detection):
 		"""

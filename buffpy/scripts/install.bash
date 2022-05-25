@@ -69,8 +69,8 @@ sudo apt update
 #	Install Utilities
 #
 
-if [[ "${HOSTNAME}" != "edge"* ]]; then
-	echo -e "\n\tInstalling Teensy loader...\n"
+if [[ "${HOSTNAME}" == "edge"* ]]; then
+	echo -e "\n\tInstalling TYcmd...\n"
 
 	# #	Pull teensy files from pjrc.com
 	# # teensy binary and objects
@@ -86,9 +86,6 @@ if [[ "${HOSTNAME}" != "edge"* ]]; then
 	# tar -xvsf teensy_linux64.tar.gz -C ${PROJECT_ROOT}/buffpy/bin
 	# # remove unecessary tar.gz 
 	# rm teensy_linux64.tar.gz
-
-else
-	#	Copy our startup service to the system units directory
 	sudo cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
 
 fi
