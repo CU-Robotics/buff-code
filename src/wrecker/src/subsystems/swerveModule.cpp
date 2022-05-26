@@ -55,9 +55,9 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     error = shadow;
   if (abs(error) > 90) {
     inversion = -1;
-    steerAngle -= 180;
-    if (steerAngle < 0)
-      steerAngle += 360;
+    inputAngle -= 180;
+    if (inputAngle < 0)
+      inputAngle += 360;
   }
 
   // Steer Velocity PID
