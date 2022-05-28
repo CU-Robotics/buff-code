@@ -40,6 +40,9 @@ void c620CAN::setPower(float power) {
   }
   
   int16_t newPower = (int16_t)(power * 16384);
+  // Serial.print("sending: ");
+  // Serial.println(newPower);
+
   byte byteOne = highByte(newPower);
   byte byteTwo = lowByte(newPower);
   sendMsgPtr->buf[byteNum << 1] = byteOne;
