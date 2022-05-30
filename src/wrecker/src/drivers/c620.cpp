@@ -11,6 +11,15 @@ extern CAN_message_t canRecieveMessages[3][11];
 
 CAN_message_t c6x0Messages[3][2];
 
+void sendCAN() {
+  can1.write(c6x0Messages[0][0]);
+  can1.write(c6x0Messages[0][1]);
+  can2.write(c6x0Messages[1][0]);
+  can2.write(c6x0Messages[1][1]);
+  can3.write(c6x0Messages[2][0]);
+  can3.write(c6x0Messages[2][1]);
+}
+
 
 c620CAN::c620CAN() {
 
@@ -47,17 +56,17 @@ void c620CAN::setPower(float power) {
   byte byteTwo = lowByte(newPower);
   sendMsgPtr->buf[byteNum << 1] = byteOne;
   sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
-  switch (canBusNum) {
-    case 1:
-      can1.write(*sendMsgPtr);
-      break;
-    case 2:
-      can2.write(*sendMsgPtr);
-      break;
-    case 3:
-      can3.write(*sendMsgPtr);
-      break;
-  }
+  // switch (canBusNum) {
+  //   case 1:
+  //     can1.write(*sendMsgPtr);
+  //     break;
+  //   case 2:
+  //     can2.write(*sendMsgPtr);
+  //     break;
+  //   case 3:
+  //     can3.write(*sendMsgPtr);
+  //     break;
+  // }
   updateMotor();
 }
 
@@ -129,17 +138,17 @@ void c610Enc::setPower(float power) {
   // Serial.print(byteOne,HEX);
   // Serial.print(", ");
   // Serial.println(byteTwo, HEX);
-  switch (canBusNum) {
-    case 1:
-      can1.write(*sendMsgPtr);
-      break;
-    case 2:
-      can2.write(*sendMsgPtr);
-      break;
-    case 3:
-      can3.write(*sendMsgPtr);
-      break;
-  }
+  // switch (canBusNum) {
+  //   case 1:
+  //     can1.write(*sendMsgPtr);
+  //     break;
+  //   case 2:
+  //     can2.write(*sendMsgPtr);
+  //     break;
+  //   case 3:
+  //     can3.write(*sendMsgPtr);
+  //     break;
+  // }
   updateMotor();
 }
 
