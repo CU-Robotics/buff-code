@@ -23,7 +23,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   // FRONT RIGHT
   data->FR.cornerID = 0;
   data->FR.steerMotorID = 4;
-  data->FR.steerEncoderID = 5;
+  data->FR.steerEncoderID = 1 + 1;
   data->FR.driveMotorID = 5;
   data->FR.absolute_offset = 45;
   for (int i = 0; i < 9; i++)
@@ -41,7 +41,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   // FRONT LEFT
   data->FL.cornerID = 1;
   data->FL.steerMotorID = 3;
-  data->FL.steerEncoderID = 2;
+  data->FL.steerEncoderID = 1 + 2;
   data->FL.driveMotorID = 6;
   data->FL.absolute_offset = -45;
   for (int i = 0; i < 9; i++)
@@ -59,7 +59,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   // BACK LEFT
   data->RL.cornerID = 2;
   data->RL.steerMotorID = 2;
-  data->RL.steerEncoderID = 3;
+  data->RL.steerEncoderID = 1 + 3;
   data->RL.driveMotorID = 7;
   data->RL.absolute_offset = -135;
   for (int i = 0; i < 9; i++)
@@ -77,7 +77,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   // BACK RIGHT
   data->RR.cornerID = 3;
   data->RR.steerMotorID = 1;
-  data->RR.steerEncoderID = 4;
+  data->RR.steerEncoderID = 1 + 4;
   data->RR.driveMotorID = 8;
   data->RR.absolute_offset = 135;
   for (int i = 0; i < 9; i++)
@@ -154,10 +154,10 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long 
   float angleBR = radiansToDegrees(atan2(A, D));
 
 
-  moduleFR.update(speedFR, angleFR, deltaTime);
+  // moduleFR.update(speedFR, angleFR, deltaTime);
   // moduleFL.update(speedFL, angleFL, deltaTime);
   // moduleBL.update(speedBL, angleBL, deltaTime);
-  // moduleBR.update(speedBR, angleBR, deltaTime);
+  moduleBR.update(speedBR, angleBR, deltaTime);
 }
 
 float SwerveChassis::radiansToDegrees(float radians) {

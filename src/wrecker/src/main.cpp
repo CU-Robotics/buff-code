@@ -35,9 +35,9 @@ Shooter shooter;
 
 // Runs once
 void setup() {
-  delay(1000);
   Serial.begin(1000000);
-  //Serial.println("basic test");
+  delay(1000);
+  Serial.println("basic test");
 
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
@@ -56,8 +56,8 @@ void setup() {
   // Subsystem setup
   reciever.init(&robot_state.driverInput);
   // gimbal.setup(&robot_config.gimbal, &robot_state);
-  //swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
-  shooter.setup(&robot_config.shooter17, &robot_state);
+  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  //shooter.setup(&robot_config.shooter17, &robot_state);
 
   //dump_Robot(&robot_state, &robot_config);
 }
@@ -86,8 +86,10 @@ void loop() {
 
   reciever.update();
   //gimbal.update(deltaT);
-  //swerveChassis.update(deltaT);
-  shooter.update(deltaT);
+  swerveChassis.update(deltaT);
+  //shooter.update(deltaT);
+
+  sendCAN();
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
