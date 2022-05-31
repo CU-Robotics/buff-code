@@ -81,8 +81,7 @@ def train_model(model):
 	exp = get_current_exp(output_dir)
 	model_path = os.path.join(model_dir, model)
 
-	if not os.path.exists(yolo_dir):
-		subprocess.run([setup_script])
+	subprocess.run([setup_script])
 
 	default_args = ['--img', '320','--batch', '32', '--epochs', '5', '--cache', '--project', output_dir]
 
@@ -118,12 +117,12 @@ def train_model(model):
 			print(f'Executing {cmd}')
 			subprocess.run(cmd)
 
-			shutil.copy(os.path.join(output_dir, 'exp' + exp, 'weights', 'best.pt'), model_dir)
+			shutil.copy(os.path.join(output_dir, 'exp' + exp, 'weights', 'buffnet.pt'), model_dir)
 			shutil.rmtree(data_path)
 
 			exp = get_current_exp(output_dir)
 
-			model_path = os.path.join(model_dir, 'best.pt')
+			model_path = os.path.join(model_dir, 'buffnet.pt')
 
 
 if __name__ == '__main__':
