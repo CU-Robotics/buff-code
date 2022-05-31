@@ -16,6 +16,8 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
 
   this->yawMotor.init(config->yawMotorID, 2);
   this->pitchMotor.init(config->pitchMotorID, 2);
+
+  config->yaw_PID.continuous = true;
 }
 
 void Gimbal::update(float deltaTime) {
