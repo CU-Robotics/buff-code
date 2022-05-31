@@ -72,6 +72,11 @@ sudo apt update
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	echo -e "\n\tInstalling TYcmd...\n"
 
+	cd "${PROJECT_ROOT}"
+
+	# wget https://github.com/Koromix/tytools/releases/download/v0.9.7/TyTools-0.9.7-osx.dmg
+	# ./
+
 	# #	Pull teensy files from pjrc.com
 	# # teensy binary and objects
 	# curl https://www.pjrc.com/teensy/teensy_linux64.tar.gz -O

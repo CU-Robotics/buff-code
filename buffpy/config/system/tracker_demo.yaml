@@ -4,29 +4,36 @@ DEBUG:
 
 TOPICS:
   IMAGE: 'image_raw'
-  GIMBAL_STATE: 'gimbal_state'
+  TARGET_MAP: 'target_map'
+  IMAGE_DEBUG: 'image_debug'
   SERIAL_OUT: 'serial_write'
+  GIMBAL_STATE: 'gimbal_state'
+  TRACKING_ERROR: 'tracking_error'
   DETECTION_PIXEL: 'image_detection'
   DETECTION_WORLD: 'world_detection'
 
 
 NODES:
-  # ROSBAGGER:    # This will record all system runs and allow us to play them back
-  #   FILE: 'record'
-  #   PACKAGE: 'rosbag'
-  #   ARGS:       # -a record all  -x ignore -o output prefix
-  #     ['-a', '-x /rosout', '-o /home/cu-robotics/buff-code/data/']
   BUFFNET: # spawns our detector node
     FILES: ['buffnet.py']
     PACKAGE: 'buffpy'
-    REQUIRED: True
+    REQUIRED: False
   LUXONIS:
     FILES: []
     PACKAGE: 'buffpy'
     REQUIRED: False
-
+  TRACKER:     # spawns our tracker node
+    FILES: ['deadreckon_tracer.py', 'projector.py']
+    CONFIG: 'tracker_settings.yaml'
+    PACKAGE: 'buffpy'
   CAMERA:
     CONFIG: 'camera_settings.yaml'
     FILES: ['mds_camera.py']
     PACKAGE: 'buffpy'
-
+  MODEL:
+    CONFIG: 'model_settings.yaml'
+  RQT_GUI:    # Opens an rqt_graph
+    FILES: ['rqt_gui']
+    PACKAGE: 'rqt_gui'
+    ARGS:
+      - '--perspective-file ${PROJECT_ROOT}/buffpy/config/data/buff_view.perspective'
