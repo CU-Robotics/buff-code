@@ -17,7 +17,7 @@ void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state, S_SwerveModule 
   moduleState = modState;
 
   this->steerMotor.init(config->steerMotorID, 1, config->steerEncoderID);
-  this->driveMotor.init(config->driveMotorID, 2);
+  this->driveMotor.init(config->driveMotorID, 1);
 }
 
 void SwerveModule::calibrate() {
@@ -75,18 +75,24 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  moduleState->driveVel.R = speed * 4000;
+  moduleState->driveVel.R = speed * 4000 * inversion;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
   // Set motor power
   if (calibrated) {
     steerMotor.setPower(tmp_steerVel.Y);
 
+    driveMotor.setPower(moduleState->driveVel.Y);
+    Serial.print(driveMotor.getRpm());
+    Serial.print(" - ");
+    Serial.print(moduleState->driveVel.R);
+    Serial.print(" - ");
+    Serial.println(moduleState->driveVel.Y);
     // Only drive if sufficiently close to target angle
-    if (abs(inputAngle - steerAngle) > 20.0)
-      driveMotor.setPower(moduleState->driveVel.Y * inversion);
-    else
-      driveMotor.setPower(0.0);
+    // if (abs(inputAngle - steerAngle) > 20.0)
+    //   driveMotor.setPower(moduleState->driveVel.Y * inversion);
+    // else
+    //   driveMotor.setPower(0.0);
   }
 }
 
