@@ -67,8 +67,10 @@ void Gimbal::update(float deltaTime) {
   PID_Filter(&config->pitch_PID, &state->gimbal.pitch_PID, pitchAngle, deltaTime);
 
   // Set motor power here?
-  yawMotor.setPower(state->gimbal.yaw_PID.Y);
-  pitchMotor.setPower(state->gimbal.pitch_PID.Y);
+  if (calibrated) {
+    yawMotor.setPower(state->gimbal.yaw_PID.Y);
+    pitchMotor.setPower(state->gimbal.pitch_PID.Y);
+  }
 }
 
 float Gimbal::realizeYawEncoder(float rawAngle) {
