@@ -105,7 +105,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
 }
 
 void SwerveChassis::update(unsigned long deltaTime) {
-  if (state->driverInput.f && !calibrated) {
+  if (state->driverInput.b && !calibrated) {
     calibrate();
     calibrated = true;
   }
@@ -125,11 +125,13 @@ void SwerveChassis::calibrate() {
 }
 
 void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long deltaTime) {
-  float gimbalAngle = 0;
+  float gimbalAngle = 0; // TODO - pull the state from gimbal state
 
+  // Apply rotation matrix so that drive inputs are gimbal-relative
   float newDriveX = -driveX * cos(radiansToDegrees(gimbalAngle)) + -driveY * sin(radiansToDegrees(-gimbalAngle));
   float newDriveY = -driveX * sin(radiansToDegrees(gimbalAngle)) + -driveY * cos(radiansToDegrees(gimbalAngle));
 
+  // Swerve math
   float A = newDriveX - spin * drivebaseConstant;
   float B = newDriveX + spin * drivebaseConstant;
   float C = newDriveY - spin * drivebaseConstant;
@@ -153,7 +155,7 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long 
   float angleBL = radiansToDegrees(atan2(A, C));
   float angleBR = radiansToDegrees(atan2(A, D));
 
-
+  // Update each module
   // moduleFR.update(speedFR, angleFR, deltaTime);
   // moduleFL.update(speedFL, angleFL, deltaTime);
   // moduleBL.update(speedBL, angleBL, deltaTime);
