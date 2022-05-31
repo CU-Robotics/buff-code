@@ -38,7 +38,7 @@ class SwerveModule {
 
     int findCalibrationMatch(int currValue, int* alignmentTable, int tableSize);
     void motorAngleToWheelAngle();
-    float convertSteerAngle(float rawSteerAngle);
+    float realizeSteerAngle(float rawSteerAngle);
 };
 
 #endif // SWERVE_MODULE

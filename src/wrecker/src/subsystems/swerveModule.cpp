@@ -42,12 +42,13 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
       this->steerRollover++;
   }
   this->prevRawSteerAngle = rawSteerAngle;
-  float steerAngle = convertSteerAngle(rawSteerAngle);
+  float steerAngle = realizeSteerAngle(rawSteerAngle);
   this->prevSteerAngle = steerAngle;
 
-  float rpm = steerMotor.getRpm() / 100.0; // 100.0 is based on the gear ratio of the motor and the steer belt
+  float rpm = steerMotor.getRpm() / 100.0; // The number 100 is based on the gear ratio of the motor and the steer belt
 
   // Inversion logic
+  // Decides wether or not to switch the wheel's drive direction
   int inversion = 1;
   float error = inputAngle - steerAngle;
   float shadow = error - 360.0;
@@ -75,7 +76,7 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  moduleState->driveVel.R = speed * 4000 * inversion;
+  moduleState->driveVel.R = speed * inversion * 8000; // 8000 is the maximum RPM of the motor pre-gearbox
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
   // Set motor power
@@ -90,7 +91,7 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     Serial.println(moduleState->driveVel.Y);
     // Only drive if sufficiently close to target angle
     // if (abs(inputAngle - steerAngle) > 20.0)
-    //   driveMotor.setPower(moduleState->driveVel.Y * inversion);
+    //   driveMotor.setPower(moduleState->driveVel.Y);
     // else
     //   driveMotor.setPower(0.0);
   }
@@ -113,12 +114,11 @@ int SwerveModule::getSteerId() {
   return config->steerMotorID;
 }
 
-float SwerveModule::convertSteerAngle(float rawSteerAngle) {
+float SwerveModule::realizeSteerAngle(float rawSteerAngle) {
   float steerAngle = ((rawSteerAngle - this->steerOffset + (this->steerRollover * 360)) * (9.0/25.0));
 
   steerAngle = fmod(steerAngle, 360.0);
-  if (steerAngle < 0) {
+  if (steerAngle < 0)
     steerAngle += 360;
-  }
   return steerAngle;
 }

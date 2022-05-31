@@ -13,23 +13,22 @@ class Gimbal
     void setup(C_Gimbal *data, S_Robot *r_state);
     void update(float deltaTime);
 
-    float realizeYawEncoder(float angle);
-    float realizePitchEncoder(float angle);
-
   private:
     S_Robot* state;
     C_Gimbal* config;
 
-
-    float yaw_Reference;
-    float pitch_Reference;
-
-    float pitchSum;
-    float yawSum;
-
-
     gm6020 yawMotor; 
     gm6020 pitchMotor;
+
+    float calibrated;
+    float yawRollover;
+    float prevRawYawAngle;
+
+    float aimYaw = 0;
+    float aimPitch = 0;
+
+    float realizeYawEncoder(float rawAngle);
+    float realizePitchEncoder(float rawAngle);
 };
 
 #endif // GIMBAL_H
