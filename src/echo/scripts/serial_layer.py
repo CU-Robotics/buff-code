@@ -11,13 +11,14 @@ from std_msgs.msg import String, Float64MultiArray
 class SerialLayer():
 	def __init__(self, name):
 
+		self.name = name
 		self.device = None
 		self.publishers = {}
 		self.connected = False
 
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 
-		self.lives = 
+		self.lives = int(rospy.get_param(f'{name}/LIVES'))
 		self.serial_LUT = rospy.get_param(f'{name}/SERIAL_LUT')
 
 		self.try_connect()
@@ -53,17 +54,17 @@ class SerialLayer():
 			if self.device:
 				self.device.close()
 
-			self.device = serial.Serial(rospy.get_param(f'{name}/PORT'), 
-				rospy.get_param(f'{name}/BAUDRATE'), 
-				timeout=rospy.get_param(f'{name}/TIMEOUT'))
+			self.device = serial.Serial(rospy.get_param(f'{self.name}/PORT'), 
+				rospy.get_param(f'{self.name}/BAUDRATE'), 
+				timeout=rospy.get_param(f'{self.name}/TIMEOUT'))
 
 			self.device.flush()
 
 		except Exception as e:
-			lives = int(rospy.get_param(f'{name}/LIVES'))
+			lives = int(rospy.get_param(f'{self.name}/LIVES'))
 			rospy.logerr(e)
-			rospy.logerr(f"Serial lives left {lives}")
-			rospy.set_param(f'{name}/LIVES', lives-1)
+			rospy.logerr(f"Serial lives left {self.lives}")
+			rospy.set_param(f'{self.name}/LIVES', lives-1)
 			if lives < 2:
 				return False
 

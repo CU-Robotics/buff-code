@@ -335,73 +335,24 @@ def diagnostic():
 		print(e)
 
 def train_model(model):
-
-	project_root = os.getenv('PROJECT_ROOT')
-	setup_script = os.path.join(project_root, 'buffpy', 'scripts', 'yolov5_setup.bash')
-
-	model_dir = os.path.join(project_root, 'buffpy', 'models')
-	yolo_dir = os.path.join(project_root, '..', 'yolov5')
-	data_dir = os.path.join(project_root, 'data')
-	output_dir = os.path.join(model_dir, 'runs')
-	shutil.rmtree(output_dir)
-	os.mkdir(output_dir)
-
-
-	model_path = os.path.join(model_dir, model)
-
-	epochs = [10, 50, 30]
-	data_zips = ['Generated.zip', 'Generic.zip', 'Augmented.zip']
-
-	if not os.path.exists(data_dir):
-		print('No training Data')
-		return
 	
-	if not os.path.exists(yolo_dir):
-		subprocess.run([setup_script])
+	if model == 'new' or model == 'scratch':
+		project_root = os.getenv('PROJECT_ROOT')
+		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
+		shutil.rmtree(output_dir)
+		os.mkdir(output_dir)
 
-	default_args = ['--img', '320','--batch', '32', '--epochs', '50', '--cache', '--project', output_dir]
+		model = 'fake-model-file.gotcha'
 
-	for dataset in data_zips:
-		args = []
+	if model == 'clean':
+		project_root = os.getenv('PROJECT_ROOT')
+		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
+		shutil.rmtree(output_dir)
+		os.mkdir(output_dir)
+		return
 
-		shutil.unpack_archive(os.path.join(data_dir, dataset), data_dir)
-		data_file = os.path.join(os.path.join(data_dir, dataset[:-4]), 'data.yaml')
-		train_path = os.path.join(os.path.join(data_dir, dataset[:-4]), 'train')
-		valid_path = os.path.join(os.path.join(data_dir, dataset[:-4]), 'valid')
-		test_path = os.path.join(os.path.join(data_dir, dataset[:-4]), 'test')
-
-		with open(data_file, 'w+') as f:
-			if os.path.exists(train_path):
-				f.write(f'train: {train_path}\n')
-
-			if os.path.exists(valid_path):
-				f.write(f'val: {valid_path}\n')
-
-			if os.path.exists(test_path):
-				f.write(f'test: {test_path}\n')
-
-			f.write(f'\nnc: 3\nnames: [\'blue-armor\', \'red-armor\', \'robot\']')
-
-		if not os.path.exists(data_file):
-			print(f'Dataset {dataset} data.yaml does not exist')
-			continue
-
-		if not os.path.exists(model_path):
-			args += ['--weights', '""']
-			args += ['--cfg', 'yolov5s.yaml']
-		
-		else:
-			args += ['--weights', model_path]
-
-		args += ['--data', data_file]
-
-		cmd = ['python3', os.path.join(yolo_dir, 'train.py')] + default_args + args
-		print(f'Executing {cmd}')
-		subprocess.run(cmd)
-
-		shutil.copy(os.path.join(output_dir, 'exp', 'weights', 'best.pt'), model_dir)
-		shutil.rmtree(os.path.join(output_dir, 'exp'))
-		model_path = os.path.join(model_dir, 'best.pt')
+	build_buffpy('ptools')
+	subprocess.run(['python3', 'buffpy/lib/trainer.py', model])
 
 def parse_arguments():
 	"""
@@ -430,7 +381,6 @@ def parse_arguments():
 		default='',
 		help='Builds the workspace locally')
 	parser.add_argument('--train', 
-		nargs=1,
 		metavar='MODEL',
 		default='',
 		help='Trains a Yolov5 model locally')
@@ -467,7 +417,7 @@ def main(ap):
 		build_buffpy(ap.build[0])
 
 	if ap.train:
-		train_model(ap.train[0])
+		train_model(ap.train)
 
 	if ap.install:
 		deploy_all_devices()

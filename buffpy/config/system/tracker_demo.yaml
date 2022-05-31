@@ -1,36 +1,39 @@
-# if debug is true:
-# print the detections,
-# save them periodically
-
-# random_noise, sine
-DEBUG: True
+DEBUG:
+  True
+  
 
 TOPICS:
-    DETECTED: "detected_object"
-    TARGET: "target"
-    ERROR: "tracking_error"
-    MAP: "target_map"
+  IMAGE: 'image_raw'
+  TARGET_MAP: 'target_map'
+  IMAGE_DEBUG: 'image_debug'
+  SERIAL_OUT: 'serial_write'
+  GIMBAL_STATE: 'gimbal_state'
+  TRACKING_ERROR: 'tracking_error'
+  DETECTION_PIXEL: 'image_detection'
+  DETECTION_WORLD: 'world_detection'
+
 
 NODES:
-    # demo detector will publish 2d coords at 30fps to detected_object
-    # goal of the tracker is to upsample, predict and publish these detections to tracker
-    RQT_IMAGE:
-        FILE: "rqt_image_view"
-        PACKAGE: "rqt_image_view"
-    CAMERA: # spawn detector
-        FILE: "tracker_demo_detector.py"
-        TOPICS:
-          - "DETECTED"
-        CONFIG: "tracker_demo_config.yaml"
-        PACKAGE: "buffpy"
-    TRACKER: # spawns our tracker node
-        FILE: "deadreckon_tracer.py"
-        TOPICS:
-            PUBLISH:
-              - "TARGET"
-              - "ERROR"
-              - "MAP"
-            SUBSCRIBE:
-              - "DETECTED"
-
-        PACKAGE: "buffpy"
+  BUFFNET: # spawns our detector node
+    FILES: ['buffnet.py']
+    PACKAGE: 'buffpy'
+    REQUIRED: False
+  LUXONIS:
+    FILES: []
+    PACKAGE: 'buffpy'
+    REQUIRED: False
+  TRACKER:     # spawns our tracker node
+    FILES: ['deadreckon_tracer.py', 'projector.py']
+    CONFIG: 'tracker_settings.yaml'
+    PACKAGE: 'buffpy'
+  CAMERA:
+    CONFIG: 'camera_settings.yaml'
+    FILES: ['mds_camera.py']
+    PACKAGE: 'buffpy'
+  MODEL:
+    CONFIG: 'model_settings.yaml'
+  RQT_GUI:    # Opens an rqt_graph
+    FILES: ['rqt_gui']
+    PACKAGE: 'rqt_gui'
+    ARGS:
+      - '--perspective-file ${PROJECT_ROOT}/buffpy/config/data/buff_view.perspective'

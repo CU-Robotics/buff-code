@@ -7,21 +7,17 @@ import rospy
 import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from gdrive_handler import GD_Handler
 
 
 class cv2_Camera:
-	def __init__(self, config_data):
+	def __init__(self):
 		# Save config for reset
-		self.config_data = config_data
 		self.init_camera()
 
-		out_topic = config_data['TOPICS']['PUBLISH'][0]
 		all_topics = rospy.get_param('/buffbot/TOPICS')
 
-
 		# Create the image publisher
-		self.pub = rospy.Publisher(all_topics[out_topic], Image, queue_size=1)
+		self.pub = rospy.Publisher(all_topics['IMAGE'], Image, queue_size=1)
 		# Init this program as a ROS node
 		# anonymous sets a unique node ID
 		rospy.init_node('omega_streamer', anonymous=True)
@@ -36,18 +32,18 @@ class cv2_Camera:
 		self.lives = 9
 		
 		if self.debug:
-			rospy.loginfo('Camera and publisher Initialized: {} {} {}'.format(self.config_data['DEVICE'], out_topic, self.fps))
+			rospy.loginfo('Camera and publisher Initialized: {} {} {}'.format(rospy.get_param('/buffbot/CAMERA/DEVICE'), all_topics['IMAGE'], self.fps))
 
 	def init_camera(self):
 		# init camera
-		self.camera = cv2.VideoCapture(self.config_data['DEVICE'])
+		self.camera = cv2.VideoCapture(rospy.get_param('/buffbot/CAMERA/DEVICE'))
 		# set fps
-		self.fps = self.config_data['FPS']
+		self.fps = rospy.get_param('/buffbot/CAMERA/FPS')
 		self.camera.set(cv2.CAP_PROP_FPS, self.fps)
 
 		# set image resolution
-		w, h, d = self.config_data['RESOLUTION']
-		self.resolution = (w, h, d)
+		r = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
+		self.resolution = (r, r, 3)
 		self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution[0])
 		self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution[1])
 
@@ -81,27 +77,27 @@ class cv2_Camera:
 
 					rospy.sleep(1)
 
-					self.camera = cv2.VideoCapture(self.config_data['DEVICE'])
+					self.camera = cv2.VideoCapture(rospy.get_param('/buffbot/CAMERA/DEVICE'))
 
 			self.camera.release()
 			return
 
-		elif 'DATA_DEFAULT' in self.config_data:
-			self.lives -= 1
-			return 1
+		else:
+			return 1 
+
 
 
 def main(config_data):
 
 	# create the video stream
-	camera = cv2_Camera(config_data)
+	camera = cv2_Camera()
 		
 	# Stream the video
 	ret = camera.stream()
 
 	if ret == 1 and 'DATA_DEFAULT' in config_data:
 		rospy.logerr('Couldn\'t open camera: Trying video...')
-		camera.config_data['DEVICE'] = os.path.join(os.getenv('PROJECT_ROOT'), 'data', config_data['DATA_DEFAULT'])
+		rospy.set_param('/buffbot/CAMERA/DEVICE', os.path.join(os.getenv('PROJECT_ROOT'), 'data', config_data['DATA_DEFAULT']))
 		camera.camera.release()
 		camera.init_camera()
 		camera.stream()
