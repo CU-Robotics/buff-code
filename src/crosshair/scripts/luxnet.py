@@ -144,7 +144,7 @@ def draw_boxes(frame, boxes, total_classes):
 
 
 class DepthAI_Device:
-	def __init__(self, data=None):
+	def __init__(self):
 		"""
 				Define all the parameters of the model here.
 				Can be initialized with a config file, a system launch
@@ -161,12 +161,12 @@ class DepthAI_Device:
 		self.image_size = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, self.model_file)
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/MODEL_FILE'))
 
 		self.bridge = CvBridge()
 
 		# Start defining a pipeline
-		self.init_depthai_pipeline(rospy.get_param('/buffbot/MODEL/MODEL_FILE'))
+		self.init_depthai_pipeline(model_path)
 
 		rospy.init_node('buffnet', anonymous=True)
 		self.det_pub = rospy.Publisher(
@@ -262,23 +262,13 @@ class DepthAI_Device:
 					ann_img_msg = self.bridge.cv2_to_imgmsg(ann_frame, "bgr8")
 					self.ann_pub.publish(ann_img_msg)
 
-def main(config_data):
-
-	if config_data is None:
-		return
-
-	device = DepthAI_Device(config_data=config_data)
+def main(name):
+	device = DepthAI_Device()
 	device.spin()
 
 if __name__ == '__main__':
-	if len(sys.argv) < 2:
-		print(f'No Data: BuffNet exiting ...')
-	elif '/buffbot' in sys.argv[1]:
-		main(rospy.get_param(sys.argv[1]))
-	elif '.yaml' in sys.argv[1]:
-		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
-			data = yaml.safe_load(f)
-		main(data)
+	if len(sys.argv) > 1:
+		main(sys.argv[1])
 
 
 		

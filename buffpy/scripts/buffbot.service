@@ -4,10 +4,11 @@ ConditionPathExists=/home/cu-robotics/buff-code/buffpy
 
 [Service]
 Type=simple
-#ExecStartPre=
-ExecStart=/home/cu-robotics/buff-code/buffpy/run /home/cu-robotics/buff-code/config/robots/self.yaml
-#ExecStartPost=
 RestartSec=5s
+User=cu-robotics
+WorkingDirectory=/home/cu-robotics/buff-code
+ExecStart=/usr/bin/python3 /home/cu-robotics/buff-code/buffpy/bin/run self.yaml
+Environment="PYTHONPATH=${PYTHONPATH}:/home/cu-robotics/.local/lib/python3.6/site-packages:/opt/ros/melodic/lib/python2.7/dist-packages"
 
 [Install]
 #WantedBy=

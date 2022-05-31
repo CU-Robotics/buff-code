@@ -89,6 +89,9 @@ def load_config(file):
 
 	if 'FROM' in data:
 		parent = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'system', data['FROM'])
+		if not os.path.exists(parent):
+			parent = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'robots', data['FROM'])
+
 		parentData = load_config(file=parent)
 
 		data = overwrite_conf(data, parentData)
@@ -126,6 +129,9 @@ def parse_target(args, projectRoot):
 		if target[-5:] == '.yaml':	# if target is a yaml file set config
 			print('Loading ROS System:...')
 			target_path = os.path.join(projectRoot, 'buffpy', 'config', 'system', target)
+			if not os.path.exists(target_path):
+				target_path = os.path.join(projectRoot, 'buffpy', 'config', 'robots', target)
+
 			config = load_config(target_path)	# None if no config
 
 			if config is None:
@@ -188,7 +194,7 @@ def launch_system(target_path, config):
 			# Not all packages handle our launch params
 			if 'CONFIG' in node and not node['CONFIG'] is None:
 				args = f'{namespace}/{name}'
-				config_path = os.path.join(node['CONFIG'])
+				config_path = os.path.join(data_path, node['CONFIG'])
 
 				with open(config_path, 'r') as f:
 					config_data = yaml.safe_load(f)
@@ -242,9 +248,10 @@ def launch_system(target_path, config):
 				required = False
 
 			# launch the process and add it to the pool
-			for program in node['FILES']:
-				process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=required)
-				pool.append(launch.launch(process))
+			if 'FILES' in node:
+				for program in node['FILES']:
+					process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=required)
+					pool.append(launch.launch(process))
 
 	return core_process, pool, launch
 

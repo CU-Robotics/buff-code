@@ -44,15 +44,17 @@ def generate_images(image, c, x, y, w, h, backgrounds):
 	high = np.array([80, 255, 255])
 
 	cropped = crop_image(image, x, y, w, h)
-	filtered = cv2.GaussianBlur(cropped.copy(), [9,9], 0.6, 0)
+	filtered = cv2.GaussianBlur(cropped.copy(), [3,3], 0.6, 0)
 	hsv_image = cv2.cvtColor(filtered, cv2.COLOR_BGR2HSV)
+
+	bv.buffshow('steps', np.concatenate([cropped, filtered, hsv_image]))
 
 	mask = cv2.bitwise_not(cv2.inRange(hsv_image, low, high))
 	rgb_mask = cv2.bitwise_and(cropped.copy(), cropped.copy(), mask=mask)
 	mask_h,mask_w,mask_c = rgb_mask.shape
 
 	while mask_h > 40:
-		mask_shape = np.array(mask.shape) * (0.3 + np.random.rand())
+		mask_shape = np.array(mask.shape) * min((0.3 + np.random.rand()), 1.0)
 		mask = cv2.resize(mask, mask_shape.astype(int))
 		rgb_mask = cv2.resize(rgb_mask, mask_shape.astype(int))
 		mask_h,mask_w,mask_c = rgb_mask.shape
@@ -63,19 +65,22 @@ def generate_images(image, c, x, y, w, h, backgrounds):
 			background = backgrounds[int(i)]
 			for x in np.linspace(0, background.shape[1] - mask_w, n_samples):
 				for y in np.linspace(0, background.shape[0] - mask_h, n_samples):
+					mask_h,mask_w,mask_c = rgb_mask.shape
 
 					x = max(0, min(background.shape[1] - mask_w, x + (np.random.rand() - 0.5) * (background.shape[1] - mask_w) / 3))
-					y = max(0, min(background.shape[0] - mask_h, y + (np.random.rand() - 0.5) * (background.shape[1] - mask_w) / 3))
+					y = max(0, min(background.shape[0] - mask_h, y + (np.random.rand() - 0.5) * (background.shape[0] - mask_h) / 3))
 
+					print(mask.shape)
+					print(x,y,x+mask_w,y+mask_h)
 					zero_mask = np.zeros(background.shape[:2], dtype=np.uint8)
 					zero_mask[round(y):round(y+mask_h),round(x):round(x+mask_w)] = mask
 					inv_zero_mask = cv2.bitwise_not(zero_mask)
 
 					object_image = np.zeros(background.shape, dtype=np.uint8)
-					object_image[int(y):int(y+mask_h),int(x):int(x+mask_w)] = rgb_mask
+					object_image[round(y):round(y+mask_h),round(x):round(x+mask_w)] = rgb_mask
 					background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
 					augmented_image = cv2.add(background_mask, object_image)
-					label = [[0, x + (mask_w/2), y + (mask_h/2), mask_w, mask_h]]
+					label = [[1, x + (mask_w/2), y + (mask_h/2), mask_w, mask_h]] # red is default
 
 					augmented_images.append(augmented_image)
 					augmented_labels.append(label)
@@ -84,7 +89,7 @@ def generate_images(image, c, x, y, w, h, backgrounds):
 					object_image[int(y):int(y+mask_h),int(x):int(x+mask_w)] = cv2.cvtColor(rgb_mask, cv2.COLOR_BGR2RGB)
 					background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
 					augmented_image = cv2.add(background_mask, object_image)
-					label = [[1, x + (mask_w/2), y + (mask_h/2), mask_w, mask_h]]
+					label = [[0, x + (mask_w/2), y + (mask_h/2), mask_w, mask_h]]
 
 					augmented_images.append(augmented_image)
 					augmented_labels.append(label)
