@@ -25,6 +25,7 @@ void SwerveModule::calibrate() {
   this->steerOffset = findCalibrationMatch(this->steerMotor.getAngle(), this->config->alignment, 9);
   this->steerRollover = 0;
   calibrated = true;
+  rampedSpeed = 0;
 }
 
 void SwerveModule::update(float speed, float angle, float deltaTime) {
@@ -61,6 +62,13 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
       inputAngle += 360;
   }
 
+  // Speed ramping
+  rampedSpeed += (speed - rampedSpeed) * 0.00001 * deltaTime;
+  if (rampedSpeed > 1)
+    rampedSpeed = 1;
+  else if (rampedSpeed < -1)
+    rampedSpeed = -1;
+
   // Steer Velocity PID
   config->steerPos.continuous = true;
   tmp_steerPos.R = inputAngle;
@@ -76,7 +84,7 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  moduleState->driveVel.R = speed * inversion * 8000; // 8000 is the maximum RPM of the motor pre-gearbox
+  moduleState->driveVel.R = rampedSpeed * inversion * 6000; // 8000 is the maximum RPM of the motor pre-gearbox
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
   // Set motor power
@@ -84,16 +92,16 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     steerMotor.setPower(tmp_steerVel.Y);
 
     driveMotor.setPower(moduleState->driveVel.Y);
-    Serial.print(driveMotor.getRpm());
-    Serial.print(" - ");
-    Serial.print(moduleState->driveVel.R);
-    Serial.print(" - ");
-    Serial.println(moduleState->driveVel.Y);
+    // Serial.print(driveMotor.getRpm());
+    // Serial.print(" - ");
+    // Serial.print(moduleState->driveVel.R);
+    // Serial.print(" - ");
+    // Serial.println(moduleState->driveVel.Y);
     // Only drive if sufficiently close to target angle
-    // if (abs(inputAngle - steerAngle) > 20.0)
-    //   driveMotor.setPower(moduleState->driveVel.Y);
-    // else
-    //   driveMotor.setPower(0.0);
+    if (abs(inputAngle - steerAngle) < 20.0)
+      driveMotor.setPower(moduleState->driveVel.Y);
+    else
+      driveMotor.setPower(0.0);
   }
 }
 

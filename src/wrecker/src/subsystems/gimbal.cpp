@@ -14,10 +14,12 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
   config = data;
   state = r_state;
 
-  this->yawMotor.init(config->yawMotorID, 2);
-  this->pitchMotor.init(config->pitchMotorID, 2);
+  this->yawMotor.init(7, 2);
+  this->pitchMotor.init(7, 2);
 
   config->yaw_PID.continuous = true;
+  config->yaw_PID.K[0] = 0.1;
+  config->pitch_PID.K[0] = 0.1;
 }
 
 void Gimbal::update(float deltaTime) {
@@ -68,8 +70,11 @@ void Gimbal::update(float deltaTime) {
 
   // Set motor power here?
   if (calibrated) {
-    yawMotor.setPower(state->gimbal.yaw_PID.Y);
-    pitchMotor.setPower(state->gimbal.pitch_PID.Y);
+    yawMotor.setPower(0.4);
+    // Serial.println("Sending 0.4");
+    // yawMotor.setPower(state->gimbal.yaw_PID.Y);
+    // pitchMotor.setPower(state->gimbal.pitch_PID.Y);
+    // Serial.println(state->gimbal.yaw_PID.Y);
   }
 }
 
