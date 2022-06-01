@@ -4,31 +4,22 @@
 flywheel fw1;
 flywheel fw2;
 
+Servo myServo;
+
 
 void setup() {
+    myServo.attach(28);
     Serial.begin(115200);
-    delay(2000);
-    Serial.println("About to initialize fw");
-
-    fw1.init(28);
-    fw2.init(29);
-
-    // fw1.initCal(28);
-    // delay(5000);
-    // fw2.initCal(29);
-
-    // Serial.println("cal1");
-    // fw1.calibrate();
-    // Serial.println(cal2);
-    // fw2.calibrate();
-    delay(1000);
-    // fw1.setPower(0.5);
-    // fw2.setPower(0.5);
 }
 
 void loop() {
-    delay(1000);
-    fw1.setPower(0.5);
-    fw2.setPower(0.5);
-    Serial.println("test");
+    if (Serial.available() > 2)
+    {  
+        delay(20);
+        int temp = Serial.parseInt();
+        myServo.attach(temp);
+        Serial.print("new power: ");
+        Serial.println(temp);
+    }
+    
 }
