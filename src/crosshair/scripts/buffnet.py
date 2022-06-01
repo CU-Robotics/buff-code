@@ -38,9 +38,9 @@ class BuffNet:
 
 		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
 
-		self.bridge = CvBridge()
-
 		rospy.init_node('buffnet', anonymous=True)
+
+		self.bridge = CvBridge()
 
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 
