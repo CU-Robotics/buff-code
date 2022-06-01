@@ -22,10 +22,10 @@ def crop_image(image, x, y, w, h):
 
 def stretch_or_cut(image, h, w):
 	if image.shape[0] > h and image.shape[1] > w:
-		x = np.random.randint(0, image.shape[0] - h)
-		y = np.random.randint(0, image.shape[1] - w)
+		x = np.random.randint(0, image.shape[1] - h)
+		y = np.random.randint(0, image.shape[0] - w)
 
-		return image[int(y):int(y+h),int(x):int(x+w)]
+		return image[y:y+h,x:x+w]
 
 	else:
 		return cv2.resize(image, (h, w))
@@ -41,87 +41,95 @@ def load_backgrounds(data_path):
 def preprocess(image, x, y, w, h):
 
 	cropped = crop_image(image, x, y, w, h)
-	filtered = cv2.GaussianBlur(cropped.copy(), [3,3], 0.6, 0)
-	hsv_image = cv2.cvtColor(filtered, cv2.COLOR_BGR2HSV)
+	filtered = cv2.GaussianBlur(cropped.copy(), [3,3], 0.8, 0)
+	# hsv_image = cv2.cvtColor(filtered, cv2.COLOR_BGR2HSV)
 
-	return hsv_image, cropped
+	return filtered# hsv_image, cropped
 
 def random_resize(image):
-	r = np.random.uniform(0.35, 1.0)
-	h = round(image.shape[0] * r)
-	w = round(image.shape[1] * r)
-	return cv2.resize(image, (h, w))
+	r = np.random.uniform(0.5, 0.8)
+	h = max(20, min(round(image.shape[0] * r), 300))
+	w = max(20, min(round(image.shape[1] * r), 300))
+	return cv2.resize(image, (w, h))
 
 def mask_background(background, mask, x, y):
 	mask_h, mask_w = mask.shape
-	# print(f'masking {mask_h}, {mask_w}, {x}, {y}')
 	zero_mask = np.zeros(background.shape[:2], dtype=np.uint8)
-	zero_mask[round(y):round(y+mask_h),round(x):round(x+mask_w)] = mask
+	zero_mask[y: y + mask_h, x: x + mask_w] = mask
 
 	return zero_mask
 
 def pad_image(mask, h, w, x, y):
 	mask_h, mask_w, mask_c = mask.shape
 	padded_image = np.zeros((h,w,mask_c), dtype=np.uint8)
-	padded_image[round(y):round(y+mask_h),round(x):round(x+mask_w)] = mask
+	padded_image[y: y + mask_h, x: x + mask_w, :] = mask
 
 	return padded_image
 
+def pad_mask(mask, h, w, x, y):
+	mask_h, mask_w = mask.shape
+	padded_image = np.zeros((h,w), dtype=np.uint8)
+	padded_image[y: y + mask_h, x: x + mask_w] = mask
+
+	return padded_image
+
+
 def generate_images(image, c, x, y, w, h, backgrounds):
 
-	n_samples = 3
+	n_samples = 1
 	augmented_images = []
 	augmented_labels = []
 
-	low = np.array([180,180,180])
-	high = np.array([255,255,255])
+	low = np.array([0,120,0])
+	high = np.array([100,255,100])
 
-	hsv_image, cropped = preprocess(image, x, y, w, h)
+	cropped = crop_image(image, x, y, w, h)
 
-	mask = cv2.bitwise_not(cv2.inRange(hsv_image, low, high))
+	mask = cv2.bitwise_not(cv2.inRange(cropped, low, high))
+
 	rgb_mask = cv2.bitwise_and(cropped.copy(), cropped.copy(), mask=mask)
 
 	for i in range(n_samples):
-		background_idx = (len(backgrounds) - 1) * np.random.rand(n_samples)
+		rgb_mask = (rgb_mask.astype(float) * np.random.uniform(0.75, 1.0)).astype(np.uint8)
 
-		rgb_mask = random_resize(rgb_mask.copy())
-		mask = cv2.resize(mask, rgb_mask.shape[:2])
-		background = backgrounds[int(background_idx[i])]
+		for l in range(n_samples):
+			background_idx = (len(backgrounds) - 1) * np.random.rand(n_samples)
 
-		mask_h, mask_w, mask_c = rgb_mask.shape
-		back_h, back_w, back_c = background.shape
-		print(f'background {background.shape}')
-		print(f'mask {mask.shape}')
+			rgb_mask = random_resize(rgb_mask.copy())
+			mask_h, mask_w, mask_c = rgb_mask.shape
 
-		for k in range(n_samples):
-			x = np.random.randint(0, back_h - mask_h)
-			y = np.random.randint(0, back_w - mask_w)
+			mask = cv2.resize(mask, (mask_w, mask_h))
 
-			zero_mask = mask_background(background, mask, x, y)
-			inv_zero_mask = cv2.bitwise_not(zero_mask)
+			background = backgrounds[int(background_idx[l])]
+			back_h, back_w, back_c = background.shape
 
-			padded_mask = pad_image(rgb_mask, back_h, back_w, x, y)
-			
-			background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
-			augmented_image = cv2.add(background_mask, padded_mask)
-			label = [[1, x + (mask_w/2), y + (mask_h/2), mask_w, mask_h]] # red is default
+			for k in range(n_samples):
+				x = np.random.randint(0, back_w - mask_w)
+				y = np.random.randint(0, back_h - mask_h)
 
-			bv.display_annotated(augmented_image, label)
+				zero_mask = mask_background(background, mask, x, y)
+				inv_zero_mask = cv2.bitwise_not(zero_mask)
 
-			augmented_images.append(augmented_image)
-			augmented_labels.append(label)
+				padded_mask = pad_image(rgb_mask, back_h, back_w, x, y)
+				
+				background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
+				augmented_image = cv2.add(background_mask, padded_mask)
+				label = [[1, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]]
+				
+				augmented_images.append(augmented_image)
+				augmented_labels.append(label)
 
-			zero_mask = mask_background(background, mask, x, y)
-			inv_zero_mask = cv2.bitwise_not(zero_mask)
+				zero_mask = mask_background(background, mask, x, y)
+				inv_zero_mask = cv2.bitwise_not(zero_mask)
 
-			padded_mask = pad_image(cv2.cvtColor(rgb_mask, cv2.COLOR_RGB2BGR), back_h, back_w, x, y)
-			
-			background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
-			augmented_image = cv2.add(background_mask, padded_mask)
-			label = [[0, x + (mask_w/2), y + (mask_h/2), mask_w, mask_h]] # red is default
+				padded_mask = pad_image(cv2.cvtColor(rgb_mask, cv2.COLOR_RGB2BGR), back_h, back_w, x, y)
+				
+				background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
+				augmented_image = cv2.add(background_mask, padded_mask)
+				label = [[0, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]] # red is default
 
-			augmented_images.append(augmented_image)
-			augmented_labels.append(label)
+				augmented_images.append(augmented_image)
+				augmented_labels.append(label)
 
 	return augmented_images, augmented_labels
 
@@ -134,7 +142,7 @@ def main(data_dir):
 	im_path = os.path.join(data_path, 'train', 'images')
 	label_path = os.path.join(data_path, 'train', 'labels')
 
-	gen_path = os.path.join(project_root, 'data', 'Generated')
+	gen_path = os.path.join(project_root, 'data', 'Experimental')
 	train_path = os.path.join(gen_path, 'train')
 	valid_path = os.path.join(gen_path, 'valid')
 
@@ -163,6 +171,8 @@ def main(data_dir):
 				print(f'Data samples: {len(label_files)}')
 				print(f'Image shape: {image.shape}')
 				print(f'Generating {len(images)} images and labels per sample')
+			
+			generated_samples += len(images)
 
 			print('Saving batch')
 			bv.save_txt_label_data(images, labels, gen_path)
