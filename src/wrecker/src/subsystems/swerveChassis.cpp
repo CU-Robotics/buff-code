@@ -30,7 +30,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   {
     data->FR.alignment[i] = fr_alignment[i];
   }
-  data->FR.steerVel.K[0] = 0.07;
+  data->FR.steerVel.K[0] = 0.03;
   data->FR.steerVel.K[1] = 0;
   data->FR.steerVel.K[2] = 0;
   data->FR.steerPos.K[0] = 1.2;
@@ -48,7 +48,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   {
     data->FL.alignment[i] = fl_alignment[i];
   }
-  data->FL.steerVel.K[0] = 0.07;
+  data->FL.steerVel.K[0] = 0.03;
   data->FL.steerVel.K[1] = 0;
   data->FL.steerVel.K[2] = 0;
   data->FL.steerPos.K[0] = 1.2;
@@ -66,7 +66,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   {
     data->RL.alignment[i] = bl_alignment[i];
   }
-  data->RL.steerVel.K[0] = 0.07;
+  data->RL.steerVel.K[0] = 0.03;
   data->RL.steerVel.K[1] = 0;
   data->RL.steerVel.K[2] = 0;
   data->RL.steerPos.K[0] = 1.2;
@@ -84,7 +84,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   {
     data->RR.alignment[i] = br_alignment[i];
   }
-  data->RR.steerVel.K[0] = 0.07;
+  data->RR.steerVel.K[0] = 0.03;
   data->RR.steerVel.K[1] = 0;
   data->RR.steerVel.K[2] = 0;
   data->RR.steerPos.K[0] = 1.2;
@@ -106,12 +106,13 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
 
 void SwerveChassis::update(unsigned long deltaTime) {
   if (state->driverInput.b && !calibrated) {
-    calibrate();
     calibrated = true;
+    calibrate();
+    Serial.println("calibrate!");
   }
 
   int x = state->driverInput.d - state->driverInput.a;
-  int y = state->driverInput.w - state->driverInput.s;
+  int y = state->driverInput.s - state->driverInput.w;
   int s = state->driverInput.q - state->driverInput.e;
 
   drive(x, y, s, deltaTime);
@@ -156,9 +157,9 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long 
   float angleBR = radiansToDegrees(atan2(A, D));
 
   // Update each module
-  // moduleFR.update(speedFR, angleFR, deltaTime);
-  // moduleFL.update(speedFL, angleFL, deltaTime);
-  // moduleBL.update(speedBL, angleBL, deltaTime);
+  moduleFR.update(speedFR, angleFR, deltaTime);
+  moduleFL.update(speedFL, angleFL, deltaTime);
+  moduleBL.update(speedBL, angleBL, deltaTime);
   moduleBR.update(speedBR, angleBR, deltaTime);
 }
 

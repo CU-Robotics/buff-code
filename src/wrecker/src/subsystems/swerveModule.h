@@ -33,6 +33,8 @@ class SwerveModule {
     float prevRawSteerAngle = 0;
     float prevSteerAngle = 0;
 
+    float rampedSpeed = 0.0;
+
     bool calibrated = false;
     float absolute_offset = 0;
 
