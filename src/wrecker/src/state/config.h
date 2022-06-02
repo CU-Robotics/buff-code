@@ -67,12 +67,19 @@ struct C_RailChassis {
 };
 
 struct C_Gimbal {
+  float sensitivity = 1;
 
-  float sensitivity = 1.0;
-
-  //  angle offset for motors: yaw, pitch
+  // Angle offset for motors: yaw, pitch
   float yawOffset = 90.0;
   float pitchOffset = 12.0;
+
+  // Pitch softstops
+  float pitchMin = 0;
+  float pitchMax = 75;
+
+  // Motor IDs
+  float pitchMotorID = 1;
+  float yawMotorID = 2;
 
   C_PID yaw_PID;
   C_PID pitch_PID;
