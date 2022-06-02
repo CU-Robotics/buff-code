@@ -14,7 +14,7 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
   config = data;
   state = r_state;
 
-  this->yawMotor.init(7, 2);
+  this->yawMotor.init(6, 2);
   this->pitchMotor.init(7, 2);
 
   config->yaw_PID.continuous = true;
@@ -30,15 +30,14 @@ void Gimbal::update(float deltaTime) {
   if (calibrated) {
     float yawDifference = this->prevRawYawAngle - rawYawAngle;
     if (yawDifference < -180)
-      this->yawRollover--;
-    else if (yawDifference > 180)
       this->yawRollover++;
+    else if (yawDifference > 180)
+      this->yawRollover--;
   }
   this->prevRawYawAngle = rawYawAngle;
 
   float yawAngle = realizeYawEncoder(rawYawAngle);
   float pitchAngle = realizeYawEncoder(pitchMotor.getAngle());
-
 
   // Calculate new gimbal setpoints
   aimYaw += state->driverInput.mouseX * config->sensitivity * deltaTime / 10000.0; // 10000 is an arbitrary number -- do not change or sensitivies will change
@@ -67,13 +66,19 @@ void Gimbal::update(float deltaTime) {
   state->gimbal.pitch_PID.R = aimPitch;
   PID_Filter(&config->pitch_PID, &state->gimbal.pitch_PID, pitchAngle, deltaTime);
 
+  Serial.print(state->driverInput.mouseX);
+  Serial.print(" - ");
+  Serial.print(aimYaw);
+  Serial.print(" - ");
+  Serial.print(yawRollover);
+  Serial.print(" - ");
+  Serial.println(yawAngle);
+
   // Set motor power here?
   if (calibrated) {
-    yawMotor.setPower(0.4);
-    // Serial.println("Sending 0.4");
-    // yawMotor.setPower(state->gimbal.yaw_PID.Y);
-    // pitchMotor.setPower(state->gimbal.pitch_PID.Y);
-    // Serial.println(state->gimbal.yaw_PID.Y);
+    yawMotor.setPower(0.0);
+    //yawMotor.setPower(state->gimbal.yaw_PID.Y);
+    //pitchMotor.setPower(state->gimbal.pitch_PID.Y);
   }
 }
 
