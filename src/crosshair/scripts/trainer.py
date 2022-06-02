@@ -83,7 +83,7 @@ def train_model(model):
 
 	subprocess.run([setup_script])
 
-	default_args = ['--img', '320','--batch', '32', '--epochs', '50', '--cache', '--project', output_dir]
+	default_args = ['--img', '320','--batch', '16', '--epochs', '50', '--cache', '--project', output_dir]
 
 	while 1:
 		data_zips = glob.glob(os.path.join(data_dir, '*.zip'))
