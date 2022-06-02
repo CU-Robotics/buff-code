@@ -76,7 +76,7 @@ def pad_mask(mask, h, w, x, y):
 
 def generate_images(image, c, x, y, w, h, backgrounds):
 
-	n_samples = 1
+	n_samples = 5
 	augmented_images = []
 	augmented_labels = []
 
@@ -102,6 +102,10 @@ def generate_images(image, c, x, y, w, h, backgrounds):
 
 			background = backgrounds[int(background_idx[l])]
 			back_h, back_w, back_c = background.shape
+
+			if np.random.uniform(0,1) > 0.5:
+				augmented_images.append(background)
+				augmented_labels.append([[]])
 
 			for k in range(n_samples):
 				x = np.random.randint(0, back_w - mask_w)
@@ -142,7 +146,7 @@ def main(data_dir):
 	im_path = os.path.join(data_path, 'train', 'images')
 	label_path = os.path.join(data_path, 'train', 'labels')
 
-	gen_path = os.path.join(project_root, 'data', 'Experimental')
+	gen_path = os.path.join(project_root, 'data', 'Generated')
 	train_path = os.path.join(gen_path, 'train')
 	valid_path = os.path.join(gen_path, 'valid')
 
@@ -159,7 +163,7 @@ def main(data_dir):
 	m = len(label_path) + 1
 	label_files = glob.glob(os.path.join(label_path, '*.txt'))
 
-	for labelf in label_files:
+	for i, labelf in enumerate(label_files):
 		imfile = os.path.join(im_path, labelf[m:-4] + '.jpg')
 		if os.path.exists(imfile):
 			image = cv2.imread(imfile)
@@ -174,7 +178,7 @@ def main(data_dir):
 			
 			generated_samples += len(images)
 
-			print('Saving batch')
+			print(f'Saving batch {i}/{len(images)}')
 			bv.save_txt_label_data(images, labels, gen_path)
 
 	print(f'Generated {generated_samples} images and labels')
