@@ -23,9 +23,8 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
 }
 
 void Gimbal::update(float deltaTime) {
-  if (state->driverInput.b && !calibrated) {
+  if (state->driverInput.b && !calibrated)
     calibrated = true;
-  }
 
   float rawYawAngle = yawMotor.getAngle();
   if (calibrated) {
