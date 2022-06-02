@@ -72,9 +72,12 @@ void c620CAN::setPower(float power) {
 
 void c620CAN::updateMotor() {
     CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id - 1];
-    angle = recMsg->buf[0];
-    angle = angle << 8;
-    angle = angle | recMsg->buf[1];
+    
+    uint16_t tempAngle;
+    tempAngle = recMsg->buf[0];
+    tempAngle = tempAngle << 8;
+    tempAngle = tempAngle | recMsg->buf[1];
+    angle = map(tempAngle, 0, 8191, 0, 36000) / 100.0;
 
     rpm = recMsg->buf[2];
     rpm = rpm << 8;
@@ -160,9 +163,9 @@ float c610Enc::getAngle() {
   {
     freq.read();
   }
-  int16_t temp = map(round(freq.countToNanoseconds(freq.read())/1000), 1, 1024, 0, 360);
+  float temp = map(round(freq.countToNanoseconds(freq.read())/1000), 1, 1024, 0, 36000) / 100.0;
 
-  if (temp >= 0 && temp <= 360)
+  if (temp >= 0.0 && temp <= 360.0)
   {
     angle = temp;
   }

@@ -21,7 +21,7 @@ void gm6020::init(short tempID, uint8_t tempCanBusNum){
   if(byteNum > 3) {
     byteNum -= 4;
     sendMsgPtr = &gm6020Messages[canBusNum-1][0];
-    sendMsgPtr->id = 0x2FF;   //ID for all gm6020s 4-7
+    sendMsgPtr->id = 0x2FF;   //ID for all gm6020s 5-7
   } else {
     sendMsgPtr = &gm6020Messages[canBusNum-1][1];
     sendMsgPtr->id = 0x1FF;   //ID for all gm6020s 0-3
@@ -37,16 +37,19 @@ void gm6020::setPower(float power) {
   }
   
   int16_t newPower = (int16_t)(power * 30000);
+  // Serial.print("newPower: ");
+  // Serial.println(newPower);
   byte byteOne = highByte(newPower);
   byte byteTwo = lowByte(newPower);
-  sendMsgPtr->buf[byteNum] = byteOne;
-  sendMsgPtr->buf[byteNum + 1] = byteTwo;
+  sendMsgPtr->buf[byteNum << 1] = byteOne;
+  sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
   switch (canBusNum) {
     case 1:
       can1.write(*sendMsgPtr);
       break;
     case 2:
       can2.write(*sendMsgPtr);
+      // Serial.println("writing to can2");
       break;
     case 3:
       can3.write(*sendMsgPtr);
@@ -56,10 +59,13 @@ void gm6020::setPower(float power) {
 }
 
 void gm6020::updateMotor() {
-  CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id + 4];
-  angle = recMsg->buf[0];
-  angle = angle << 8;
-  angle = angle | recMsg->buf[1];
+  CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id + 3];
+  
+  uint16_t tempAngle;
+  tempAngle = recMsg->buf[0];
+  tempAngle = tempAngle << 8;
+  tempAngle = tempAngle | recMsg->buf[1];
+  angle = map(tempAngle, 0, 8191, 0, 36000) / 100.0;
 
   rpm = recMsg->buf[2];
   rpm = rpm << 8;
