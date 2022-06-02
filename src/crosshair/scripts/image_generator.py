@@ -90,9 +90,8 @@ def generate_images(image, c, x, y, w, h, backgrounds):
 	rgb_mask = cv2.bitwise_and(cropped.copy(), cropped.copy(), mask=mask)
 
 	for i in range(n_samples):
-		rgb_mask = (rgb_mask.astype(float) * np.random.uniform(0.75, 1.0)).astype(np.uint8)
-
 		for l in range(n_samples):
+
 			background_idx = (len(backgrounds) - 1) * np.random.rand(n_samples)
 
 			rgb_mask = random_resize(rgb_mask.copy())
@@ -178,7 +177,7 @@ def main(data_dir):
 			
 			generated_samples += len(images)
 
-			print(f'Saving batch {i}/{len(images)}')
+			print(f'Saving batch {i}/{len(label_files)}')
 			bv.save_txt_label_data(images, labels, gen_path)
 
 	print(f'Generated {generated_samples} images and labels')
