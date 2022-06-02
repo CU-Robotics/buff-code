@@ -8,16 +8,15 @@ Servo myServo;
 
 
 void setup() {
-    myServo.attach(28);
-    Serial.begin(115200);
-}
+    myServo.attach(29);
+    Serial.begin(115200);}
 
 void loop() {
     if (Serial.available() > 2)
     {  
         delay(20);
         int temp = Serial.parseInt();
-        myServo.attach(temp);
+        myServo.writeMicroseconds(temp);
         Serial.print("new power: ");
         Serial.println(temp);
     }
