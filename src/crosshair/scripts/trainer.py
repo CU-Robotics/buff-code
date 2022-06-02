@@ -106,7 +106,7 @@ def train_model(model):
 
 			if not os.path.exists(model_path):
 				args += ['--weights', '""']
-				args += ['--cfg', 'yolov5l.yaml']
+				args += ['--cfg', 'yolov5m.yaml']
 			
 			else:
 				args += ['--weights', model_path]
