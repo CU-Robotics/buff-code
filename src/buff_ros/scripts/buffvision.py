@@ -115,6 +115,7 @@ def display_annotated(image, labels):
 		image = cv2.rectangle(image, (int(x - (w/2)), int(y - (h/2))), (int(x + (w/2)), int(y + (h/2))), colors[int(c)], 2)
 		image = cv2.putText(image, f'{c}', (int(x - (w/2)), int(y - (h/2))-15), cv2.FONT_HERSHEY_SIMPLEX, 
                    1, (255,255,255), 2, cv2.LINE_AA)
+
 	buffshow('annotated', image)
 
 def dateFilledPath(fileName='00'):
@@ -137,8 +138,11 @@ def write_sample(save_path, key, image, label):
 	label_path = os.path.join(save_path, 'labels')
 	label_date_path = os.path.join(label_path, date_string + '.txt')
 	with open(label_date_path, 'w+') as f:
-		for c, x, y, w, h in label:
-			f.write(f'{c} {x/image.shape[1]} {y/image.shape[0]} {w/image.shape[1]} {h/image.shape[0]}\n')
+		if len(label[0]) < 1:
+			f.write('')
+		else:
+			for c, x, y, w, h in label:
+				f.write(f'{c} {x/image.shape[1]} {y/image.shape[0]} {w/image.shape[1]} {h/image.shape[0]}\n')
 
 
 def save_txt_label_data(images, labels, gen_path):
