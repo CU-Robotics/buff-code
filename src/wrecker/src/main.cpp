@@ -92,9 +92,9 @@ void loop() {
     serial_event(&robot_state, &robot_config);
 
   reciever.update();
-  //gimbal.update(deltaT);
+  gimbal.update(deltaT);
   //swerveChassis.update(deltaT);
-  shooter.update(deltaT);
+  //shooter.update(deltaT);
 
   
 
