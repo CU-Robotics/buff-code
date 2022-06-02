@@ -1,0 +1,47 @@
+#include <Arduino.h>
+#include "drivers/c620.h"
+#include "drivers/dr16.h"
+#include "state/state.h"
+
+
+// CAN
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+CAN_message_t canRecieveMessages[3][11];
+CAN_message_t tempMessage;
+
+DriverInput inStruct;
+
+c620CAN motor1;
+c620CAN motor2;
+
+dr16 rec;
+
+float power = 0;
+
+void setup() {
+    can1.begin();
+    can2.begin();
+    can3.begin();
+
+    can1.setBaudRate(1000000);
+    can2.setBaudRate(1000000);
+    can3.setBaudRate(1000000);
+
+    motor1.init(1, 2);
+    motor2.init(2, 2);
+
+    rec.init(&inStruct);
+}
+
+void loop() {
+    rec.update();
+    // Serial.println(inStruct.rightStickY);
+
+    power = map(inStruct.rightStickY, 364, 1684, -1000, 1000) / 1000.0;
+    Serial.println(power);
+
+    motor1.setPower(power);
+    motor2.setPower(power);
+}
