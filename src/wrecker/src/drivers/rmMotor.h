@@ -7,7 +7,7 @@ class rmMotor {
   public:
     short getTorque();
     short getRpm();
-    short getAngle();
+    float getAngle();
     byte getTemp();
     void updateMotor();
     // void updateMotor(CAN_message_t* recMsg);     //update motor info values directly from CAN message  !!!!!!needs implementation
@@ -17,7 +17,7 @@ class rmMotor {
   protected:
     short torque = -1;
     short rpm = -1;
-    short angle = -1;
+    float angle = -1;
     byte temp = -1;
     uint8_t id = -1;
     uint8_t canBusNum = 0;
