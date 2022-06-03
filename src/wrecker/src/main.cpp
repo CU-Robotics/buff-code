@@ -40,6 +40,10 @@ SwerveChassis swerveChassis;
 // TEMP
 int counter = 1;
 
+void dump(){
+  dump_Robot(&robot_config, &robot_state);
+}
+
 // Runs once
 void setup() {
   Serial.begin(1000000);
@@ -62,15 +66,11 @@ void setup() {
   // Subsystem setup
 
   // Subsystem setup
-  reciever.init(&robot_state.driverInput);
+  // reciever.init(&robot_state.driverInput);
   gimbal.setup(&robot_config.gimbal, &robot_state);
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
 
-  // reciever.init(&robot_state.driverInput);
-  gimbal.setup(&robot_config.gimbal, &robot_state);
-  // //swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
-  // shooter.setup(&robot_config.shooter17, &robot_state);
 
   serialDumpTmr.priority(1);                                     // Set interval timer to handle serial reads
   serialDumpTmr.begin(dump, dumpRate);
@@ -100,11 +100,9 @@ void loop() {
     serial_event(&robot_config, &robot_state);
 
   // reciever.update();
-  //gimbal.update(deltaT);
-  //swerveChassis.update(deltaT);
+  // gimbal.update(deltaT);
+  // swerveChassis.update(deltaT);
   // shooter.update(deltaT);
-
-  
 
   if (counter % 5 == 0) {
     sendCAN();

@@ -1,0 +1,80 @@
+#include <Arduino.h>
+#include "drivers/gm6020.h"
+#include "drivers/dr16.h"
+#include "state/state.h"
+
+
+// CAN
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+CAN_message_t canRecieveMessages[3][11];
+CAN_message_t tempMessage;
+
+DriverInput inStruct;
+
+gm6020 motor1;
+gm6020 motor2;
+
+float power1;
+float power2;
+
+dr16 rec;
+
+void setup() {
+    Serial.begin(115200);
+
+    can1.begin();
+    can2.begin();
+    can3.begin();
+
+    can1.setBaudRate(1000000);
+    can2.setBaudRate(1000000);
+    can3.setBaudRate(1000000);
+
+    motor1.init(6, 2);  //yaw
+    motor2.init(7, 2);  //pitch
+
+    rec.init(&inStruct);
+}
+
+void loop() {
+    // Necesary for motors to recieve data over CAN
+    // Needs to have usage
+    //  can.update(XXX, YYY);
+    //
+    while (can1.read(tempMessage)) {
+        canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
+    }
+
+    while (can2.read(tempMessage)) {
+        canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
+        // Serial.print("Recieved from: ");
+        // Serial.println(tempMessage.id, HEX);
+    }
+
+    while (can3.read(tempMessage)) {
+        canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
+    }
+
+
+    rec.update();
+    // Serial.println(inStruct.rightStickX);
+    // Serial.println(inStruct.rightStickY);
+    // Serial.println();
+
+    power1 = map(inStruct.rightStickX, 364, 1684, -1000, 1000) / 1000;
+    power2 = map(inStruct.rightStickY, 364, 1684, -1000, 1000) / 1000;
+
+    // Serial.println(power2);
+    // Serial.println(motor1.getAngle());
+    // Serial.println();
+
+    motor1.updateMotor();
+    motor2.updateMotor();
+    Serial.print(motor1.getAngle());
+    Serial.print(", ");
+    Serial.println(motor2.getAngle());
+    // motor1.setPower(0.5);
+    // motor2.setPower(0.5);
+}

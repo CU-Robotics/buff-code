@@ -1,0 +1,21 @@
+#include <Arduino.h>
+
+#include <Servo.h>
+
+Servo myServo;
+
+void setup() {
+  myServo.attach(28);
+  Serial.begin(9600);
+}
+
+void loop() {
+  if(Serial.available() > 2) {
+    delay(20);
+    int temp = Serial.parseInt();
+    myServo.writeMicroseconds(temp);
+    Serial.print("new power: ");
+    Serial.println(temp);
+  }
+
+}

@@ -20,26 +20,21 @@ void Shooter::setup(C_Shooter17 *config, S_Robot *state) {
 }
 
 void Shooter::update(unsigned long deltaTime) {
-    if (state->driverInput.b && !calibrated) {
+    if (state->driverInput.b && !calibrated)
         calibrated = true;
-    }
-
-    this->config->feedPID.K[0] = 0.0005;
-    state->Shooter17.feedPID.R = -2160;
-    PID_Filter(&config->feedPID, &state->Shooter17.feedPID, feedMotor.getRpm(), deltaTime);
 
     if (calibrated) {
-        this->topFlywheel.setPower(0.2);
-        this->bottomFlywheel.setPower(0.2);
+        this->topFlywheel.setPower(0.3);
+        this->bottomFlywheel.setPower(0.3);
 
-        if (state->driverInput.f) {
-            this->feedMotor.setPower(state->Shooter17.feedPID.Y);
-            Serial.print(state->Shooter17.feedPID.Y);
-            Serial.print(" - ");
-            Serial.print(feedMotor.getRpm());
-            Serial.println();
-        }
+        if (state->driverInput.f)
+            state->shooter17.feedPID.R = -2160;
+        else if (state->driverInput.g)
+            state->shooter17.feedPID.R = 2160;
         else
-            this->feedMotor.setPower(0.0);
+            state->shooter17.feedPID.R = 0;
+        this->config->feedPID.K[0] = 0.0005;
+        PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
+        this->feedMotor.setPower(state->shooter17.feedPID.Y);
     }
 }

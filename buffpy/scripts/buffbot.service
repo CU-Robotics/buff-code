@@ -7,7 +7,8 @@ Type=simple
 RestartSec=5s
 User=cu-robotics
 WorkingDirectory=/home/cu-robotics/buff-code
-ExecStart=/usr/bin/python3 /home/cu-robotics/buff-code/buffpy/bin/run self.yaml
+PreExec=export OPENBLAS_CORETYPE=ARMV8
+ExecStart=/home/cu-robotics/buff-code/buffpy/scripts/startup.bash
 Environment="PYTHONPATH=${PYTHONPATH}:/home/cu-robotics/.local/lib/python3.6/site-packages:/opt/ros/melodic/lib/python2.7/dist-packages"
 
 [Install]

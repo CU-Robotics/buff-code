@@ -61,9 +61,9 @@ struct DriverInput {
   uint8_t s1 = 0;
   uint8_t s2 = 0;
 
-  float mouseX = 0.0f;
-  float mouseY = 0.0f;
-  float mouseZ = 0.0f;
+  int16_t mouseX = 0.0f;
+  int16_t mouseY = 0.0f;
+  int16_t mouseZ = 0.0f;
   bool mouseLeft = false;
   bool mouseRight = false;
 
