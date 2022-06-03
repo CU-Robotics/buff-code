@@ -4,6 +4,7 @@ import sys
 import cv2
 import yaml
 import glob
+import shutil
 import string
 import random
 import numpy as np
@@ -177,10 +178,11 @@ def main(data_dir):
 			
 			generated_samples += len(images)
 
-			print(f'Saving batch {i}/{len(label_files)}')
+			print(f'Saving batch {i+1}/{len(label_files)}')
 			bv.save_txt_label_data(images, labels, gen_path)
 
 	print(f'Generated {generated_samples} images and labels')
+	shutil.make_archive('Generated', 'zip', data_path)
 		
 
 if __name__ == '__main__':

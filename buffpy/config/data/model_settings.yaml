@@ -1,3 +1,4 @@
-IOU: 0.5
-CONFIDENCE: 0.5
-MODEL_FILE: "only-gen.blob"
+IOU: 0.7
+CONFIDENCE: 0.7
+PT_FILE: "buffnet.pt"
+BLOB_FILE: "buffnet.blob"

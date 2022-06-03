@@ -161,7 +161,7 @@ class DepthAI_Device:
 		self.image_size = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/MODEL_FILE'))
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/BLOB_FILE'))
 
 		self.bridge = CvBridge()
 
