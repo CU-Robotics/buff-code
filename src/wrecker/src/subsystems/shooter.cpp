@@ -24,11 +24,13 @@ void Shooter::update(unsigned long deltaTime) {
         calibrated = true;
 
     if (calibrated) {
-        this->topFlywheel.setPower(0.2);
-        this->bottomFlywheel.setPower(0.2);
+        this->topFlywheel.setPower(0.3);
+        this->bottomFlywheel.setPower(0.3);
 
         if (state->driverInput.f)
             state->Shooter17.feedPID.R = -2160;
+        else if (state->driverInput.g)
+            state->Shooter17.feedPID.R = 2160;
         else
             state->Shooter17.feedPID.R = 0;
         this->config->feedPID.K[0] = 0.0005;
