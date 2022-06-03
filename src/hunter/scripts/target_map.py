@@ -62,6 +62,10 @@ class Target_Map:
 		self.psi = state[2]
 		self.phi = state[1]
 
+	def get_class_color(cl):
+		colors = [[255, 0, 0], [255, 0, 0], [0, 255, 0]]
+		return np.array(colors[cl])
+
 	def publish_map(self):
 
 		d = (self.map_size[0] * 0.02, self.map_size[1] * 0.02)
@@ -77,9 +81,10 @@ class Target_Map:
 		image = cv2.line(image, origin, fovr, (255,0,0))
 
 		if not self.r is None:
-			for i, (x,y) in enumerate(self.history):
+			for i, (c,x,y) in enumerate(self.history):
+				color = get_class_color(c)
 				target = (int(origin[0] + x), int(origin[1] + y))
-				image = cv2.circle(image, target, 10, (255 * i / 5, 255, 255 * i / 5), 2)
+				image = cv2.circle(image, target, 10, color * i / 5, 2)
 
 		msg = self.bridge.cv2_to_imgmsg(image, encoding='rgb8')
 		self.map_pub.publish(msg)

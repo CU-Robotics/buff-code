@@ -54,7 +54,7 @@ class Dead_Reckon_Tracer:
 		topics = rospy.get_param('/buffbot/TOPICS')
 
 		self.detect_sub = rospy.Subscriber(
-			topics['DETECTION_WORLD'], Float64MultiArray, self.detection_callback, queue_size=5)
+			topics['DETECTION_PIXEL'], Float64MultiArray, self.detection_callback, queue_size=5)
 
 		self.prediction_pub = rospy.Publisher(
 			topics['SERIAL_OUT'], String, queue_size=1)
@@ -73,7 +73,10 @@ class Dead_Reckon_Tracer:
 		# Build a custom message that has a timestamp
 		t = time.time()
 		# do tracker stuff
-		measure = np.array(msg.data)
+		x1, y1, x2, y2, cf, cl = np.array(msg.data)
+		measure = np.array([(x1 + x2) / 2, (y1 + y2) / 2])
+		msg = String(f'GPR {phi_err} GYR {psi_err}')
+		self.prediction_pub.publish(msg)
 		self.update_trajectory(t, measure)
 
 	def reset(self):
@@ -149,9 +152,9 @@ class Dead_Reckon_Tracer:
 			if not self.history is None:
 
 				self.predict(time.time())
-				psi = np.arctan(self.pose[1] / self.pose[0]) # arctan of x,y is yaw
-				phi = self.d_offset * np.linalg.norm(self.pose) # phi is this needs to be tuned function of distance
-				msg = String(f'GPR {phi} GYR {psi}')
+				psi_err = np.arctan(self.pose[1] / self.pose[0]) # arctan of x,y is yaw
+				phi_err = self.d_offset * np.linalg.norm(self.pose) # phi is this needs to be tuned function of distance
+				msg = String(f'GPR {phi_err} GYR {psi_err}')
 				self.prediction_pub.publish(msg)
 
 				if self.debug:
