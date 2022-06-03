@@ -16,7 +16,7 @@ NODES:
     REQUIRED: False
   CAMERA:
     CONFIG: 'camera_settings.yaml'
-    FILES: ['data_streamer.py']
+    FILES: ['mds_camera.py'] # ['data_streamer.py']
     PACKAGE: 'buffpy'
   MODEL:
     CONFIG: 'model_settings.yaml'
