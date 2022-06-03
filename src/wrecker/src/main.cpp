@@ -8,6 +8,7 @@
 #include "subsystems/gimbal.h"
 #include "drivers/serial_interface.h"
 #include "subsystems/swerveChassis.h"
+#include "subsystems/gimbal.h"
 #include "subsystems/shooter.h"
 
 // CAN
@@ -31,20 +32,19 @@ C_Robot robot_config;
 // Subsystems
 Gimbal gimbal;
 // dr16 reciever;
+Shooter shooter;
 // ref_sys refSystem;
-// SwerveModule sm;
-// SwerveChassis swerveChassis;
-// Shooter shooter;
+SwerveChassis swerveChassis;
 
-void dump(){
-  dump_Robot(&robot_config, &robot_state);
-}
+
+// TEMP
+int counter = 1;
 
 // Runs once
 void setup() {
-  delay(1000);
   Serial.begin(1000000);
-  //Serial.println("basic test");
+  delay(1000);
+  Serial.println("basic test");
 
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
@@ -62,6 +62,10 @@ void setup() {
   // Subsystem setup
 
   // Subsystem setup
+  reciever.init(&robot_state.driverInput);
+  gimbal.setup(&robot_config.gimbal, &robot_state);
+  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  shooter.setup(&robot_config.shooter17, &robot_state);
 
   // reciever.init(&robot_state.driverInput);
   gimbal.setup(&robot_config.gimbal, &robot_state);
@@ -83,8 +87,10 @@ void loop() {
   // while (can1.read(tempMessage))
   //   canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
   
-  // while (can2.read(tempMessage))
-  //   canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
+
+  while (can2.read(tempMessage)) {
+    canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
+  }
   
   // while (can3.read(tempMessage))
   //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
@@ -97,6 +103,14 @@ void loop() {
   //gimbal.update(deltaT);
   //swerveChassis.update(deltaT);
   // shooter.update(deltaT);
+
+  
+
+  if (counter % 5 == 0) {
+    sendCAN();
+    counter = 0;
+  }
+  counter++;
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;

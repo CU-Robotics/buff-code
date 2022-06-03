@@ -103,9 +103,8 @@ def generate_images(image, c, x, y, w, h, backgrounds):
 			background = backgrounds[int(background_idx[l])]
 			back_h, back_w, back_c = background.shape
 
-			if np.random.uniform(0,1) > 0.5:
-				augmented_images.append(background)
-				augmented_labels.append([[]])
+			augmented_images.append(background)
+			augmented_labels.append([[]])
 
 			for k in range(n_samples):
 				x = np.random.randint(0, back_w - mask_w)
@@ -134,6 +133,20 @@ def generate_images(image, c, x, y, w, h, backgrounds):
 
 				augmented_images.append(augmented_image)
 				augmented_labels.append(label)
+
+				zero_mask = mask_background(background, mask, x, y)
+				inv_zero_mask = cv2.bitwise_not(zero_mask)
+
+				padded_mask = pad_image(cv2.cvtColor(rgb_mask, cv2.COLOR_RGB2BGR), back_h, back_w, x, y)
+				
+				background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
+				augmented_image = cv2.add(background_mask, padded_mask)
+				label = [[0, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]] # red is default
+
+				augmented_images.append(augmented_image)
+				augmented_labels.append(label)
+
+	return None, None
 
 	return augmented_images, augmented_labels
 
@@ -170,6 +183,7 @@ def main(data_dir):
 			[[c, x, y, w, h]] = bv.load_label(labelf)
 
 			images, labels = generate_images(image, c, x, y, w, h, backgrounds)
+			continue
 
 			if generated_samples == -1:
 				print(f'Data samples: {len(label_files)}')

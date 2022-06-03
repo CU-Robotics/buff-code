@@ -15,6 +15,7 @@ gm6020::gm6020() {
 }
 
 void gm6020::init(short tempID, uint8_t tempCanBusNum){
+  canBusNum = tempCanBusNum;
   id = tempID;
   byteNum = id - 1;
   if(byteNum > 3) {
@@ -28,14 +29,14 @@ void gm6020::init(short tempID, uint8_t tempCanBusNum){
 }
 
 void gm6020::setPower(float power) {
-  if (power > 1)
+  if (power > 1.0)
   {
-    power = 1;
-  } else if (power < -1) {
-    power = -1;
+    power = 1.0;
+  } else if (power < -1.0) {
+    power = -1.0;
   }
   
-  short newPower = (short)(power * MAX_VALUE);
+  int16_t newPower = (int16_t)(power * 30000);
   byte byteOne = highByte(newPower);
   byte byteTwo = lowByte(newPower);
   sendMsgPtr->buf[byteNum] = byteOne;
