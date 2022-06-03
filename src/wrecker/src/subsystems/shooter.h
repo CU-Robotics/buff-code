@@ -20,6 +20,8 @@ class Shooter {
     flywheel topFlywheel;
     flywheel bottomFlywheel;
 
+    float calibrated = false;
+
     void fire(float speed);
 };
 
