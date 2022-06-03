@@ -28,7 +28,7 @@ class BuffNet:
 		"""
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, 'buffnet.pt')
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/PT_FILE'))
 
 		print(model_path)
 		
