@@ -83,7 +83,7 @@ def train_model(model):
 
 	subprocess.run([setup_script])
 
-	default_args = ['--img', '320','--batch', '16', '--epochs', '50', '--cache', '--project', output_dir]
+	default_args = ['--img', '320','--batch', '64', '--epochs', '50', '--cache', '--project', output_dir]
 
 	while 1:
 		data_zips = glob.glob(os.path.join(data_dir, '*.zip'))
@@ -106,7 +106,7 @@ def train_model(model):
 
 			if not os.path.exists(model_path):
 				args += ['--weights', '""']
-				args += ['--cfg', 'yolov5l.yaml']
+				args += ['--cfg', 'yolov5s.yaml']
 			
 			else:
 				args += ['--weights', model_path]
