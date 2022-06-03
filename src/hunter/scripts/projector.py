@@ -82,10 +82,7 @@ class Projector:
 		h = abs(y2 - y1)
 		d = self.height_2_distance(h)
 		alpha = np.radians((1 - (xc / self.image_size[0])) * self.FOV)
-		print('=====')
-		print(h, d)
-		print(xc, alpha)
-		return d * np.cos(self.phi) * np.array([np.cos(self.psi + alpha), np.sin(self.psi + alpha)])
+		return [cl, d * np.cos(self.phi) * np.cos(self.psi + alpha), d * np.cos(self.phi) * np.sin(self.psi + alpha)]
 
 
 def main(data):

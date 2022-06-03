@@ -40,9 +40,20 @@ void Gimbal::update(float deltaTime) {
   float pitchAngle = realizeYawEncoder(pitchMotor.getAngle());
 
   // Calculate new gimbal setpoints
-  aimYaw += state->driverInput.mouseX * config->sensitivity * deltaTime / 10000.0; // 10000 is an arbitrary number -- do not change or sensitivies will change
-  aimPitch += state->driverInput.mouseY * config->sensitivity * deltaTime / 10000.0; // 10000 is an arbitrary number -- do not change or sensitivies will change
-
+  if (state->driverInput.mouseRight) {
+    aimYaw = state->gimbal.yaw_reference;
+    aimPitch = state->gimbal.pitch_reference;
+    mouseReleased = 1;
+  }
+  else if (mouseReleased){
+    aimYaw = state->gimbal.yaw_PID.Y;
+    aimPitch = state->gimbal.pitch_PID.Y;
+  }
+  else {
+    aimYaw += state->driverInput.mouseX * config->sensitivity * deltaTime / 10000.0; // 10000 is an arbitrary number -- do not change or sensitivies will change
+    aimPitch += state->driverInput.mouseY * config->sensitivity * deltaTime / 10000.0; // 10000 is an arbitrary number -- do not change or sensitivies will change
+  }
+  
   // Yaw angle range correction
   aimYaw = fmod(aimYaw, 360.0);
   if (aimYaw < 0)
@@ -52,6 +63,7 @@ void Gimbal::update(float deltaTime) {
   aimPitch = fmod(aimPitch, 360.0);
   if (aimPitch < 0)
     aimPitch += 360;
+  
   // Pich softstops
   if (aimPitch < config->pitchMin)
     aimPitch = config->pitchMin;

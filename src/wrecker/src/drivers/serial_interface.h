@@ -5,6 +5,8 @@ void PID_serial_event(C_PID*, S_PID*);
 void dump_PID(C_PID*, String);
 void dump_PID(S_PID*, String);
 
+void detection_serial_event(S_Gimbal*);
+
 void SwerveModule_serial_event(C_SwerveModule*, S_SwerveModule*);
 void dump_Swerve(C_SwerveModule*, String);
 void dump_Swerve(S_SwerveModule*, String);

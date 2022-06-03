@@ -275,7 +275,7 @@ void dump_Chassis(S_Chassis* ch){
   dump_Swerve(&ch->RL, "/SD");
 }
 
-void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
+void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state, bool auto_aim){
 	char cmd = Serial.read();
   switch (cmd)
   {
@@ -288,6 +288,16 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
 
     case 'G':
       config->yawOffset = Serial.parseInt();
+
+    case 'W':
+      if (auto_aim)
+        state->yaw_reference = Serial.parseFloat();
+      break;
+
+    case 'H':
+      if (auto_aim)
+        state->pitch_reference = Serial.parseFloat();
+      break;
 
     case 'Y':
       PID_serial_event(&config->yaw_PID, &state->yaw_PID);
@@ -398,7 +408,7 @@ void serial_event(C_Robot* config, S_Robot* state){
   switch (cmd)
   {
     case 'G':
-      Gimbal_serial_event(&config->gimbal, &state->gimbal);
+      Gimbal_serial_event(&config->gimbal, &state->gimbal, state->driverInput.mouseRight);
       break;
 
     case 'V':
