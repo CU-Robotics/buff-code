@@ -21,7 +21,7 @@ CAN_message_t tempMessage;
 // Loop timing
 unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
-unsigned long dumpRate = 100000.0; // 1 sec
+unsigned long dumpRate = 1000000; // 1 sec
 
 IntervalTimer serialDumpTmr;
 
@@ -72,7 +72,7 @@ void setup() {
   shooter.setup(&robot_config.shooter17, &robot_state);
 
 
-  serialDumpTmr.priority(1);                                     // Set interval timer to handle serial reads
+  serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
   serialDumpTmr.begin(dump, dumpRate);
 }
 
@@ -88,24 +88,25 @@ void loop() {
   //   canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
   
 
-  while (can2.read(tempMessage)) {
-    canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
-  }
+  // while (can2.read(tempMessage)) {
+  //   canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
+  // }
   
-  // while (can3.read(tempMessage))
-  //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
+  // // while (can3.read(tempMessage))
+  // //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
   
   
   if (Serial.available() > 0)
     serial_event(&robot_config, &robot_state);
 
-  // reciever.update();
-  // gimbal.update(deltaT);
-  // swerveChassis.update(deltaT);
-  // shooter.update(deltaT);
+
+  // // reciever.update();
+  // // gimbal.update(deltaT);
+  // // swerveChassis.update(deltaT);
+  // // shooter.update(deltaT);
 
   if (counter % 5 == 0) {
-    sendCAN();
+    //sendCAN();
     counter = 0;
   }
   counter++;

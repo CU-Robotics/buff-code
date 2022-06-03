@@ -16,8 +16,8 @@ void sendCAN() {
   can1.write(c6x0Messages[0][1]);
   can2.write(c6x0Messages[1][0]);
   can2.write(c6x0Messages[1][1]);
-  // can3.write(c6x0Messages[2][0]);
-  // can3.write(c6x0Messages[2][1]);
+  can3.write(c6x0Messages[2][0]);
+  can3.write(c6x0Messages[2][1]);
 }
 
 

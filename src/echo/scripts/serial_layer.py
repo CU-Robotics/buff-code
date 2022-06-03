@@ -106,7 +106,6 @@ class SerialLayer():
 		else:
 			return
 
-		
 		if name[0] == '/':
 			topic = self.access_2_string(name[1:])
 			topic = '/' + '_'.join(topic.split('/'))[1:]
