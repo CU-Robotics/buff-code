@@ -127,7 +127,6 @@ def build_buffpy(build):
 	"""
 	project_root = os.getenv('PROJECT_ROOT')
 	lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	clear_directory(lib_path)
 	
 	data = load_build_config(build)
 	

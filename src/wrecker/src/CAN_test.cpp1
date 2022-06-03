@@ -1,0 +1,61 @@
+#include <Arduino.h>
+#include "drivers/c620.h"
+#include "drivers/dr16.h"
+#include "state/state.h"
+
+
+// CAN
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+CAN_message_t canRecieveMessages[3][11];
+CAN_message_t tempMessage;
+
+
+// c610Enc motor1;
+c620CAN motor2;
+
+float power = 0.2;
+
+void setup() {
+    Serial.begin(115200);
+    can1.begin();
+    can2.begin();
+    can3.begin();
+
+    can1.setBaudRate(1000000);
+    can2.setBaudRate(1000000);
+    can3.setBaudRate(1000000);
+
+    // motor1.init(1, 1, 5);
+    motor2.init(8, 1);
+    // motor1.init(1, 1, 5);
+
+}
+
+void loop() {
+    // Necesary for motors to recieve data over CAN
+  // Needs to have usage
+  //  can.update(XXX, YYY);
+  //
+  while (can1.read(tempMessage))
+    canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
+  
+  while (can2.read(tempMessage))
+    canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
+  
+  while (can3.read(tempMessage))
+    canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
+  
+
+    // Serial.println(power);
+
+    // motor1.setPower(power);
+    motor2.setPower(0);
+    // motor1.setPower(power);
+
+    // sendCAN();
+
+    // delay(100);
+    Serial.println(motor2.getRpm());
+}

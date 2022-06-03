@@ -54,8 +54,12 @@ def overwrite_conf(a, b):
 			if not item in b:
 				b[item] = [] # initialize
 
-			for n in a[item]:
-				b[item].append(n) # add item
+			if len(a[item]) == 0:
+				b[item] = []
+
+			else:
+				for n in a[item]:
+					b[item].append(n) # add item
 
 		elif type(a[item]) is dict: # recurse on dictionary
 			if item in b:
