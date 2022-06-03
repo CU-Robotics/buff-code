@@ -39,7 +39,7 @@ class Projector:
 			topics['DETECTION_PIXEL'], Float64MultiArray, self.detection_callback, queue_size=5)
 
 		self.gimbal_sub = rospy.Subscriber(
-			topics['GIMBAL_STATE'], Float64MultiArray, self.gimbal_callback, queue_size=1)
+		 	topics['GIMBAL_STATE'], Float64MultiArray, self.gimbal_callback, queue_size=1)
 
 		self.project_pub = rospy.Publisher(
 			topics['DETECTION_WORLD'], Float64MultiArray, queue_size=1)
