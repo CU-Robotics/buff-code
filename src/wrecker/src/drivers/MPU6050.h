@@ -1,5 +1,7 @@
-#ifndef REF_SYS_H
-#define REF_SYS_H
+#ifndef MPU6050_H
+#define MPU6050_H
+#include <Adafruit_MPU6050.h>
+
 
 //#include "state/state.h"
 

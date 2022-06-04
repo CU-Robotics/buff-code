@@ -35,8 +35,8 @@ C_Robot robot_config;
 Gimbal gimbal;
 dr16 reciever;
 Shooter shooter;
-Ref_System refSys;
-SwerveChassis swerveChassis;
+// Ref_System refSys;
+// SwerveChassis swerveChassis;
 
 
 // TEMP
@@ -69,11 +69,11 @@ void setup() {
 
   // Subsystem setup
 
-  refSys.init(&robot_state.refSystem);
+  //refSys.init(&robot_state.refSystem);
   reciever.init(&robot_state.driverInput);
   gimbal.setup(&robot_config.gimbal, &robot_state);
   // swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
-  // shooter.setup(&robot_config.shooter17, &robot_state);
+  shooter.setup(&robot_config.shooter17, &robot_state);
 
 
   // serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
@@ -105,17 +105,19 @@ void loop() {
 
 
   reciever.update();
-  gimbal.update(deltaT);
-  // // swerveChassis.update(deltaT);
-  // // shooter.update(deltaT);
 
-  //refSys.read_serial();
+  //swerveChassis.update(deltaT);
+  gimbal.update(deltaT);
+  shooter.update(deltaT);
 
   if (counter % 5 == 0) {
-    sendCAN();
+    // sendC6x0();
+    // sendGM6020();
     counter = 0;
   }
   counter++;
+
+  //Serial.println(deltaT);
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
