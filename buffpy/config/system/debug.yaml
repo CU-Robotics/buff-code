@@ -1,13 +1,12 @@
-DEBUG:
-  True
-
-FROM:
-  'live.yaml'
+DEBUG: True
+FROM: 'live.yaml'
 
 TOPICS:
-  TRACKING_ERROR: 'tracking_error'
   TARGET_MAP: 'target_map'
   IMAGE_DEBUG: 'image_debug'
+  TRACKING_ERROR: 'tracking_error'
+  DETECTION_WORLD: 'world_detection'
+  
 
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
@@ -22,7 +21,7 @@ NODES:
   LUXONIS:
     REQUIRED: False
   TRACKER:     # spawns our tracker node
-    FILES: ['target_map.py']
+    FILES: ['projector.py', 'target_map.py']
   RQT_GUI:    # Opens an rqt_graph
     FILES: ['rqt_gui']
     PACKAGE: 'rqt_gui'

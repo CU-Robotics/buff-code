@@ -247,12 +247,19 @@ class DepthAI_Device:
 					output, conf_thres=self.confidence, iou_thres=self.iou)
 
 				boxes = boxes[0]
-
+				detections = []
 				if boxes is not None:
 					boxes = boxes.numpy() 
-					for box in boxes:
-						target_msg = Float64MultiArray(data=box)
-						self.det_pub.publish(target_msg)
+					for x1,x2,y1,y2,cf,cl in boxes:
+						x = (x1 + x2) / (2 * self.image_size)
+						y = (y1 + y2) / (2 * self.image_size)
+						w = abs(x1 - x2) / self.image_size
+						h = abs(y1 - y2) / self.image_size
+						
+						detections = np.concatenate([detections, [x,y,w,h,cl]])
+					
+					target_msg = Float64MultiArray(data=detections)
+					self.det_pub.publish(target_msg)
 
 				image_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
 				self.image_pub.publish(image_msg)

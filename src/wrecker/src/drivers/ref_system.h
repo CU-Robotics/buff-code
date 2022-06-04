@@ -1,24 +1,21 @@
+#include "state/state.h"
+
 #ifndef REF_SYS_H
 #define REF_SYS_H
 
-#include "state/state.h"
-
-class ref_sys{
+class Ref_System{
 
     public:
 
-    ref_sys();
+    Ref_System();
 
     void init(S_RefSystem *tempInput);
 
     bool read_serial();
 
-    S_RefSystem * run_data;
-
     private:
 
-
-
+    S_RefSystem* state;
 };
 
 #endif

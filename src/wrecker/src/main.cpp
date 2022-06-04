@@ -2,14 +2,16 @@
 #include <FlexCAN_T4.h>
 
 #include "state/state.h"
-#include "drivers/dr16.h"
 #include "state/config.h"
-#include "drivers/ref_sys.h"
-#include "subsystems/gimbal.h"
+
+#include "drivers/dr16.h"
+#include "drivers/ref_system.h"
 #include "drivers/serial_interface.h"
-#include "subsystems/swerveChassis.h"
+
+#include "subsystems/gimbal.h"
 #include "subsystems/gimbal.h"
 #include "subsystems/shooter.h"
+#include "subsystems/swerveChassis.h"
 
 // CAN
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
@@ -33,7 +35,7 @@ C_Robot robot_config;
 Gimbal gimbal;
 // dr16 reciever;
 Shooter shooter;
-// ref_sys refSystem;
+Ref_System refSys;
 SwerveChassis swerveChassis;
 
 
@@ -67,13 +69,13 @@ void setup() {
 
   // Subsystem setup
   // reciever.init(&robot_state.driverInput);
-  gimbal.setup(&robot_config.gimbal, &robot_state);
-  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
-  shooter.setup(&robot_config.shooter17, &robot_state);
+  // gimbal.setup(&robot_config.gimbal, &robot_state);
+  // swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  // shooter.setup(&robot_config.shooter17, &robot_state);
 
 
-  serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
-  serialDumpTmr.begin(dump, dumpRate);
+  // serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
+  // serialDumpTmr.begin(dump, dumpRate);
 }
 
 
@@ -96,14 +98,16 @@ void loop() {
   // //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
   
   
-  if (Serial.available() > 0)
-    serial_event(&robot_config, &robot_state);
+  // if (Serial.available() > 0)
+  //   serial_event(&robot_config, &robot_state);
 
 
   // // reciever.update();
-  // // gimbal.update(deltaT);
+  // gimbal.update(deltaT);
   // // swerveChassis.update(deltaT);
   // // shooter.update(deltaT);
+
+  refSys.read_serial();
 
   if (counter % 5 == 0) {
     //sendCAN();

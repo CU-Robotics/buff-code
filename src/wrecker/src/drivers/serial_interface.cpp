@@ -275,7 +275,7 @@ void dump_Chassis(S_Chassis* ch){
   dump_Swerve(&ch->RL, "/SD");
 }
 
-void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state, bool auto_aim){
+void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
 	char cmd = Serial.read();
   switch (cmd)
   {
@@ -290,13 +290,11 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state, bool auto_aim){
       config->yawOffset = Serial.parseInt();
 
     case 'W':
-      if (auto_aim)
-        state->yaw_reference = Serial.parseFloat();
+      state->yaw_reference = Serial.parseFloat();
       break;
 
     case 'H':
-      if (auto_aim)
-        state->pitch_reference = Serial.parseFloat();
+      state->pitch_reference = Serial.parseFloat();
       break;
 
     case 'Y':
@@ -408,7 +406,7 @@ void serial_event(C_Robot* config, S_Robot* state){
   switch (cmd)
   {
     case 'G':
-      Gimbal_serial_event(&config->gimbal, &state->gimbal, state->driverInput.mouseRight);
+      Gimbal_serial_event(&config->gimbal, &state->gimbal);
       break;
 
     case 'V':
@@ -430,14 +428,14 @@ void serial_event(C_Robot* config, S_Robot* state){
 }
 
 void dump_Robot(C_Robot* r_config, S_Robot* r_state){
-  dump_Chassis(&r_state->chassis);
+  // dump_Chassis(&r_state->chassis);
   // dump_RailChassis(&r_config->railChassis);
-  dump_SwerveChassis(&r_config->swerveChassis);
+  // dump_SwerveChassis(&r_config->swerveChassis);
 
   dump_Gimbal(&r_state->gimbal);
   dump_Gimbal(&r_config->gimbal);
 
-  // dump_RefSystem_State(r_state->refSystem);
+  dump_RefSystem_State(&r_state->refSystem);
 
   // dump_DriverInput(r_state->driverInput);
 }

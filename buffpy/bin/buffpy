@@ -392,6 +392,9 @@ def parse_arguments():
 	parser.add_argument('--initialize', 
 		action='store_true',
 		help='Initializes registered devices')
+	parser.add_argument('--upload', 
+		action='store_true',
+		help='Uploads firmware with PIO')
 	parser.add_argument('--clean',
 		action='store_true',
 		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
@@ -420,6 +423,9 @@ def main(ap):
 
 	if ap.install:
 		deploy_all_devices()
+
+	if ap.upload:
+		result = subprocess.run('cd src/wrecker && pio run -t upload', shell=True)
 
 	# May be Deprecated
 	# Consider moving to buff.bash as an alias
