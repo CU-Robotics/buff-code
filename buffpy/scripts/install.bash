@@ -69,26 +69,10 @@ sudo apt update
 #	Install Utilities
 #
 
-if [[ "${HOSTNAME}" != "edge"* ]]; then
-	echo -e "\n\tInstalling Teensy loader...\n"
+source "${PROJECT_ROOT}/buffpy/scripts/install_tytools.bash"
 
-	# #	Pull teensy files from pjrc.com
-	# # teensy binary and objects
-	# curl https://www.pjrc.com/teensy/teensy_linux64.tar.gz -O
-	# # teensy rules file
-	# curl https://www.pjrc.com/teensy/00-teensy.rules -O
+if [[ "${HOSTNAME}" == "edge"* ]]; then
 
-	# # mv rules into rules.d and set the proper file permissions
-	# sudo mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
-	# sudo chmod 0644 /etc/udev/rules.d/00-teensy.rules
-
-	# # extract the tar to buffpy/bin
-	# tar -xvsf teensy_linux64.tar.gz -C ${PROJECT_ROOT}/buffpy/bin
-	# # remove unecessary tar.gz 
-	# rm teensy_linux64.tar.gz
-
-else
-	#	Copy our startup service to the system units directory
 	sudo cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
 
 fi

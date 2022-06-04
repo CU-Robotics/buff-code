@@ -20,6 +20,7 @@ void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt) {
     float shadow = error - 360.0;
     if (fabs(shadow) < error) {
       state->X[0] = -shadow;
+      Serial.println("use shadow");
     }
   }
 

@@ -144,7 +144,7 @@ def draw_boxes(frame, boxes, total_classes):
 
 
 class DepthAI_Device:
-	def __init__(self, config_data=None):
+	def __init__(self):
 		"""
 				Define all the parameters of the model here.
 				Can be initialized with a config file, a system launch
@@ -153,24 +153,21 @@ class DepthAI_Device:
 		"""
 		# It is assumed that this script will only be called by the ols
 		# If the ols is used properly these will always be defined
-		self.FPS = config_data['CAMERA']['FPS']
-		self.iou = config_data['MODEL_INFO']['IOU']
+		topics = rospy.get_param('/buffbot/TOPICS')
 		self.debug = rospy.get_param('/buffbot/DEBUG')
-		self.image_size = config_data['CAMERA']['RESOLUTION']
-		self.model_file = config_data['MODEL_INFO']['MODEL_FILE']
-		self.confidence = config_data['MODEL_INFO']['CONFIDENCE']
+		self.iou = rospy.get_param('/buffbot/MODEL/IOU')
+		self.FPS = rospy.get_param('/buffbot/CAMERA/FPS')
+		self.confidence = rospy.get_param('/buffbot/MODEL/CONFIDENCE')
+		self.image_size = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, self.model_file)
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/BLOB_FILE'))
 
 		self.bridge = CvBridge()
 
 		# Start defining a pipeline
 		self.init_depthai_pipeline(model_path)
 
-		self.debug = rospy.get_param('/buffbot/DEBUG')
-		topics = rospy.get_param('/buffbot/TOPICS')
-		
 		rospy.init_node('buffnet', anonymous=True)
 		self.det_pub = rospy.Publisher(
 			topics['DETECTION_PIXEL'], Float64MultiArray, queue_size=1)
@@ -250,12 +247,19 @@ class DepthAI_Device:
 					output, conf_thres=self.confidence, iou_thres=self.iou)
 
 				boxes = boxes[0]
-
+				detections = []
 				if boxes is not None:
 					boxes = boxes.numpy() 
-					for box in boxes:
-						target_msg = Float64MultiArray(data=box)
-						self.det_pub.publish(target_msg)
+					for x1,x2,y1,y2,cf,cl in boxes:
+						x = (x1 + x2) / (2 * self.image_size)
+						y = (y1 + y2) / (2 * self.image_size)
+						w = abs(x1 - x2) / self.image_size
+						h = abs(y1 - y2) / self.image_size
+						
+						detections = np.concatenate([detections, [x,y,w,h,cl]])
+					
+					target_msg = Float64MultiArray(data=detections)
+					self.det_pub.publish(target_msg)
 
 				image_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
 				self.image_pub.publish(image_msg)
@@ -265,23 +269,13 @@ class DepthAI_Device:
 					ann_img_msg = self.bridge.cv2_to_imgmsg(ann_frame, "bgr8")
 					self.ann_pub.publish(ann_img_msg)
 
-def main(config_data):
-
-	if config_data is None:
-		return
-
-	device = DepthAI_Device(config_data=config_data)
+def main(name):
+	device = DepthAI_Device()
 	device.spin()
 
 if __name__ == '__main__':
-	if len(sys.argv) < 2:
-		print(f'No Data: BuffNet exiting ...')
-	elif '/buffbot' in sys.argv[1]:
-		main(rospy.get_param(sys.argv[1]))
-	elif '.yaml' in sys.argv[1]:
-		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
-			data = yaml.safe_load(f)
-		main(data)
+	if len(sys.argv) > 1:
+		main(sys.argv[1])
 
 
 		

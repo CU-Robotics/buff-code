@@ -1,35 +1,40 @@
-DEBUG:
-  False
+DEBUG: False
   
 
 TOPICS:
   IMAGE: 'image_raw'
   GIMBAL_STATE: 'gimbal_state'
   SERIAL_OUT: 'serial_write'
+  DETECTION_RED: 'red_detection'
+  DETECTION_BLUE: 'blue_detection'
   DETECTION_PIXEL: 'image_detection'
-  DETECTION_WORLD: 'world_detection'
 
 
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
-  #   FILE:
-  #     'record'
-  #   PACKAGE:
-  #     'rosbag'
+  #   FILE: 'record'
+  #   PACKAGE: 'rosbag'
   #   ARGS:       # -a record all  -x ignore -o output prefix
-  #     - '-a'
-  #     - '-x /rosout'
-  #     - '-o /home/cu-robotics/buff-code/data/'
+  #     ['-a', '-x /rosout', '-o /home/cu-robotics/buff-code/data/']
   LUXONIS: # spawns our detector node
     FILES: ['luxnet.py']
-    CONFIG: 'luxonis_settings.yaml'
-    PACKAGE: 'buffpy'
     REQUIRED: True
-  TRACKER:     # spawns our tracker node
-    FILES: ['deadreckon_tracer.py', 'projector.py']
-    CONFIG: 'tracker_settings.yaml'
-    PACKAGE: 'buffpy'
+  RED_TRACKER:     # spawns our tracker node
+    FILES: ['deadreckon_tracer.py']
+    CONFIG: None
+    DETECTION_TOPIC: 'DETECTION_RED'
+  # BLUE_TRACKER:     # spawns our tracker node
+  #   FILES: ['deadreckon_tracer.py']
+  #   CONFIG: None
+  #   DETECTION_TOPIC: 'DETECTION_BLUE'
   SERIAL:
     FILES: ['serial_layer.py']
     CONFIG: 'serial_settings.yaml'
-    PACKAGE: 'buffpy'
+
+  MODEL:
+    CONFIG: 'model_settings.yaml'
+  CAMERA:
+    CONFIG: 'camera_settings.yaml'
+  TRACKER:
+    FILES: ['projector.py']
+    CONFIG: 'tracker_settings.yaml'

@@ -11,6 +11,15 @@ extern CAN_message_t canRecieveMessages[3][11];
 
 CAN_message_t c6x0Messages[3][2];
 
+void sendCAN() {
+  can1.write(c6x0Messages[0][0]);
+  can1.write(c6x0Messages[0][1]);
+  can2.write(c6x0Messages[1][0]);
+  can2.write(c6x0Messages[1][1]);
+  can3.write(c6x0Messages[2][0]);
+  can3.write(c6x0Messages[2][1]);
+}
+
 
 c620CAN::c620CAN() {
 
@@ -39,29 +48,35 @@ void c620CAN::setPower(float power) {
   }
   
   int16_t newPower = (int16_t)(power * 16384);
+  // Serial.print("sending: ");
+  // Serial.println(newPower);
+
   byte byteOne = highByte(newPower);
   byte byteTwo = lowByte(newPower);
   sendMsgPtr->buf[byteNum << 1] = byteOne;
   sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
-  switch (canBusNum) {
-    case 1:
-      can1.write(*sendMsgPtr);
-      break;
-    case 2:
-      can2.write(*sendMsgPtr);
-      break;
-    case 3:
-      can3.write(*sendMsgPtr);
-      break;
-  }
+  // switch (canBusNum) {
+  //   case 1:
+  //     can1.write(*sendMsgPtr);
+  //     break;
+  //   case 2:
+  //     can2.write(*sendMsgPtr);
+  //     break;
+  //   case 3:
+  //     can3.write(*sendMsgPtr);
+  //     break;
+  // }
   updateMotor();
 }
 
 void c620CAN::updateMotor() {
     CAN_message_t *recMsg = &canRecieveMessages[canBusNum - 1][id - 1];
-    angle = recMsg->buf[0];
-    angle = angle << 8;
-    angle = angle | recMsg->buf[1];
+    
+    uint16_t tempAngle;
+    tempAngle = recMsg->buf[0];
+    tempAngle = tempAngle << 8;
+    tempAngle = tempAngle | recMsg->buf[1];
+    angle = map(tempAngle, 0, 8191, 0, 36000) / 100.0;
 
     rpm = recMsg->buf[2];
     rpm = rpm << 8;
@@ -122,17 +137,17 @@ void c610Enc::setPower(float power) {
   // Serial.print(byteOne,HEX);
   // Serial.print(", ");
   // Serial.println(byteTwo, HEX);
-  switch (canBusNum) {
-    case 1:
-      can1.write(*sendMsgPtr);
-      break;
-    case 2:
-      can2.write(*sendMsgPtr);
-      break;
-    case 3:
-      can3.write(*sendMsgPtr);
-      break;
-  }
+  // switch (canBusNum) {
+  //   case 1:
+  //     can1.write(*sendMsgPtr);
+  //     break;
+  //   case 2:
+  //     can2.write(*sendMsgPtr);
+  //     break;
+  //   case 3:
+  //     can3.write(*sendMsgPtr);
+  //     break;
+  // }
   updateMotor();
 }
 
@@ -144,9 +159,9 @@ float c610Enc::getAngle() {
   {
     freq.read();
   }
-  int16_t temp = map(round(freq.countToNanoseconds(freq.read())/1000), 1, 1024, 0, 360);
+  float temp = map(round(freq.countToNanoseconds(freq.read())/1000), 1, 1024, 0, 36000) / 100.0;
 
-  if (temp >= 0 && temp <= 360)
+  if (temp >= 0.0 && temp <= 360.0)
   {
     angle = temp;
   }

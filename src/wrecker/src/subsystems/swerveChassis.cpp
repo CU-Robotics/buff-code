@@ -24,7 +24,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   // FRONT RIGHT
   data->FR.cornerID = 0;
   data->FR.steerMotorID = 4;
-  data->FR.steerEncoderID = 5;
+  data->FR.steerEncoderID = 1 + 1;
   data->FR.driveMotorID = 5;
   data->FR.absolute_offset = 45;
 
@@ -32,7 +32,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   {
     data->FR.alignment[i] = fr_alignment[i];
   }
-  data->FR.steerVel.K[0] = 0.07;
+  data->FR.steerVel.K[0] = 0.03;
   data->FR.steerVel.K[1] = 0;
   data->FR.steerVel.K[2] = 0;
   data->FR.steerPos.K[0] = 1.2;
@@ -44,7 +44,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   // FRONT LEFT
   data->FL.cornerID = 1;
   data->FL.steerMotorID = 3;
-  data->FL.steerEncoderID = 2;
+  data->FL.steerEncoderID = 1 + 2;
   data->FL.driveMotorID = 6;
   data->FL.absolute_offset = -45;
 
@@ -52,7 +52,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   {
     data->FL.alignment[i] = fl_alignment[i];
   }
-  data->FL.steerVel.K[0] = 0.07;
+  data->FL.steerVel.K[0] = 0.03;
   data->FL.steerVel.K[1] = 0;
   data->FL.steerVel.K[2] = 0;
   data->FL.steerPos.K[0] = 1.2;
@@ -64,7 +64,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   // BACK LEFT
   data->RL.cornerID = 2;
   data->RL.steerMotorID = 2;
-  data->RL.steerEncoderID = 3;
+  data->RL.steerEncoderID = 1 + 3;
   data->RL.driveMotorID = 7;
   data->RL.absolute_offset = -135;
 
@@ -72,7 +72,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   {
     data->RL.alignment[i] = bl_alignment[i];
   }
-  data->RL.steerVel.K[0] = 0.07;
+  data->RL.steerVel.K[0] = 0.03;
   data->RL.steerVel.K[1] = 0;
   data->RL.steerVel.K[2] = 0;
   data->RL.steerPos.K[0] = 1.2;
@@ -84,7 +84,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   // BACK RIGHT
   data->RR.cornerID = 3;
   data->RR.steerMotorID = 1;
-  data->RR.steerEncoderID = 4;
+  data->RR.steerEncoderID = 1 + 4;
   data->RR.driveMotorID = 8;
   data->RR.absolute_offset = 135;
 
@@ -92,7 +92,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   {
     data->RR.alignment[i] = br_alignment[i];
   }
-  data->RR.steerVel.K[0] = 0.07;
+  data->RR.steerVel.K[0] = 0.03;
   data->RR.steerVel.K[1] = 0;
   data->RR.steerVel.K[2] = 0;
   data->RR.steerPos.K[0] = 1.2;
@@ -115,13 +115,14 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
 }
 
 void SwerveChassis::update(unsigned long deltaTime) {
-  if (state->driverInput.f && !calibrated) {
-    calibrate();
+  if (state->driverInput.b && !calibrated) {
     calibrated = true;
+    calibrate();
+    Serial.println("calibrate!");
   }
 
   int x = state->driverInput.d - state->driverInput.a;
-  int y = state->driverInput.w - state->driverInput.s;
+  int y = state->driverInput.s - state->driverInput.w;
   int s = state->driverInput.q - state->driverInput.e;
 
 
@@ -136,11 +137,13 @@ void SwerveChassis::calibrate() {
 }
 
 void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long deltaTime) {
-  float gimbalAngle = 0;
+  float gimbalAngle = 0; // TODO - pull the state from gimbal state
 
+  // Apply rotation matrix so that drive inputs are gimbal-relative
   float newDriveX = -driveX * cos(radiansToDegrees(gimbalAngle)) + -driveY * sin(radiansToDegrees(-gimbalAngle));
   float newDriveY = -driveX * sin(radiansToDegrees(gimbalAngle)) + -driveY * cos(radiansToDegrees(gimbalAngle));
 
+  // Swerve math
   float A = newDriveX - spin * drivebaseConstant;
   float B = newDriveX + spin * drivebaseConstant;
   float C = newDriveY - spin * drivebaseConstant;
@@ -164,11 +167,11 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long 
   float angleBL = radiansToDegrees(atan2(A, C));
   float angleBR = radiansToDegrees(atan2(A, D));
 
-
+  // Update each module
   moduleFR.update(speedFR, angleFR, deltaTime);
-  // moduleFL.update(speedFL, angleFL, deltaTime);
-  // moduleBL.update(speedBL, angleBL, deltaTime);
-  // moduleBR.update(speedBR, angleBR, deltaTime);
+  moduleFL.update(speedFL, angleFL, deltaTime);
+  moduleBL.update(speedBL, angleBL, deltaTime);
+  moduleBR.update(speedBR, angleBR, deltaTime);
 }
 
 float SwerveChassis::radiansToDegrees(float radians) {

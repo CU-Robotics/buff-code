@@ -1,5 +1,6 @@
-**/.vscode
 **/.pio
+**/.piopm
+**/.vscode
 **/.DS_store
 **/__pycache__
 
