@@ -196,15 +196,17 @@ def launch_system(target_path, config):
 			node = config['NODES'][name]
 
 			# Not all packages handle our launch params
-			if 'CONFIG' in node and not node['CONFIG'] is None:
+			if 'CONFIG' in node:
 				args = f'{namespace}/{name}'
-				config_path = os.path.join(data_path, node['CONFIG'])
 
-				with open(config_path, 'r') as f:
-					config_data = yaml.safe_load(f)
+				if not node['CONFIG'] == 'None':
+					config_path = os.path.join(data_path, node['CONFIG'])
 
-				if not config_data is None:
-					node.update(config_data) # Add the yaml data to the roslaunch node
+					with open(config_path, 'r') as f:
+						config_data = yaml.safe_load(f)
+
+					if not config_data is None:
+						node.update(config_data) # Add the yaml data to the roslaunch node
 
 				rospy.set_param(args, node)
 

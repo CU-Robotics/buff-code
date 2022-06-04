@@ -68,16 +68,22 @@ class BuffNet:
 		"""
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 		prediction = np.array(self.model(image).pandas().xywh)[0]
-
 		annotation = []
-		detection = []
+		detection = np.array([])
 
 		if len(prediction) < 1:
 			return annotation, detection
 
 		for x,y,w,h,cf,cl,n in prediction:
-			annotation.append([round(x), round(y), round(w), round(h), cf, cl, n])
-			detection.append([round(x), round(y), round(w), round(h), cf, cl])
+			annotation.append([int(x), int(y), int(w), int(h), cf, cl, n])
+
+			x = int(x) / image.shape[1]
+			y = int(y) / image.shape[0]
+			w = int(w) / image.shape[1]
+			h = int(h) / image.shape[0]
+
+			if cf > 0.5:
+				detection = np.concatenate([detection, [x, y, w, h, cl]])
 
 		return annotation, detection
 
@@ -92,6 +98,7 @@ class BuffNet:
 		image = frame.copy()
 
 		colors = [(255,0,0), (0,0,255), (0,255,0)]
+
 		if len(labels) < 1:
 			return image
 
@@ -137,12 +144,9 @@ class BuffNet:
 		annotations, predictions = self.detect(image)
 		mesg = Float64MultiArray()
 
-		if len(predictions) < 1:
-			mesg.data = [-1.0, -1.0, -1.0, -1.0, -1.0]
-		else:
-			for pred in predictions:
-				mesg.data = np.array(pred, dtype=np.float64)
-				self.target_pub.publish(mesg)
+		if len(predictions) > 3:
+			mesg.data = np.array(predictions, dtype=np.float64)
+			self.target_pub.publish(mesg)
 
 		if self.debug:
 			self.publish_annotated(self.annotate_image(image, annotations))

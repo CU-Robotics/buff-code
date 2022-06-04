@@ -31,32 +31,34 @@ class Dead_Reckon_Tracer:
 	cause problems in the future.
 	"""
 	
-	def __init__(self, data, debug=False):
+	def __init__(self, name):
 		self.pose = None
 		self.history = None
 		self.t = time.time() 
 		self.old_t = time.time()
 		self.trajectory = np.zeros((3,2), dtype=np.float64)
 
-		self.r_threshold = data['MATCH_THRESHOLD']
-		self.d_offset = data['SHOOTER_DROP']
-		self.t_offset = data['LEAD_TIME']
-		self.rate_hz = data['RATE']
+		self.init_ros(name)
 
-		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
-
-		self.init_ros(data)
-
-	def init_ros(self, data):
+	def init_ros(self, name):
 
 		rospy.init_node('tracker', anonymous=True)
-		self.rate = rospy.Rate(data['RATE'])
+
+		self.r_threshold = rospy.get_param('/buffbot/TRACKER/MATCH_THRESHOLD')
+		self.d_offset = rospy.get_param('/buffbot/TRACKER/SHOOTER_DROP')
+		self.t_offset = rospy.get_param('/buffbot/TRACKER/LEAD_TIME')
+		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
+		
+		hz = rospy.get_param('/buffbot/CAMERA/FPS')
+		self.rate = rospy.Rate(hz)
 		
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 		topics = rospy.get_param('/buffbot/TOPICS')
 
+		detection_topic = rospy.get_param(f'{name}/DETECTION_TOPIC')
+
 		self.detect_sub = rospy.Subscriber(
-			topics['DETECTION_PIXEL'], Float64MultiArray, self.detection_callback, queue_size=5)
+			topics[detection_topic], Float64MultiArray, self.detection_callback, queue_size=5)
 
 		self.prediction_pub = rospy.Publisher(
 			topics['SERIAL_OUT'], String, queue_size=1)
@@ -75,9 +77,15 @@ class Dead_Reckon_Tracer:
 		# Build a custom message that has a timestamp
 		t = time.time()
 		# do tracker stuff
-		x, y, w, h, cf, cl = np.array(msg.data)
-		
-		self.update_trajectory(t, [x,y])
+		detections = np.array(msg.data)
+		closest_det = np.ones(4) / 2
+		closest_det[3] = 0
+
+		for detection in detections.reshape(round(len(detections)/4), 4):
+			if detection[3] > closest_det[3]:
+				closest_det = detection
+
+		self.update_trajectory(t, np.array(closest_det[:2]))
 
 	def reset(self):
 		self.history = None
@@ -97,6 +105,7 @@ class Dead_Reckon_Tracer:
 		if not pose is None:
 			return pose + (t_vect @ self.trajectory)
 		else:
+			print(self.trajectory)
 			self.pose = self.history[0] + (t_vect @ self.trajectory)
 
 	def publish_error(self):
@@ -115,15 +124,16 @@ class Dead_Reckon_Tracer:
 
 		if self.history is None:
 			self.history = np.zeros((4,2), dtype=np.float64)
-			self.history[0] = np.array(measure).reshape(2)
+			self.history[0] = measure
+			self.history[1] = measure
 
 		else:
-			self.history[1:] =  self.history[:3]
-			self.history[0] = np.array(measure).reshape(2)
+			if np.linalg.norm(measure - self.history[0]) > self.r_threshold:
+				self.trajectory = np.zeros((3,2), dtype=np.float64)
+				self.history[0] = measure
 
-		if np.linalg.norm(self.history[0] - self.history[1]) > self.r_threshold:
-			self.reset()
-			return
+			self.history[1:] =  self.history[:3]
+			self.history[0] = measure
 
 		velocity, acceleration, jerk = self.trajectory
 
@@ -134,14 +144,13 @@ class Dead_Reckon_Tracer:
 		self.old_t = self.t
 		self.t = t
 
-		acceleration = (velocity - v1) / dt
-		jerk = (acceleration - a1) / dt
+		# acceleration = (velocity - v1) / dt
+		# jerk = (acceleration - a1) / dt
 
 		# save updates
 		self.trajectory = np.array([velocity, acceleration, jerk])
 
 	def spin(self):
-
 		while not rospy.is_shutdown():
 
 			if time.time() - self.t > 5:
@@ -150,19 +159,22 @@ class Dead_Reckon_Tracer:
 			if not self.history is None:
 
 				self.predict(time.time())
+				print(f'history: {self.history}')
+				print(f'Pose: {self.pose}')
 				phi_err = (self.pose[1] - self.d_offset) * self.FOV
 				psi_err = (self.pose[0] - 0.5) * self.FOV
-				print(phi_err, psi_err)
-				# msg = String(f'GPR {phi_err} GYR {psi_err}')
-				# self.prediction_pub.publish(msg)
+				print(f'Error: {phi_err}, {psi_err}')
+				msg = String(f'GH {phi_err} GW {psi_err}')
+				self.prediction_pub.publish(msg)
 
 				if self.debug:
 					self.publish_error()
 
 			self.rate.sleep()
 
-def main(data):
-	tracker = Dead_Reckon_Tracer(data)
+def main(name):
+	tracker = Dead_Reckon_Tracer(name)
+
 	tracker.spin()
 
 
@@ -171,10 +183,5 @@ if __name__ == '__main__':
 		print(f'No Data: Tracker exiting ...')
 
 	elif '/buffbot' in sys.argv[1]:
-		main(rospy.get_param(sys.argv[1]))
+		main(sys.argv[1])
 
-	elif '.yaml' in sys.argv[1]:
-		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
-			data = yaml.safe_load(f)
-
-		main(data)
