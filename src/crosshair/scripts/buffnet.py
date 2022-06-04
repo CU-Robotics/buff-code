@@ -102,6 +102,7 @@ class BuffNet:
 			y2 = int(y + (h / 2))
 			image = cv2.rectangle(image, (x1, y1), (x2, y2), colors[int(c)], 2)
 			image = cv2.putText(image, name + f'-{np.round(cl, 4)}', (x1, y1 - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv2.LINE_AA)
+		
 		return image
 
 	def detect_and_annotate(self, image):
