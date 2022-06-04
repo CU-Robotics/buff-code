@@ -27,9 +27,9 @@ void Shooter::update(unsigned long deltaTime) {
         this->topFlywheel.setPower(0.3);
         this->bottomFlywheel.setPower(0.3);
 
-        if (state->driverInput.f)
+        if (state->driverInput.mouseLeft)
             state->Shooter17.feedPID.R = -2160;
-        else if (state->driverInput.g)
+        else if (state->driverInput.f)
             state->Shooter17.feedPID.R = 2160;
         else
             state->Shooter17.feedPID.R = 0;
