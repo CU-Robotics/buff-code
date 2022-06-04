@@ -10,6 +10,15 @@ extern CAN_message_t canRecieveMessages[3][11];
 
 CAN_message_t gm6020Messages[3][2];
 
+void sendGM6020() {
+  can1.write(gm6020Messages[0][0]);
+  can1.write(gm6020Messages[0][1]);
+  can2.write(gm6020Messages[1][0]);
+  can2.write(gm6020Messages[1][1]);
+  // can3.write(c6x0Messages[2][0]);
+  // can3.write(c6x0Messages[2][1]);
+}
+
 gm6020::gm6020() {
   
 }
@@ -43,18 +52,18 @@ void gm6020::setPower(float power) {
   byte byteTwo = lowByte(newPower);
   sendMsgPtr->buf[byteNum << 1] = byteOne;
   sendMsgPtr->buf[(byteNum << 1) + 1] = byteTwo;
-  switch (canBusNum) {
-    case 1:
-      can1.write(*sendMsgPtr);
-      break;
-    case 2:
-      can2.write(*sendMsgPtr);
-      // Serial.println("writing to can2");
-      break;
-    case 3:
-      can3.write(*sendMsgPtr);
-      break;
-  }
+  // switch (canBusNum) {
+  //   case 1:
+  //     can1.write(*sendMsgPtr);
+  //     break;
+  //   case 2:
+  //     can2.write(*sendMsgPtr);
+  //     // Serial.println("writing to can2");
+  //     break;
+  //   case 3:
+  //     can3.write(*sendMsgPtr);
+  //     break;
+  // }
   updateMotor();
 }
 

@@ -17,10 +17,11 @@ void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt) {
   // Proportional term = error (Reference - Measure)
   state->X[0] = error;
   if (config->continuous) {
-    float shadow = error - 360.0;
-    if (fabs(shadow) < error) {
-      state->X[0] = -shadow;
-      Serial.println("use shadow");
+    if (180.0 < error) {
+      state->X[0] = (error - 360);
+    }
+    else if (-180 > error) {
+      state->X[0] = (error + 360);
     }
   }
 
