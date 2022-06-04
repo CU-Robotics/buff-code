@@ -8,6 +8,8 @@
 #ifndef GM6020_H
 #define GM6020_H
 
+void sendGM6020();
+
 class gm6020 : public rmMotor {
     public:
         gm6020();

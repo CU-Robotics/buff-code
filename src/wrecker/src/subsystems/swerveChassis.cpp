@@ -113,7 +113,7 @@ void SwerveChassis::update(unsigned long deltaTime) {
 
   int x = state->driverInput.d - state->driverInput.a;
   int y = state->driverInput.s - state->driverInput.w;
-  int s = state->driverInput.q - state->driverInput.e;
+  int s = state->driverInput.z - state->driverInput.x;
 
   drive(x, y, s, deltaTime);
 }
@@ -126,7 +126,7 @@ void SwerveChassis::calibrate() {
 }
 
 void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long deltaTime) {
-  float gimbalAngle = 0; // TODO - pull the state from gimbal state
+  float gimbalAngle = this->state->chassis.heading;
 
   // Apply rotation matrix so that drive inputs are gimbal-relative
   float newDriveX = -driveX * cos(radiansToDegrees(gimbalAngle)) + -driveY * sin(radiansToDegrees(-gimbalAngle));

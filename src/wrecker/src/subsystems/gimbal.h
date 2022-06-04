@@ -1,6 +1,7 @@
 #include "state/state.h"
 #include "state/config.h"
 #include "drivers/gm6020.h"
+#include "drivers/MPU6050.h"
 #include "algorithms/PID_Filter.h"
 
 #ifndef GIMBAL_H
@@ -20,12 +21,16 @@ class Gimbal
     gm6020 yawMotor; 
     gm6020 pitchMotor;
 
+    MPU6050 imu;
+
     float calibrated;
     float yawRollover;
     float prevRawYawAngle;
 
     float aimYaw = 0;
     float aimPitch = 0;
+
+    float gyroAngle = 0;
 
     float realizeYawEncoder(float rawAngle);
     float realizePitchEncoder(float rawAngle);

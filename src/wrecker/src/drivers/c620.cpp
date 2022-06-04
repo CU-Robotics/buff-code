@@ -11,7 +11,7 @@ extern CAN_message_t canRecieveMessages[3][11];
 
 CAN_message_t c6x0Messages[3][2];
 
-void sendCAN() {
+void sendC6x0() {
   can1.write(c6x0Messages[0][0]);
   can1.write(c6x0Messages[0][1]);
   can2.write(c6x0Messages[1][0]);
