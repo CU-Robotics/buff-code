@@ -9,24 +9,23 @@ from std_msgs.msg import String, Float64MultiArray
 
 
 class SerialLayer():
-	def __init__(self, data):
+	def __init__(self, name):
 
+		self.name = name
 		self.device = None
 		self.publishers = {}
 		self.connected = False
 
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 
-		self.port = data['PORT']
-		self.lives = data['LIVES']
-		self.timeout = data['TIMEOUT']
-		self.baudrate = data['BAUDRATE']
-		self.serial_LUT = data['SERIAL_LUT']
+		self.lives = int(rospy.get_param(f'{name}/LIVES'))
+		self.serial_LUT = rospy.get_param(f'{name}/SERIAL_LUT')
 
 		self.try_connect()
 
 		topics = rospy.get_param('/buffbot/TOPICS')
-		self.writer_sub = rospy.Subscriber(topics['SERIAL_OUT'], String, self.writer_callback, queue_size=10)
+		self.writer_sub = rospy.Subscriber(topics['SERIAL_OUT'], 
+			String, self.writer_callback, queue_size=10)
 
 		rospy.init_node('echo-serial', anonymous=True)
 
@@ -41,11 +40,8 @@ class SerialLayer():
 		"""
 		  Callback for writing messages to the teensy
 		"""
-		s = ''
-		for l in msg.data:
-			s += str(l)
-
-		self.write_device(bytes(s, 'utf-8'))
+		byte_string = bytes(msg.data, 'utf-8')
+		self.write_device(byte_string)
 
 	def try_connect(self):
 		"""
@@ -55,14 +51,18 @@ class SerialLayer():
 			if self.device:
 				self.device.close()
 
-			self.device = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
+			self.device = serial.Serial(rospy.get_param(f'{self.name}/PORT'), 
+				rospy.get_param(f'{self.name}/BAUDRATE'), 
+				timeout=rospy.get_param(f'{self.name}/TIMEOUT'))
+
 			self.device.flush()
 
 		except Exception as e:
+			lives = int(rospy.get_param(f'{self.name}/LIVES'))
 			rospy.logerr(e)
 			rospy.logerr(f"Serial lives left {self.lives}")
-			self.lives -= 1
-			if self.lives < 1:
+			rospy.set_param(f'{self.name}/LIVES', lives-1)
+			if lives < 2:
 				return False
 
 		else:
@@ -103,7 +103,6 @@ class SerialLayer():
 		else:
 			return
 
-		
 		if name[0] == '/':
 			topic = self.access_2_string(name[1:])
 			topic = '/' + '_'.join(topic.split('/'))[1:]
@@ -158,9 +157,5 @@ if __name__=='__main__':
 	if len(sys.argv) < 2:
 		print(f'No Data: Serial Layer exiting')
 	elif '/buffbot' in sys.argv[1]:
-		main(rospy.get_param(sys.argv[1]))
-	elif '.yaml' in sys.argv[1]:
-		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
-			data = yaml.safe_load(f)
-		main(data)
+		main(sys.argv[1])
 

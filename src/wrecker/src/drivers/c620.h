@@ -7,6 +7,8 @@
 #ifndef C620_H
 #define C620_H
 
+void sendCAN();
+
 class c620CAN : public rmMotor {
     public:
         c620CAN();

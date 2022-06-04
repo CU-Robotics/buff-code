@@ -34,10 +34,13 @@ struct S_Chassis {
   S_PID driveVel;
 };
 
+
 struct S_Gimbal {
   float yaw = 0.0f;
   float pitch = 0.0f;
   float yawGlobal = 0.0f;
+  float yaw_reference = 0.0f;
+  float pitch_reference = 0.0f;
 
   S_PID yaw_PID;
   S_PID pitch_PID;
@@ -61,9 +64,9 @@ struct DriverInput {
   uint8_t s1 = 0;
   uint8_t s2 = 0;
 
-  float mouseX = 0.0f;
-  float mouseY = 0.0f;
-  float mouseZ = 0.0f;
+  int16_t mouseX = 0;
+  int16_t mouseY = 0;
+  int16_t mouseZ = 0;
   bool mouseLeft = false;
   bool mouseRight = false;
 
@@ -81,7 +84,7 @@ struct DriverInput {
   bool c = false;
   bool v = false;
   bool b = false;
-  bool shift = false;
+  bool shift = true;
   bool ctrl = false;
 
   //byte keyboard[2] = 15 bit value

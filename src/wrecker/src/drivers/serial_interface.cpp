@@ -240,7 +240,7 @@ void dump_RailChassis(C_RailChassis* rc){
   Serial.println(rc->nodes[9]);
 
   dump_PID(&rc->drivePos, "@RP");
-  dump_PID(&rc->driveVel, "@RD");
+  dump_PID(&rc->driveVel, "@RV");
 }
 
 void dump_SwerveChassis(C_SwerveChassis* sc){
@@ -275,8 +275,36 @@ void dump_Chassis(S_Chassis* ch){
   dump_Swerve(&ch->RL, "/SD");
 }
 
+void dump_Gimbal(S_Gimbal* gm){
+  Serial.print("/GT: "); 
+  Serial.print(gm->yaw); Serial.print(","); 
+  Serial.print(gm->pitch); Serial.print(",");
+  Serial.print(gm->yaw_reference); Serial.print(",");
+  Serial.print(gm->pitch_reference); Serial.print(",");
+
+  Serial.println(gm->yawGlobal);
+
+  dump_PID(&gm->yaw_PID, "/GY");
+  dump_PID(&gm->pitch_PID, "/GP");
+}
+
+void dump_Gimbal(C_Gimbal* gm){
+  Serial.print("@GS: "); 
+  Serial.println(gm->sensitivity); 
+
+  Serial.print("@GA: "); 
+  Serial.println(gm->yawOffset); 
+
+  Serial.print("@GG: ");
+  Serial.println(gm->pitchOffset);
+
+  dump_PID(&gm->yaw_PID, "@GY");
+  dump_PID(&gm->pitch_PID, "@GP");
+}
+
+
 void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
-	char cmd = Serial.read();
+  char cmd = Serial.read();
   switch (cmd)
   {
     case 'S':
@@ -289,6 +317,15 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
     case 'G':
       config->yawOffset = Serial.parseInt();
 
+    case 'W':
+      state->yaw_reference = Serial.parseFloat();
+      break;
+
+    case 'H':
+      state->pitch_reference = Serial.parseFloat();
+      dump_Gimbal(state);
+      break;
+
     case 'Y':
       PID_serial_event(&config->yaw_PID, &state->yaw_PID);
       break;
@@ -297,30 +334,6 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
       PID_serial_event(&config->pitch_PID, &state->yaw_PID);
       break;
   }
-}
-
-void dump_Gimbal(S_Gimbal* gm){
-  Serial.print("/GT: "); 
-  Serial.print(gm->yaw); Serial.print(","); 
-  Serial.print(gm->pitch); Serial.print(",");
-  Serial.println(gm->yawGlobal);
-
-  dump_PID(&gm->yaw_PID, "/GY");
-  dump_PID(&gm->pitch_PID, "/GP");
-}
-
-void dump_Gimbal(C_Gimbal* gm){
-  Serial.print("@BS: "); 
-  Serial.println(gm->sensitivity); 
-
-  Serial.print("@BA: "); 
-  Serial.println(gm->yawOffset); 
-
-  Serial.print("@BG: ");
-  Serial.println(gm->pitchOffset);
-
-  dump_PID(&gm->yaw_PID, "@BY");
-  dump_PID(&gm->pitch_PID, "@BP");
 }
 
 void Shooter17_serial_event(C_Shooter17* config, S_Shooter* state){
@@ -421,13 +434,13 @@ void serial_event(C_Robot* config, S_Robot* state){
 
 void dump_Robot(C_Robot* r_config, S_Robot* r_state){
   // dump_Chassis(&r_state->chassis);
-  // dump_RailChassis(r_config->railChassis);
+  // dump_RailChassis(&r_config->railChassis);
   // dump_SwerveChassis(&r_config->swerveChassis);
 
   dump_Gimbal(&r_state->gimbal);
-  // dump_Gimbal(&r_config->gimbal);
+  dump_Gimbal(&r_config->gimbal);
 
-  // dump_RefSystem_State(r_state->refSystem);
+  // dump_RefSystem_State(&r_state->refSystem);
 
   // dump_DriverInput(r_state->driverInput);
 }

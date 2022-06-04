@@ -16,52 +16,46 @@ import numpy as np
 import buffvision as bv
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from gdrive_handler import GD_Handler
 from std_msgs.msg import Float64MultiArray
 
 class BuffNet:
-	def __init__(self, config_data=None):
+	def __init__(self):
 		"""
 			Define all the parameters of the model here.
 			Can be initialized with a config file, a system launch
 			or manually from a terminal. will exit if not enough params
 			exist.
 		"""
-		if 'DEBUG' in config_data:
-			self.debug = True
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, config_data['MODEL'])
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/PT_FILE'))
 
+		print(model_path)
+		
 		if not os.path.exists(model_path):
-			gdrive = GD_Handler()
-			gdrive.downloadFile(file='BuffNetv2-exp14', path=model_dir, title='BuffNetv2-exp14.pt')
+			print('No model')
+			return
 
 		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
 
-		rospy.loginfo
+		rospy.init_node('buffnet', anonymous=True)
 
 		self.bridge = CvBridge()
-		rospy.init_node('buffnet', anonymous=True)
+
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 
 		topics = rospy.get_param('/buffbot/TOPICS')
-		pubs = [topics[t] for t in config_data['TOPICS']['PUBLISH']]
-		subs = [topics[t] for t in config_data['TOPICS']['SUBSCRIBE']]
 
-		if len(pubs) > 0:
-			self.target_pub = rospy.Publisher(pubs[0], Float64MultiArray, queue_size=1)
-			if self.debug and len(pubs) > 1:
-				self.debug_pub = rospy.Publisher(pubs[1], Image, queue_size=1)
+		self.target_pub = rospy.Publisher(topics['DETECTION_PIXEL'], Float64MultiArray, queue_size=1)
 
-		if len(subs) > 0:
-			self.im_subscriber = rospy.Subscriber(subs[0], Image, self.imageCallBack, queue_size=1)
+		if self.debug:
+			self.debug_pub = rospy.Publisher(topics['IMAGE_DEBUG'], Image, queue_size=1)
 
-		if 'CAMERA' in config_data:
-			w, h, d = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
-			self.image_size = (w, d)
-		else:
-			self.image_size = (416, 416)
+		self.im_subscriber = rospy.Subscriber(topics['IMAGE'], Image, self.imageCallBack, queue_size=1)
+
+		r = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
+		self.image_size = (r, r)
+
 
 
 	def detect(self, image):
@@ -72,42 +66,51 @@ class BuffNet:
 			@RETURNS:
 				annotations: bounding box of the detected object with color and class [class, name, (x1,y1), (w,h)]
 		"""
-		image = cv2.resize(image, self.image_size)
+		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 		prediction = np.array(self.model(image).pandas().xywh)[0]
-
 		annotation = []
-		detection = []
+		detection = np.array([])
 
 		if len(prediction) < 1:
 			return annotation, detection
 
 		for x,y,w,h,cf,cl,n in prediction:
-			annotation.append([round(x), round(y), round(w), round(h), cf, cl, n])
-			detection.append([round(x), round(y), round(w), round(h), cf, cl])
+			annotation.append([int(x), int(y), int(w), int(h), cf, cl, n])
+
+			x = int(x) / image.shape[1]
+			y = int(y) / image.shape[0]
+			w = int(w) / image.shape[1]
+			h = int(h) / image.shape[0]
+
+			if cf > 0.5:
+				detection = np.concatenate([detection, [x, y, w, h, cl]])
 
 		return annotation, detection
 
 	def generate_color(self, cl):
 		return (np.cos(cl) * 255, np.sin(cl) * 255, np.tan(cl) * 255)
 
-	def annotate_image(self, image=None, labels=None):
+	def annotate_image(self, frame, labels):
 
-		if image is None or labels is None:
+		if frame is None or labels is None:
 			return None
 
-		annotated_image = image.copy()
+		image = frame.copy()
 
-		scale = (image.shape[1] / self.image_size[0], image.shape[0] / self.image_size[1])
-		for label in labels:
-			w = int(label[2]) * scale[0]
-			h = int(label[3]) * scale[1]
-			p1 = (int((label[0] - (w / 2)) * scale[0]), int((label[1] - (h / 2)) * scale[1]))
-			p2 = (int((label[0] + (w / 2)) * scale[0]), int((label[1] + (h / 2)) * scale[1]))
-			color = self.generate_color(label[5])
-			annotated_image = cv2.rectangle(annotated_image, p1, p2, color, 2)
-			annotated_image = cv2.putText(annotated_image, f'{label[6]}-{round(label[4])}%', p1, cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1, cv2.LINE_AA)
+		colors = [(255,0,0), (0,0,255), (0,255,0)]
+
+		if len(labels) < 1:
+			return image
+
+		for [x, y, w, h, cl, c, name] in labels:
+			x1 = int(x - (w / 2))
+			x2 = int(x + (w / 2))
+			y1 = int(y - (h / 2))
+			y2 = int(y + (h / 2))
+			image = cv2.rectangle(image, (x1, y1), (x2, y2), colors[int(c)], 2)
+			image = cv2.putText(image, name + f'-{np.round(cl, 4)}', (x1, y1 - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv2.LINE_AA)
 		
-		return annotated_image
+		return image
 
 	def detect_and_annotate(self, image):
 		"""
@@ -137,15 +140,13 @@ class BuffNet:
 			@RETURNS:
 				None
 		"""
+		image = cv2.resize(image, self.image_size)
 		annotations, predictions = self.detect(image)
 		mesg = Float64MultiArray()
 
-		if len(predictions) < 1:
-			mesg.data = [-1.0, -1.0, -1.0, -1.0, -1.0]
-		else:
-			for pred in predictions:
-				mesg.data = np.array(pred, dtype=np.float64)
-				self.target_pub.publish(mesg)
+		if len(predictions) > 3:
+			mesg.data = np.array(predictions, dtype=np.float64)
+			self.target_pub.publish(mesg)
 
 		if self.debug:
 			self.publish_annotated(self.annotate_image(image, annotations))
@@ -161,30 +162,11 @@ class BuffNet:
 		self.detect_and_publish(self.bridge.imgmsg_to_cv2(img_msg))
 
 
-def main(config_data):
-
-	if config_data is None:
-		return
-
-	detector = BuffNet(config_data=config_data)
-
-	if 'TOPICS' in config_data:
-		rospy.spin()
-
-	if 'DATA' in config_data:	
-		# run independantly
-		data = bv.load_data(path=os.path.join(os.get_env('PROJECT_ROOT'), 'data', config_data['DATA']))
-
-		for image, labels in data[0:5]:
-			detector.detect_and_annotate(image)
+def main():
+	detector = BuffNet()
+	rospy.spin()
 
 
 if __name__=='__main__':
-	if len(sys.argv) < 2:
-		print(f'No Data: BuffNet exiting ...')
-	elif '/buffbot' in sys.argv[1]:
-		main(rospy.get_param(sys.argv[1]))
-	elif '.yaml' in sys.argv[1]:
-		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
-			data = yaml.safe_load(f)
-		main(data)
+	main()
+

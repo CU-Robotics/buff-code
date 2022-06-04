@@ -35,6 +35,7 @@
 import os
 import sys
 import yaml
+import glob
 import shutil
 import argparse
 import subprocess
@@ -126,7 +127,6 @@ def build_buffpy(build):
 	"""
 	project_root = os.getenv('PROJECT_ROOT')
 	lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	clear_directory(lib_path)
 	
 	data = load_build_config(build)
 	
@@ -142,8 +142,8 @@ def build_buffpy(build):
 	# Build the Firmware with pio 
 	if 'FIRMWARE_INI' in data:
 		for firmware_pkg in data['FIRMWARE_INI']:
-			firmware_ini_path = os.path.join(project_root, 'src', firmware_pkg, data['FIRMWARE_INI'][firmware_pkg])
-			result = subprocess.run(['platformio', 'run', '-c', firmware_ini_path])
+			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
+			result = subprocess.run(f'cd {firmware_path} && pio run', shell=True)
 
 
 def get_devices():
@@ -333,6 +333,25 @@ def diagnostic():
 	except Exception as e:
 		print(e)
 
+def train_model(model):
+	
+	if model == 'new' or model == 'scratch':
+		project_root = os.getenv('PROJECT_ROOT')
+		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
+		shutil.rmtree(output_dir)
+		os.mkdir(output_dir)
+
+		model = 'fake-model-file.gotcha'
+
+	if model == 'clean':
+		project_root = os.getenv('PROJECT_ROOT')
+		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
+		shutil.rmtree(output_dir)
+		os.mkdir(output_dir)
+		return
+
+	build_buffpy('ptools')
+	subprocess.run(['python3', 'buffpy/lib/trainer.py', model])
 
 def parse_arguments():
 	"""
@@ -360,6 +379,10 @@ def parse_arguments():
 		metavar='PROFILE',
 		default='',
 		help='Builds the workspace locally')
+	parser.add_argument('--train', 
+		metavar='MODEL',
+		default='',
+		help='Trains a Yolov5 model locally')
 	parser.add_argument('--install', 
 		action='store_true',
 		help='Installs build to the registered robots')
@@ -369,13 +392,15 @@ def parse_arguments():
 	parser.add_argument('--initialize', 
 		action='store_true',
 		help='Initializes registered devices')
+	parser.add_argument('--upload', 
+		action='store_true',
+		help='Uploads firmware with PIO')
 	parser.add_argument('--clean',
 		action='store_true',
 		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
 
 	return parser.parse_args(sys.argv[1:])
 						
-
 def main(ap):
 
 	if ap.clean:
@@ -393,8 +418,14 @@ def main(ap):
 	if ap.build:
 		build_buffpy(ap.build[0])
 
+	if ap.train:
+		train_model(ap.train)
+
 	if ap.install:
 		deploy_all_devices()
+
+	if ap.upload:
+		result = subprocess.run('cd src/wrecker && pio run -t upload', shell=True)
 
 	# May be Deprecated
 	# Consider moving to buff.bash as an alias

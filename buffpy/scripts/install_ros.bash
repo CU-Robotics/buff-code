@@ -25,7 +25,7 @@ sudo apt update
 
 echo -e "\n\tInstalling ros-${ROS_DISTRO}-${ROS_PKG}\n"
 
-sudo apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins
+sudo apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin python-catkin-tools
 
 if [[ "${HOSTNAME}" != "edge"* ]]; then
 	sudo apt install -y --no-install-recommends ros-${ROS_DISTRO}-rqt-robot-plugins
