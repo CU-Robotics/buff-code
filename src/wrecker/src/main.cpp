@@ -63,6 +63,7 @@ void setup() {
 
   // Subsystem setup
 
+  ref_sys.init(&robot_state->)
   reciever.init(&robot_state.driverInput);
   // gimbal.setup(&robot_config.gimbal, &robot_state);
   //swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
