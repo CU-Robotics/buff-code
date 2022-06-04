@@ -98,7 +98,7 @@ void loop() {
 
   if (counter % 5 == 0) {
     sendC6x0();
-    // sendGM6020();
+    sendGM6020();
     counter = 0;
   }
   counter++;
