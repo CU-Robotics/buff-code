@@ -43,7 +43,7 @@ void Gimbal::update(float deltaTime) {
   }
   this->prevRawYawAngle = rawYawAngle;
 
-  //this->imu.update_MPU6050();
+  this->imu.update_MPU6050();
   this->gyroAngle += ((this->imu.get_gyro_x() - 0.7763) * (180.0 / M_PI) * 6) / deltaTime;
   this->state->chassis.heading = gyroAngle;
 
