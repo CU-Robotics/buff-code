@@ -43,6 +43,8 @@ class Dead_Reckon_Tracer:
 		self.t_offset = data['LEAD_TIME']
 		self.rate_hz = data['RATE']
 
+		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
+
 		self.init_ros(data)
 
 	def init_ros(self, data):
@@ -73,11 +75,9 @@ class Dead_Reckon_Tracer:
 		# Build a custom message that has a timestamp
 		t = time.time()
 		# do tracker stuff
-		x1, y1, x2, y2, cf, cl = np.array(msg.data)
-		measure = np.array([(x1 + x2) / 2, (y1 + y2) / 2])
-		msg = String(f'GPR {phi_err} GYR {psi_err}')
-		self.prediction_pub.publish(msg)
-		self.update_trajectory(t, measure)
+		x, y, w, h, cf, cl = np.array(msg.data)
+		
+		self.update_trajectory(t, [x,y])
 
 	def reset(self):
 		self.history = None
@@ -117,17 +117,15 @@ class Dead_Reckon_Tracer:
 			self.history = np.zeros((4,2), dtype=np.float64)
 			self.history[0] = np.array(measure).reshape(2)
 
-		self.history[1:] =  self.history[:3]
-		self.history[0] = np.array(measure).reshape(2)
+		else:
+			self.history[1:] =  self.history[:3]
+			self.history[0] = np.array(measure).reshape(2)
 
 		if np.linalg.norm(self.history[0] - self.history[1]) > self.r_threshold:
 			self.reset()
 			return
 
 		velocity, acceleration, jerk = self.trajectory
-
-		if debug:
-			self.error.append()
 
 		v1 = velocity
 		a1 = acceleration
@@ -152,10 +150,11 @@ class Dead_Reckon_Tracer:
 			if not self.history is None:
 
 				self.predict(time.time())
-				psi_err = np.arctan(self.pose[1] / self.pose[0]) # arctan of x,y is yaw
-				phi_err = self.d_offset * np.linalg.norm(self.pose) # phi is this needs to be tuned function of distance
-				msg = String(f'GPR {phi_err} GYR {psi_err}')
-				self.prediction_pub.publish(msg)
+				phi_err = (self.pose[1] - self.d_offset) * self.FOV
+				psi_err = (self.pose[0] - 0.5) * self.FOV
+				print(phi_err, psi_err)
+				# msg = String(f'GPR {phi_err} GYR {psi_err}')
+				# self.prediction_pub.publish(msg)
 
 				if self.debug:
 					self.publish_error()

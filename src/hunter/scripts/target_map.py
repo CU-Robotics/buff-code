@@ -21,7 +21,7 @@ class Target_Map:
 		self.t = time.time()
 		self.bridge = CvBridge()
 		self.r = np.zeros(2, dtype=np.float64)
-		self.history = np.zeros((4,2), dtype=np.float64)
+		self.history = np.zeros((4,3), dtype=np.float64)
 
 		self.rate = data['RATE']
 		self.map_size = data['MAP_SIZE']
@@ -62,7 +62,7 @@ class Target_Map:
 		self.psi = state[2]
 		self.phi = state[1]
 
-	def get_class_color(cl):
+	def get_class_color(self, cl):
 		colors = [[255, 0, 0], [255, 0, 0], [0, 255, 0]]
 		return np.array(colors[cl])
 
@@ -82,7 +82,7 @@ class Target_Map:
 
 		if not self.r is None:
 			for i, (c,x,y) in enumerate(self.history):
-				color = get_class_color(c)
+				color = self.get_class_color(int(c))
 				target = (int(origin[0] + x), int(origin[1] + y))
 				image = cv2.circle(image, target, 10, color * i / 5, 2)
 

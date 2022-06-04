@@ -11,5 +11,5 @@ NODES:
     FILES: []
     REQUIRED: False
   CAMERA:
-    FILES: ['mds_camera.py'] # ['data_streamer.py']
+    FILES: ['data_streamer.py'] # ['mds_camera.py'] #
     PACKAGE: 'buffpy'

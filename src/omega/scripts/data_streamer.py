@@ -42,7 +42,7 @@ class Data_Streamer:
 			for d in dirs:
 				data_yaml = os.path.join(root, d, 'data.yaml')
 				if os.path.exists(data_yaml):
-					image_path = os.path.join(root, d, 'test', 'images')
+					image_path = os.path.join(root, d, 'train', 'images')
 					m = len(image_path) + 1
 					image_files = glob.glob(os.path.join(image_path, '*.jpg'))
 
