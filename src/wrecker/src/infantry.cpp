@@ -92,9 +92,9 @@ void loop() {
     serial_event(&robot_state, &robot_config);
 
   reciever.update();
-  swerveChassis.update(deltaT);
+  //swerveChassis.update(deltaT);
   gimbal.update(deltaT);
-  shooter.update(deltaT);
+  //shooter.update(deltaT);
 
   if (counter % 5 == 0) {
     sendC6x0();
@@ -103,7 +103,7 @@ void loop() {
   }
   counter++;
 
-  Serial.println(deltaT);
+  //Serial.println(deltaT);
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;

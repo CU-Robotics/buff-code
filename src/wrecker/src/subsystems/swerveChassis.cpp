@@ -126,11 +126,11 @@ void SwerveChassis::calibrate() {
 }
 
 void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long deltaTime) {
-  float gimbalAngle = this->state->chassis.heading;
+  float gimbalAngle = this->state->gimbal.yawGlobal;
 
   // Apply rotation matrix so that drive inputs are gimbal-relative
-  float newDriveX = -driveX * cos(radiansToDegrees(gimbalAngle)) + -driveY * sin(radiansToDegrees(-gimbalAngle));
-  float newDriveY = -driveX * sin(radiansToDegrees(gimbalAngle)) + -driveY * cos(radiansToDegrees(gimbalAngle));
+  float newDriveX = -driveX * cos(degreesToRadians(gimbalAngle)) + -driveY * sin(degreesToRadians(-gimbalAngle));
+  float newDriveY = -driveX * sin(degreesToRadians(gimbalAngle)) + -driveY * cos(degreesToRadians(gimbalAngle));
 
   // Swerve math
   float A = newDriveX - spin * drivebaseConstant;
@@ -167,4 +167,10 @@ float SwerveChassis::radiansToDegrees(float radians) {
   double degrees;
   degrees = radians * 180 / PI;
   return degrees;
+}
+
+float SwerveChassis::degreesToRadians(float degrees) {
+  double radians;
+  radians = degrees * (PI / 180.0);
+  return radians;
 }
