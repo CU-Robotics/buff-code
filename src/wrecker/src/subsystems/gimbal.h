@@ -35,6 +35,11 @@ class Gimbal
 
     float realizeYawEncoder(float rawAngle);
     float realizePitchEncoder(float rawAngle);
+
+    //counters for updating imu
+    unsigned long newTime = 0;
+    unsigned long oldTime = 0;
+
 };
 
 #endif // GIMBAL_H

@@ -28,6 +28,7 @@ class SwerveChassis {
     void drive(float driveX, float driveY, float spin, unsigned long deltaTime);
     void driveSimple(float driveX, float driveY, float deltaTime);
     float radiansToDegrees(float radians);
+    float degreesToRadians(float degrees);
 };
 
 #endif // SWERVE_CHASSIS_H

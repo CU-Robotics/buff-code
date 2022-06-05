@@ -68,7 +68,12 @@ class Target_Map:
 				for j, (x,y) in enumerate(self.history[i]):
 					color = self.get_class_color(i)
 					target = (int(origin[0] + x), int(origin[1] + y))
-					image = cv2.circle(image, target, 10, color * 5 / (j+1), 2)
+					if i < 2:
+						image = cv2.circle(image, target, 5, color * 5 / (j+1), 2)
+					else:
+						t1 = (target[0] - 5, target[1] - 5)
+						t2 = (target[0] + 5, target[1] + 5)
+						image = cv2.rectangle(image, t1, t2, color * 5 / (j+1), 2)
 
 		self.map = image
 
@@ -76,7 +81,7 @@ class Target_Map:
 		"""
 		Parse a detection msg
 		PARAMS:
-			msg: Float64MultiArray, detection msg, data=[x,y,w,h,cl]
+			msg: Float64MultiArray, detection msg, data=[c,x,y]
 		"""
 		# do projector stuff
 		self.t = time.time()
