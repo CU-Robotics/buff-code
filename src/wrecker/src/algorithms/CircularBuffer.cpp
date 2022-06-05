@@ -1,53 +1,56 @@
 #include "CircularBuffer.h"
 
-CircularBuffer::CircularBuffer(int n){
-	max_size = max_size;
-	head = 0;
-	tail = 0;
+CircularBuffer::CircularBuffer(){
+
 }
 
+void CircularBuffer::init(int n) {
+	max_size = n;
+	num_items = 0;
+	head = 0;
+	tail = 0;
 
-int CircularBuffer::num_items(){
-	int length = tail - head;
-	if (length < 0)
-		length = max_size;
-
-	return length;
+	buff = new float[max_size];
 }
 
 float CircularBuffer::get(int idx){
-	idx += head;
 
-	if (idx > max_size)
-		idx -= tail;
+	idx = head - idx;
+
+	if (idx < 0)
+		idx += max_size;
 
 	return buff[idx];
 }
 
-float* CircularBuffer::get(int start, int stop){
-	int length = num_items();
-	float temp[length];
+// float* CircularBuffer::get(int start, int stop){
+// 	int length = num_items;
+// 	float temp[length];
 
-	for (int i = 0; i < stop - start; i++)
-		temp[i] = get(i);
+// 	for (int i = 0; i < stop - start; i++)
+// 		temp[i] = get(i);
 
-	return temp;
-}
+// 	return temp;
+// }
 
 int CircularBuffer::push(float value){
-	head ++;
-	
-	if (tail <= head)
-		tail++;
+    if (num_items > 0){
+        head ++;
+    	if (tail >= head)
+        	tail++;
 
-	else if (head >= max_size){
-		head = 0;
-		tail++;
+    	else if (head >= max_size){
+        	head = 0;
+        	tail++;
+    	}
 	}
 
-	buff[head] = value;
+	if (num_items < max_size) {
+		num_items ++;
+	}
+    buff[head] = value;
 
-	return num_items();
+    return num_items;
 }
 
 void CircularBuffer::reset(){
@@ -56,16 +59,28 @@ void CircularBuffer::reset(){
 
 	head = 0;
 	tail = 0;
+	num_items = 0;
 }
 
 float CircularBuffer::mean(){
 	float sum = 0.0;
-	for (int i = 0; i < num_items(); i++)
+	for (int i = 0; i < num_items; i++)
 		sum += get(i);
 
 	return sum / max_size;
 }
 
+int CircularBuffer::size() {
+	return num_items;
+}
+
+void CircularBuffer::print_buff()
+{
+	for (int i = 0; i < num_items; i++) {
+		Serial.print(get(i));
+		Serial.print(" // ");
+	}
+}
 
 // float CircularBuffer::median():
 // 	int length = size();

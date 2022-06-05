@@ -20,22 +20,25 @@ usage instructions (copied & modified from link above):
 
 class CircularBuffer {
 public:
-	CircularBuffer(int size);
-	
-	int num_items();
+	CircularBuffer();
+
+	void init(int size);
 	float get(int);					// index [0,size], 0 is most recent item
 	float* get(int, int);
 	int push(float);
+	int size();
+
+	void print_buff();
 
 	void reset();
 
 	float mean();
-	float median();
 
 private:
 	int head;
 	int tail;
 	int max_size;
+	int num_items;
 	float* buff;
 };
 
