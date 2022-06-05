@@ -39,8 +39,6 @@ Shooter shooter;
 // Ref_System refSys;
 // SwerveChassis swerveChassis;
 
-CircularBuffer cb(5);
-
 
 // TEMP
 int counter = 1;
@@ -111,7 +109,7 @@ void loop() {
 
   //swerveChassis.update(deltaT);
   gimbal.update(deltaT);
-  shooter.update(deltaT);
+  //shooter.update(deltaT);
 
   if (counter % 5 == 0) {
     // sendC6x0();

@@ -8,7 +8,7 @@
 #include "algorithms/PID_Filter.h"
 
 Gimbal::Gimbal() {
-  
+
 }
 
 void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
@@ -21,15 +21,24 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
   this->imu.init();
 
   config->yaw_PID.continuous = true;
-  config->yaw_PID.K[0] = 0.015;
+  config->yaw_PID.K[0] = 1.65;
+  config->yaw_PID.K[1] = 3.3;
+  config->yaw_PID.K[2] = 0.0;//50.0;//0.55;
   config->pitch_PID.K[0] = 0.02;
 
   config->pitchMax = 50.0;
   config->pitchMin = -18.0;
   config->pitchOffset = 180;
+  config->yawOffset = 330;
 }
 
 void Gimbal::update(float deltaTime) {
+  newTime = millis();
+  if ((newTime - oldTime) > 25) {
+    imu.update_MPU6050();
+    oldTime = newTime;
+  }
+
   if (state->driverInput.b && !calibrated)
     calibrated = true;
 
@@ -43,9 +52,8 @@ void Gimbal::update(float deltaTime) {
   }
   this->prevRawYawAngle = rawYawAngle;
 
-  this->imu.update_MPU6050();
+  // this->imu.update_MPU6050();
   this->gyroAngle += ((this->imu.get_gyro_x() - 0.7763) * (180.0 / M_PI) * 6) / deltaTime;
-  this->state->chassis.heading = gyroAngle;
 
   float yawAngle = realizeYawEncoder(rawYawAngle);
   float pitchAngle = realizePitchEncoder(pitchMotor.getAngle());
@@ -84,6 +92,8 @@ void Gimbal::update(float deltaTime) {
   else if (aimPitch > config->pitchMax)
     aimPitch = config->pitchMax;
 
+  this->state->gimbal.yawGlobal = yawAngle;
+
   // Yaw PID
   state->gimbal.yaw_PID.R = aimYaw;
   PID_Filter(&config->yaw_PID, &state->gimbal.yaw_PID, yawAngle, deltaTime);
@@ -94,7 +104,10 @@ void Gimbal::update(float deltaTime) {
 
   // Set motor power
   if (calibrated) {
-    yawMotor.setPower(state->gimbal.yaw_PID.Y);
+    float move = state->driverInput.mouseX * config->sensitivity * deltaTime / 10000.0;
+    Serial.println(move);
+    yawMotor.setPower(move);
+    //yawMotor.setPower(state->gimbal.yaw_PID.Y);
     pitchMotor.setPower(state->gimbal.pitch_PID.Y);
   }
 }
