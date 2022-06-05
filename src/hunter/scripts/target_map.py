@@ -18,10 +18,9 @@ class Target_Map:
 	def __init__(self, name):
 		self.phi = 0.0
 		self.psi = 0.0
+		self.map = None
 		self.t = time.time()
 		self.bridge = CvBridge()
-		self.r = np.zeros(2, dtype=np.float64)
-		self.map = None
 
 		self.init_ros(name)
 		self.draw_map()
@@ -94,6 +93,8 @@ class Target_Map:
 				while len(self.history[c]) > 4:
 					self.history[c].pop()
 
+		self.draw_map()
+
 	def gimbal_callback(self, msg):
 		state = msg.data
 		self.psi = state[2]
@@ -104,18 +105,14 @@ class Target_Map:
 		return np.array(colors[cl])
 
 	def publish_map(self):
-
 		msg = self.bridge.cv2_to_imgmsg(self.map, encoding='rgb8')
 		self.map_pub.publish(msg)
 
 	def spin(self):
 		while not rospy.is_shutdown():
-			t = time.time()
-
-			if t - self.t > 5:
-				self.r = None
 
 			self.publish_map()
+			self.rate.sleep()
 
 
 def main(name):

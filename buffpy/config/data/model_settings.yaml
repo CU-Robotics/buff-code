@@ -1,5 +1,5 @@
-IOU: 0.5
+IOU: 0.7
 NCLASSES: 3
-CONFIDENCE: 0.3
+CONFIDENCE: 0.5
 PT_FILE: "buffnet.pt"
 BLOB_FILE: "buffnet.blob"

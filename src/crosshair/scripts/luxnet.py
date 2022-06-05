@@ -212,6 +212,10 @@ class DepthAI_Device:
 
 		detection_nn.out.link(xout_nn.input)
 
+		# Define a camera control stream
+		controlIn = self.pipeline.create(dai.node.XLinkIn)
+		controlIn.setStreamName('control')
+
 
 	def spin(self):
 
@@ -221,6 +225,11 @@ class DepthAI_Device:
 				name="nn_input", maxSize=4, blocking=False)
 			q_nn = device.getOutputQueue(
 				name="nn", maxSize=4, blocking=False)
+
+			controlQueue = device.getInputQueue('control')
+			ctrl = dai.CameraControl()
+			ctrl.setContrast(10)
+			controlQueue.send(ctrl)
 
 			start_time = time.time()
 			layer_info_printed = False

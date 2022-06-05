@@ -28,15 +28,6 @@ class BuffNet:
 		"""
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/PT_FILE'))
-
-		print(model_path)
-		
-		if not os.path.exists(model_path):
-			print('No model')
-			return
-
-		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
 
 		rospy.init_node('buffnet', anonymous=True)
 
@@ -51,12 +42,19 @@ class BuffNet:
 		if self.debug:
 			self.debug_pub = rospy.Publisher(topics['IMAGE_DEBUG'], Image, queue_size=1)
 
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/PT_FILE'))
+		
+		if not os.path.exists(model_path):
+			print('No model')
+			self.model = None
+			return
+
+		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
+
 		self.im_subscriber = rospy.Subscriber(topics['IMAGE'], Image, self.imageCallBack, queue_size=1)
 
 		r = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 		self.image_size = (r, r)
-
-
 
 	def detect(self, image):
 		"""
@@ -66,6 +64,9 @@ class BuffNet:
 			@RETURNS:
 				annotations: bounding box of the detected object with color and class [class, name, (x1,y1), (w,h)]
 		"""
+		if self.model == None:
+			return
+
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 		prediction = np.array(self.model(image).pandas().xywh)[0]
 		annotation = []
