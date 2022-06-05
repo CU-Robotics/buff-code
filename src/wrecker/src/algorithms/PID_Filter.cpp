@@ -14,7 +14,7 @@ void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt) {
   // Integral term = sum of error
   state->X[1] = max(config->Imin, min(config->Imax, state->X[1] + (state->X[0] * dt)));
   
-  // Proportional term = error (R - Y)
+  // Proportional term = error (Reference - Measure)
   state->X[0] = error;
   if (config->continuous) {
     if (180.0 < error) {

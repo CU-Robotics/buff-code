@@ -29,12 +29,18 @@ struct S_Chassis {
   S_SwerveModule FR;
   S_SwerveModule RR;
   S_SwerveModule RL;
+
+  S_PID drivePos;
+  S_PID driveVel;
 };
+
 
 struct S_Gimbal {
   float yaw = 0.0f;
   float pitch = 0.0f;
   float yawGlobal = 0.0f;
+  float yaw_reference = 0.0f;
+  float pitch_reference = 0.0f;
 
   S_PID yaw_PID;
   S_PID pitch_PID;
@@ -58,9 +64,9 @@ struct DriverInput {
   uint8_t s1 = 0;
   uint8_t s2 = 0;
 
-  int16_t mouseX = 0.0f;
-  int16_t mouseY = 0.0f;
-  int16_t mouseZ = 0.0f;
+  int16_t mouseX = 0;
+  int16_t mouseY = 0;
+  int16_t mouseZ = 0;
   bool mouseLeft = false;
   bool mouseRight = false;
 
@@ -78,82 +84,78 @@ struct DriverInput {
   bool c = false;
   bool v = false;
   bool b = false;
-  bool shift = false;
+  bool shift = true;
   bool ctrl = false;
 
   //byte keyboard[2] = 15 bit value
 };
 
 struct S_RefSystem {
-    char curr_stage;
-    char comp_type;
-    int rem_time;
-    char comp_result;
+    char curr_stage = '\r';
+    char comp_type = '\r';
+    char comp_result = '\r';
 
-    int red_hero_hp;
-    int red_sentry_hp;
-    int red_infantry_hp;
-    int blue_hero_hp;
-    int blue_sentry_hp;
-    int blue_infantry_hp;
-    int red_hero_max_hp;
-    int red_sentry_max_hp;
-    int red_infantry_max_hp;
-    int blue_hero_max_hp;
-    int blue_sentry_max_hp;
-    int blue_infantry_max_hp;
+    int rem_time = -1;
 
-    int red_one_rem_proj;
-    int red_two_rem_proj;
-    int blue_one_rem_proj;
-    int blue_two_rem_proj;
+    int red_hero_hp = -1;
+    int red_sentry_hp = -1;
+    int red_infantry_hp = -1;
+    int blue_hero_hp = -1;
+    int blue_sentry_hp = -1;
+    int blue_infantry_hp = -1;
+    int red_hero_max_hp = -1;
+    int red_sentry_max_hp = -1;
+    int red_infantry_max_hp = -1;
+    int blue_hero_max_hp = -1;
+    int blue_sentry_max_hp = -1;
+    int blue_infantry_max_hp = -1;
 
-    char ref_warning;
-    int foul_robot_id;
+    int red_one_rem_proj = -1;
+    int red_two_rem_proj = -1;
+    int blue_one_rem_proj = -1;
+    int blue_two_rem_proj = -1;
+
+    char ref_warning = '\r';
+    int foul_robot_id = -1;
     
-    int red_hero_robot_level;
-    int red_infantry_robot_level;
-    int red_sentry_robot_level;
-    int blue_hero_robot_level;
-    int blue_infantry_robot_level;
-    int blue_sentry_robot_level;
+    int red_hero_robot_level = -1;
+    int red_infantry_robot_level = -1;
+    int red_sentry_robot_level = -1;
+    int blue_hero_robot_level = -1;
+    int blue_infantry_robot_level = -1;
+    int blue_sentry_robot_level = -1;
 
-    int robot_1_cool_val;       //17mm
-    int robot_1_barr_heat_lim;       //17mm
-    int robot_1_speed_lim;       //17mm
+    int robot_1_cool_val = -1;       //17mm
+    int robot_1_barr_heat_lim = -1;       //17mm
+    int robot_1_speed_lim = -1;       //17mm
 
-    int robot_2_cool_val;       //17mm
-    int robot_2_barr_heat_lim;       //17mm
-    int robot_2_speed_lim;       //17mm
+    int robot_2_cool_val = -1;       //17mm
+    int robot_2_barr_heat_lim = -1;       //17mm
+    int robot_2_speed_lim = -1;       //17mm
 
-    int robot_42_cool_val;
-    int robot_42_heat_lim;
-    int robot_42_speed_lim;  
+    int robot_42_cool_val = -1;
+    int robot_42_heat_lim = -1;
+    int robot_42_speed_lim = -1;  
 
-    int robot_power_lim;
+    int robot_power_lim = -1;
 
-    int chasis_volt;
-    int chasis_current;
+    int chasis_volt = -1;
+    int chasis_current = -1;
 
-    int robot_buff;
+    int robot_buff = -1;
 
-    int launch_freq;
-    int launch_speed;
+    int launch_freq = -1;
+    int launch_speed = -1;
 
-    int rem_17_proj;
-    int rem_42_proj;
-
-    //following lines are so that code will compile
-    int health = 100;
-    int matchTime = 0;
-    short robotLevel = 0;
+    int rem_17_proj = -1;
+    int rem_42_proj = -1;
 };
 
 struct S_Robot {
   S_Gimbal gimbal;
   S_Chassis chassis;
-  S_Shooter Shooter17;
-  S_Shooter Shooter42;
+  S_Shooter shooter17;
+  S_Shooter shooter42;
 
   S_RefSystem refSystem;
   DriverInput driverInput;

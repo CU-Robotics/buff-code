@@ -35,6 +35,7 @@
 import os
 import sys
 import yaml
+import glob
 import shutil
 import argparse
 import subprocess
@@ -71,41 +72,78 @@ def clean_buffpy():
 		This is an end-all clean up. It will clean everything.
 	"""
 
-	data_path = os.path.join(os.getenv('PROJECT_ROOT'), 'data')
-	lib_path = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'lib')
+	project_root = os.getenv('PROJECT_ROOT')
+	data_path = os.path.join(project_root, 'data')
+	lib_path = os.path.join(project_root, 'buffpy', 'lib')
+	firmware_config = os.path.join(project_root, 'buffpy', 'config', 'build', 'firmware.yaml')
+	
+	if not os.path.exists(firmware_config):
+		print('No build specified exiting:...')
+		return
+
+	with open(firmware_config, 'r') as f:
+		data = yaml.safe_load(f)
 
 	if not 'edge' in os.getenv('HOSTNAME'):
-		result = subprocess.run(['catkin', 'clean', '-y'])
+		clear_directory(lib_path)
+		for firmware_pkg in data['FIRMWARE_INI']:
+			firmware_ini_path = os.path.join(project_root, 'src', firmware_pkg, data['FIRMWARE_INI'][firmware_pkg])
+			result = subprocess.run(['platformio', 'run', '-t', 'clean', '-c', firmware_ini_path])
 
 	clear_directory(data_path)
-	clear_directory(lib_path)
+	
+def load_build_config(build):
 
+	project_root = os.getenv('PROJECT_ROOT')
+	lib_path = os.path.join(project_root, 'buffpy', 'lib')
+	config_path = os.path.join(project_root, 'buffpy', 'config')
+	base_config = os.path.join(config_path, 'build', f'{build}.yaml')
+	
+	if not os.path.exists(base_config):
+		print(f'Could not find {base_config}')
+		return
 
-def build_buffpy(profile):
+	with open(base_config, 'r') as f:
+		data = yaml.safe_load(f)
+		if 'INCLUDE' in data:
+			for file in data['INCLUDE']:
+				child_config = os.path.join(config_path, 'build', file)
+				with open(child_config, 'r') as fc:
+					child_data = yaml.safe_load(fc)
+					for item in child_data:
+						if item in data:
+							data[item].update(child_data[item])
+
+						else:
+							data[item] = child_data[item]
+
+	return data
+
+def build_buffpy(build):
 	"""
 		Builds the current workspace locally.
 		PARAMS:
 			profile: string, the profile to build
 	"""
+	project_root = os.getenv('PROJECT_ROOT')
+	lib_path = os.path.join(project_root, 'buffpy', 'lib')
+	
+	data = load_build_config(build)
+	
+	if 'PYTHON3_SCRIPTS' in data:
+		for pkg in data['PYTHON3_SCRIPTS']:
+			for file in data['PYTHON3_SCRIPTS'][pkg]:
+				dest = os.path.join(lib_path, file)
+				f_path = os.path.join(project_root, 'src', pkg, 'scripts', file)
+				result = subprocess.run(['cp', f_path, dest])
+				result = subprocess.run(['chmod', '+x', dest])
+				print(f'Installing {f_path}')
 
-	if not profile:
-		print('No profile specified exiting:...')
-		return
-
-	# use catkin to clean the workspace if it was already built
-	catkin_tools = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'build', '.catkin_tools.yaml')
-
-	if os.path.exists(catkin_tools):
-		with open(catkin_tools, 'r') as f:
-			build_config = yaml.safe_load(f)
-		if 'profile' in build_config:
-			if build_config['profile'] != profile:
-				print(f'Building with new profile: {profile}')
-				print(f'Cleaning old profile: {build_config["profile"]}')
-				result = subprocess.run(['catkin', 'clean', '-b', '-y'])
-
-	# Rebuild the workspace with catkin build
-	result = subprocess.run(['catkin', 'build', '--profile', profile])		
+	# Build the Firmware with pio 
+	if 'FIRMWARE_INI' in data:
+		for firmware_pkg in data['FIRMWARE_INI']:
+			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
+			result = subprocess.run(f'cd {firmware_path} && pio run', shell=True)
 
 
 def get_devices():
@@ -295,6 +333,25 @@ def diagnostic():
 	except Exception as e:
 		print(e)
 
+def train_model(model):
+	
+	if model == 'new' or model == 'scratch':
+		project_root = os.getenv('PROJECT_ROOT')
+		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
+		shutil.rmtree(output_dir)
+		os.mkdir(output_dir)
+
+		model = 'fake-model-file.gotcha'
+
+	if model == 'clean':
+		project_root = os.getenv('PROJECT_ROOT')
+		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
+		shutil.rmtree(output_dir)
+		os.mkdir(output_dir)
+		return
+
+	build_buffpy('ptools')
+	subprocess.run(['python3', 'buffpy/lib/trainer.py', model])
 
 def parse_arguments():
 	"""
@@ -320,8 +377,12 @@ def parse_arguments():
 	parser.add_argument('--build', 
 		nargs=1,
 		metavar='PROFILE',
-		default=False,
-		help='Builds the workspace locally (use profile debug)')
+		default='',
+		help='Builds the workspace locally')
+	parser.add_argument('--train', 
+		metavar='MODEL',
+		default='',
+		help='Trains a Yolov5 model locally')
 	parser.add_argument('--install', 
 		action='store_true',
 		help='Installs build to the registered robots')
@@ -331,13 +392,15 @@ def parse_arguments():
 	parser.add_argument('--initialize', 
 		action='store_true',
 		help='Initializes registered devices')
+	parser.add_argument('--upload', 
+		action='store_true',
+		help='Uploads firmware with PIO')
 	parser.add_argument('--clean',
 		action='store_true',
 		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
 
 	return parser.parse_args(sys.argv[1:])
 						
-
 def main(ap):
 
 	if ap.clean:
@@ -355,8 +418,14 @@ def main(ap):
 	if ap.build:
 		build_buffpy(ap.build[0])
 
+	if ap.train:
+		train_model(ap.train)
+
 	if ap.install:
 		deploy_all_devices()
+
+	if ap.upload:
+		result = subprocess.run('cd src/wrecker && pio run -t upload', shell=True)
 
 	# May be Deprecated
 	# Consider moving to buff.bash as an alias

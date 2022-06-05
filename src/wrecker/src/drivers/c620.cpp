@@ -16,15 +16,14 @@ void sendC6x0() {
   can1.write(c6x0Messages[0][1]);
   can2.write(c6x0Messages[1][0]);
   can2.write(c6x0Messages[1][1]);
-  // can3.write(c6x0Messages[2][0]);
-  // can3.write(c6x0Messages[2][1]);
+  can3.write(c6x0Messages[2][0]);
+  can3.write(c6x0Messages[2][1]);
 }
 
 
 c620CAN::c620CAN() {
 
 }
-
 
 void c620CAN::init(uint8_t motorId, uint8_t tempCanBusNum) {
   canBusNum = tempCanBusNum;
@@ -90,12 +89,9 @@ void c620CAN::updateMotor() {
     temp = recMsg->buf[6];
 }
 
-
-
 c610Enc::c610Enc() {
   
 }
-
 
 void c610Enc::init(short tempID, uint8_t tempCanBusNum, uint8_t encPin) {
   canBusNum = tempCanBusNum;
