@@ -3,6 +3,7 @@
 #include "drivers/gm6020.h"
 #include "drivers/MPU6050.h"
 #include "algorithms/PID_Filter.h"
+#include "algorithms/CircularBuffer.h"
 
 #ifndef GIMBAL_H
 #define GIMBAL_H
@@ -22,6 +23,8 @@ class Gimbal
     gm6020 pitchMotor;
 
     MPU6050 imu;
+
+    CircularBuffer mouseXBuffer;
 
     float calibrated;
     float yawRollover;
