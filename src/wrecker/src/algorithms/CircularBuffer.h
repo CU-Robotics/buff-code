@@ -22,8 +22,9 @@ class CircularBuffer {
 public:
 	CircularBuffer(int size);
 	
-	int size();
+	int num_items();
 	float get(int);					// index [0,size], 0 is most recent item
+	float* get(int, int);
 	int push(float);
 
 	void reset();
@@ -34,7 +35,7 @@ public:
 private:
 	int head;
 	int tail;
-	const int size;
+	int max_size;
 	float* buff;
 };
 
