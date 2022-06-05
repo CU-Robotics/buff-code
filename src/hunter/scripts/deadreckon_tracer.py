@@ -105,7 +105,7 @@ class Dead_Reckon_Tracer:
 		if not pose is None:
 			return pose + (t_vect @ self.trajectory)
 		else:
-			print(self.trajectory)
+			# print(self.trajectory)
 			self.pose = self.history[0] + (t_vect @ self.trajectory)
 
 	def publish_error(self):
@@ -159,8 +159,8 @@ class Dead_Reckon_Tracer:
 			if not self.history is None:
 
 				self.predict(time.time())
-				print(f'history: {self.history}')
-				print(f'Pose: {self.pose}')
+				# print(f'history: {self.history}')
+				# print(f'Pose: {self.pose}')
 				phi_err = (self.pose[1] - self.d_offset)
 				psi_err = (self.pose[0] - 0.5)
 				msg = String(f'GH {phi_err} GW {psi_err}')
