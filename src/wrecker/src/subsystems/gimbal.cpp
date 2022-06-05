@@ -19,11 +19,10 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
   this->pitchMotor.init(7, 2);
 
   this->imu.init();
+  mouseXBuffer.init(50);
 
   config->yaw_PID.continuous = true;
-  config->yaw_PID.K[0] = 1.65;
-  config->yaw_PID.K[1] = 3.3;
-  config->yaw_PID.K[2] = 0.0;//50.0;//0.55;
+  config->yaw_PID.K[0] = 0.005;
   config->pitch_PID.K[0] = 0.02;
 
   config->pitchMax = 50.0;
@@ -95,8 +94,10 @@ void Gimbal::update(float deltaTime) {
   this->state->gimbal.yawGlobal = yawAngle;
 
   // Yaw PID
-  state->gimbal.yaw_PID.R = aimYaw;
-  PID_Filter(&config->yaw_PID, &state->gimbal.yaw_PID, yawAngle, deltaTime);
+  float move = state->driverInput.mouseX * config->sensitivity * deltaTime * 150 / 10000.0;
+  mouseXBuffer.push(move);
+  state->gimbal.yaw_PID.R = mouseXBuffer.mean();
+  PID_Filter(&config->yaw_PID, &state->gimbal.yaw_PID, (yawMotor.getRpm() * 0.5), deltaTime);
 
   // Pitch PID
   state->gimbal.pitch_PID.R = aimPitch;
@@ -104,10 +105,11 @@ void Gimbal::update(float deltaTime) {
 
   // Set motor power
   if (calibrated) {
-    float move = state->driverInput.mouseX * config->sensitivity * deltaTime / 10000.0;
-    Serial.println(move);
-    yawMotor.setPower(move);
-    //yawMotor.setPower(state->gimbal.yaw_PID.Y);
+    Serial.print(state->gimbal.yaw_PID.R);
+    Serial.print(" - ");
+    Serial.print(state->gimbal.yaw_PID.Y);
+    Serial.println();
+    yawMotor.setPower(state->gimbal.yaw_PID.Y);
     //pitchMotor.setPower(state->gimbal.pitch_PID.Y);
   }
 }

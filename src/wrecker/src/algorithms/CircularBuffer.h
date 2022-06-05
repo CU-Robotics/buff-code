@@ -19,23 +19,27 @@ usage instructions (copied & modified from link above):
 */
 
 class CircularBuffer {
-	public:
-		CircularBuffer(int max_size);
-		
-		int size();
-		float peek(int idx);					// index [0,size], 0 is most recent item
-		float peek(int start, int stop);	
-		int push(float value);
+public:
+	CircularBuffer();
 
-		void reset();
+	void init(int size);
+	float get(int);					// index [0,size], 0 is most recent item
+	float* get(int, int);
+	int push(float);
+	int size();
 
-		float mean();
+	void print_buff();
 
-	private:
-		int head;
-		int tail;
-		int max_size;
-		float* buff;
+	void reset();
+
+	float mean();
+
+private:
+	int head;
+	int tail;
+	int max_size;
+	int num_items;
+	float* buff;
 };
 
 #endif

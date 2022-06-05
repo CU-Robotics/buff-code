@@ -13,6 +13,7 @@
 #include "subsystems/shooter.h"
 #include "subsystems/swerveChassis.h"
 
+
 // CAN
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
@@ -36,7 +37,7 @@ Gimbal gimbal;
 dr16 reciever;
 Shooter shooter;
 // Ref_System refSys;
-// SwerveChassis swerveChassis;
+SwerveChassis swerveChassis;
 
 
 // TEMP
@@ -50,18 +51,18 @@ void dump(){
 void setup() {
   Serial.begin(1000000);
   delay(1000);
-  Serial.println("basic test");
+  Serial.println("-- ROBOT START --");
 
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
-  // can1.begin();
-  // can2.begin();
+  can1.begin();
+  can2.begin();
   // can3.begin();
 
-  // can1.setBaudRate(1000000);
-  // can2.setBaudRate(1000000);
+  can1.setBaudRate(1000000);
+  can2.setBaudRate(1000000);
   // can3.setBaudRate(1000000);
 
 
@@ -72,9 +73,8 @@ void setup() {
   //refSys.init(&robot_state.refSystem);
   reciever.init(&robot_state.driverInput);
   gimbal.setup(&robot_config.gimbal, &robot_state);
-  // swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
-
 
   // serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
   // serialDumpTmr.begin(dump, dumpRate);
@@ -88,13 +88,13 @@ void loop() {
   // Needs to have usage
   //  can.update(XXX, YYY);
   //
-  // while (can1.read(tempMessage))
-  //   canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
+  while (can1.read(tempMessage))
+    canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
   
 
-  // while (can2.read(tempMessage)) {
-  //   canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
-  // }
+  while (can2.read(tempMessage)) {
+    canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
+  }
   
   // // while (can3.read(tempMessage))
   // //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
@@ -110,8 +110,8 @@ void loop() {
   //shooter.update(deltaT);
 
   if (counter % 5 == 0) {
-    // sendC6x0();
-    // sendGM6020();
+    sendC6x0();
+    sendGM6020();
     counter = 0;
   }
   counter++;
