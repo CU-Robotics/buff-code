@@ -12,7 +12,7 @@ void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt) {
   state->X[2] = (error - state->X[0]) / dt;
   
   // Integral term = sum of error
-  // state->X[1] = max(config->Imin, min(config->Imax, state->X[1] + (state->X[0] * dt)));
+  state->X[1] = max(config->Imin, min(config->Imax, state->X[1] + (state->X[0] * dt)));
   
   // Proportional term = error (R - Y)
   state->X[0] = error;
