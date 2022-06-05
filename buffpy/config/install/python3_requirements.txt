@@ -10,5 +10,8 @@ cython==0.29.26
 seaborn==0.11.2
 requests==2.27.1
 protobuf==3.12.4 
+depthai==2.15.2.0
+platformio==6.0.1
+tensorboard==2.9.0
 torchvision==0.10.0
 opencv-python==4.5.5.64

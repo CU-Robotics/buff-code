@@ -9,25 +9,16 @@
 import os
 import sys
 import cv2
+import time
 import yaml
 import rospy
 import torch
+import torchvision
 import numpy as np
+import depthai as dai
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
-from gdrive_handler import GD_Handler
 from std_msgs.msg import Float64MultiArray
-
-import depthai as dai
-import time
-import numpy as np
-
-# functions taken from https://github.com/ultralytics/yolov5/blob/master/utils/general.py
-
-import torch
-import torchvision
-import time
-import numpy as np
 
 
 def xywh2xyxy(x):
@@ -118,16 +109,9 @@ def non_max_suppression(prediction, conf_thres=0.1, iou_thres=0.6, merge=False, 
 
 
 labelMap = [
-	'armor',
-	'base',
-	'car',
-	'target',
-	'target-blue',
-	'target-grey',
-	'target-grey-2',
-	'target-red',
-	'watcher',
-	'background'
+	'blue-armor',
+	'red-armor',
+	'robot'
 ]
 
 cam_options = ['rgb', 'left', 'right']
@@ -137,29 +121,30 @@ def draw_boxes(frame, boxes, total_classes):
 	if boxes is None or len(boxes) == 0:
 		return frame
 	else:
+		colors = [(255,0,0), (0,0,255), (0,255,0), (0, 0, 0)]
+		for box in boxes:
+			x1 = int(box[0])
+			y1 = int(box[1])
+			x2 = int(box[2])
+			y2 = int(box[3])
 
-		for i in range(boxes.shape[0]):
-			x1, y1, x2, y2 = int(boxes[i, 0]), int(
-				boxes[i, 1]), int(boxes[i, 2]), int(boxes[i, 3])
-			conf, cls = boxes[i, 4], int(boxes[i, 5])
+			conf, cl = box[4], int(box[5])
 
-			label = f"{labelMap[cls]}: {conf:.2f}"
-
-			frame = cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
+			label = f"{labelMap[cl]}: {conf:.2f}"
+			frame = cv2.rectangle(frame, (x1, y1), (x2, y2), colors[cl], 1)
 
 			# Get the width and height of label for bg square
 			(w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.3, 1)
 
 			# Shows the text.
-			frame = cv2.rectangle(frame, (x1, y1 - 2*h),
-								  (x1 + w, y1), (0, 255, 0), -1)
-			frame = cv2.putText(frame, label, (x1, y1 - 5),
-								cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+			frame = cv2.rectangle(frame, (x1, y1 - 2*h), (x1 + w, y1), colors[cl], -1)
+			frame = cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
+
 	return frame
 
 
 class DepthAI_Device:
-	def __init__(self, config_data=None):
+	def __init__(self):
 		"""
 				Define all the parameters of the model here.
 				Can be initialized with a config file, a system launch
@@ -168,27 +153,24 @@ class DepthAI_Device:
 		"""
 		# It is assumed that this script will only be called by the ols
 		# If the ols is used properly these will always be defined
-		self.FPS = config_data['CAMERA']['FPS']
-		self.iou = config_data['MODEL_INFO']['IOU']
+		topics = rospy.get_param('/buffbot/TOPICS')
 		self.debug = rospy.get_param('/buffbot/DEBUG')
-		self.image_size = config_data['CAMERA']['RESOLUTION']
-		self.model_file = config_data['MODEL_INFO']['MODEL_FILE']
-		self.confidence = config_data['MODEL_INFO']['CONFIDENCE']
+		self.iou = rospy.get_param('/buffbot/MODEL/IOU')
+		self.FPS = rospy.get_param('/buffbot/CAMERA/FPS')
+		self.confidence = rospy.get_param('/buffbot/MODEL/CONFIDENCE')
+		self.image_size = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, self.model_file)
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/BLOB_FILE'))
 
 		self.bridge = CvBridge()
 
 		# Start defining a pipeline
 		self.init_depthai_pipeline(model_path)
 
-		self.debug = rospy.get_param('/buffbot/DEBUG')
-		topics = rospy.get_param('/buffbot/TOPICS')
-		
 		rospy.init_node('buffnet', anonymous=True)
 		self.det_pub = rospy.Publisher(
-			topics['DETECTION'], Float64MultiArray, queue_size=1)
+			topics['DETECTION_PIXEL'], Float64MultiArray, queue_size=1)
 
 		self.image_pub = rospy.Publisher(
 			topics['IMAGE'], Image, queue_size=1)
@@ -241,11 +223,7 @@ class DepthAI_Device:
 				name="nn", maxSize=4, blocking=False)
 
 			start_time = time.time()
-			counter = 0
-			fps = 0
 			layer_info_printed = False
-
-			i = 0
 
 			rospy.loginfo("Starting the Stream")
 
@@ -254,7 +232,6 @@ class DepthAI_Device:
 				in_nn = q_nn.get()
 
 				frame = in_nn_input.getCvFrame()
-				layers = in_nn.getAllLayers()
 
 				# get the "output" layer
 				output = np.array(in_nn.getLayerFp16("output"))
@@ -270,31 +247,18 @@ class DepthAI_Device:
 					output, conf_thres=self.confidence, iou_thres=self.iou)
 
 				boxes = boxes[0]
-				# publish our detections
-
-				# if boxes is not None:
-				# 	boxes = boxes.numpy() 
-				# 	rospy.loginfo(boxes)
-				# 	target_msg = Float64MultiArray(data=np.array(boxes.flatten(), dtype=np.float64))
-				# 	self.det_pub.publish(target_msg)
-				# 	ann_frame = draw_boxes(frame, boxes, 9)
-
-				# 	ann_img_msg = self.bridge.cv2_to_imgmsg(ann_frame, "bgr8")
-				# 	self.ann_pub.publish(ann_img_msg)
-				# else:
-				# 	ann_img_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
-				# 	self.ann_pub.publish(ann_img_msg)
-				# 	# send an empty message of some kind
-				# 	pass
-
-				# # publish our images
-
-				# img_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
-				# self.raw_pub.publish(img_msg)
-
+				detections = []
 				if boxes is not None:
 					boxes = boxes.numpy() 
-					target_msg = Float64MultiArray(data=np.array(boxes.flatten(), dtype=np.float64))
+					for x1,x2,y1,y2,cf,cl in boxes:
+						x = (x1 + x2) / (2 * self.image_size)
+						y = (y1 + y2) / (2 * self.image_size)
+						w = abs(x1 - x2) / self.image_size
+						h = abs(y1 - y2) / self.image_size
+						
+						detections = np.concatenate([detections, [x,y,w,h,cl]])
+					
+					target_msg = Float64MultiArray(data=detections)
 					self.det_pub.publish(target_msg)
 
 				image_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
@@ -305,23 +269,13 @@ class DepthAI_Device:
 					ann_img_msg = self.bridge.cv2_to_imgmsg(ann_frame, "bgr8")
 					self.ann_pub.publish(ann_img_msg)
 
-def main(config_data):
-
-	if config_data is None:
-		return
-
-	device = DepthAI_Device(config_data=config_data)
+def main(name):
+	device = DepthAI_Device()
 	device.spin()
 
 if __name__ == '__main__':
-	if len(sys.argv) < 2:
-		print(f'No Data: BuffNet exiting ...')
-	elif '/buffbot' in sys.argv[1]:
-		main(rospy.get_param(sys.argv[1]))
-	elif '.yaml' in sys.argv[1]:
-		with open(os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'data', sys.argv[1]), 'r') as f:
-			data = yaml.safe_load(f)
-		main(data)
+	if len(sys.argv) > 1:
+		main(sys.argv[1])
 
 
 		

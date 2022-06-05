@@ -11,6 +11,7 @@ SwerveChassis::SwerveChassis() {
 
 }
 
+
 void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   config = data;
   state = r_state;
@@ -26,6 +27,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->FR.steerEncoderID = 1 + 1;
   data->FR.driveMotorID = 5;
   data->FR.absolute_offset = 45;
+
   for (int i = 0; i < 9; i++)
   {
     data->FR.alignment[i] = fr_alignment[i];
@@ -36,6 +38,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->FR.steerPos.K[0] = 1.2;
   data->FR.steerPos.K[1] = 0;
   data->FR.steerPos.K[2] = 0;
+
   data->FR.driveVel.K[0] = 0.0006;
 
   // FRONT LEFT
@@ -44,6 +47,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->FL.steerEncoderID = 1 + 2;
   data->FL.driveMotorID = 6;
   data->FL.absolute_offset = -45;
+
   for (int i = 0; i < 9; i++)
   {
     data->FL.alignment[i] = fl_alignment[i];
@@ -54,6 +58,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->FL.steerPos.K[0] = 1.2;
   data->FL.steerPos.K[1] = 0;
   data->FL.steerPos.K[2] = 0;
+
   data->FL.driveVel.K[0] = 0.0006;
 
   // BACK LEFT
@@ -62,6 +67,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->RL.steerEncoderID = 1 + 3;
   data->RL.driveMotorID = 7;
   data->RL.absolute_offset = -135;
+
   for (int i = 0; i < 9; i++)
   {
     data->RL.alignment[i] = bl_alignment[i];
@@ -72,6 +78,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->RL.steerPos.K[0] = 1.2;
   data->RL.steerPos.K[1] = 0;
   data->RL.steerPos.K[2] = 0;
+
   data->RL.driveVel.K[0] = 0.0006;
 
   // BACK RIGHT
@@ -80,6 +87,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->RR.steerEncoderID = 1 + 4;
   data->RR.driveMotorID = 8;
   data->RR.absolute_offset = 135;
+
   for (int i = 0; i < 9; i++)
   {
     data->RR.alignment[i] = br_alignment[i];
@@ -90,7 +98,9 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   data->RR.steerPos.K[0] = 1.2;
   data->RR.steerPos.K[1] = 0;
   data->RR.steerPos.K[2] = 0;
+
   data->RR.driveVel.K[0] =  0.0006;
+
 
   // // Init modules
   moduleFR.setup(&data->FR, state, &state->chassis.FR);
@@ -114,6 +124,7 @@ void SwerveChassis::update(unsigned long deltaTime) {
   int x = state->driverInput.d - state->driverInput.a;
   int y = state->driverInput.s - state->driverInput.w;
   int s = state->driverInput.z - state->driverInput.x;
+
 
   drive(x, y, s, deltaTime);
 }

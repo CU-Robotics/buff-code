@@ -27,14 +27,15 @@ void Shooter::update(unsigned long deltaTime) {
         this->topFlywheel.setPower(0.3);
         this->bottomFlywheel.setPower(0.3);
 
+
         if (state->driverInput.mouseLeft)
-            state->Shooter17.feedPID.R = -2160;
+            state->shooter17.feedPID.R = -2160;
         else if (state->driverInput.f)
-            state->Shooter17.feedPID.R = 2160;
+            state->shooter17.feedPID.R = 2160;
         else
-            state->Shooter17.feedPID.R = 0;
+            state->shooter17.feedPID.R = 0;
         this->config->feedPID.K[0] = 0.0005;
-        PID_Filter(&config->feedPID, &state->Shooter17.feedPID, feedMotor.getRpm(), deltaTime);
-        this->feedMotor.setPower(state->Shooter17.feedPID.Y);
+        PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
+        this->feedMotor.setPower(state->shooter17.feedPID.Y);
     }
 }
