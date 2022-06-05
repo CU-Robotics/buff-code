@@ -91,7 +91,7 @@ void Gimbal::update(float deltaTime) {
     Serial.println(move);
     yawMotor.setPower(move);
     //yawMotor.setPower(state->gimbal.yaw_PID.Y);
-    pitchMotor.setPower(state->gimbal.pitch_PID.Y);
+    //pitchMotor.setPower(state->gimbal.pitch_PID.Y);
   }
 }
 
