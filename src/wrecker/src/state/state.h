@@ -42,8 +42,10 @@ struct S_Gimbal {
   float yaw_reference = 0.0f;
   float pitch_reference = 0.0f;
 
-  S_PID yaw_PID;
-  S_PID pitch_PID;
+  S_PID yawVel;
+  S_PID yawPos;
+  S_PID pitchVel;
+  S_PID pitchPos;
 };
 
 struct S_Shooter {
