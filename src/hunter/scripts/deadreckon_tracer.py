@@ -161,8 +161,8 @@ class Dead_Reckon_Tracer:
 				self.predict(time.time())
 				# print(f'history: {self.history}')
 				# print(f'Pose: {self.pose}')
-				phi_err = (self.pose[1] - self.d_offset)
-				psi_err = (self.pose[0] - 0.5)
+				phi_err = (self.pose[1] - self.d_offset) * self.FOV
+				psi_err = (self.pose[0] - 0.5) * self.FOV
 				msg = String(f'GH {phi_err} GW {psi_err}')
 				self.prediction_pub.publish(msg)
 
