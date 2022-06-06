@@ -27,6 +27,9 @@ class Gimbal
     CircularBuffer mouseXFilter;
     CircularBuffer mouseYFilter;
 
+    CircularBuffer yawFilter;
+    CircularBuffer pitchFilter;
+
     float calibrated;
     float yawRollover;
     float prevRawYawAngle;
