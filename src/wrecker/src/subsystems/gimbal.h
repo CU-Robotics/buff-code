@@ -24,7 +24,8 @@ class Gimbal
 
     MPU6050 imu;
 
-    CircularBuffer mouseXBuffer;
+    CircularBuffer mouseXFilter;
+    CircularBuffer mouseYFilter;
 
     float calibrated;
     float yawRollover;
@@ -35,6 +36,8 @@ class Gimbal
 
     int mouseReleased = 0;
     float gyroAngle = 0;
+
+    float gyroDrift = 0;
 
     float realizeYawEncoder(float rawAngle);
     float realizePitchEncoder(float rawAngle);
