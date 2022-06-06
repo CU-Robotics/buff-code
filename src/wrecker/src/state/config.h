@@ -67,7 +67,7 @@ struct C_RailChassis {
 };
 
 struct C_Gimbal {
-  float sensitivity = 0.0004;
+  float sensitivity = 0.000005;
 
   // Angle offset for motors: yaw, pitch
   float yawOffset = 90.0;
@@ -81,8 +81,10 @@ struct C_Gimbal {
   float pitchMotorID = 1;
   float yawMotorID = 2;
 
-  C_PID yaw_PID;
-  C_PID pitch_PID;
+  C_PID yawVel;
+  C_PID yawPos;
+  C_PID pitchVel;
+  C_PID pitchPos;
 };
 
 // Configured for cooling focus by default

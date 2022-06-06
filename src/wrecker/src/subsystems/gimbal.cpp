@@ -19,11 +19,15 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
   this->pitchMotor.init(7, 2);
 
   this->imu.init();
-  mouseXBuffer.init(50);
+  mouseXFilter.init(50);
+  mouseYFilter.init(50);
 
-  config->yaw_PID.continuous = true;
-  config->yaw_PID.K[0] = 0.005;
-  config->pitch_PID.K[0] = 0.02;
+  config->yawVel.Ymin = -150.0;
+  config->yawVel.Ymax = 150.0;
+  config->yawVel.K[0] = 0.01;
+
+  config->yawPos.continuous = true;
+  config->yawPos.K[0] = 1.5;
 
   config->pitchMax = 50.0;
   config->pitchMin = -18.0;
@@ -32,15 +36,21 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
 }
 
 void Gimbal::update(float deltaTime) {
+  if (state->driverInput.b && !calibrated) {
+    calibrated = true;
+    imu.update_MPU6050();
+    gyroDrift = this->imu.get_gyro_x();
+  }
+
+  // Gyro management
   newTime = millis();
-  if ((newTime - oldTime) > 25) {
+  if ((newTime - oldTime) > 25 && calibrated) {
     imu.update_MPU6050();
     oldTime = newTime;
   }
+  this->gyroAngle += ((this->imu.get_gyro_x() - gyroDrift) * (180.0 / M_PI) * 6) / deltaTime;
 
-  if (state->driverInput.b && !calibrated)
-    calibrated = true;
-
+  // Yaw encoder
   float rawYawAngle = yawMotor.getAngle();
   if (calibrated) {
     float yawDifference = this->prevRawYawAngle - rawYawAngle;
@@ -50,27 +60,27 @@ void Gimbal::update(float deltaTime) {
       this->yawRollover++;
   }
   this->prevRawYawAngle = rawYawAngle;
-
-  // this->imu.update_MPU6050();
-  this->gyroAngle += ((this->imu.get_gyro_x() - 0.7763) * (180.0 / M_PI) * 6) / deltaTime;
-
   float yawAngle = realizeYawEncoder(rawYawAngle);
+  this->state->gimbal.yawGlobal = yawAngle; // Set the global yaw
+  
+  // Pitch encoder
   float pitchAngle = realizePitchEncoder(pitchMotor.getAngle());
 
-  // Calculate new gimbal setpoints
+  // Calculate gimbal setpoints
   if (state->driverInput.mouseRight) {
     aimYaw += state->gimbal.yaw_reference;
     aimPitch += state->gimbal.pitch_reference;
     mouseReleased = 1;
   }
   else if (mouseReleased){
-    aimYaw = state->gimbal.yaw_PID.Y;
-    aimPitch = state->gimbal.pitch_PID.Y;
+    aimYaw = yawAngle;
+    aimPitch = pitchAngle;
     mouseReleased = 0;
   }
   else {
-    aimYaw += state->driverInput.mouseX * config->sensitivity * deltaTime / 10000.0; // 10000 is an arbitrary number -- do not change or sensitivies will change
-    aimPitch += state->driverInput.mouseY * config->sensitivity * deltaTime / 10000.0; // 10000 is an arbitrary number -- do not change or sensitivies will change
+    float moveYaw = state->driverInput.mouseX * config->sensitivity * deltaTime;
+    mouseXFilter.push(moveYaw);
+    aimYaw += mouseXFilter.mean();
   }
   
 
@@ -91,25 +101,32 @@ void Gimbal::update(float deltaTime) {
   else if (aimPitch > config->pitchMax)
     aimPitch = config->pitchMax;
 
-  this->state->gimbal.yawGlobal = yawAngle;
 
   // Yaw PID
-  float move = state->driverInput.mouseX * config->sensitivity * deltaTime * 150 / 10000.0;
-  mouseXBuffer.push(move);
-  state->gimbal.yaw_PID.R = mouseXBuffer.mean();
-  PID_Filter(&config->yaw_PID, &state->gimbal.yaw_PID, (yawMotor.getRpm() * 0.5), deltaTime);
+  state->gimbal.yawPos.R = aimYaw;
+  PID_Filter(&config->yawPos, &state->gimbal.yawPos, yawAngle, deltaTime);
+
+  state->gimbal.yawVel.R = state->gimbal.yawPos.Y;
+  PID_Filter(&config->yawVel, &state->gimbal.yawVel, (yawMotor.getRpm() * 0.5), deltaTime);
+
+  Serial.print(aimYaw);
+  Serial.print(" - ");
+  Serial.print(yawAngle);
+  Serial.print(" - ");
+  Serial.print(state->gimbal.yawPos.Y);
+  Serial.print(" - ");
+  Serial.print(state->gimbal.yawVel.Y);
+  Serial.println();
+
 
   // Pitch PID
-  state->gimbal.pitch_PID.R = aimPitch;
-  PID_Filter(&config->pitch_PID, &state->gimbal.pitch_PID, pitchAngle, deltaTime);
+  // state->gimbal.pitch_PID.R = aimPitch;
+  // PID_Filter(&config->pitch_PID, &state->gimbal.pitch_PID, pitchAngle, deltaTime);
 
   // Set motor power
   if (calibrated) {
-    Serial.print(state->gimbal.yaw_PID.R);
-    Serial.print(" - ");
-    Serial.print(state->gimbal.yaw_PID.Y);
-    Serial.println();
-    yawMotor.setPower(state->gimbal.yaw_PID.Y);
+    yawMotor.setPower(state->gimbal.yawVel.Y);
+    //yawMotor.setPower(-0.5);
     //pitchMotor.setPower(state->gimbal.pitch_PID.Y);
   }
 }
