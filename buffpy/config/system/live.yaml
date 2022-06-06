@@ -8,7 +8,7 @@ TOPICS:
   DETECTION_RED: 'red_detection'
   DETECTION_BLUE: 'blue_detection'
   DETECTION_PIXEL: 'image_detection'
-
+  DETECTION_WORLD: 'world_detection'
 
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
