@@ -422,9 +422,11 @@ def main(ap):
 		train_model(ap.train)
 
 	if ap.install:
+		build_buffpy('deploy')
 		deploy_all_devices()
 
 	if ap.upload:
+		build_buffpy('firmware')
 		result = subprocess.run('cd src/wrecker && pio run -t upload', shell=True)
 
 	# May be Deprecated
