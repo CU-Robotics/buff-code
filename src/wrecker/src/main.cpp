@@ -43,7 +43,7 @@
 
 // TEMP
 int counter = 1;
-CircularBuffer cb(10);
+CircularBuffer cb;
 
 
 // void dump(){
@@ -81,6 +81,7 @@ void setup() {
 
   // serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
   // serialDumpTmr.begin(dump, dumpRate);
+  cb.init(5);
 
 }
 
