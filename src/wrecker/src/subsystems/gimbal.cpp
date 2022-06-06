@@ -68,7 +68,7 @@ void Gimbal::update(float deltaTime) {
 
   // Calculate gimbal setpoints
   if (state->driverInput.mouseRight) {
-    aimYaw += state->gimbal.yaw_reference;
+    aimYaw -= state->gimbal.yaw_reference;
     aimPitch += state->gimbal.pitch_reference;
     mouseReleased = 1;
   }
