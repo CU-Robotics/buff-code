@@ -85,9 +85,9 @@ void dr16::update() {
 
 
         //mouse
-        input->mouseX = (int16_t)((buf[6] << 8) | buf[7]);
-        input->mouseY = (int16_t)((buf[8] << 8) | buf[9]);
-        input->mouseZ = (int16_t)((buf[10] << 8) | buf[11]);
+        input->mouseX = (int16_t)(buf[6] | (buf[7] << 8));
+        input->mouseY = (int16_t)(buf[8] | (buf[9] << 8));
+        input->mouseZ = (int16_t)(buf[10] | (buf[11] << 8));
         input->mouseLeft = buf[12];
         input->mouseRight = buf[13];
 

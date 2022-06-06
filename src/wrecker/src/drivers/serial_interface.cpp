@@ -284,8 +284,8 @@ void dump_Gimbal(S_Gimbal* gm){
 
   Serial.println(gm->yawGlobal);
 
-  dump_PID(&gm->yaw_PID, "/GY");
-  dump_PID(&gm->pitch_PID, "/GP");
+  dump_PID(&gm->yawVel, "/GY");
+  dump_PID(&gm->pitchVel, "/GP");
 }
 
 void dump_Gimbal(C_Gimbal* gm){
@@ -298,8 +298,8 @@ void dump_Gimbal(C_Gimbal* gm){
   Serial.print("@GG: ");
   Serial.println(gm->pitchOffset);
 
-  dump_PID(&gm->yaw_PID, "@GY");
-  dump_PID(&gm->pitch_PID, "@GP");
+  dump_PID(&gm->yawVel, "@GY");
+  dump_PID(&gm->pitchVel, "@GP");
 }
 
 
@@ -327,11 +327,11 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
       break;
 
     case 'Y':
-      PID_serial_event(&config->yaw_PID, &state->yaw_PID);
+      PID_serial_event(&config->yawVel, &state->yawVel);
       break;
 
     case 'P':
-      PID_serial_event(&config->pitch_PID, &state->yaw_PID);
+      PID_serial_event(&config->pitchVel, &state->pitchVel);
       break;
   }
 }
