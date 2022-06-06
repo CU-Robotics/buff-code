@@ -36,13 +36,15 @@ float CircularBuffer::get(int idx){
 int CircularBuffer::push(float value){
     if (num_items > 0){
         head ++;
-    	if (tail >= head)
-        	tail++;
 
-    	else if (head >= max_size){
+    	if (head >= max_size)
         	head = 0;
+
+        if (tail >= head)
         	tail++;
-    	}
+        
+        	if (tail >= max_size)
+        		tail = 0;
 	}
 
 	if (num_items < max_size) {
@@ -80,6 +82,14 @@ void CircularBuffer::print_buff()
 		Serial.print(get(i));
 		Serial.print(" // ");
 	}
+
+	Serial.print(num_items);
+	Serial.print(" // ");
+	Serial.print(head);
+	Serial.print(" // ");
+	Serial.print(tail);
+	Serial.print(" // ");
+	Serial.println(max_size);
 }
 
 // float CircularBuffer::median():
