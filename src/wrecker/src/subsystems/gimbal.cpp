@@ -77,7 +77,7 @@ void Gimbal::update(float deltaTime) {
 
   // Calculate gimbal setpoints
   if (state->driverInput.mouseRight) {
-    aimYaw -= state->gimbal.yaw_reference;
+    aimYaw += state->gimbal.yaw_reference;
     aimPitch += state->gimbal.pitch_reference;
     mouseReleased = 1;
   }
@@ -118,15 +118,6 @@ void Gimbal::update(float deltaTime) {
   PID_Filter(&config->yawVel, &state->gimbal.yawVel, yawFilter.mean(), deltaTime);
 
   float dynamicYawFeedforward = -gyroSpeed * 1.0;
-
-  Serial.print(yawAngle);
-  Serial.print(" - ");
-  Serial.print(state->gimbal.yawPos.Y);
-  Serial.print(" - ");
-  Serial.print(yawFilter.mean());
-  Serial.print(" - ");
-  Serial.print(state->gimbal.yawVel.Y);
-  Serial.println();
 
 
   // Pitch PID

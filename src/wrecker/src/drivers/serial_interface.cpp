@@ -385,24 +385,30 @@ void DriverInput_serial_event(DriverInput*){
 }
 
 void dump_DriverInput(DriverInput* di){
-  Serial.print("/DL");
+  Serial.print("/DL: ");
   Serial.print(di->leftStickX); Serial.print(","); 
   Serial.println(di->leftStickY);
   
-  Serial.print("/DR");
+  Serial.print("/DR: ");
   Serial.print(di->rightStickX); Serial.print(","); 
   Serial.println(di->rightStickY);
   
-  Serial.print("/DS"); 
+  Serial.print("/DS: "); 
   Serial.print(di->leftSwitch); Serial.print(","); 
   Serial.println(di->rightSwitch);
   
-  Serial.print("/DM");
+  Serial.print("/DM: ");
   Serial.print(di->mouseX); Serial.print(","); 
   Serial.println(di->mouseY);
 }
 
 void dump_RefSystem_State(S_RefSystem* rf){
+  Serial.print("/MS: "); 
+  Serial.print(rf->robot_id); Serial.print(",");
+  Serial.print(rf->robot_level); Serial.print(",");
+  Serial.print(rf->robot_health); Serial.print(",");
+  Serial.print(rf->chassis_current); Serial.print(",");
+  Serial.println(rf->chassis_voltage);
 
 }
 
@@ -440,7 +446,7 @@ void dump_Robot(C_Robot* r_config, S_Robot* r_state){
   dump_Gimbal(&r_state->gimbal);
   dump_Gimbal(&r_config->gimbal);
 
-  // dump_RefSystem_State(&r_state->refSystem);
+  dump_RefSystem_State(&r_state->refSystem);
 
   // dump_DriverInput(r_state->driverInput);
 }
