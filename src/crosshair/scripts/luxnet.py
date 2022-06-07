@@ -230,7 +230,7 @@ class DepthAI_Device:
 			ctrl = dai.CameraControl()
 			ctrl.setContrast(10)
 			ctrl.setAutoWhiteBalanceMode(dai.RawCameraControl.AutoWhiteBalanceMode.OFF)
-			ctrl.setAutoFocusMode(dai.setAutoFocusMode.AutoFocusMode.OFF)
+			ctrl.setAutoFocusMode(dai.RawCameraControl.AutoFocusMode.OFF)
 			controlQueue.send(ctrl)
 
 			start_time = time.time()
