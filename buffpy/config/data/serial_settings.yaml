@@ -30,6 +30,9 @@ SERIAL_LUT:
     D: 
       NAME: 'driver'
       TYPE: 'DRIVER'
+    M:
+      NAME: 'ref'
+      TYPE: 'REF_SYSTEM'
 
   GIMBAL:
     S: 'sensitivity'
@@ -110,3 +113,5 @@ SERIAL_LUT:
     R: 'rightstick'
 
 
+  REF_SYSTEM:
+    

@@ -22,16 +22,24 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
   mouseXFilter.init(50);
   mouseYFilter.init(50);
 
+  pitchFilter.init(35);
+  yawFilter.init(50);
+
+  config->yawPos.K[0] = 2.3;
+  config->yawPos.K[2] = 0.01;
+
   config->yawVel.Ymin = -150.0;
   config->yawVel.Ymax = 150.0;
-  config->yawVel.K[0] = 0.01;
+  config->yawVel.K[0] = 0.04;
 
-  config->yawPos.continuous = true;
-  config->yawPos.K[0] = 1.5;
+  config->pitchPos.K[0] = 3;
+  config->pitchPos.K[2] = 0.0;
+
+  config->pitchVel.K[0] = 0.012;
 
   config->pitchMax = 50.0;
   config->pitchMin = -18.0;
-  config->pitchOffset = 180;
+  config->pitchOffset = 177;
   config->yawOffset = 330;
 }
 
@@ -48,7 +56,8 @@ void Gimbal::update(float deltaTime) {
     imu.update_MPU6050();
     oldTime = newTime;
   }
-  this->gyroAngle += ((this->imu.get_gyro_x() - gyroDrift) * (180.0 / M_PI) * 6) / deltaTime;
+  float gyroSpeed = (this->imu.get_gyro_x() - gyroDrift) * (180.0 / M_PI) * (deltaTime / 1000000.0);
+  this->gyroAngle += gyroSpeed;
 
   // Yaw encoder
   float rawYawAngle = yawMotor.getAngle();
@@ -68,7 +77,7 @@ void Gimbal::update(float deltaTime) {
 
   // Calculate gimbal setpoints
   if (state->driverInput.mouseRight) {
-    aimYaw -= state->gimbal.yaw_reference;
+    aimYaw += state->gimbal.yaw_reference;
     aimPitch += state->gimbal.pitch_reference;
     mouseReleased = 1;
   }
@@ -81,19 +90,17 @@ void Gimbal::update(float deltaTime) {
     float moveYaw = state->driverInput.mouseX * config->sensitivity * deltaTime;
     mouseXFilter.push(moveYaw);
     aimYaw += mouseXFilter.mean();
+
+    float movePitch = state->driverInput.mouseY * config->sensitivity * deltaTime;
+    mouseYFilter.push(movePitch);
+    aimPitch -= mouseYFilter.mean();
   }
   
 
-  // Yaw angle range correction
-  aimYaw = fmod(aimYaw, 360.0);
-  if (aimYaw < 0)
-    aimYaw += 360;
-
-  // Pitch angle range correction
-  aimPitch = fmod(aimPitch, 360.0);
-
-  if (aimPitch < 0)
-    aimPitch += 360;
+  // // Yaw angle range correction
+  // aimYaw = fmod(aimYaw, 360.0);
+  // if (aimYaw < 0)
+  //   aimYaw += 360;
   
   // Pich softstops
   if (aimPitch < config->pitchMin)
@@ -106,37 +113,43 @@ void Gimbal::update(float deltaTime) {
   state->gimbal.yawPos.R = aimYaw;
   PID_Filter(&config->yawPos, &state->gimbal.yawPos, yawAngle, deltaTime);
 
+  yawFilter.push(yawMotor.getRpm() * 0.5);
   state->gimbal.yawVel.R = state->gimbal.yawPos.Y;
-  PID_Filter(&config->yawVel, &state->gimbal.yawVel, (yawMotor.getRpm() * 0.5), deltaTime);
+  PID_Filter(&config->yawVel, &state->gimbal.yawVel, yawFilter.mean(), deltaTime);
 
-  Serial.print(aimYaw);
-  Serial.print(" - ");
-  Serial.print(yawAngle);
-  Serial.print(" - ");
-  Serial.print(state->gimbal.yawPos.Y);
-  Serial.print(" - ");
-  Serial.print(state->gimbal.yawVel.Y);
-  Serial.println();
+  float dynamicYawFeedforward = -gyroSpeed * 1.0;
 
 
   // Pitch PID
-  // state->gimbal.pitch_PID.R = aimPitch;
-  // PID_Filter(&config->pitch_PID, &state->gimbal.pitch_PID, pitchAngle, deltaTime);
+  state->gimbal.pitchPos.R = aimPitch;
+  PID_Filter(&config->pitchPos, &state->gimbal.pitchPos, pitchAngle, deltaTime);
+
+  pitchFilter.push(pitchMotor.getRpm());
+  state->gimbal.pitchVel.R = state->gimbal.pitchPos.Y;
+  PID_Filter(&config->pitchVel, &state->gimbal.pitchVel, pitchFilter.mean(), deltaTime);
+
+  float dynamicPitchFeedForward = cos((PI / 180.0) * pitchAngle) * 0.45;
+
+  // Serial.print(pitchAngle);
+  // Serial.print(" - ");
+  // Serial.print(aimPitch);
+  // Serial.println();
 
   // Set motor power
   if (calibrated) {
-    yawMotor.setPower(state->gimbal.yawVel.Y);
+    yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
     //yawMotor.setPower(-0.5);
     //pitchMotor.setPower(state->gimbal.pitch_PID.Y);
+    pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }
 }
 
 float Gimbal::realizeYawEncoder(float rawAngle) {
   float yawAngle = ((rawAngle - config->yawOffset + (this->yawRollover * 360)) * 0.5) + (this->gyroAngle);
 
-  yawAngle = fmod(yawAngle, 360.0);
-  if (yawAngle < 0)
-    yawAngle += 360;
+  // yawAngle = fmod(yawAngle, 360.0);
+  // if (yawAngle < 0)
+  //   yawAngle += 360;
   return yawAngle;
 }
 

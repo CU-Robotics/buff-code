@@ -119,6 +119,10 @@ struct S_RefSystem {
 
     char ref_warning = '\r';
     int foul_robot_id = -1;
+
+    int robot_id = -1;
+    int robot_level = -1;
+    int robot_health = -1;
     
     int red_hero_robot_level = -1;
     int red_infantry_robot_level = -1;
@@ -141,8 +145,8 @@ struct S_RefSystem {
 
     int robot_power_lim = -1;
 
-    int chasis_volt = -1;
-    int chasis_current = -1;
+    int chassis_voltage = -1;
+    int chassis_current = -1;
 
     int robot_buff = -1;
 

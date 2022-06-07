@@ -36,7 +36,7 @@ C_Robot robot_config;
 Gimbal gimbal;
 dr16 reciever;
 Shooter shooter;
-// Ref_System refSys;
+Ref_System refSys;
 SwerveChassis swerveChassis;
 
 
@@ -71,7 +71,7 @@ void setup() {
 
   // Subsystem setup
 
-  //refSys.init(&robot_state.refSystem);
+  refSys.init(&robot_state.refSystem);
   reciever.init(&robot_state.driverInput);
   gimbal.setup(&robot_config.gimbal, &robot_state);
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
@@ -109,6 +109,8 @@ void loop() {
   //swerveChassis.update(deltaT);
   gimbal.update(deltaT);
   //shooter.update(deltaT);
+
+  refSys.read_serial();
 
   if (counter % 5 == 0) {
     sendC6x0();
