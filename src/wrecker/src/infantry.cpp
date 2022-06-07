@@ -100,10 +100,10 @@ void loop() {
   // // while (can3.read(tempMessage))
   // //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
   
-  
+  ref_sys.read_serial();  
+
   if (Serial.available() > 0)
     serial_event(&robot_config, &robot_state);
-
 
   reciever.update();
   //swerveChassis.update(deltaT);
