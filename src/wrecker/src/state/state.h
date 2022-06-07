@@ -50,6 +50,7 @@ struct S_Gimbal {
 
 struct S_Shooter {
   bool firing = false;
+  int mode = 0;
 
   S_PID feedPID;
 };
