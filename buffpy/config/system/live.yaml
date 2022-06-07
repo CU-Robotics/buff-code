@@ -19,14 +19,14 @@ NODES:
   LUXONIS: # spawns our detector node
     FILES: ['luxnet.py']
     REQUIRED: True
-  RED_TRACKER:     # spawns our tracker node
-    FILES: ['deadreckon_tracer.py']
-    CONFIG: None
-    DETECTION_TOPIC: 'DETECTION_RED'
-  # BLUE_TRACKER:     # spawns our tracker node
+  # RED_TRACKER:     # spawns our tracker node
   #   FILES: ['deadreckon_tracer.py']
   #   CONFIG: None
-  #   DETECTION_TOPIC: 'DETECTION_BLUE'
+  #   DETECTION_TOPIC: 'DETECTION_RED'
+  BLUE_TRACKER:     # spawns our tracker node
+    FILES: ['deadreckon_tracer.py']
+    CONFIG: None
+    DETECTION_TOPIC: 'DETECTION_BLUE'
   SERIAL:
     FILES: ['serial_layer.py']
     CONFIG: 'serial_settings.yaml'
