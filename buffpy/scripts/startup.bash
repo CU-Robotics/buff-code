@@ -1,1 +1,3 @@
-python3 /home/cu-robotics/buff-code/buffpy/bin/run self.yaml
+#! /bin/bash
+
+python3 /home/mdyse/buff-code/buffpy/bin/run self.yaml

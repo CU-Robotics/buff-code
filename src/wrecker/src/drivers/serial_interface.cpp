@@ -281,7 +281,6 @@ void dump_Gimbal(S_Gimbal* gm){
   Serial.print(gm->pitch); Serial.print(",");
   Serial.print(gm->yaw_reference); Serial.print(",");
   Serial.print(gm->pitch_reference); Serial.print(",");
-
   Serial.println(gm->yawGlobal);
 
   dump_PID(&gm->yawVel, "/GY");
@@ -319,11 +318,11 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
 
     case 'W':
       state->yaw_reference = Serial.parseFloat();
+      dump_Gimbal(state);
       break;
 
     case 'H':
       state->pitch_reference = Serial.parseFloat();
-      dump_Gimbal(state);
       break;
 
     case 'Y':
@@ -444,9 +443,9 @@ void dump_Robot(C_Robot* r_config, S_Robot* r_state){
   // dump_SwerveChassis(&r_config->swerveChassis);
 
   dump_Gimbal(&r_state->gimbal);
-  dump_Gimbal(&r_config->gimbal);
+  // dump_Gimbal(&r_config->gimbal);
 
-  dump_RefSystem_State(&r_state->refSystem);
+  // dump_RefSystem_State(&r_state->refSystem);
 
   // dump_DriverInput(r_state->driverInput);
 }

@@ -11,6 +11,10 @@ TOPICS:
   DETECTION_WORLD: 'world_detection'
 
 NODES:
+  MODEL:
+    CONFIG: 'model_settings.yaml'
+  CAMERA:
+    CONFIG: 'camera_settings.yaml'
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
   #   FILE: 'record'
   #   PACKAGE: 'rosbag'
@@ -30,11 +34,6 @@ NODES:
   SERIAL:
     FILES: ['serial_layer.py']
     CONFIG: 'serial_settings.yaml'
-
-  MODEL:
-    CONFIG: 'model_settings.yaml'
-  CAMERA:
-    CONFIG: 'camera_settings.yaml'
   TRACKER:
     FILES: ['projector.py']
     CONFIG: 'tracker_settings.yaml'
