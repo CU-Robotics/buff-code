@@ -50,7 +50,7 @@ class Dead_Reckon_Tracer:
 		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
 		
 		hz = rospy.get_param('/buffbot/CAMERA/FPS')
-		self.rate = rospy.Rate(hz)
+		self.rate = rospy.Rate(hz / 2)
 		
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 		topics = rospy.get_param('/buffbot/TOPICS')

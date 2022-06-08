@@ -4,9 +4,7 @@ FROM: 'live.yaml'
 TOPICS:
   TARGET_MAP: 'target_map'
   IMAGE_DEBUG: 'image_debug'
-  TRACKING_ERROR: 'tracking_error'
-  DETECTION_WORLD: 'world_detection'
-  
+  TRACKING_ERROR: 'tracking_error'  
 
 NODES:
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
