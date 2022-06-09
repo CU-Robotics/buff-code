@@ -59,13 +59,11 @@ class Projector:
 		"""
 		# for now. need to figure out how to get accurate time between messages?
 		# Build a custom message that has a timestamp
-		t = time.time()
 		# do projector stuff
 		r = self.project(np.array(msg.data))
-		#  if not r is None and len(r) > 0:
-			# print(r)
-			# msg = Float64MultiArray(data=r)
-			# self.project_pub.publish(msg)
+		if not r is None and len(r) > 0:
+			msg = Float64MultiArray(data=r)
+			self.project_pub.publish(msg)
 
 	def gimbal_callback(self, msg):
 		state = msg.data
@@ -95,11 +93,12 @@ class Projector:
 				reds = np.concatenate([reds, [x,y,w,h]])
 
 
-			d = self.height_2_distance(h * self.image_size)
+			d = self.height_2_distance(h * self.image_size[0])
 			alphaX = np.radians((0.5 - x) * self.FOV)
 			alphaY = np.radians((y - 0.5) * self.FOV)
-			poses = np.concatenate([poses, 
-				[cl, d * np.cos(self.phi + alphaY) * np.cos(self.psi + alphaX), d * np.cos(self.phi + alphaY) * np.sin(self.psi + alphaX)]])
+			poses = np.concatenate([poses, [cl, 
+				d * np.cos(self.phi + alphaY) * np.cos(self.psi + alphaX), 
+				d * np.cos(self.phi + alphaY) * np.sin(self.psi + alphaX)]])
 
 		if len(reds) > 1:
 			msg = Float64MultiArray(data=reds)

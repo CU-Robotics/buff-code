@@ -42,6 +42,7 @@ SwerveChassis swerveChassis;
 
 
 // TEMP
+int update_eh = 0;
 int counter = 1;
 
 void dump(){
@@ -77,8 +78,8 @@ void setup() {
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
 
-  // serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
-  // serialDumpTmr.begin(dump, dumpRate);
+  serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
+  serialDumpTmr.begin(dump, dumpRate);
 }
 
 
@@ -105,10 +106,9 @@ void loop() {
   if (Serial.available() > 0)
     serial_event(&robot_config, &robot_state);
 
-  robot_state.driverInput.mouseRight = 1;
-
   reciever.update();
   //swerveChassis.update(deltaT);
+  robot_state.driverInput.mouseRight = 1;
   gimbal.update(deltaT);
   //shooter.update(deltaT);
 
