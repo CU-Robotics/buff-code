@@ -26,9 +26,10 @@ void Shooter::update(unsigned long deltaTime) {
         calibrated = true;
 
     if (calibrated) {
+        Serial.println("enabled");
         // Spin flywheels
-        this->topFlywheel.setPower(0.35);
-        this->bottomFlywheel.setPower(0.35);
+        this->topFlywheel.setPower(0.3);
+        this->bottomFlywheel.setPower(0.3);
 
         // Mode switching
         if (state->driverInput.q) {
@@ -40,7 +41,7 @@ void Shooter::update(unsigned long deltaTime) {
         }
 
         // Feeding
-        if (state->driverInput.mouseLeft)
+        if (state->driverInput.mouseLeft) {
             switch(this->state->shooter17.mode) {
                 case 0:
                     state->shooter17.feedPID.R = -60 * 36;
@@ -53,14 +54,18 @@ void Shooter::update(unsigned long deltaTime) {
                     break;
                 default:
                     state->shooter17.feedPID.R = -60 * 36;
-            } 
-        else if (state->driverInput.f)
+            }
+        } else if (state->driverInput.f)
             state->shooter17.feedPID.R = 60 * 36;
         else
             state->shooter17.feedPID.R = 0;
 
+        Serial.print(state->shooter17.feedPID.R);
+        Serial.print(" - ");
+
         // Feed PID
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
         this->feedMotor.setPower(state->shooter17.feedPID.Y);
+        Serial.println(state->shooter17.feedPID.Y);
     }
 }
