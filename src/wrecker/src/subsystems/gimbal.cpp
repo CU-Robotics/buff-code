@@ -122,7 +122,6 @@ void Gimbal::update(float deltaTime) {
 
   float dynamicYawFeedforward = -gyroSpeed * 1.0;
 
-
   // Serial.print(yawAngle);
   // Serial.print(" - ");
   // Serial.print(state->gimbal.yawPos.Y);
@@ -133,7 +132,6 @@ void Gimbal::update(float deltaTime) {
   // Serial.print(" - ");
   // Serial.print(state->gimbal.yawVel.Y);
   // Serial.println();
-
 
   // Pitch PID
   state->gimbal.pitchPos.R = aimPitch;
@@ -153,7 +151,6 @@ void Gimbal::update(float deltaTime) {
   // Set motor power
   if (calibrated) {
     yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
-    //yawMotor.setPower(-0.5);
     //pitchMotor.setPower(state->gimbal.pitch_PID.Y);
     pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }
