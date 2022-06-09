@@ -147,7 +147,7 @@ void Gimbal::update(float deltaTime) {
   Serial.print(" - aimPitch: ");
   Serial.print(aimPitch);
   Serial.print(" - deltaTime: ");
-  Serial.print(aimPitch);
+  Serial.print(deltaTime);
   Serial.println();
 
   // Set motor power
