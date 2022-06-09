@@ -25,7 +25,7 @@ class SerialLayer():
 
 		topics = rospy.get_param('/buffbot/TOPICS')
 		self.writer_sub = rospy.Subscriber(topics['SERIAL_OUT'], 
-			String, self.writer_callback, queue_size=10)
+			String, self.writer_callback, queue_size=1)
 
 		rospy.init_node('echo-serial', anonymous=True)
 
@@ -41,7 +41,6 @@ class SerialLayer():
 		  Callback for writing messages to the teensy
 		"""
 		byte_string = bytes(msg.data, 'utf-8')
-		# print(byte_string)
 		self.write_device(byte_string)
 
 	def try_connect(self):
@@ -102,6 +101,7 @@ class SerialLayer():
 				return
 
 		else:
+			rospy.loginfo(f'{packet}')
 			return
 
 		if name[0] == '/':
