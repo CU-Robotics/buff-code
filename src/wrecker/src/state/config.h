@@ -40,6 +40,8 @@ struct C_SwerveModule {
   C_PID steerVel;
   C_PID steerPos;
   C_PID driveVel;
+
+  float rampLimit = 0.01;
 };
 
 struct C_SwerveChassis {

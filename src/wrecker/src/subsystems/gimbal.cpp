@@ -30,7 +30,7 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
 
   config->yawVel.Ymin = -150.0;
   config->yawVel.Ymax = 150.0;
-  config->yawVel.K[0] = 0.04;
+  config->yawVel.K[0] = 0.06;
 
   config->pitchPos.K[0] = 3;
   config->pitchPos.K[2] = 0.0;
@@ -114,10 +114,25 @@ void Gimbal::update(float deltaTime) {
   PID_Filter(&config->yawPos, &state->gimbal.yawPos, yawAngle, deltaTime);
 
   yawFilter.push(yawMotor.getRpm() * 0.5);
+  // int time = millis();
+  // float modulate = (time % 1000) / 1000.0;
+  // modulate = (25 * sinf(2 * PI * modulate)) + 100;
   state->gimbal.yawVel.R = state->gimbal.yawPos.Y;
   PID_Filter(&config->yawVel, &state->gimbal.yawVel, yawFilter.mean(), deltaTime);
 
   float dynamicYawFeedforward = -gyroSpeed * 1.0;
+
+
+  // Serial.print(yawAngle);
+  // Serial.print(" - ");
+  // Serial.print(state->gimbal.yawPos.Y);
+  // Serial.print(" - ");
+  // Serial.print(state->gimbal.yawVel.R);
+  // Serial.print(" - ");
+  // Serial.print(yawFilter.mean());
+  // Serial.print(" - ");
+  // Serial.print(state->gimbal.yawVel.Y);
+  // Serial.println();
 
 
   // Pitch PID

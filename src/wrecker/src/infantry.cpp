@@ -112,8 +112,6 @@ void loop() {
   gimbal.update(deltaT);
   //shooter.update(deltaT);
 
-  refSys.read_serial();
-
   if (counter % 5 == 0) {
     sendC6x0();
     sendGM6020();

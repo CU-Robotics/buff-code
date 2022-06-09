@@ -17,6 +17,8 @@ void Shooter::setup(C_Shooter17 *config, S_Robot *state) {
     this->feedMotor.init(1, 2);
     this->bottomFlywheel.init(29);
     this->topFlywheel.init(28);
+
+    this->config->feedPID.K[0] = 0.0005;
 }
 
 void Shooter::update(unsigned long deltaTime) {
@@ -24,17 +26,40 @@ void Shooter::update(unsigned long deltaTime) {
         calibrated = true;
 
     if (calibrated) {
-        this->topFlywheel.setPower(0.3);
-        this->bottomFlywheel.setPower(0.3);
+        // Spin flywheels
+        this->topFlywheel.setPower(0.35);
+        this->bottomFlywheel.setPower(0.35);
 
+        // Mode switching
+        if (state->driverInput.q) {
+            this->state->shooter17.mode = 0;
+        } else if (state->driverInput.e) {
+            this->state->shooter17.mode = 1;
+        } else if (state->driverInput.r) {
+            this->state->shooter17.mode = 2;
+        }
 
+        // Feeding
         if (state->driverInput.mouseLeft)
-            state->shooter17.feedPID.R = -2160;
+            switch(this->state->shooter17.mode) {
+                case 0:
+                    state->shooter17.feedPID.R = -60 * 36;
+                    break;
+                case 1:
+                    state->shooter17.feedPID.R = -90 * 36;
+                    break;
+                case 2:
+                    state->shooter17.feedPID.R = -120 * 36;
+                    break;
+                default:
+                    state->shooter17.feedPID.R = -60 * 36;
+            } 
         else if (state->driverInput.f)
-            state->shooter17.feedPID.R = 2160;
+            state->shooter17.feedPID.R = 60 * 36;
         else
             state->shooter17.feedPID.R = 0;
-        this->config->feedPID.K[0] = 0.0005;
+
+        // Feed PID
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
         this->feedMotor.setPower(state->shooter17.feedPID.Y);
     }
