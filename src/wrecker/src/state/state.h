@@ -17,6 +17,8 @@ struct S_SwerveModule {
   S_PID steerVel;
   S_PID steerPos;
   S_PID driveVel;
+
+  float inRange;
 };
 
 struct S_Chassis {
@@ -32,6 +34,8 @@ struct S_Chassis {
 
   S_PID drivePos;
   S_PID driveVel;
+
+  float rampLimit;
 };
 
 
@@ -50,6 +54,7 @@ struct S_Gimbal {
 
 struct S_Shooter {
   bool firing = false;
+  int mode = 0;
 
   S_PID feedPID;
 };
