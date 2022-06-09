@@ -76,17 +76,17 @@ void Gimbal::update(float deltaTime) {
   float pitchAngle = realizePitchEncoder(pitchMotor.getAngle());
 
   // Calculate gimbal setpoints
-  if (state->driverInput.mouseRight) {
-    aimYaw += state->gimbal.yaw_reference;
-    aimPitch += state->gimbal.pitch_reference;
-    mouseReleased = 1;
-  }
-  else if (mouseReleased){
-    aimYaw = yawAngle;
-    aimPitch = pitchAngle;
-    mouseReleased = 0;
-  }
-  else {
+  // if (state->driverInput.mouseRight) {
+  //   aimYaw += state->gimbal.yaw_reference;
+  //   aimPitch += state->gimbal.pitch_reference;
+  //   mouseReleased = 1;
+  // }
+  // else if (mouseReleased){
+  //   aimYaw = yawAngle;
+  //   aimPitch = pitchAngle;
+  //   mouseReleased = 0;
+  // }
+  //else {
     float moveYaw = state->driverInput.mouseX * config->sensitivity * deltaTime;
     mouseXFilter.push(moveYaw);
     aimYaw += mouseXFilter.mean();
@@ -94,7 +94,7 @@ void Gimbal::update(float deltaTime) {
     float movePitch = state->driverInput.mouseY * config->sensitivity * deltaTime;
     mouseYFilter.push(movePitch);
     aimPitch -= mouseYFilter.mean();
-  }
+  //}
   
 
   // // Yaw angle range correction
@@ -145,6 +145,8 @@ void Gimbal::update(float deltaTime) {
   Serial.print(" - aimYaw: ");
   Serial.print(aimYaw);
   Serial.print(" - aimPitch: ");
+  Serial.print(aimPitch);
+  Serial.print(" - deltaTime: ");
   Serial.print(aimPitch);
   Serial.println();
 
