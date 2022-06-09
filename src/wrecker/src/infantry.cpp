@@ -78,8 +78,8 @@ void setup() {
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
 
-  // serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
-  // serialDumpTmr.begin(dump, dumpRate);
+  serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
+  serialDumpTmr.begin(dump, dumpRate);
 }
 
 
@@ -102,12 +102,11 @@ void loop() {
   // //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
 
   
-  // if (Serial.available() > 0)
-  //   serial_event(&robot_config, &robot_state);
+  if (Serial.available() > 0)
+    serial_event(&robot_config, &robot_state);
 
   reciever.update();
   //swerveChassis.update(deltaT);
-  robot_state.driverInput.mouseRight = 1;
   gimbal.update(deltaT);
   //shooter.update(deltaT);
 
