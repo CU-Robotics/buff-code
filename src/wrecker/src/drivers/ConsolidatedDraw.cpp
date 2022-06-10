@@ -1,271 +1,11 @@
 #include <bitset>
 #include <iostream>
+#include <math.h>
 #include <string>
 #include <tuple>
 #include <vector>
 
 using namespace std;
-
-//CLASSES AND STRUCTS
-class Data{
-    public:
-    virtual vector<uint8_t> getData() = 0;
-};
-class DrawMessage: public Data{
-    private:
-    //DRAW ONE GRAPHIC ONLY AT ONE TIME
-    unsigned short data_id = 0x0101;
-    unsigned short sender_id;
-    unsigned short receiver_id;
-    vector<uint8_t> data_segment;
-    public:
-    DrawMessage(unsigned short sender_id, unsigned short receiver_id, vector<uint8_t> data_segment);
-    void setSenderID(unsigned short sender_id);
-    void setReceiverID(unsigned short receiver_id);
-    void setDataSegment(vector<uint8_t> data_segment);
-    unsigned short getDataID();
-    unsigned short getSenderID();
-    unsigned short getReceiverID();
-    vector<uint8_t> getDataSegment();
-    vector<uint8_t> getData();
-};
-struct Content{
-    unsigned short cmd_id;
-    Data* message;
-    Content(){cmd_id = 0; this->message = nullptr;};
-    Content(unsigned short cmd_id, Data* message);
-};
-struct Header{
-    unsigned char SOF = 0xA5;
-    unsigned short data_length;
-    unsigned char seq;
-    unsigned char CRC8; 
-    Header(){data_length = 0; seq = 0; CRC8 = 0;};
-    Header(Content* content, unsigned char seq);
-};
-struct Footer{
-    unsigned short frame_tail;
-    Footer(){frame_tail = 0;};
-    Footer(Content* content);
-};
-class RefSend{
-    private:
-    Header* header = nullptr;
-    Content* content = nullptr;
-    Footer* footer = nullptr;
-
-    public:
-    void setHeader(Header* header);
-    void setContent(Content* content);
-    void setFooter(Footer* footer);
-    Header* getHeader();
-    Content* getContent();
-    Footer* getFooter();
-    virtual vector<uint8_t> createMessage() = 0; //RETURN: array of bytes containing header, content, footer 
-};
-class Draw: public RefSend{
-    private:
-    //default color
-    string color = "black";
-    //index counter
-    int count = 0;
-    void drawWithColor() throw (exception); //uses private color to draw in color
-
-    public:
-    void setColor(string color);
-    string getColor();
-    int getColorID();
-    vector<uint8_t> lineData(tuple<int, int> v1, tuple<int, int> v2); //RETURN: array of bytes to set data_segment
-    vector<uint8_t> rectData(int width, int height, tuple<int, int> center); //RETURN: array of bytes to set data_segment
-    vector<uint8_t> rectData(tuple<int, int> topLeft, tuple<int, int> bottomRight); //RETURN: array of bytes to set data_segment
-    vector<uint8_t> circleData(tuple<int, int> center, int radius); //RETURN: array of bytes to set data_segment
-    vector<uint8_t> textData(string text, int fontSize, tuple<int, int> topLeft); // RETURN: array of bytes to set data_segment
-    vector<uint8_t> createMessage(); //RETURN: array of bytes containing header, content, footer
-};
-//CLASS FUNCTIONS
-//Structs
-Content::Content(unsigned short cmd_id, Data* message){
-    this->cmd_id = cmd_id;
-    this->message = message;
-}
-Header::Header(Content* content, unsigned char seq){
-    const unsigned short length = content->message->getData().size() + 2;
-    this->data_length = length;
-    this->seq = seq;
-    unsigned char temp[] = {uint8_t(length >> 8), uint8_t(length & 0xff), seq};
-    this->CRC8 = Get_CRC8_Check_Sum(temp, 3, 0x00);
-}
-Footer::Footer(Content* content){
-    vector<uint8_t> temp = content->message->getData();
-    temp.insert(temp.begin(), uint8_t(content->cmd_id & 0xff));
-    temp.insert(temp.begin(), uint8_t(content->cmd_id >> 8));
-    this->frame_tail = Get_CRC16_Check_Sum(&temp[0], temp.size(), 0x00);
-}
-//RefSend
-void RefSend::setHeader(Header* header){
-    this->header = header;
-}
-void RefSend::setContent(Content* content){
-    this->content = content;
-}
-void RefSend::setFooter(Footer* footer){
-    this->footer = footer;
-}
-Header* RefSend::getHeader(){
-    return this->header;
-}
-Content* RefSend::getContent(){
-    return this->content;
-}
-Footer* RefSend::getFooter(){
-    return this->footer;
-}
-//DrawMessage
-DrawMessage::DrawMessage(unsigned short sender_id, unsigned short receiver_id, vector<uint8_t> data_segment){
-    this->setSenderID(sender_id);
-    this->setReceiverID(receiver_id);
-    this->setDataSegment(data_segment);
-}
-void DrawMessage::setSenderID(unsigned short sender_id){
-    this->sender_id = sender_id;
-}
-void DrawMessage::setReceiverID(unsigned short receiver_id){
-    this->receiver_id = receiver_id;
-}
-void DrawMessage::setDataSegment(vector<uint8_t> data_segment){
-    this->data_segment = data_segment;
-}
-unsigned short DrawMessage::getDataID(){
-    return this->data_id;
-}
-unsigned short DrawMessage::getSenderID(){
-    return this->sender_id;
-}
-unsigned short DrawMessage::getReceiverID(){
-    return this->receiver_id;
-}
-vector<uint8_t> DrawMessage::getDataSegment(){
-    return this->data_segment;
-}
-vector<uint8_t> DrawMessage::getData(){
-    vector<uint8_t> bytes = vector<uint8_t>();
-    bytes.push_back(data_id >> 8);
-    bytes.push_back(data_id & 0xff);
-    bytes.push_back(sender_id >> 8);
-    bytes.push_back(sender_id & 0xff);
-    bytes.push_back(receiver_id >> 8);
-    bytes.push_back(receiver_id & 0xff);
-    vector<uint8_t> dataSegment = this->getDataSegment();
-    bytes.insert(bytes.end(), dataSegment.begin(), dataSegment.end());
-    return bytes;
-}
-//Draw
-void Draw::drawWithColor() throw (exception){
-    if (getColorID() == -1){
-        throw exception();
-    }
-    this->count++;
-};
-void Draw::setColor(string color){
-    this->color = color;
-};
-string Draw::getColor(){
-    return this->color;
-};
-int Draw::getColorID(){
-    int num = -1;
-    const string COLORS[] = {"blue", "yellow", "green", "orange", "purplish red", "pink", "cyan", "black", "white"};
-    if (this->color == "red"){
-        return 0x0;
-    }
-    else{
-        for (int color_index = 0; color_index < sizeof(COLORS)/sizeof(COLORS[0]); color_index++){
-            if (COLORS[color_index] == this->color){
-                num = color_index;
-            }
-        }
-        return num;
-    }
-};
-vector<uint8_t> Draw::lineData(tuple<int, int> v1, tuple<int, int> v2){
-    drawWithColor();
-    const string count = to_binaryString(this->count, 24);
-    const string gc = string("001") + string("000") + string("0001") + to_binaryString(getColorID(),4) + "000000000000000000";
-    const string gc2 = string("0000001010") + to_binaryString(get<0>(v1), 11) + to_binaryString(get<1>(v1), 11);
-    const string gc3 = string("0001100100") + to_binaryString(get<0>(v2), 11) + to_binaryString(get<1>(v2), 11);
-    bitset<120> bits(count + gc + gc2 + gc3);
-    string result = bits.to_string();
-    return to_bytes(result);
-};
-vector<uint8_t> Draw::rectData(int width, int height, tuple<int, int> center){
-    drawWithColor();
-    const int startX = get<0>(center) - width/2;
-    const int startY = get<1>(center) + height/2;
-    const int endX = get<0>(center) + width/2;
-    const int endY = get<1>(center) - height/2;
-    return rectData(tuple<int, int>(startX, startY), tuple<int, int>(endX, endY));
-    
-};
-vector<uint8_t> Draw::rectData(tuple<int, int> topLeft, tuple<int, int> bottomRight){
-    drawWithColor();
-    const int startX = get<0>(topLeft);
-    const int startY = get<1>(topLeft);
-    const int endX = get<0>(bottomRight);
-    const int endY = get<1>(bottomRight);
-    const string count = to_binaryString(this->count, 24);
-    const string gc = string("001") + string("001") + string("0001") + to_binaryString(getColorID(),4) + "000000000000000000";
-    const string gc2 = string("0000001010") + to_binaryString(startX, 11) + to_binaryString(startY, 11);
-    const string gc3 = string("0001100100") + to_binaryString(endX, 11) + to_binaryString(endY, 11);
-    bitset<120> bits(count + gc + gc2 + gc3);
-    //0x000001, 0b001, 0b001, 0b0001, 0b0111, 0b(18 0s), 0b000001010, startx, starty, 0b01100100, endx, endy
-    string result = bits.to_string();
-    //cout << result << endl;
-    return to_bytes(result);
-};
-vector<uint8_t> Draw::circleData(tuple<int, int> center, int radius){
-    drawWithColor();
-    const string count = to_binaryString(this->count, 24);
-    const string gc = string("001") + string("010") + string("0001") + to_binaryString(getColorID(),4) + "000000000000000000";
-    const string gc2 = string("0000001010") + to_binaryString(get<0>(center), 11) + to_binaryString(get<1>(center), 11);
-    const string gc3 = to_binaryString(radius, 11) + "0000000000000000000000";
-    bitset<120> bits(count + gc + gc2 + gc3);
-    string result = bits.to_string();
-    //cout << result << endl;
-    return to_bytes(result);
-};
-vector<uint8_t> Draw::textData(string text, int fontSize, tuple<int, int> topLeft){
-    drawWithColor();
-    const string count = to_binaryString(this->count, 24);
-    const string gc = string("001") + string("111") + string("0001") + to_binaryString(getColorID(),4) + to_binaryString(fontSize, 9) + to_binaryString(text.length(), 9);
-    const string gc2 = to_binaryString(fontSize/10, 10) + to_binaryString(get<0>(topLeft), 11) + to_binaryString(get<1>(topLeft), 11);
-    const string gc3 = to_binaryString(fontSize, 10) + "0000000000000000000000";
-    bitset<120> bits(count + gc + gc2 + gc3);
-    string result = bits.to_string();
-    //cout << result << endl;
-    return to_bytes(result);
-};
-vector<uint8_t> Draw::createMessage(){
-    vector<uint8_t> bytes = vector<uint8_t>();
-    if ((this->getHeader() != nullptr) && (this->getContent() != nullptr) && (this->getFooter() != nullptr)){
-        if ((this->getContent()->cmd_id = 0x0301) && (this->getContent()->message != nullptr)){
-            bytes.push_back(this->getHeader()->SOF);
-            bytes.push_back(this->getHeader()->data_length >> 8);
-            bytes.push_back(this->getHeader()->data_length & 0xff);
-            bytes.push_back(this->getHeader()->seq);
-            bytes.push_back(this->getHeader()->CRC8);
-            bytes.push_back(this->getContent()->cmd_id >> 8);
-            bytes.push_back(this->getContent()->cmd_id & 0xff);
-            vector<uint8_t> data = getContent()->message->getData();
-            bytes.insert(bytes.end(), data.begin(), data.end());
-            bytes.push_back(this->getFooter()->frame_tail >> 8);
-            bytes.push_back(this->getFooter()->frame_tail & 0xff);
-        }
-    }
-    else{
-        cout << "error: no header or content or footer" << endl;
-    }
-    return bytes;
-};
 
 //GENERAL FUNCTIONS
 /*
@@ -273,12 +13,12 @@ vector<uint8_t> Draw::createMessage(){
 ** Input: integer, expected length of binary string
 ** Output: string (binary string)
 */
-string to_binaryString(int num, int length){
+std::string to_binaryString(int num, int length){
     if (to_string(num).length() > length){
         return "error";
     }
     bitset<sizeof(num)> bits(num);
-    string result = bits.to_string();
+    std::string result = bits.to_string();
     while (result.length() < length){
         result = "0" + result;
     }
@@ -289,14 +29,14 @@ string to_binaryString(int num, int length){
 ** Input: string
 ** Output: vector<uint8_t> (vector of bytes)
 */
-vector<uint8_t> to_bytes(string str){
+vector<uint8_t> to_bytes(std::string str){
     vector<uint8_t> bytes = vector<uint8_t>();
     if (str.length()%8 != 0){
         return bytes;
     }
     for (int _ = 0; _ < str.length()/8; _ ++){
         int num = 0;
-        const string sub = str.substr(_*8, 8);
+        const std::string sub = str.substr(_*8, 8);
         for (int __ = 0; __ < 8; __++){
             num += (stoi(to_string(sub.at(__)))-48)*pow(2,7-__);
         }
@@ -450,8 +190,415 @@ void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength)
     pchMessage[dwLength-1] = (uint8_t)((wCRC >> 8)& 0x00ff);
 }
 
-/*int main(){
-    //const DATA_LENGTH, CRC8, FRAME_TAIL;
+//CLASSES AND STRUCTS
+class Data{
+    public:
+    virtual vector<uint8_t> getData() = 0;
+};
+class DrawMessage: public Data{
+    private:
+    //DRAW ONE GRAPHIC ONLY AT ONE TIME
+    unsigned short data_id = 0x0101;
+    unsigned short sender_id;
+    unsigned short receiver_id;
+    vector<uint8_t> data_segment;
+    public:
+    DrawMessage(unsigned short sender_id, unsigned short receiver_id, vector<uint8_t> data_segment);
+    void setSenderID(unsigned short sender_id);
+    void setReceiverID(unsigned short receiver_id);
+    void setDataSegment(vector<uint8_t> data_segment);
+    unsigned short getDataID();
+    unsigned short getSenderID();
+    unsigned short getReceiverID();
+    vector<uint8_t> getDataSegment();
+    vector<uint8_t> getData();
+};
+struct Content{
+    unsigned short cmd_id;
+    Data* message;
+    Content(){cmd_id = 0; this->message = nullptr;};
+    Content(unsigned short cmd_id, Data* message);
+};
+struct Header{
+    unsigned char SOF = 0xA5;
+    unsigned short data_length;
+    unsigned char seq;
+    unsigned char CRC8; 
+    Header(){data_length = 0; seq = 0; CRC8 = 0;};
+    Header(Content* content, unsigned char seq);
+};
+struct Footer{
+    unsigned short frame_tail;
+    Footer(){frame_tail = 0;};
+    Footer(Content* content);
+};
+class RefSend{
+    private:
+    Header* header = nullptr;
+    Content* content = nullptr;
+    Footer* footer = nullptr;
+
+    public:
+    void setHeader(Header* header);
+    void setContent(Content* content);
+    void setFooter(Footer* footer);
+    Header* getHeader();
+    Content* getContent();
+    Footer* getFooter();
+    virtual vector<uint8_t> createMessage() = 0; //RETURN: array of bytes containing header, content, footer 
+};
+class Draw: public RefSend{
+    private:
+    //default color
+    std::string color = "black";
+    //index counter
+    int count = 0;
+    void drawWithColor() throw (exception); //uses private color to draw in color
+
+    public:
+    void setColor(std::string color);
+    std::string getColor();
+    int getColorID();
+    vector<uint8_t> lineData(tuple<int, int> v1, tuple<int, int> v2); //RETURN: array of bytes to set data_segment
+    vector<uint8_t> rectData(int width, int height, tuple<int, int> center); //RETURN: array of bytes to set data_segment
+    vector<uint8_t> rectData(tuple<int, int> topLeft, tuple<int, int> bottomRight); //RETURN: array of bytes to set data_segment
+    vector<uint8_t> circleData(tuple<int, int> center, int radius); //RETURN: array of bytes to set data_segment
+    vector<uint8_t> textData(std::string text, int fontSize, tuple<int, int> topLeft); // RETURN: array of bytes to set data_segment
+    vector<uint8_t> createMessage(); //RETURN: array of bytes containing header, content, footer
+};
+//CLASS FUNCTIONS
+//Structs
+Content::Content(unsigned short cmd_id, Data* message){
+    this->cmd_id = cmd_id;
+    this->message = message;
+}
+Header::Header(Content* content, unsigned char seq){
+    const unsigned short length = content->message->getData().size() + 2;
+    this->data_length = length;
+    this->seq = seq;
+    unsigned char temp[] = {uint8_t(length >> 8), uint8_t(length & 0xff), seq};
+    this->CRC8 = Get_CRC8_Check_Sum(temp, 3, 0x00);
+}
+Footer::Footer(Content* content){
+    vector<uint8_t> temp = content->message->getData();
+    temp.insert(temp.begin(), uint8_t(content->cmd_id & 0xff));
+    temp.insert(temp.begin(), uint8_t(content->cmd_id >> 8));
+    this->frame_tail = Get_CRC16_Check_Sum(&temp[0], temp.size(), 0x00);
+}
+//RefSend
+void RefSend::setHeader(Header* header){
+    this->header = header;
+}
+void RefSend::setContent(Content* content){
+    this->content = content;
+}
+void RefSend::setFooter(Footer* footer){
+    this->footer = footer;
+}
+Header* RefSend::getHeader(){
+    return this->header;
+}
+Content* RefSend::getContent(){
+    return this->content;
+}
+Footer* RefSend::getFooter(){
+    return this->footer;
+}
+//DrawMessage
+DrawMessage::DrawMessage(unsigned short sender_id, unsigned short receiver_id, vector<uint8_t> data_segment){
+    this->setSenderID(sender_id);
+    this->setReceiverID(receiver_id);
+    this->setDataSegment(data_segment);
+}
+void DrawMessage::setSenderID(unsigned short sender_id){
+    this->sender_id = sender_id;
+}
+void DrawMessage::setReceiverID(unsigned short receiver_id){
+    this->receiver_id = receiver_id;
+}
+void DrawMessage::setDataSegment(vector<uint8_t> data_segment){
+    this->data_segment = data_segment;
+}
+unsigned short DrawMessage::getDataID(){
+    return this->data_id;
+}
+unsigned short DrawMessage::getSenderID(){
+    return this->sender_id;
+}
+unsigned short DrawMessage::getReceiverID(){
+    return this->receiver_id;
+}
+vector<uint8_t> DrawMessage::getDataSegment(){
+    return this->data_segment;
+}
+vector<uint8_t> DrawMessage::getData(){
+    vector<uint8_t> bytes = vector<uint8_t>();
+    bytes.push_back(data_id >> 8);
+    bytes.push_back(data_id & 0xff);
+    bytes.push_back(sender_id >> 8);
+    bytes.push_back(sender_id & 0xff);
+    bytes.push_back(receiver_id >> 8);
+    bytes.push_back(receiver_id & 0xff);
+    vector<uint8_t> dataSegment = this->getDataSegment();
+    bytes.insert(bytes.end(), dataSegment.begin(), dataSegment.end());
+    return bytes;
+}
+//Draw
+void Draw::drawWithColor() throw (exception){
+    if (getColorID() == -1){
+        throw exception();
+    }
+    this->count++;
+};
+void Draw::setColor(std::string color){
+    this->color = color;
+};
+std::string Draw::getColor(){
+    return this->color;
+};
+int Draw::getColorID(){
+    int num = -1;
+    const std::string COLORS[] = {"blue", "yellow", "green", "orange", "purplish red", "pink", "cyan", "black", "white"};
+    if (this->color == "red"){
+        return 0x0;
+    }
+    else{
+        for (int color_index = 0; color_index < sizeof(COLORS)/sizeof(COLORS[0]); color_index++){
+            if (COLORS[color_index] == this->color){
+                num = color_index;
+            }
+        }
+        return num;
+    }
+};
+vector<uint8_t> Draw::lineData(tuple<int, int> v1, tuple<int, int> v2){
+    drawWithColor();
+    const std::string count = to_binaryString(this->count, 24);
+    const std::string gc = std::string("001") + std::string("000") + std::string("0001") + to_binaryString(getColorID(),4) + "000000000000000000";
+    const std::string gc2 = std::string("0000001010") + to_binaryString(get<0>(v1), 11) + to_binaryString(get<1>(v1), 11);
+    const std::string gc3 = std::string("0001100100") + to_binaryString(get<0>(v2), 11) + to_binaryString(get<1>(v2), 11);
+    bitset<120> bits(count + gc + gc2 + gc3);
+    std::string result = bits.to_string();
+    return to_bytes(result);
+};
+vector<uint8_t> Draw::rectData(int width, int height, tuple<int, int> center){
+    drawWithColor();
+    const int startX = get<0>(center) - width/2;
+    const int startY = get<1>(center) + height/2;
+    const int endX = get<0>(center) + width/2;
+    const int endY = get<1>(center) - height/2;
+    return rectData(tuple<int, int>(startX, startY), tuple<int, int>(endX, endY));
+    
+};
+vector<uint8_t> Draw::rectData(tuple<int, int> topLeft, tuple<int, int> bottomRight){
+    drawWithColor();
+    const int startX = get<0>(topLeft);
+    const int startY = get<1>(topLeft);
+    const int endX = get<0>(bottomRight);
+    const int endY = get<1>(bottomRight);
+    const std::string count = to_binaryString(this->count, 24);
+    const std::string gc = std::string("001") + std::string("001") + std::string("0001") + to_binaryString(getColorID(),4) + "000000000000000000";
+    const std::string gc2 = std::string("0000001010") + to_binaryString(startX, 11) + to_binaryString(startY, 11);
+    const std::string gc3 = std::string("0001100100") + to_binaryString(endX, 11) + to_binaryString(endY, 11);
+    bitset<120> bits(count + gc + gc2 + gc3);
+    //0x000001, 0b001, 0b001, 0b0001, 0b0111, 0b(18 0s), 0b000001010, startx, starty, 0b01100100, endx, endy
+    std::string result = bits.to_string();
+    //cout << result << endl;
+    return to_bytes(result);
+};
+vector<uint8_t> Draw::circleData(tuple<int, int> center, int radius){
+    drawWithColor();
+    const std::string count = to_binaryString(this->count, 24);
+    const std::string gc = std::string("001") + std::string("010") + std::string("0001") + to_binaryString(getColorID(),4) + "000000000000000000";
+    const std::string gc2 = std::string("0000001010") + to_binaryString(get<0>(center), 11) + to_binaryString(get<1>(center), 11);
+    const std::string gc3 = to_binaryString(radius, 11) + "0000000000000000000000";
+    bitset<120> bits(count + gc + gc2 + gc3);
+    std::string result = bits.to_string();
+    //cout << result << endl;
+    return to_bytes(result);
+};
+vector<uint8_t> Draw::textData(std::string text, int fontSize, tuple<int, int> topLeft){
+    drawWithColor();
+    const std::string count = to_binaryString(this->count, 24);
+    const std::string gc = std::string("001") + std::string("111") + std::string("0001") + to_binaryString(getColorID(),4) + to_binaryString(fontSize, 9) + to_binaryString(text.length(), 9);
+    const std::string gc2 = to_binaryString(fontSize/10, 10) + to_binaryString(get<0>(topLeft), 11) + to_binaryString(get<1>(topLeft), 11);
+    const std::string gc3 = to_binaryString(fontSize, 10) + "0000000000000000000000";
+    bitset<120> bits(count + gc + gc2 + gc3);
+    std::string result = bits.to_string();
+    //cout << result << endl;
+    return to_bytes(result);
+};
+vector<uint8_t> Draw::createMessage(){
+    vector<uint8_t> bytes = vector<uint8_t>();
+    if ((this->getHeader() != nullptr) && (this->getContent() != nullptr) && (this->getFooter() != nullptr)){
+        if ((this->getContent()->cmd_id = 0x0301) && (this->getContent()->message != nullptr)){
+            bytes.push_back(this->getHeader()->SOF);
+            bytes.push_back(this->getHeader()->data_length >> 8);
+            bytes.push_back(this->getHeader()->data_length & 0xff);
+            bytes.push_back(this->getHeader()->seq);
+            bytes.push_back(this->getHeader()->CRC8);
+            bytes.push_back(this->getContent()->cmd_id >> 8);
+            bytes.push_back(this->getContent()->cmd_id & 0xff);
+            vector<uint8_t> data = getContent()->message->getData();
+            bytes.insert(bytes.end(), data.begin(), data.end());
+            bytes.push_back(this->getFooter()->frame_tail >> 8);
+            bytes.push_back(this->getFooter()->frame_tail & 0xff);
+        }
+    }
+    else{
+        cout << "error: no header or content or footer" << endl;
+    }
+    return bytes;
+};
+
+//ABSTRACTED FUNCTIONS & CLASS
+class AbstractDraw{
+    unsigned short sender_id;
+    unsigned short receiver_id;
+    std::string color = "black";
+    AbstractDraw(std::string sender, std::string receiver, std::string team);
+    void setColor(std::string color);
+    vector<uint8_t> drawLine(tuple<int, int> v1, tuple<int, int> v2);
+    vector<uint8_t> drawRect(int width, int height, tuple<int, int> center); //RETURN: array of bytes
+    vector<uint8_t> drawRect(tuple<int, int> topLeft, tuple<int, int> bottomRight); //RETURN: array of bytes
+    vector<uint8_t> drawCircle(tuple<int, int> center, int radius); //RETURN: array of bytes
+    vector<uint8_t> drawText(std::string text, int fontSize, tuple<int, int> topLeft); // RETURN: array of bytes
+};
+AbstractDraw::AbstractDraw(std::string sender, std::string receiver, std::string team){
+    if (team == "red"){
+        if (sender == "infantry" || sender == "standard"){
+            this->sender_id = 0x0103;
+        }
+        else if (sender == "hero"){
+            this->sender_id = 0x0101;
+        }
+        if (receiver == "infantry" || receiver == "standard"){
+            this->receiver_id = 3;
+        }
+        else if (receiver == "hero"){
+            this->receiver_id = 1;
+        }
+    }
+    else if (team == "blue"){
+        if (sender == "infantry" || sender == "standard"){
+            this->sender_id = 0x0167;
+        }
+        else if (sender == "hero"){
+            this->sender_id = 0x0165;
+        }
+        if (receiver == "infantry" || receiver == "standard"){
+            this->sender_id = 0x0103;
+            this->receiver_id = 103;
+        }
+        else if (receiver == "hero"){
+            this->receiver_id = 101;
+        }
+    }
+    else{
+        this->sender_id = 0;
+        this->receiver_id = 0;
+    }
+}
+void AbstractDraw::setColor(string color){
+    this->color = color;
+}
+vector<uint8_t> AbstractDraw::drawLine(tuple<int, int> v1, tuple<int, int> v2){
+    const unsigned char SEQ = 0x0;
+    Draw draw;
+    draw.setColor(this->color);
+    vector<uint8_t> shape = draw.lineData(v1, v2);
+    if (this->sender_id != 0 && this->receiver_id != 0){
+        DrawMessage drawMsg = DrawMessage(this->sender_id, this->receiver_id, shape);
+        Content content = Content(0x0301, &drawMsg);
+        draw.setContent(&content);
+        Header header = Header(&content, SEQ);
+        draw.setHeader(&header);
+        Footer footer = Footer(&content);
+        draw.setFooter(&footer);
+        return draw.createMessage();
+    }
+    else{
+        return vector<uint8_t>();
+    }
+}
+vector<uint8_t> AbstractDraw::drawRect(int width, int height, tuple<int, int> center){
+    const unsigned char SEQ = 0x0;
+    Draw draw;
+    draw.setColor(this->color);
+    vector<uint8_t> shape = draw.rectData(width, height, center);
+    if (this->sender_id != 0 && this->receiver_id != 0){
+        DrawMessage drawMsg = DrawMessage(this->sender_id, this->receiver_id, shape);
+        Content content = Content(0x0301, &drawMsg);
+        draw.setContent(&content);
+        Header header = Header(&content, SEQ);
+        draw.setHeader(&header);
+        Footer footer = Footer(&content);
+        draw.setFooter(&footer);
+        return draw.createMessage();
+    }
+    else{
+        return vector<uint8_t>();
+    }
+}
+vector<uint8_t> AbstractDraw::drawRect(tuple<int, int> topLeft, tuple<int, int> bottomRight){
+    const unsigned char SEQ = 0x0;
+    Draw draw;
+    draw.setColor(this->color);
+    vector<uint8_t> shape = draw.rectData(topLeft, bottomRight);
+    if (this->sender_id != 0 && this->receiver_id != 0){
+        DrawMessage drawMsg = DrawMessage(this->sender_id, this->receiver_id, shape);
+        Content content = Content(0x0301, &drawMsg);
+        draw.setContent(&content);
+        Header header = Header(&content, SEQ);
+        draw.setHeader(&header);
+        Footer footer = Footer(&content);
+        draw.setFooter(&footer);
+        return draw.createMessage();
+    }
+    else{
+        return vector<uint8_t>();
+    }
+}
+vector<uint8_t> AbstractDraw::drawCircle(tuple<int, int> center, int radius){
+    const unsigned char SEQ = 0x0;
+    Draw draw;
+    draw.setColor(this->color);
+    vector<uint8_t> shape = draw.circleData(center, radius);
+    if (this->sender_id != 0 && this->receiver_id != 0){
+        DrawMessage drawMsg = DrawMessage(this->sender_id, this->receiver_id, shape);
+        Content content = Content(0x0301, &drawMsg);
+        draw.setContent(&content);
+        Header header = Header(&content, SEQ);
+        draw.setHeader(&header);
+        Footer footer = Footer(&content);
+        draw.setFooter(&footer);
+        return draw.createMessage();
+    }
+    else{
+        return vector<uint8_t>();
+    }
+}
+vector<uint8_t> AbstractDraw::drawText(string text, int fontSize, tuple<int, int> topLeft){
+    const unsigned char SEQ = 0x0;
+    Draw draw;
+    draw.setColor(this->color);
+    vector<uint8_t> shape = draw.textData(text, fontSize, topLeft);
+    if (this->sender_id != 0 && this->receiver_id != 0){
+        DrawMessage drawMsg = DrawMessage(this->sender_id, this->receiver_id, shape);
+        Content content = Content(0x0301, &drawMsg);
+        draw.setContent(&content);
+        Header header = Header(&content, SEQ);
+        draw.setHeader(&header);
+        Footer footer = Footer(&content);
+        draw.setFooter(&footer);
+        return draw.createMessage();
+    }
+    else{
+        return vector<uint8_t>();
+    }
+}
+//int main(){
+    /*//const DATA_LENGTH, CRC8, FRAME_TAIL;
     const unsigned char SEQ = 0x0;
     const unsigned short CMD_ID = 0x0301;
     const unsigned short SENDER_ID = 0x1234;
@@ -484,5 +631,5 @@ void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength)
         cout << "0x";
         cout << hex << int(c);
         cout << " ";
-    }
-}*/
+    }*/
+//}
