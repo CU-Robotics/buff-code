@@ -128,28 +128,26 @@ vector<uint8_t> Draw::createMessage(){
     return bytes;
 };
 
-int main(){
-    const unsigned short DATA_LENGTH = 0x1234;
+/*int main(){
+    //const DATA_LENGTH, CRC8, FRAME_TAIL;
     const unsigned char SEQ = 0x0;
-    const unsigned char CRC = 0x0;
     const unsigned short CMD_ID = 0x0301;
     const unsigned short SENDER_ID = 0x1234;
     const unsigned short RECEIVER_ID = 0x1234;
-    const unsigned short FRAME_TAIL = 0x1234;
-    //1. create draw
+    //1. Create draw
     Draw draw;
-    //2. Create heading
-    Header header = Header(DATA_LENGTH, SEQ, CRC);
-    draw.setHeader(&header);
-    //3. Create footer
-    Footer footer = Footer(FRAME_TAIL);
-    draw.setFooter(&footer);
-    //4. TODO: Create drawing & data
+    //2. TODO: Create drawing & data
     vector<uint8_t> shape = draw.rectData(20,10,tuple<int,int>(5,5));
     DrawMessage drawMsg = DrawMessage(SENDER_ID, RECEIVER_ID, shape);
-    //5. Create content
+    //3. Create content
     Content content = Content(CMD_ID, &drawMsg);
     draw.setContent(&content);
+    //4. Create header
+    Header header = Header(&content, SEQ);
+    draw.setHeader(&header);
+    //5. Create footer
+    Footer footer = Footer(&content);
+    draw.setFooter(&footer);
     //6. Create message
     vector<uint8_t> msg = draw.createMessage();
     //TESTS:
@@ -165,4 +163,4 @@ int main(){
         cout << hex << int(c);
         cout << " ";
     }
-}
+}*/
