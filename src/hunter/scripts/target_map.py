@@ -63,7 +63,6 @@ class Target_Map:
 		image = cv2.line(image, origin, fovr, (255,0,0))
 
 		for i in range(len(self.history)):
-			print(f'{i} {self.history[i]}')
 			if not self.history[i] is None:
 				for j, (x,y) in enumerate(self.history[i]):
 					color = self.get_class_color(i)
