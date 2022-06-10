@@ -41,6 +41,7 @@ class SerialLayer():
 		  Callback for writing messages to the teensy
 		"""
 		byte_string = bytes(msg.data, 'utf-8')
+		# print(byte_string)
 		self.write_device(byte_string)
 
 	def try_connect(self):
@@ -101,6 +102,7 @@ class SerialLayer():
 				return
 
 		else:
+			rospy.loginfo(packet[0])
 			return
 
 		if name[0] == '/':

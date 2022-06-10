@@ -21,6 +21,13 @@ NODES:
     FILES: ['serial_layer.py']
     CONFIG: 'serial_settings.yaml'
 
+  BLUE_TRACKER:     # spawns our tracker node
+    FILES: ['deadreckon_tracer.py']
+    CONFIG: None
+    DETECTION_TOPIC: 'DETECTION_BLUE'
+
+  TRACKER:
+    CONFIG: 'tracker_settings.yaml'
   MODEL:
     CONFIG: 'model_settings.yaml'
   CAMERA:

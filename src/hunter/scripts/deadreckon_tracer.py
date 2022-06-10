@@ -50,7 +50,7 @@ class Dead_Reckon_Tracer:
 		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
 		
 		hz = rospy.get_param('/buffbot/CAMERA/FPS')
-		self.rate = rospy.Rate(hz)
+		self.rate = rospy.Rate(hz / 2)
 		
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 		topics = rospy.get_param('/buffbot/TOPICS')
@@ -159,11 +159,10 @@ class Dead_Reckon_Tracer:
 			if not self.history is None:
 
 				self.predict(time.time())
-				# print(f'history: {self.history}')
-				# print(f'Pose: {self.pose}')
-				phi_err = (self.pose[1] - self.d_offset)
-				psi_err = (self.pose[0] - 0.5)
-				msg = String(f'GH {phi_err} GW {psi_err}')
+
+				phi_err = (self.pose[1] - self.d_offset) * self.FOV
+				psi_err = (self.pose[0] - 0.5) * self.FOV
+				msg = String(f'GW {round(psi_err * 100)}') # GH {round(phi_err * 100)} 
 				self.prediction_pub.publish(msg)
 
 				if self.debug:

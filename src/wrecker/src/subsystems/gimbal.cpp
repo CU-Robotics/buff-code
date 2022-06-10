@@ -76,17 +76,17 @@ void Gimbal::update(float deltaTime) {
   float pitchAngle = realizePitchEncoder(pitchMotor.getAngle());
 
   // Calculate gimbal setpoints
-  // if (state->driverInput.mouseRight) {
-  //   aimYaw += state->gimbal.yaw_reference;
-  //   aimPitch += state->gimbal.pitch_reference;
-  //   mouseReleased = 1;
-  // }
-  // else if (mouseReleased){
-  //   aimYaw = yawAngle;
-  //   aimPitch = pitchAngle;
-  //   mouseReleased = 0;
-  // }
-  //else {
+  if (state->driverInput.mouseRight) {
+    aimYaw += (state->gimbal.yaw_reference / 100.0);
+    aimPitch += (state->gimbal.pitch_reference / 100.0);
+    mouseReleased = 1;
+  }
+  else if (mouseReleased){
+    aimYaw = yawAngle;
+    aimPitch = pitchAngle;
+    mouseReleased = 0;
+  }
+  else {
     float moveYaw = state->driverInput.mouseX * config->sensitivity * deltaTime;
     mouseXFilter.push(moveYaw);
     aimYaw += mouseXFilter.mean();
@@ -94,7 +94,7 @@ void Gimbal::update(float deltaTime) {
     float movePitch = state->driverInput.mouseY * config->sensitivity * deltaTime;
     mouseYFilter.push(movePitch);
     aimPitch -= mouseYFilter.mean();
-  //}
+  }
   
 
   // // Yaw angle range correction
@@ -122,11 +122,6 @@ void Gimbal::update(float deltaTime) {
 
   float dynamicYawFeedforward = -gyroSpeed * 1.0;
 
-  // Serial.print(yawMotor.getAngle());
-  // Serial.print(" - ");
-  // Serial.println(yawAngle);
-
-
   // Pitch PID
   state->gimbal.pitchPos.R = aimPitch;
   PID_Filter(&config->pitchPos, &state->gimbal.pitchPos, pitchAngle, deltaTime);
@@ -137,26 +132,14 @@ void Gimbal::update(float deltaTime) {
 
   float dynamicPitchFeedForward = cos((PI / 180.0) * pitchAngle) * 0.45;
 
-  Serial.print(state->gimbal.yaw_reference);
-  Serial.print(" - ");
-  Serial.print(state->gimbal.yawVel.Y + dynamicYawFeedforward);
-  Serial.print(" - ");
-  Serial.print(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
-  Serial.print(" - aimYaw: ");
-  Serial.print(aimYaw);
-  Serial.print(" - aimPitch: ");
-  Serial.print(aimPitch);
-  Serial.print(" - deltaTime: ");
-  Serial.print(deltaTime);
-  Serial.println();
-
   // Set motor power
   if (calibrated) {
-    yawMotor.setPower(0.0);
-    pitchMotor.setPower(0.0);
-    //yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
-    //pitchMotor.setPower(state->gimbal.pitch_PID.Y);
-    //pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
+    // yawMotor.setPower(0.3);
+    // pitchMotor.setPower(0.0);
+    //Serial.println(state->gimbal.yaw_reference);
+    yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
+    // // pitchMotor.setPower(state->gimbal.pitch_PID.Y);
+    pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }
 }
 

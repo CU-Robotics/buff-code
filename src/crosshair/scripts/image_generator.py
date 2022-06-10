@@ -75,16 +75,27 @@ def pad_mask(mask, h, w, x, y):
 	return padded_image
 
 
-def generate_images(image, c, x, y, w, h, backgrounds):
+def generate_images(image, label, backgrounds):
 
-	n_samples = 5
+	n_samples = 1
 	augmented_images = []
 	augmented_labels = []
 
 	low = np.array([0,120,0])
 	high = np.array([100,255,100])
 
-	cropped = crop_image(image, x, y, w, h)
+	if len(label) == 0:
+		x = round(image.shape[1] / 2)
+		y = round(image.shape[0] / 2)
+		w = image.shape[1]
+		h = image.shape[0]
+		c = -1
+		cropped = crop_image(image, x, y, w, h)
+
+	else:
+		[[x, y, w, h, c]] = label
+		cropped = image.copy()
+
 
 	mask = cv2.bitwise_not(cv2.inRange(cropped, low, high))
 
@@ -117,34 +128,35 @@ def generate_images(image, c, x, y, w, h, backgrounds):
 				
 				background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
 				augmented_image = cv2.add(background_mask, padded_mask)
-				label = [[1, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]]
+
 				
-				augmented_images.append(augmented_image)
-				augmented_labels.append(label)
 
-				zero_mask = mask_background(background, mask, x, y)
-				inv_zero_mask = cv2.bitwise_not(zero_mask)
-
-				padded_mask = pad_image(cv2.cvtColor(rgb_mask, cv2.COLOR_RGB2BGR), back_h, back_w, x, y)
+				if not c == -1:
+					label = [[c, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]]
 				
-				background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
-				augmented_image = cv2.add(background_mask, padded_mask)
-				label = [[0, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]] # red is default
+					bv.display_annotated(augmented_image, label)
 
-				augmented_images.append(augmented_image)
-				augmented_labels.append(label)
+					augmented_images.append(augmented_image)
+					augmented_labels.append(label)
 
-				zero_mask = mask_background(background, mask, x, y)
-				inv_zero_mask = cv2.bitwise_not(zero_mask)
+					zero_mask = mask_background(background, mask, x, y)
+					inv_zero_mask = cv2.bitwise_not(zero_mask)
 
-				padded_mask = pad_image(cv2.cvtColor(rgb_mask, cv2.COLOR_RGB2BGR), back_h, back_w, x, y)
-				
-				background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
-				augmented_image = cv2.add(background_mask, padded_mask)
-				label = [[0, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]] # red is default
+					padded_mask = pad_image(cv2.cvtColor(rgb_mask, cv2.COLOR_RGB2BGR), back_h, back_w, x, y)
+					
+					background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
+					augmented_image = cv2.add(background_mask, padded_mask)
+					label = [[not c, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]] # red is default
 
-				augmented_images.append(augmented_image)
-				augmented_labels.append(label)
+					bv.display_annotated(augmented_image, label)
+					
+
+					augmented_images.append(augmented_image)
+					augmented_labels.append(label)
+
+				else:
+					augmented_images.append([[]])
+					augmented_labels.append(label)
 
 	return None, None
 
@@ -180,9 +192,9 @@ def main(data_dir):
 		imfile = os.path.join(im_path, labelf[m:-4] + '.jpg')
 		if os.path.exists(imfile):
 			image = cv2.imread(imfile)
-			[[c, x, y, w, h]] = bv.load_label(labelf)
+			label = bv.load_label(labelf)
 
-			images, labels = generate_images(image, c, x, y, w, h, backgrounds)
+			images, labels = generate_images(image, label, backgrounds)
 			continue
 
 			if generated_samples == -1:
