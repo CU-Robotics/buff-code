@@ -162,7 +162,8 @@ class Dead_Reckon_Tracer:
 
 				phi_err = (self.pose[1] - self.d_offset) * self.FOV
 				psi_err = (self.pose[0] - 0.5) * self.FOV
-				msg = String(f'GW {round(psi_err * 100)}') # GH {round(phi_err * 100)} 
+
+				msg = String(f'GW {round(psi_err)}\nGH {round(phi_err)}\n') # 
 				self.prediction_pub.publish(msg)
 
 				if self.debug:

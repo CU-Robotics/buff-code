@@ -42,6 +42,7 @@ SwerveChassis swerveChassis;
 
 
 // TEMP
+int update_eh = 0;
 int counter = 1;
 
 void dump(){
@@ -108,6 +109,10 @@ void loop() {
   reciever.update();
   //swerveChassis.update(deltaT);
   gimbal.update(deltaT);
+  if (deltaT > 1000){
+    Serial.print("dT ");
+    Serial.println(deltaT);
+  }
   //shooter.update(deltaT);
 
   if (counter % 5 == 0) {
@@ -117,7 +122,7 @@ void loop() {
   }
   counter++;
 
-  //Serial.println(deltaT);
+  // Serial.println(deltaT);
 
   // Delta-time calculator: keep this at the bottom
   deltaT = micros() - lastTime;
