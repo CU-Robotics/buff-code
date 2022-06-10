@@ -134,11 +134,7 @@ void Gimbal::update(float deltaTime) {
 
   // Set motor power
   if (calibrated) {
-    // yawMotor.setPower(0.3);
-    // pitchMotor.setPower(0.0);
-    //Serial.println(state->gimbal.yaw_reference);
     yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
-    // // pitchMotor.setPower(state->gimbal.pitch_PID.Y);
     pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }
 }
