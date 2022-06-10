@@ -101,7 +101,7 @@ class SerialLayer():
 				return
 
 		else:
-			rospy.loginfo(f'{packet}')
+			rospy.loginfo(packet[0])
 			return
 
 		if name[0] == '/':

@@ -38,6 +38,7 @@ void PID_serial_event(C_PID* config, S_PID* state)
     case 'Y':
       config->Ymin = Serial.parseFloat();
       config->Ymax = Serial.parseFloat();
+      break;
 
     case 'R':
       state->R = Serial.parseFloat();
@@ -45,6 +46,7 @@ void PID_serial_event(C_PID* config, S_PID* state)
 
     case 'C':
       config->continuous = !config->continuous;
+      break;
   }  
 }
 
@@ -181,6 +183,7 @@ void SwerveChassis_serial_event(C_SwerveChassis* config, S_Chassis* state){
 
     case 'L':
       config->baseLength = Serial.parseFloat();
+      break;
 
     case 'I':
       m = Serial.parseInt();
@@ -303,6 +306,7 @@ void dump_Gimbal(C_Gimbal* gm){
 
 
 void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
+  long t2 = micros();
   char cmd = Serial.read();
   switch (cmd)
   {
@@ -312,12 +316,17 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
 
     case 'A':
       config->pitchOffset = Serial.parseInt();
+      break;
 
     case 'G':
       config->yawOffset = Serial.parseInt();
+      break;
 
     case 'W':
+      long t3 = micros();
       state->yaw_reference = Serial.parseFloat();
+      Serial.print("yaw_reference_serial_event ");
+      Serial.println(micros() - t3);
       break;
 
     case 'H':
@@ -332,6 +341,8 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
       PID_serial_event(&config->pitchVel, &state->pitchVel);
       break;
   }
+  Serial.print("gimbal_serial_event ");
+  Serial.println(micros() - t2);
 }
 
 void Shooter17_serial_event(C_Shooter17* config, S_Shooter* state){
@@ -411,6 +422,7 @@ void dump_RefSystem_State(S_RefSystem* rf){
 }
 
 void serial_event(C_Robot* config, S_Robot* state){
+  long t = micros();
   while(Serial.available()){
     char cmd = Serial.read();
     switch (cmd)
@@ -435,6 +447,8 @@ void serial_event(C_Robot* config, S_Robot* state){
         SwerveChassis_serial_event(&config->swerveChassis, &state->chassis);
         break;
     }
+    Serial.print("serial_event ");
+    Serial.println(micros() - t);
   }
 }
 
@@ -444,11 +458,10 @@ void dump_Robot(C_Robot* r_config, S_Robot* r_state){
     // dump_SwerveChassis(&r_config->swerveChassis);
 
     dump_Gimbal(&r_state->gimbal);
-    dump_Gimbal(&r_config->gimbal);
+    // dump_Gimbal(&r_config->gimbal);
 
-    dump_RefSystem_State(&r_state->refSystem);
-
-    dump_DriverInput(&r_state->driverInput);
+    // dump_RefSystem_State(&r_state->refSystem);
+    // dump_DriverInput(&r_state->driverInput);
 }
 
 
