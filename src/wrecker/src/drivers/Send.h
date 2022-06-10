@@ -1,4 +1,4 @@
-#pragma once
+//#pragma once
 
 #include <bitset>
 #include <string>
@@ -31,15 +31,6 @@ class DrawMessage: public Data{
     vector<uint8_t> getData();
 };
 
-struct Header{
-    unsigned char SOF = 0xA5;
-    unsigned short data_length;
-    unsigned char seq;
-    unsigned char CRC8; 
-    Header(){data_length = 0; seq = 0; CRC8 = 0;};
-    Header(unsigned short data_length, unsigned char seq, unsigned char CRC8);
-};
-
 struct Content{
     unsigned short cmd_id;
     Data* message;
@@ -47,10 +38,19 @@ struct Content{
     Content(unsigned short cmd_id, Data* message);
 };
 
+struct Header{
+    unsigned char SOF = 0xA5;
+    unsigned short data_length;
+    unsigned char seq;
+    unsigned char CRC8; 
+    Header(){data_length = 0; seq = 0; CRC8 = 0;};
+    Header(Content* content, unsigned char seq);
+};
+
 struct Footer{
     unsigned short frame_tail;
     Footer(){frame_tail = 0;};
-    Footer(unsigned short frame_tail);
+    Footer(Content* content);
 };
 
 class RefSend{
