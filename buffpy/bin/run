@@ -207,7 +207,7 @@ def launch_system(target_path, config):
 
 					if not config_data is None:
 						node.update(config_data) # Add the yaml data to the roslaunch node
-
+						
 				rospy.set_param(args, node)
 
 			elif 'ARGS' in node:
@@ -249,7 +249,6 @@ def launch_system(target_path, config):
 
 			if 'REQUIRED' in node:
 				required = node['REQUIRED']
-
 			else:
 				required = False
 

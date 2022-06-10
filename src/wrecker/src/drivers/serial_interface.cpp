@@ -38,6 +38,7 @@ void PID_serial_event(C_PID* config, S_PID* state)
     case 'Y':
       config->Ymin = Serial.parseFloat();
       config->Ymax = Serial.parseFloat();
+      break;
 
     case 'R':
       state->R = Serial.parseFloat();
@@ -45,6 +46,7 @@ void PID_serial_event(C_PID* config, S_PID* state)
 
     case 'C':
       config->continuous = !config->continuous;
+      break;
   }  
 }
 
@@ -181,6 +183,7 @@ void SwerveChassis_serial_event(C_SwerveChassis* config, S_Chassis* state){
 
     case 'L':
       config->baseLength = Serial.parseFloat();
+      break;
 
     case 'I':
       m = Serial.parseInt();
@@ -281,7 +284,6 @@ void dump_Gimbal(S_Gimbal* gm){
   Serial.print(gm->pitch); Serial.print(",");
   Serial.print(gm->yaw_reference); Serial.print(",");
   Serial.print(gm->pitch_reference); Serial.print(",");
-
   Serial.println(gm->yawGlobal);
 
   dump_PID(&gm->yawVel, "/GY");
@@ -313,17 +315,18 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
 
     case 'A':
       config->pitchOffset = Serial.parseInt();
+      break;
 
     case 'G':
       config->yawOffset = Serial.parseInt();
+      break;
 
     case 'W':
-      state->yaw_reference = Serial.parseFloat();
+      state->yaw_reference = Serial.parseInt();
       break;
 
     case 'H':
-      state->pitch_reference = Serial.parseFloat();
-      dump_Gimbal(state);
+      state->pitch_reference = Serial.parseInt();
       break;
 
     case 'Y':
@@ -385,24 +388,30 @@ void DriverInput_serial_event(DriverInput*){
 }
 
 void dump_DriverInput(DriverInput* di){
-  Serial.print("/DL");
+  Serial.print("/DL: ");
   Serial.print(di->leftStickX); Serial.print(","); 
   Serial.println(di->leftStickY);
   
-  Serial.print("/DR");
+  Serial.print("/DR: ");
   Serial.print(di->rightStickX); Serial.print(","); 
   Serial.println(di->rightStickY);
   
-  Serial.print("/DS"); 
+  Serial.print("/DS: "); 
   Serial.print(di->leftSwitch); Serial.print(","); 
   Serial.println(di->rightSwitch);
   
-  Serial.print("/DM");
+  Serial.print("/DM: ");
   Serial.print(di->mouseX); Serial.print(","); 
   Serial.println(di->mouseY);
 }
 
 void dump_RefSystem_State(S_RefSystem* rf){
+  Serial.print("/MS: "); 
+  Serial.print(rf->robot_id); Serial.print(",");
+  Serial.print(rf->robot_level); Serial.print(",");
+  Serial.print(rf->robot_health); Serial.print(",");
+  Serial.print(rf->chassis_current); Serial.print(",");
+  Serial.println(rf->chassis_voltage);
 
 }
 
@@ -438,7 +447,7 @@ void dump_Robot(C_Robot* r_config, S_Robot* r_state){
   // dump_SwerveChassis(&r_config->swerveChassis);
 
   dump_Gimbal(&r_state->gimbal);
-  dump_Gimbal(&r_config->gimbal);
+  // dump_Gimbal(&r_config->gimbal);
 
   // dump_RefSystem_State(&r_state->refSystem);
 

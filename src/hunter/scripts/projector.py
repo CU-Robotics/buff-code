@@ -62,9 +62,10 @@ class Projector:
 		t = time.time()
 		# do projector stuff
 		r = self.project(np.array(msg.data))
-		if not r is None and len(r) > 0:
-			msg = Float64MultiArray(data=r)
-			self.project_pub.publish(msg)
+		#  if not r is None and len(r) > 0:
+			# print(r)
+			# msg = Float64MultiArray(data=r)
+			# self.project_pub.publish(msg)
 
 	def gimbal_callback(self, msg):
 		state = msg.data
@@ -86,17 +87,20 @@ class Projector:
 		blues = []
 		poses = []
 
-		for detection in detections.reshape((round(len(detections)/5), 5)):
-			x, y, w, h, cl = detection
+		for x, y, w, h, cl in detections.reshape((round(len(detections)/5), 5)):
 
 			if cl == 0:
 				blues = np.concatenate([blues, [x,y,w,h]])
 			elif cl == 1:
 				reds = np.concatenate([reds, [x,y,w,h]])
 
-			d = self.height_2_distance(h)
-			alpha = np.radians((0.5 - (x / self.image_size[0])) * self.FOV / 2)
-			poses = np.concatenate([poses, [cl, d * np.cos(self.phi) * np.cos(self.psi + alpha), d * np.cos(self.phi) * np.sin(self.psi + alpha)]])
+
+			d = self.height_2_distance(h * self.image_size[0])
+			alphaX = np.radians((0.5 - x) * self.FOV)
+			alphaY = np.radians((y - 0.5) * self.FOV)
+			poses = np.concatenate([poses, [cl, 
+				d * np.cos(self.phi + alphaY) * np.cos(self.psi + alphaX), 
+				d * np.cos(self.phi + alphaY) * np.sin(self.psi + alphaX)]])
 
 		if len(reds) > 1:
 			msg = Float64MultiArray(data=reds)

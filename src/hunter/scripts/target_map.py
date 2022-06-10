@@ -63,6 +63,7 @@ class Target_Map:
 		image = cv2.line(image, origin, fovr, (255,0,0))
 
 		for i in range(len(self.history)):
+			print(f'{i} {self.history[i]}')
 			if not self.history[i] is None:
 				for j, (x,y) in enumerate(self.history[i]):
 					color = self.get_class_color(i)
@@ -92,6 +93,9 @@ class Target_Map:
 				self.history[c].insert(0,detection[1:])
 				while len(self.history[c]) > 4:
 					self.history[c].pop()
+
+			else:
+				self.history[c] = [detection[1:]]
 
 		self.draw_map()
 

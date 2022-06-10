@@ -3,13 +3,11 @@ Description=CU Robotics Startup Service
 ConditionPathExists=/home/cu-robotics/buff-code/buffpy
 
 [Service]
-Type=simple
-RestartSec=5s
 User=cu-robotics
+Type=forking
+StandardOutput=console
 WorkingDirectory=/home/cu-robotics/buff-code
-PreExec=export OPENBLAS_CORETYPE=ARMV8
-ExecStart=/home/cu-robotics/buff-code/buffpy/scripts/startup.bash
-Environment="PYTHONPATH=${PYTHONPATH}:/home/cu-robotics/.local/lib/python3.6/site-packages:/opt/ros/melodic/lib/python2.7/dist-packages"
+ExecStart=/bin/bash -c 'source /home/cu-robotics/buff-code/buffpy/buff.bash && run self.yaml'
 
 [Install]
 #WantedBy=

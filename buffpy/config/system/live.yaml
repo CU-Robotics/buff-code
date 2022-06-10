@@ -8,9 +8,13 @@ TOPICS:
   DETECTION_RED: 'red_detection'
   DETECTION_BLUE: 'blue_detection'
   DETECTION_PIXEL: 'image_detection'
-
+  DETECTION_WORLD: 'world_detection'
 
 NODES:
+  MODEL:
+    CONFIG: 'model_settings.yaml'
+  CAMERA:
+    CONFIG: 'camera_settings.yaml'
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
   #   FILE: 'record'
   #   PACKAGE: 'rosbag'
@@ -19,22 +23,17 @@ NODES:
   LUXONIS: # spawns our detector node
     FILES: ['luxnet.py']
     REQUIRED: True
-  RED_TRACKER:     # spawns our tracker node
-    FILES: ['deadreckon_tracer.py']
-    CONFIG: None
-    DETECTION_TOPIC: 'DETECTION_RED'
-  # BLUE_TRACKER:     # spawns our tracker node
+  # RED_TRACKER:     # spawns our tracker node
   #   FILES: ['deadreckon_tracer.py']
   #   CONFIG: None
-  #   DETECTION_TOPIC: 'DETECTION_BLUE'
+  #   DETECTION_TOPIC: 'DETECTION_RED'
+  BLUE_TRACKER:     # spawns our tracker node
+    FILES: ['deadreckon_tracer.py']
+    CONFIG: None
+    DETECTION_TOPIC: 'DETECTION_BLUE'
   SERIAL:
     FILES: ['serial_layer.py']
     CONFIG: 'serial_settings.yaml'
-
-  MODEL:
-    CONFIG: 'model_settings.yaml'
-  CAMERA:
-    CONFIG: 'camera_settings.yaml'
   TRACKER:
     FILES: ['projector.py']
     CONFIG: 'tracker_settings.yaml'

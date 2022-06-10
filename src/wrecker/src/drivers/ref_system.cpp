@@ -14,7 +14,7 @@ accurately test the code when I have a fully up and running ref system.
 Ref_System::Ref_System(){
 }
 
-void Ref_System::init(S_RefSystem *tempInput) {
+void Ref_System::init(S_RefSystem *tempInput){
 	state = tempInput;
 	Serial2.begin(115200);
 }
@@ -27,11 +27,9 @@ bool Ref_System::read_serial(){
 	uint32_t temp_launch_speed;
    
 	while(Serial2.available() > 1){
-		enter_code = Serial2.read();    //It will read in the first byte of data
+		enter_code = Serial2.read();
 		
 		if(enter_code == 0xA5){         //It looks for this value that signifies that there is about to be a transmission of data
-
-			//Serial.println("Enter code received");
 
 			Serial2.readBytes(&temp, 1); 	// Get the length of the packet
 			data_length = temp;
@@ -44,259 +42,165 @@ bool Ref_System::read_serial(){
 
 			crc = temp;
 
-			Serial.print("Length ");Serial.print(data_length);
-			Serial.print("CRC ");Serial.println(crc);
+			while(Serial2.readBytes(&temp, 1) != 1){}
+			cmd_id = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+			while(Serial2.readBytes(&temp, 1) != 1){}
+			cmd_id = cmd_id | (temp << 8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
+			if(cmd_id == 0x202){   //power and heat data   
+				 
 
-			// cmd_id = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				////////////////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				state->chassis_voltage = temp_stat | (temp<<8);    
 
-			// cmd_id = cmd_id | (temp << 8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				////////////////////////////////////////////////////////////////////////////
 
-			// Serial.println(cmd_id, HEX);
+				Serial2.readBytes(&temp, 1);
+				temp_stat = temp;
+				Serial2.readBytes(&temp, 1);    //Setting chasis output current
+				state->chassis_current = temp_stat | (temp<<8);
 
-
-			// if(cmd_id == 514){   //power and heat data   
-				
-			// 	//Serial.println("received cmd_id, inside 514"); 
-
-			// 		////////////////////////////////////////////////////////////////////////////
-
-			// 		while(Serial2.readBytes(&temp, 1) != 1){  
-			// 		}        //This waits till another byte of data is available
-
-			// 		temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// 		while(Serial2.readBytes(&temp, 1) != 1){    //Setting chasis output voltage 
-			// 		}        //This waits till another byte of data is available
-
-			// 		temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// 		run_data -> chasis_volt = temp_stat;    
-
-			// 		////////////////////////////////////////////////////////////////////////////
-
-			// 		Serial2.readBytes(&temp, 1)
-
-			// 		temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-			// 		Serial2.readBytes(&temp, 1)    //Setting chasis output current
-			// 		run_data->chasis_current = temp_stat | (temp<<8);
-
-			// 		////////////////////////////////////////////////////////////////////////////
+				////////////////////////////////////////////////////////////////////////////
 								
-			// }
+			}
 
-			// else if(cmd_id == 1){  //stage 1
+			else if(cmd_id == 0x1){  //stage 1
 
 				// Serial.println("received cmd_id inside 1"); 
 
-			//	 while(Serial2.readBytes(&temp, 1) != 1){   
-			// 	 }        //This waits till another byte of data is available
+				while(Serial2.readBytes(&temp, 1) != 1){}        //This waits till another byte of data is available
 
-			// 	 comp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-			// 	 comp_stat = comp_stat >> 4;
+				comp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				comp_stat = comp_stat >> 4;
 
-			// 	 if(comp_stat == 0){
-			// 		run_data -> curr_stage = 'P';  //pre comp stage
-			// 		//Serial.println("pre comp");
-			// 	 }
+				if(comp_stat == 0)
+					state->curr_stage = 'P';  //pre comp stage
 
-			// 	 else if(comp_stat == 1){
-			// 		run_data -> curr_stage = 'S';   //Setup
-			// 	 }
+				else if(comp_stat == 1)
+					state->curr_stage = 'S';   //Setup
 
-			// 	 else if(comp_stat == 2){
-			// 		run_data -> curr_stage = 'I';    //Init stage
-			// 	 }
+				else if(comp_stat == 2)
+					state->curr_stage = 'I';    //Init stage
 
-			// else if(comp_stat == 3){
-			// 	run_data -> curr_stage = 'F';   //5 sec countdown
-			// }
-
-			// else if(comp_stat == 4){
-			// 	run_data -> curr_stage = 'C';   //In combat
-			// }
-
-			// else if(comp_stat == 5){
-			// 	run_data -> curr_stage = 'R';   //calc comp results
-			// }
-
-			// while(Serial2.readBytes(&temp, 1) != 1){   
-			// }
-
-			// unix_time = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){    
-			// }        //This waits till another byte of data is available
-
-			// unix_time = unix_time | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> rem_time = int(unix_time);
-								
-			// }else if(cmd_id == 2){   //results for 2
-
-			// //Serial.println("received cmd_id inside 2"); 
-
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
-
-			// comp_stat = temp;
-
-			// if(comp_stat == 0){
-
-			// 	run_data -> comp_result = 'D';
+				else if(comp_stat == 3)
+					state->curr_stage = 'F';   //5 sec countdown
 				
-			// }else if(comp_stat == 1){
+				else if(comp_stat == 4)
+					state->curr_stage = 'C';   //In combat
 
-			// 	run_data -> comp_result = 'R';
-				
-			// }else if(comp_stat == 2){
+				else if(comp_stat == 5)
+					state->curr_stage = 'R';   //calc comp results
 
-			// 	run_data -> comp_result = 'B';
-				
-			// }
-				
-			// }else if(cmd_id == 3){   //everyone hp
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				unix_time = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				unix_time = unix_time | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->rem_time = int(unix_time);
+									
+			}
 
-			// 	//Serial.println("received cmd_id inside 3"); 
+			else if(cmd_id == 0x2){   //results for 2
 
-			// 	while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
+				//Serial.println("received cmd_id inside 2"); 
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				comp_stat = temp;
 
-			// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				if(comp_stat == 0)
+					state->comp_result = 'D';
+					
+				else if(comp_stat == 1)
+					state->comp_result = 'R';
+					
+				else if(comp_stat == 2)
+					state->comp_result = 'B';
 
-			// while(Serial2.readBytes(&temp, 1) != 1){   
-			// }        //This waits till another byte of data is available
+			}
 
-			// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+			// else if(cmd_id == 0x3){   //everyone hp
 
-			// run_data -> red_hero_hp = temp_hp;
+			// 	Serial.println("received cmd_id inside 3"); 
 
-			// /////////////////////////////////////////////////////////////////
+			// 	for (int i = 0; i < 16; i ++){
+			// 		Serial2.readBytes(&temp, 1);
+			// 		temp_hp = temp;
+			// 		Serial2.readBytes(&temp, 1);
+			// 		Serial.print("robot_id "); Serial.print(state->robot_id);
+			// 		Serial.print(", "); Serial.println(i+1);
+			// 		if (i + 1 == state->robot_id)
+			// 		{	
+			// 			Serial.println("robot health");
+			// 			state->robot_health = temp_hp | (temp<<8);
+			// 		}
+			// 	}
 
-			// while(Serial2.readBytes(&temp, 1) != 1){  
-			// }        //This waits till another byte of data is available
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// temp_hp = temp;
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}		// Red hero HP
+			// 	// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+			// 	// if (state->robot_id == 1)
+			// 	// 	state->robot_health = temp_hp;
 
-			// while(Serial2.readBytes(&temp, 1) != 1){            //skipping 2 bytes  
-			// }        //This waits till another byte of data is available
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}        //red infantry HP
+			// 	// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+			// 	// if (state->robot_id == 3 or state->robot_id == 4 or state->robot_id == 5)
+			// 	// 	state->robot_health = temp_hp;
 
-			// ///////////////////////////////////////////////////////////////
+			// 	// //////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){  
-			// }        //This waits till another byte of data is available
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}        //red sentry HP
+			// 	// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+			// 	// if (state->robot_id == 7)
+			// 	// 	state->robot_health = temp_hp;
 
-			// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+			// 	// //////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){            //red infantry hp  
-			// }        //This waits till another byte of data is available
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}        //Blue Hero HP
+			// 	// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+			// 	// state->blue_hero_hp = temp_hp;
 
-			// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+			// 	// /////////////////////////////////////////////////////////////////
 
-			// run_data -> red_infantry_hp = temp_hp;
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
 
-			// ///////////////////////////////////////////////////////////////
+			// 	// ///////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){  
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){  
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){      //Skipping 4 bytes  
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}        //Blue Infantry HP
+			// 	// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+			// 	// state->blue_infantry_hp = temp_hp;
 
-			// //////////////////////////////////////////////////////////////////
+			// 	// ///////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){  
-			// }        //This waits till another byte of data is available
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
 
-			// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+			// 	// //////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){            //red infantry hp   
-			// }        //This waits till another byte of data is available
-
-			// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> red_sentry_hp = temp_hp;
-
-			// ///////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){  
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){  
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){      //Skipping 4 bytes   
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){   
-			// }
-
-			// //////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
-
-			// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Blue hero  
-			// }        //This waits till another byte of data is available
-
-			// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> blue_hero_hp = temp_hp;
-
-			// /////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){   
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){            //skipping 2 bytes   
-			// }
-
-			// ///////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
-
-			// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){            //blue infantry hp
-			// }        //This waits till another byte of data is available
-
-			// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> blue_infantry_hp = temp_hp;
-
-			// ///////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){   
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){      //Skipping 4 bytes    
-			// }
-			// while(Serial2.readBytes(&temp, 1) != 1){   
-			// }
-
-			// //////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
-
-			// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){            //blue infantry hp  
-			// }        //This waits till another byte of data is available
-
-			// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> blue_sentry_hp = temp_hp;
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}
+			// 	// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+			// 	// while(Serial2.readBytes(&temp, 1) != 1){}		//Blue Sentry HP
+			// 	// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+			// 	// state->blue_sentry_hp = temp_hp;
 		   
-			// ///////////////////////////////////////////////////////////////
+			// 	///////////////////////////////////////////////////////////////
 		
-			// }else if(cmd_id == 5){   //resto zone and everyone's projectivels
+			// }
+
+			// else if(cmd_id == 5){   //resto zone and everyone's projectivels
 
 			// 	//Serial.println("received cmd_id inside 5"); 
 
@@ -321,7 +225,7 @@ bool Ref_System::read_serial(){
 
 			// rem_proj = rem_proj | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-			// run_data -> red_one_rem_proj = temp_hp;
+			// state->red_one_rem_proj = temp_hp;
 
 			// ///////////////////////////////////////////////////////////////
 
@@ -335,7 +239,7 @@ bool Ref_System::read_serial(){
 
 			// rem_proj = rem_proj | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-			// run_data -> red_two_rem_proj = temp_hp;
+			// state->red_two_rem_proj = temp_hp;
 
 			// ///////////////////////////////////////////////////////////////
 
@@ -349,7 +253,7 @@ bool Ref_System::read_serial(){
 
 			// rem_proj = rem_proj | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-			// run_data -> blue_one_rem_proj = temp_hp;
+			// state->blue_one_rem_proj = temp_hp;
 
 			// ///////////////////////////////////////////////////////////////
 
@@ -363,11 +267,13 @@ bool Ref_System::read_serial(){
 
 			// rem_proj = rem_proj | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-			// run_data -> blue_two_rem_proj = temp_hp;
+			// state->blue_two_rem_proj = temp_hp;
 		  
 			// ///////////////////////////////////////////////////////////////
 				
-			// }else if(cmd_id == 260){ //ref warning
+			// }
+
+			// else if(cmd_id == 260){  //ref warning
 
 			// //Serial.println("received cmd_id inside 260"); 
 
@@ -379,15 +285,15 @@ bool Ref_System::read_serial(){
 
 			// if(warning_level == 1){
 
-			// 	run_data -> ref_warning = 'Y';
+			// 	state->ref_warning = 'Y';
 				
 			// }else if(warning_level == 2){
 
-			// 	run_data -> ref_warning = 'R';
+			// 	state->ref_warning = 'R';
 				
 			// }else if(warning_level == 3){
 
-			// 	run_data -> ref_warning = 'F';
+			// 	state->ref_warning = 'F';
 
 			// }
 
@@ -396,257 +302,181 @@ bool Ref_System::read_serial(){
 
 			// robo_id = temp;
 
-			// run_data -> foul_robot_id = int(robo_id);
+			// state->foul_robot_id = int(robo_id);
 
-			// }else if(cmd_id == 201){ //robo stat
-
-			// //Serial.println("received cmd_id inside 201"); 
-
-			// ////////////////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
-
-			// robo_id = temp;
-
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
-
-			// robot_level = temp;
-
-			// ////////////////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
-
-			// temp_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
-
-			// temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// ////////////////////////////////////////////////////////////////////////////
-			
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
-
-			// temp_max_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){  
-			// }        //This waits till another byte of data is available
-
-			// temp_max_hp = temp_max_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// ////////////////////////////////////////////////////////////////////////////
-
-			// //This part looks for the robot id and then assigns values that follow depending on what robot id is transmitted
-
-			// if(int(robo_id) == 1){      //red hero
-
-			// 	if(int(robot_level) >= 1 && int(robot_level) <=3){
-			// 	run_data -> red_hero_robot_level = int(robot_level);
-			// 	}
-
-			// 	run_data -> red_hero_hp = temp_hp;
-
-			// 	run_data -> red_hero_max_hp = temp_max_hp;
-				
-			// }else if(int(robo_id) == 3){    //red infantry
-
-			// 	if(int(robot_level) >= 1 && int(robot_level) <=3){
-			// 	run_data -> red_infantry_robot_level = int(robot_level);
-			// 	}
-
-			// 	run_data -> red_infantry_hp = temp_hp;
-
-			// 	run_data -> red_infantry_max_hp = temp_max_hp;
-				
-			// }else if(int(robo_id) == 7){    //red sentry
-
-			// 	if(int(robot_level) >= 1 && int(robot_level) <=3){
-			// 	run_data -> red_sentry_robot_level = int(robot_level);
-			// 	}
-
-			// 	run_data -> red_sentry_hp = temp_hp;
-
-			// 	run_data -> red_sentry_max_hp = temp_max_hp;
-				
-			// }else if(int(robo_id) == 101){    //blue hero
-
-			// 	if(int(robot_level) >= 1 && int(robot_level) <=3){
-			// 	run_data -> blue_hero_robot_level = int(robot_level);      
-			// 	}
-
-			// 	run_data -> blue_hero_hp = temp_hp;
-
-			// 	run_data -> blue_hero_max_hp = temp_max_hp;
-				
-			// }else if(int(robo_id) == 103){    //blue infantry
-
-			// 	if(int(robot_level) >= 1 && int(robot_level) <=3){
-			// 	run_data -> blue_infantry_robot_level = int(robot_level);
-			// 	}
-
-			// 	run_data -> blue_infantry_hp = temp_hp;
-
-			// 	run_data -> blue_infantry_max_hp = temp_max_hp;
-				
-			// }else if(int(robo_id) == 107){    //blue sentry
-
-			// 	if(int(robot_level) >= 1 && int(robot_level) <=3){
-			// 	run_data -> blue_sentry_robot_level = int(robot_level);
-			// 	}
-
-			// 	run_data -> blue_sentry_hp = temp_hp;
-				
-			// 	run_data -> blue_sentry_max_hp = temp_max_hp;
-				
 			// }
 
-			// ////////////////////////////////////////////////////////////////////////////
+			else if(cmd_id == 0x201){ //robo stat
+
+				////////////////////////////////////////////////////////////////////////////
+
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				state->robot_id = temp;
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				state->robot_level = temp;
+
+				////////////////////////////////////////////////////////////////////////////
+
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_hp = temp;
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+
+				////////////////////////////////////////////////////////////////////////////
+				
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_max_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_max_hp = temp_max_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+
+				////////////////////////////////////////////////////////////////////////////
+
+				// //This part looks for the robot id and then assigns values that follow depending on what robot id is transmitted
+
+				if(int(robo_id) == 1){      //red hero
+
+					if(int(state->robot_level) >= 1 && int(state->robot_level) <=3)
+						state->robot_level = int(state->robot_level);
+
+					state->red_hero_hp = temp_hp;
+					state->red_hero_max_hp = temp_max_hp;
+					
+				}
+				else if(int(robo_id) == 3){    //red infantry
+
+					if(int(robot_level) >= 1 && int(robot_level) <=3)
+						state->robot_level = int(robot_level);
+
+					state->red_infantry_hp = temp_hp;
+					state->red_infantry_max_hp = temp_max_hp;
+				}
+				else if(int(robo_id) == 7){    //red sentry
+
+					if(int(robot_level) >= 1 && int(robot_level) <=3)
+						state->robot_level = int(robot_level);
+
+					state->red_sentry_hp = temp_hp;
+					state->red_sentry_max_hp = temp_max_hp;
+				}
+				else if(int(robo_id) == 101){    //blue hero
+
+					if(int(robot_level) >= 1 && int(robot_level) <=3)
+						state->robot_level = int(robot_level);      
+
+					state->blue_hero_hp = temp_hp;
+					state->blue_hero_max_hp = temp_max_hp;
+					
+				}
+				else if(int(robo_id) == 103){    //blue infantry
+
+					if(int(robot_level) >= 1 && int(robot_level) <=3)
+						state->robot_level = int(robot_level);
+
+					state->blue_infantry_hp = temp_hp;
+					state->blue_infantry_max_hp = temp_max_hp;
+					
+				}
+				else if(int(robo_id) == 107){    //blue sentry
+
+					if(int(robot_level) >= 1 && int(robot_level) <=3)
+						state->robot_level = int(robot_level);
+
+					state->blue_sentry_hp = temp_hp;
+					state->blue_sentry_max_hp = temp_max_hp;
+					
+				}
+
+				////////////////////////////////////////////////////////////////////////////
 			
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){} // robot _ 1 cooling value
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_1_cool_val = temp_stat;
 
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				////////////////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){          //Robot 1 cooling value read in 
-			// }        //This waits till another byte of data is available
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;
+				while(Serial2.readBytes(&temp, 1) != 1){} // robot_1 barrel heat limit
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_1_barr_heat_lim = temp_stat;
 
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				////////////////////////////////////////////////////////////////////////////
 
-			// run_data -> robot_1_cool_val = temp_stat;
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){} // setting robot 1 speed
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_1_speed_lim = temp_stat;
 
-			// ////////////////////////////////////////////////////////////////////////////
+				////////////////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){} // robot_2 cooling value
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_2_cool_val = temp_stat;
 
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				////////////////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot one barrel heat limit 
-			// }        //This waits till another byte of data is available
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){} 	// robot 2 barrel heat limit
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_2_barr_heat_lim = temp_stat;
 
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				////////////////////////////////////////////////////////////////////////////
 
-			// run_data -> robot_1_barr_heat_lim = temp_stat;
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){} 	//robot 2 speed limit
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_2_speed_lim = temp_stat;
 
-			// ////////////////////////////////////////////////////////////////////////////
+				////////////////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){} 	// 42mm cooling value
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_42_cool_val = temp_stat;
 
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				////////////////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot one speed limit 
-			// }        //This waits till another byte of data is available
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){}	// 42mm barrel heat limit
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_42_heat_lim = temp_stat;
 
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				////////////////////////////////////////////////////////////////////////////
 
-			// run_data -> robot_1_speed_lim = temp_stat;
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){}		// robot 42mm speed limit
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_42_speed_lim = temp_stat;
 
-			// ////////////////////////////////////////////////////////////////////////////
+				////////////////////////////////////////////////////////////////////////////
 
-			// while(Serial2.readBytes(&temp, 1) != 1){  
-			// }        //This waits till another byte of data is available
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				while(Serial2.readBytes(&temp, 1) != 1){} // robot power limit
+				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
+				state->robot_power_lim = temp_stat;
 
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot two cooling value  
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> robot_2_cool_val = temp_stat;
-
-			// ////////////////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot two barrel heat limit 
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> robot_2_barr_heat_lim = temp_stat;
-
-			// ////////////////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot two speed limit
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> robot_2_speed_lim = temp_stat;
-
-			// ////////////////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot 42mm cooling value
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> robot_42_cool_val = temp_stat;
-
-			// ////////////////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot 42mm barrel heat limit  
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> robot_42_heat_lim = temp_stat;
-
-			// ////////////////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot 42mm speed limit 
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> robot_42_speed_lim = temp_stat;
-
-			// ////////////////////////////////////////////////////////////////////////////
-
-			// while(Serial2.readBytes(&temp, 1) != 1){ 
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
-
-			// while(Serial2.readBytes(&temp, 1) != 1){    //Setting robot power consumption limit 
-			// }        //This waits till another byte of data is available
-
-			// temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-
-			// run_data -> robot_power_lim = temp_stat;
-
-			// /////////////////////////////////////////////////////////////////////////////
+				/////////////////////////////////////////////////////////////////////////////
 		  
-			// }else if(cmd_id == 516){ //robot buffs
+			}
+
+			else if (cmd_id == 0x204){
+				Serial.println("health hit");
+				Serial2.readBytes(&temp, 1);
+				state->robot_health = temp;
+			}
+
+			//else if(cmd_id == 516){ //robot buffs
 
 			// //Serial.println("received cmd_id inside 516"); 
 
@@ -654,13 +484,13 @@ bool Ref_System::read_serial(){
 			// }        //This waits till another byte of data is available
 
 			// if((temp & 0b00000001) == 1){
-			// 	run_data -> robot_buff = '0';
+			// 	state->robot_buff = '0';
 			// }else if((temp & 0b00000010) == 1){
-			// 	run_data -> robot_buff = '1';
+			// 	state->robot_buff = '1';
 			// }else if((temp & 0b00000100) == 1){
-			// 	run_data -> robot_buff = '2';
+			// 	state->robot_buff = '2';
 			// }else if((temp & 0b00001000) == 1){
-			// 	run_data -> robot_buff = '3';
+			// 	state->robot_buff = '3';
 			// }
 			
 			// }else if(cmd_id == 518){  //damage stats
@@ -686,7 +516,7 @@ bool Ref_System::read_serial(){
 
 			// comp_stat = int(temp);
 
-			// run_data -> launch_freq = comp_stat;
+			// state->launch_freq = comp_stat;
 
 			// //////////////////////////////////////////////////////////////////
 
@@ -715,7 +545,7 @@ bool Ref_System::read_serial(){
 
 			// /////////////////////////////////////////////////////////////////
 
-			// run_data -> launch_speed = temp_launch_speed;
+			// state->launch_speed = temp_launch_speed;
 			
 			// }else if(cmd_id == 520){  //remaining proj.
 
@@ -732,7 +562,7 @@ bool Ref_System::read_serial(){
 			// //This waits till another byte of data is available
 
 			// //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-			// run_data->rem_17_proj = temp_stat | (temp<<8);
+			// state->rem_17_proj = temp_stat | (temp<<8);
 
 			// /////////////////////////////////////////////////////////////////////////
 
@@ -745,7 +575,7 @@ bool Ref_System::read_serial(){
 			// //This waits till another byte of data is available
 
 			// //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-			// run_data -> rem_42_proj = temp_stat | (temp<<8);
+			// state->rem_42_proj = temp_stat | (temp<<8);
 
 			// /////////////////////////////////////////////////////////////////////////
 			
@@ -753,7 +583,7 @@ bool Ref_System::read_serial(){
 
 			// //Serial.println("received cmd_id inside 521");           //I am not sure if I need to record this
 
-			// }   
+			//}   
 		}
 	}
 	return 1;
