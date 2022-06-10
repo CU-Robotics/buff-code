@@ -28,8 +28,14 @@ void Shooter::update(unsigned long deltaTime) {
     if (calibrated) {
         Serial.println("enabled");
         // Spin flywheels
-        this->topFlywheel.setPower(0.3);
-        this->bottomFlywheel.setPower(0.3);
+        this->topFlywheel.setPower(0.4);
+        this->bottomFlywheel.setPower(0.4);
+
+        /// Death reset
+        if (state->driverInput.v) {
+            this->bottomFlywheel.init(29);
+            this->topFlywheel.init(28);
+        }
 
         // Mode switching
         if (state->driverInput.q) {

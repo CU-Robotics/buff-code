@@ -102,8 +102,8 @@ void loop() {
   
   refSys.read_serial(); 
 
-  if (Serial.available() > 0)
-    serial_event(&robot_config, &robot_state);
+  // if (Serial.available() > 0)
+  //   serial_event(&robot_config, &robot_state);
 
   reciever.update();
   //swerveChassis.update(deltaT);
