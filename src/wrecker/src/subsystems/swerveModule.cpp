@@ -96,15 +96,14 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
 
   // Set motor power
   if (calibrated) {
-    steerMotor.setPower(0.0);
-    driveMotor.setPower(0.0);
-    // steerMotor.setPower(tmp_steerVel.Y);
+
+    steerMotor.setPower(tmp_steerVel.Y);
 
     // // Only drive if sufficiently close to target angle
-    // if (abs(inputAngle - steerAngle) < 20.0)
-    //   driveMotor.setPower(moduleState->driveVel.Y);
-    // else
-    //   driveMotor.setPower(0.0);
+    if (abs(inputAngle - steerAngle) < 20.0)
+      driveMotor.setPower(moduleState->driveVel.Y);
+    else
+      driveMotor.setPower(0.0);
   }
 }
 
@@ -113,6 +112,9 @@ int SwerveModule::findCalibrationMatch(int currValue, int* alignmentTable, int t
   int bestOffset = 0;
   for (int i = 0; i < tableSize; i++) {
     int distance = abs(currValue - alignmentTable[i]);
+    int shadowDistance = (currValue - alignmentTable[i]) + 360;
+    if (shadowDistance < distance)
+      distance = shadowDistance;
     if (distance < smallestDistance) {
       smallestDistance = distance;
       bestOffset = alignmentTable[i];

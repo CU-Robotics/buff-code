@@ -24,6 +24,10 @@ class SwerveChassis {
 
     float calibrated = false;
 
+    float prevX;
+    float prevY;
+    float prevS;
+
     void calibrate();
     void drive(float driveX, float driveY, float spin, unsigned long deltaTime);
     void driveSimple(float driveX, float driveY, float deltaTime);

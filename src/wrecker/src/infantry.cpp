@@ -45,9 +45,9 @@ SwerveChassis swerveChassis;
 int update_eh = 0;
 int counter = 1;
 
-void dump(){
-  dump_Robot(&robot_config, &robot_state);
-}
+// void dump(){
+//   dump_Robot(&robot_config, &robot_state);
+// }
 
 // Runs once
 void setup() {
@@ -67,19 +67,16 @@ void setup() {
   can2.setBaudRate(1000000);
   // can3.setBaudRate(1000000);
 
-
-  // Subsystem setup
-
-  // Subsystem setup
-
+  // Driver setup
   refSys.init(&robot_state.refSystem);
   reciever.init(&robot_state.driverInput);
+  // Subsystem setup
   gimbal.setup(&robot_config.gimbal, &robot_state);
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
 
-  serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
-  serialDumpTmr.begin(dump, dumpRate);
+  // serialDumpTmr.priority(0);                                     // Set interval timer to handle serial reads
+  // serialDumpTmr.begin(dump, dumpRate);
 }
 
 
@@ -103,16 +100,12 @@ void loop() {
   
   refSys.read_serial(); 
 
-  if (Serial.available() > 0)
-    serial_event(&robot_config, &robot_state);
+  // if (Serial.available() > 0)
+  //   serial_event(&robot_config, &robot_state);
 
   reciever.update();
-  //swerveChassis.update(deltaT);
+  swerveChassis.update(deltaT);
   gimbal.update(deltaT);
-  if (deltaT > 1000){
-    Serial.print("dT ");
-    Serial.println(deltaT);
-  }
   //shooter.update(deltaT);
 
   if (counter % 5 == 0) {

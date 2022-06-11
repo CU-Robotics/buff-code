@@ -43,6 +43,7 @@ class Gimbal
     float gyroDrift = 0;
 
     float realizeYawEncoder(float rawAngle);
+    float realizeYawEncoderWithoutGyro(float rawAngle);
     float realizePitchEncoder(float rawAngle);
 
     //counters for updating imu
