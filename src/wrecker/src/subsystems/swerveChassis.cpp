@@ -33,12 +33,8 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
     data->FR.alignment[i] = fr_alignment[i];
   }
   data->FR.steerVel.K[0] = 0.03;
-  data->FR.steerVel.K[1] = 0;
-  data->FR.steerVel.K[2] = 0;
   data->FR.steerPos.K[0] = 1.2;
-  data->FR.steerPos.K[1] = 0;
   data->FR.steerPos.K[2] = 0;
-
   data->FR.driveVel.K[0] = 0.0006;
 
   // FRONT LEFT
@@ -53,12 +49,8 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
     data->FL.alignment[i] = fl_alignment[i];
   }
   data->FL.steerVel.K[0] = 0.03;
-  data->FL.steerVel.K[1] = 0;
-  data->FL.steerVel.K[2] = 0;
   data->FL.steerPos.K[0] = 1.2;
-  data->FL.steerPos.K[1] = 0;
   data->FL.steerPos.K[2] = 0;
-
   data->FL.driveVel.K[0] = 0.0006;
 
   // BACK LEFT
@@ -73,12 +65,8 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
     data->RL.alignment[i] = bl_alignment[i];
   }
   data->RL.steerVel.K[0] = 0.03;
-  data->RL.steerVel.K[1] = 0;
-  data->RL.steerVel.K[2] = 0;
   data->RL.steerPos.K[0] = 1.2;
-  data->RL.steerPos.K[1] = 0;
   data->RL.steerPos.K[2] = 0;
-
   data->RL.driveVel.K[0] = 0.0006;
 
   // BACK RIGHT
@@ -93,16 +81,12 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
     data->RR.alignment[i] = br_alignment[i];
   }
   data->RR.steerVel.K[0] = 0.03;
-  data->RR.steerVel.K[1] = 0;
-  data->RR.steerVel.K[2] = 0;
   data->RR.steerPos.K[0] = 1.2;
-  data->RR.steerPos.K[1] = 0;
   data->RR.steerPos.K[2] = 0;
-
   data->RR.driveVel.K[0] =  0.0006;
 
 
-  // // Init modules
+  // Init modules
   moduleFR.setup(&data->FR, state, &state->chassis.FR);
   moduleFL.setup(&data->FL, state, &state->chassis.FL);
   moduleBL.setup(&data->RL, state, &state->chassis.RL);
@@ -110,15 +94,13 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
 
   float baseRadius = sqrt(pow(config->baseLength, 2) + pow(config->baseWidth, 2));
   drivebaseConstant = config->baseLength / baseRadius;
-
-  //calibrate();
 }
 
 void SwerveChassis::update(unsigned long deltaTime) {
   if (state->driverInput.b && !calibrated) {
     calibrated = true;
     calibrate();
-    Serial.println("calibrate!");
+    Serial.println("SwerveChassis Calibrated");
   }
 
   int x = state->driverInput.d - state->driverInput.a;

@@ -38,9 +38,6 @@ class Gimbal
     float aimPitch = 0;
 
     int mouseReleased = 0;
-    float gyroAngle = 0;
-
-    float gyroDrift = 0;
 
     float realizeYawEncoder(float rawAngle);
     float realizeYawEncoderWithoutGyro(float rawAngle);
