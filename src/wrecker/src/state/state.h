@@ -44,6 +44,8 @@ struct S_Gimbal {
   float yaw = 0.0f;
   float pitch = 0.0f;
   float yawGlobal = 0.0f;
+  float gyroDrift = 0.0f;
+  float gyroAngle = 0.0f;
   float yaw_reference = 0.0f;
   float pitch_reference = 0.0f;
 
