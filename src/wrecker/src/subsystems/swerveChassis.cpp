@@ -17,7 +17,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   state = r_state;
 
   int bl_alignment[9] = {23, 63, 102, 142, 182, 222, 261, 301, 340};
-  int br_alignment[9] = {38, 77, 119, 157, 199, 238, 280, 319, 360};
+  int br_alignment[9] = {38, 77, 119, 157, 199, 240, 280, 321, 360};
   int fr_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
   int fl_alignment[9] = {2, 42, 85, 125, 166, 206, 246, 288, 327};
 
@@ -124,16 +124,6 @@ void SwerveChassis::update(unsigned long deltaTime) {
   int x = state->driverInput.d - state->driverInput.a;
   int y = state->driverInput.s - state->driverInput.w;
   int s = state->driverInput.z - state->driverInput.x;
-
-  if (x == 0 && y == 0 && s == 0) {
-    x = prevX * 0.0001;
-    y = prevY * 0.0001;
-    s = prevS * 0.0001;
-  } else {
-    prevX = x;
-    prevY = y;
-    prevS = s;
-  }
 
   drive(x, y, s, deltaTime);
 }

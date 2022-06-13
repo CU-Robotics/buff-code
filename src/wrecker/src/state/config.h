@@ -45,12 +45,14 @@ struct C_SwerveModule {
 };
 
 struct C_SwerveChassis {
-
   float baseWidth = 14.5;
   float baseLength = 14.5;
 
   //  Current limit for level: lvl0, lvl1, lvl2, lvl3
   float currentLimit[4] = {40.0 / 24.0, 60.0 / 24.0, 80.0 / 24.0, 100.0 / 24.0};
+
+  float levelMaxRpmMap[4] = {3000.0, 4000.0, 5000.0, 6000.0};
+  float levelRampRateMap[4] = {0.001, 0.002, 0.003, 0.004};
 
   //  SwerveModules
   C_SwerveModule FR;

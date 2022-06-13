@@ -27,6 +27,9 @@ struct S_Chassis {
   float heading = 0.0f; // naming needs to be more consistent (greek letters, descriptive or units)
   float a[2] = {0.0f, 0.0f};
 
+  float maxRpm;
+  float rampRate;
+
   S_SwerveModule FL;
   S_SwerveModule FR;
   S_SwerveModule RR;
@@ -34,8 +37,6 @@ struct S_Chassis {
 
   S_PID drivePos;
   S_PID driveVel;
-
-  float rampLimit;
 };
 
 

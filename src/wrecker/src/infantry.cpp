@@ -106,7 +106,7 @@ void loop() {
   reciever.update();
   swerveChassis.update(deltaT);
   gimbal.update(deltaT);
-  //shooter.update(deltaT);
+  shooter.update(deltaT);
 
   if (counter % 5 == 0) {
     sendC6x0();

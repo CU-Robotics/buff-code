@@ -31,6 +31,9 @@ void SwerveModule::calibrate() {
 void SwerveModule::update(float speed, float angle, float deltaTime) {
   // Convert sensor and input units
   float inputAngle = angle + config->absolute_offset;
+  if (speed == 0) {
+    inputAngle = prevSteerAngle;
+  }
   if (inputAngle < 0)
     inputAngle += 360;
 
@@ -96,7 +99,6 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
 
   // Set motor power
   if (calibrated) {
-
     steerMotor.setPower(tmp_steerVel.Y);
 
     // // Only drive if sufficiently close to target angle
