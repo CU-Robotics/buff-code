@@ -1,5 +1,9 @@
-#ifndef REF_SYS_H
-#define REF_SYS_H
+#ifndef MPU6050_H
+#define MPU6050_H
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>        //Including the librariy for the Adafruit 6050 IMU
+
+
 
 //#include "state/state.h"
 
@@ -53,6 +57,8 @@ class MPU6050{
         Adafruit_MPU6050  mpu;
         sensors_vec_t a, g;
         sensors_vec_t a_at, g_at;
+
+        sensors_event_t a_temp, g_temp, temp;       //Declaring sensor event variables to be passed into the get event function that is included in the adafruit library 
 
 
 };
