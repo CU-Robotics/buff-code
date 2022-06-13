@@ -1,6 +1,6 @@
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>        //Including the librariy for the Adafruit 6050 IMU
-#include <Wire.h>
+// #include <Adafruit_MPU6050.h>
+// #include <Adafruit_Sensor.h>        //Including the librariy for the Adafruit 6050 IMU
+// #include <Wire.h>
 
 #include "MPU6050.h"        //Including the header file for this driver
 
@@ -13,17 +13,6 @@ void MPU6050::init(){       //Our init function
     mpu.begin();        //Calling the mpu begin function that is included in the Adafruit libraries
 
     current_index = 0;    //this is for the circular array being set to the head
-
-  // Try to initialize!
-  if (!mpu.begin()) {          //calling the begin function on the Adafruit mpu passed through the parameters
-
-    //Serial.println("Failed to find MPU6050 chip");     //A serial print function for debugging
-
-    while (1) {
-      delay(10);
-    }
-
-  }
 
   //Serial.println("MPU6050 Found!");     //A serial print function for debugging
 
@@ -40,8 +29,6 @@ void MPU6050::init(){       //Our init function
 }
 
 bool MPU6050::update_MPU6050(){
-
-    sensors_event_t a_temp, g_temp, temp;       //Declaring sensor event variables to be passed into the get event function that is included in the adafruit library 
 
     mpu.getEvent(&a_temp, &g_temp, &temp);           //calling the getEvent function which updates the sensor events passed through its parameters
 
