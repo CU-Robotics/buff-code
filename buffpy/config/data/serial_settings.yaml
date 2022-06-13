@@ -4,3 +4,114 @@ LIVES: 4
 TIMEOUT: 3
 BAUDRATE: 1000000
 PORT: '/dev/ttyACM0'
+
+SERIAL_LUT:
+  SUBSYSTEM:
+    G: 
+      NAME: 'gimbal'
+      TYPE: 'GIMBAL'
+
+    V: 
+      NAME: 'shooter17'
+      TYPE: 'SHOOTER'
+
+    F: 
+      NAME: 'shooter42'
+      TYPE: 'SHOOTER'
+
+    R: 
+      NAME: 'rail_chassis'
+      TYPE: 'CHASSIS'
+
+    S: 
+      NAME: 'swerve_chassis'  
+      TYPE: 'CHASSIS'
+
+    D: 
+      NAME: 'driver'
+      TYPE: 'DRIVER'
+    M:
+      NAME: 'ref'
+      TYPE: 'REF_SYSTEM'
+
+  GIMBAL:
+    S: 'sensitivity'
+    A: 'yaw_offset'
+    G: 'pitch_offset'
+    Y: 
+      NAME: 'yaw_pid'
+      TYPE: 'PID'
+    P: 
+      NAME: 'pitch_pid'
+      TYPE: 'PID'
+    T: 'state'
+
+  SHOOTER:
+    T: 'timeout'
+    L: 'rpm_low'
+    H: 'rpm_high'
+    B: 'rpm_burst'
+    P: 'powerlimit'
+
+  CHASSIS:
+    N: 'nodes'
+    S: 'state'
+    W: 'width'
+    L: 'height'
+    I: 'currentlimit'
+    P: 
+      NAME: 'drive_position_pid'
+      TYPE: 'PID'
+    V: 
+      NAME: 'drive_velocity_pid'
+      TYPE: 'PID'
+    A: 
+      NAME: 'fr_swerve_module'
+      TYPE: 'SWERVE_MODULE'
+    B: 
+      NAME: 'fl_swerve_module'
+      TYPE: 'SWERVE_MODULE'
+    C: 
+      NAME: 'rl_swerve_module'
+      TYPE: 'SWERVE_MODULE'
+    D:
+      NAME: 'rr_swerve_module'
+      TYPE: 'SWERVE_MODULE' 
+
+
+  SWERVE_MODULE:
+    S: 'state'
+    A: 'alignment'
+    M: 'module_id'
+    C: 'corner_id'
+    R: 'drive_motor_id'
+    T: 'steer_motor_id'
+    E: 'steer_encoder_id'
+    P: 
+      NAME: 'steer_position_pid'
+      TYPE: 'PID'
+    V: 
+      NAME: 'steer_velocity_pid'
+      TYPE: 'PID'
+    D: 
+      NAME: 'drive_velocity_pid'
+      TYPE: 'PID'
+
+  PID:
+    X: 'state'
+    K: 'gains'
+    Y: 'output'
+    R: 'reference'
+    C: 'continuous'
+    O: 'output_bounds'
+    I: 'integrator_bounds'
+
+  DRIVER:
+    M: 'mouse'
+    S: 'switch'
+    L: 'leftstick'
+    R: 'rightstick'
+
+
+  REF_SYSTEM:
+    S: 'state'

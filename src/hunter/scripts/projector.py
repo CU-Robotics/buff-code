@@ -15,25 +15,122 @@ from std_msgs.msg import String, Float64MultiArray
 """
 
 class Projector:
-	def __init__(self):
+	def __init__(self, name):
 		# camera heading
 		self.phi = 0.0
 		self.psi = 0.0
-		self.a = config_data['A']
-		self.m = config_data['M']
-		self.P = config_data['P']
+		self.a = rospy.get_param(f'{name}/A')
+		self.m = rospy.get_param(f'{name}/M')
 
-	def height_2_distance(h):
-		return self.a * np.exp(self.m * (h + self.p))
+		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
+		image_res = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
+		self.image_size = np.array([image_res, image_res, 3])
 
-	def project(self, pose):
+		self.init_ros()
+
+	def init_ros(self):
+		rospy.init_node('projector', anonymous=True)
+		self.rate = rospy.Rate(rospy.get_param('/buffbot/CAMERA/FPS'))
+		
+		self.debug = rospy.get_param('/buffbot/DEBUG')
+		topics = rospy.get_param('/buffbot/TOPICS')
+
+		self.detect_sub = rospy.Subscriber(
+			topics['DETECTION_PIXEL'], Float64MultiArray, self.detection_callback, queue_size=5)
+
+		self.gimbal_sub = rospy.Subscriber(
+		 	topics['GIMBAL_STATE'], Float64MultiArray, self.gimbal_callback, queue_size=1)
+
+		self.red_pub = rospy.Publisher(
+			topics['DETECTION_RED'], Float64MultiArray, queue_size=1)
+
+		self.blue_pub = rospy.Publisher(
+			topics['DETECTION_BLUE'], Float64MultiArray, queue_size=1)
+
+		self.project_pub = rospy.Publisher(
+			topics['DETECTION_WORLD'], Float64MultiArray, queue_size=1)
+
+
+	def detection_callback(self, msg):
+		"""
+		Parse a detection msg
+		PARAMS:
+			msg: Float64MultiArray, detection msg, data=[x,y,w,h,cf,cl]
+		"""
+		# for now. need to figure out how to get accurate time between messages?
+		# Build a custom message that has a timestamp
+		# do projector stuff
+		r = self.project(np.array(msg.data))
+		if not r is None and len(r) > 0:
+			msg = Float64MultiArray(data=r)
+			self.project_pub.publish(msg)
+
+	def gimbal_callback(self, msg):
+		state = msg.data
+		self.psi = state[0]
+		self.phi = state[1]
+
+	def height_2_distance(self, h):
+		return (self.a * h) + (self.m / h)
+
+	def project(self, detections):
 		"""
 		Projects a detection into the world frame
 		PARAMS:
-			pose: Float64MultiArray.data, [x,y,h,w,cf,cl] (detection msg)
+			pose: Float64MultiArray.data, [x1,y1,x2,y2,cf,cl] (detection msg)
 		RETURNS:
 			vector (x,y): body frame position of the detection
 		"""
-		d = height_2_distance(pose[2])
-		alpha = np.radians((1 - (pose[0] / self.image_size[0])) * self.FOV)
-		return d * np.cos(self.phi) np.array([np.cos(self.psi + alpha), np.sin(self.psi + alpha)])
+		reds = []
+		blues = []
+		poses = []
+
+		for x, y, w, h, cl in detections.reshape((round(len(detections)/5), 5)):
+
+			if cl == 0:
+				blues = np.concatenate([blues, [x,y,w,h]])
+			elif cl == 1:
+				reds = np.concatenate([reds, [x,y,w,h]])
+
+
+			d = self.height_2_distance(h * self.image_size[0])
+			alphaX = np.radians((0.5 - x) * self.FOV)
+			alphaY = np.radians((y - 0.5) * self.FOV)
+			poses = np.concatenate([poses, [cl, 
+				d * np.cos(self.phi + alphaY) * np.cos(self.psi + alphaX), 
+				d * np.cos(self.phi + alphaY) * np.sin(self.psi + alphaX)]])
+
+		if len(reds) > 1:
+			msg = Float64MultiArray(data=reds)
+			self.red_pub.publish(msg)
+		elif len(blues) > 1:
+			msg = Float64MultiArray(data=blues)
+			self.blue_pub.publish(msg)
+
+		return poses
+
+def main(name):
+	projector = Projector(name)
+
+	try:
+		while not rospy.is_shutdown():
+			# for sim
+			projector.rate.sleep()
+
+	except KeyboardInterrupt as e:
+		print('Projector killed')
+
+	except Exception as e:
+		print(e)
+
+
+if __name__ == '__main__':
+	if len(sys.argv) < 2:
+		print(f'No Data: Projector exiting ...')
+
+	elif '/buffbot' in sys.argv[1]:
+		main(sys.argv[1])
+
+
+
+

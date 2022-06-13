@@ -1,7 +1,9 @@
 #include "state/state.h"
 #include "state/config.h"
 #include "drivers/gm6020.h"
+#include "drivers/MPU6050.h"
 #include "algorithms/PID_Filter.h"
+#include "algorithms/CircularBuffer.h"
 
 #ifndef GIMBAL_H
 #define GIMBAL_H
@@ -20,6 +22,14 @@ class Gimbal
     gm6020 yawMotor; 
     gm6020 pitchMotor;
 
+    MPU6050 imu;
+
+    CircularBuffer mouseXFilter;
+    CircularBuffer mouseYFilter;
+
+    CircularBuffer yawFilter;
+    CircularBuffer pitchFilter;
+
     float calibrated;
     float yawRollover;
     float prevRawYawAngle;
@@ -27,8 +37,16 @@ class Gimbal
     float aimYaw = 0;
     float aimPitch = 0;
 
+    int mouseReleased = 0;
+
     float realizeYawEncoder(float rawAngle);
+    float realizeYawEncoderWithoutGyro(float rawAngle);
     float realizePitchEncoder(float rawAngle);
+
+    //counters for updating imu
+    unsigned long newTime = 0;
+    unsigned long oldTime = 0;
+
 };
 
 #endif // GIMBAL_H

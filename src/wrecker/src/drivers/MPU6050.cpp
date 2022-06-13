@@ -9,47 +9,55 @@ MPU6050::MPU6050(){         //Our default constructor
 }
 
 void MPU6050::init(){       //Our init function 
-
     mpu.begin();        //Calling the mpu begin function that is included in the Adafruit libraries
 
     current_index = 0;    //this is for the circular array being set to the head
 
-  //Serial.println("MPU6050 Found!");     //A serial print function for debugging
+    //setupt motion detection
+    mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
+    mpu.setMotionDetectionThreshold(1);
+    mpu.setMotionDetectionDuration(20);
+    mpu.setInterruptPinLatch(true);	// Keep it latched.  Will turn off when reinitialized.
+    mpu.setInterruptPinPolarity(true);
+    mpu.setMotionInterrupt(true);
 
-  //setupt motion detection
-  mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
-  mpu.setMotionDetectionThreshold(1);
-  mpu.setMotionDetectionDuration(20);
-  mpu.setInterruptPinLatch(true);	// Keep it latched.  Will turn off when reinitialized.
-  mpu.setInterruptPinPolarity(true);
-  mpu.setMotionInterrupt(true);
-
-  //Serial.println("");     //A serial print function for debugging
-  delay(100);
+    //Serial.println("");     //A serial print function for debugging
+    delay(100);
 }
 
 bool MPU6050::update_MPU6050(){
 
-    mpu.getEvent(&a_temp, &g_temp, &temp);           //calling the getEvent function which updates the sensor events passed through its parameters
+    sensors_event_t a_temp, g_temp, temp;       //Declaring sensor event variables to be passed into the get event function that is included in the adafruit library 
 
-    if(current_index < array_length){       //The case of we haven't reached the end of the array with the current index
+    bool success = mpu.getEvent(&a_temp, &g_temp, &temp);           //calling the getEvent function which updates the sensor events passed through its parameters
 
-        run_data_accel[current_index+1] = a_temp.acceleration;
-        run_data_gyro[current_index+1] = g_temp.gyro;
-        current_index++;
+    if (success) {
+        if(current_index < array_length){       //The case of we haven't reached the end of the array with the current index
 
+            run_data_accel[current_index+1] = a_temp.acceleration;
+            run_data_gyro[current_index+1] = g_temp.gyro;
+            current_index++;
+
+        }
+        else if(current_index == array_length){     //The case where we have reached the end of the array with the current index
+
+            run_data_accel[0] = a_temp.acceleration;
+            run_data_gyro[0] = g_temp.gyro;
+            current_index = 0;   //Setting it up so next time it runs from head + 1
+
+        }
+
+        a = run_data_accel[current_index];
+        g = run_data_gyro[current_index];       //Putting the sensor event just filled into the circular array into a member variable that represents the current 
+                                                //IMU status. This will be used later in the getters.
+    } else {
+        a.x = 0;
+        a.y = 0;
+        a.z = 0;
+        g.x = 0;
+        g.y = 0;
+        g.z = 0;
     }
-    else if(current_index == array_length){     //The case where we have reached the end of the array with the current index
-
-        run_data_accel[0] = a_temp.acceleration;
-        run_data_gyro[0] = g_temp.gyro;
-        current_index = 0;   //Setting it up so next time it runs from head + 1
-
-    }
-
-    a = run_data_accel[current_index];
-    g = run_data_gyro[current_index];       //Putting the sensor event just filled into the circular array into a member variable that represents the current 
-                                            //IMU status. This will be used later in the getters.
 
 }
 
