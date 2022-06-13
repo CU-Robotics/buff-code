@@ -47,7 +47,7 @@ void Gimbal::update(float deltaTime) {
   if (state->driverInput.b && !calibrated) {
     calibrated = true;
     imu.update_MPU6050();
-    gyroDrift = this->imu.get_gyro_x();
+    gyroDrift = this->imu.get_gyro_z();
   }
 
   // Gyro management
@@ -56,7 +56,7 @@ void Gimbal::update(float deltaTime) {
     imu.update_MPU6050();
     oldTime = newTime;
   }
-  float gyroSpeed = (this->imu.get_gyro_x() - gyroDrift) * (180.0 / M_PI) * (deltaTime / 1000000.0);
+  float gyroSpeed = (this->imu.get_gyro_z() - gyroDrift) * (180.0 / M_PI) * (deltaTime / 1000000.0);
   this->gyroAngle += gyroSpeed;
 
   // Yaw encoder
@@ -125,6 +125,10 @@ void Gimbal::update(float deltaTime) {
 
   // Set motor power
   if (calibrated) {
+    // Serial.print(gyroDrift);
+    // Serial.print(" - ");
+    // Serial.println(yawAngle); 
+    // yawMotor.setPower(0.0);
     yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
     pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }
