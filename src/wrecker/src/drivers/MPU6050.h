@@ -1,8 +1,6 @@
 #ifndef MPU6050_H
 #define MPU6050_H
 #include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>        //Including the librariy for the Adafruit 6050 IMU
-
 
 
 //#include "state/state.h"

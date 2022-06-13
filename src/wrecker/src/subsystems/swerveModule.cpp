@@ -31,6 +31,9 @@ void SwerveModule::calibrate() {
 void SwerveModule::update(float speed, float angle, float deltaTime) {
   // Convert sensor and input units
   float inputAngle = angle + config->absolute_offset;
+  if (speed == 0) {
+    inputAngle = prevSteerAngle;
+  }
   if (inputAngle < 0)
     inputAngle += 360;
 
@@ -63,11 +66,17 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   }
 
   // Speed ramping
-  rampedSpeed += (speed - rampedSpeed) * 0.00001 * deltaTime;
-  if (rampedSpeed > 1)
-    rampedSpeed = 1;
-  else if (rampedSpeed < -1)
-    rampedSpeed = -1;
+  if (rampedSpeed < speed) {
+    rampedSpeed += this->config->rampLimit * (deltaTime / 1000.0);
+    if (rampedSpeed > speed) {
+      rampedSpeed = speed;
+    }
+  } else if (rampedSpeed > speed) {
+    rampedSpeed -= this->config->rampLimit * (deltaTime / 1000.0);
+    if (rampedSpeed < speed) {
+      rampedSpeed = speed;
+    }
+  }
 
   // Steer Velocity PID
   config->steerPos.continuous = true;
@@ -87,17 +96,12 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   moduleState->driveVel.R = rampedSpeed * inversion * 6000; // 8000 is the maximum RPM of the motor pre-gearbox
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
+
   // Set motor power
   if (calibrated) {
     steerMotor.setPower(tmp_steerVel.Y);
 
-    driveMotor.setPower(moduleState->driveVel.Y);
-    // Serial.print(driveMotor.getRpm());
-    // Serial.print(" - ");
-    // Serial.print(moduleState->driveVel.R);
-    // Serial.print(" - ");
-    // Serial.println(moduleState->driveVel.Y);
-    // Only drive if sufficiently close to target angle
+    // // Only drive if sufficiently close to target angle
     if (abs(inputAngle - steerAngle) < 20.0)
       driveMotor.setPower(moduleState->driveVel.Y);
     else
@@ -110,6 +114,9 @@ int SwerveModule::findCalibrationMatch(int currValue, int* alignmentTable, int t
   int bestOffset = 0;
   for (int i = 0; i < tableSize; i++) {
     int distance = abs(currValue - alignmentTable[i]);
+    int shadowDistance = (currValue - alignmentTable[i]) + 360;
+    if (shadowDistance < distance)
+      distance = shadowDistance;
     if (distance < smallestDistance) {
       smallestDistance = distance;
       bestOffset = alignmentTable[i];

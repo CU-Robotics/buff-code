@@ -1,64 +1,27 @@
-DEBUG:
-  False
+DEBUG: True
   
 
 TOPICS:
-  RAW_IMG:
-    'image_raw'
-  DETECTED:
-    'detected_object'
-  BUFFNET_DEBUG:
-    'image_annotated'
-  TARGET:
-    'target'
-  ERROR:
-    'tracking_error'
-  TARGET_MAP:
-    'target_map'
-
+  IMAGE: 'image_raw'
+  GIMBAL_STATE: 'gimbal_state'
+  SERIAL_OUT: 'serial_write'
+  DETECTION_RED: 'red_detection'
+  DETECTION_BLUE: 'blue_detection'
+  DETECTION_PIXEL: 'image_detection'
+  TARGET_MAP: 'target_map'
+  IMAGE_DEBUG: 'image_debug'
+  TRACKING_ERROR: 'tracking_error'
+  DETECTION_WORLD: 'world_detection'
 
 NODES:
-  # ROSBAGGER:    # This will record all system runs and allow us to play them back
-  #   FILE:
-  #     'record'
-  #   PACKAGE:
-  #     'rosbag'
-  #   ARGS:       # -a record all -x ignore -o output prefix
-  #     - '-a'
-  #     - '-x /rosout'
-  #     - '-o /home/cu-robotics/buff-code/data/'
-  CAMERA:     # spawns our camera streamer
-    FILE:
-      'mds_camera.py'
-    TOPICS:
-      PUBLISH:
-        - 'RAW_IMG'
-    CONFIG:
-      'default_camera.yaml'
-    PACKAGE:
-      'buffpy'
-    REQUIRED:
-      'yes'  # can be anything
-  DETECTOR:   # spawns our detector node
-    FILE:
-      'buffnet.py'
-    TOPICS:
-      SUBSCRIBE:
-        - 'RAW_IMG'
-      PUBLISH:
-        - 'DETECTED'
-        - 'BUFFNET_DEBUG'
-    CONFIG:
-      'buffnet-settings.yaml'
-    PACKAGE:
-      'buffpy'
+  RED_TRACKER:     # spawns our tracker node
+    FILES: ['deadreckon_tracer.py']
+    CONFIG: None
+    DETECTION_TOPIC: 'DETECTION_RED'
 
-  # SERIAL:     # spawns our camera streamer
-  #   FILE:
-  #     'serial_layer.py'
-  #   CONFIG:
-  #     'default_serial.yaml'
-  #   PACKAGE:
-  #     'buffpy'
-  #   REQUIRED:
-  #     'yes'  # can be anything
+  MODEL:
+    CONFIG: 'model_settings.yaml'
+  CAMERA:
+    CONFIG: 'camera_settings.yaml'
+  TRACKER:
+    CONFIG: 'tracker_settings.yaml'

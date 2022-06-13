@@ -4,8 +4,8 @@
 #
 
 #   Select base image here (ARM64 or AMD64)
-ARG BASE_IMAGE=curobotics/buffbox:x86_64-base # curobotics/buffbox:aarch64-base # 
-FROM ${BASE_IMAGE}
+# curobotics/buffbox:aarch64-base # curobotics/buffbox:x86_64-base
+FROM curobotics/buffbox:x86_64-base
 
 ENV PROJECT_ROOT=/home/cu-robotics/buff-code
 

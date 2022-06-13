@@ -4,29 +4,62 @@
 #include "state/state.h"
 #include "state/config.h"
 #include "drivers/gm6020.h"
+#include "drivers/MPU6050.h"
 #include "algorithms/PID_Filter.h"
 
 Gimbal::Gimbal() {
-  
+
 }
 
 void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
   config = data;
   state = r_state;
 
-  this->yawMotor.init(7, 2);
+  this->yawMotor.init(6, 2);
   this->pitchMotor.init(7, 2);
 
-  config->yaw_PID.continuous = true;
-  config->yaw_PID.K[0] = 0.1;
-  config->pitch_PID.K[0] = 0.1;
+  this->imu.init();
+  mouseXFilter.init(50);
+  mouseYFilter.init(50);
+
+  pitchFilter.init(35);
+  yawFilter.init(50);
+
+  config->yawPos.K[0] = 2.3;
+  config->yawPos.K[2] = 0.01;
+
+  config->yawVel.Ymin = -150.0;
+  config->yawVel.Ymax = 150.0;
+  config->yawVel.K[0] = 0.06;
+
+  config->pitchPos.K[0] = 3;
+  config->pitchPos.K[2] = 0.0;
+
+  config->pitchVel.K[0] = 0.012;
+
+  config->pitchMax = 50.0;
+  config->pitchMin = -18.0;
+  config->pitchOffset = 177;
+  config->yawOffset = 119.28;
 }
 
 void Gimbal::update(float deltaTime) {
   if (state->driverInput.b && !calibrated) {
     calibrated = true;
+    imu.update_MPU6050();
+    this->state->gimbal.gyroDrift = this->imu.get_gyro_z();
   }
 
+  // Gyro management
+  newTime = millis();
+  if ((newTime - oldTime) > 25 && calibrated) {
+    imu.update_MPU6050();
+    oldTime = newTime;
+  }
+  float gyroSpeed = (this->imu.get_gyro_z() - this->state->gimbal.gyroDrift) * (180.0 / M_PI) * (deltaTime / 1000000.0); // There are 1000000 microseconds in a second.
+  this->state->gimbal.gyroAngle += gyroSpeed;
+
+  // Yaw encoder
   float rawYawAngle = yawMotor.getAngle();
   if (calibrated) {
     float yawDifference = this->prevRawYawAngle - rawYawAngle;
@@ -36,54 +69,74 @@ void Gimbal::update(float deltaTime) {
       this->yawRollover++;
   }
   this->prevRawYawAngle = rawYawAngle;
-
   float yawAngle = realizeYawEncoder(rawYawAngle);
-  float pitchAngle = realizeYawEncoder(pitchMotor.getAngle());
+  this->state->gimbal.yawGlobal = realizeYawEncoderWithoutGyro(rawYawAngle); // Set the global yaw
+  
+  // Pitch encoder
+  float pitchAngle = realizePitchEncoder(pitchMotor.getAngle());
 
+  // Calculate gimbal setpoints
+  if (state->driverInput.mouseRight) {
+    aimYaw += state->gimbal.yaw_reference;
+    aimPitch += state->gimbal.pitch_reference;
+    mouseReleased = 1;
+  }
+  else if (mouseReleased){
+    aimYaw = yawAngle;
+    aimPitch = pitchAngle;
+    mouseReleased = 0;
+  }
+  else {
+    float moveYaw = state->driverInput.mouseX * config->sensitivity * deltaTime;
+    mouseXFilter.push(moveYaw);
+    aimYaw += mouseXFilter.mean();
 
-  // Calculate new gimbal setpoints
-  aimYaw += state->driverInput.mouseX * config->sensitivity * deltaTime / 10000.0; // 10000 is an arbitrary number -- do not change or sensitivies will change
-  aimPitch += state->driverInput.mouseY * config->sensitivity * deltaTime / 10000.0; // 10000 is an arbitrary number -- do not change or sensitivies will change
-
-  // Yaw angle range correction
-  aimYaw = fmod(aimYaw, 360.0);
-  if (aimYaw < 0)
-    aimYaw += 360;
-
-  // Pitch angle range correction
-  aimPitch = fmod(aimPitch, 360.0);
-  if (aimPitch < 0)
-    aimPitch += 360;
+    float movePitch = state->driverInput.mouseY * config->sensitivity * deltaTime;
+    mouseYFilter.push(movePitch);
+    aimPitch -= mouseYFilter.mean();
+  }
+  
   // Pich softstops
   if (aimPitch < config->pitchMin)
     aimPitch = config->pitchMin;
   else if (aimPitch > config->pitchMax)
     aimPitch = config->pitchMax;
 
+
   // Yaw PID
-  state->gimbal.yaw_PID.R = aimYaw;
-  PID_Filter(&config->yaw_PID, &state->gimbal.yaw_PID, yawAngle, deltaTime);
+  state->gimbal.yawPos.R = aimYaw;
+  PID_Filter(&config->yawPos, &state->gimbal.yawPos, yawAngle, deltaTime);
+
+  yawFilter.push(yawMotor.getRpm() * 0.5);
+  state->gimbal.yawVel.R = state->gimbal.yawPos.Y;
+  PID_Filter(&config->yawVel, &state->gimbal.yawVel, yawFilter.mean(), deltaTime);
+
+  float dynamicYawFeedforward = -gyroSpeed * 1.0;
 
   // Pitch PID
-  state->gimbal.pitch_PID.R = aimPitch;
-  PID_Filter(&config->pitch_PID, &state->gimbal.pitch_PID, pitchAngle, deltaTime);
+  state->gimbal.pitchPos.R = aimPitch;
+  PID_Filter(&config->pitchPos, &state->gimbal.pitchPos, pitchAngle, deltaTime);
 
-  // Set motor power here?
+  pitchFilter.push(pitchMotor.getRpm());
+  state->gimbal.pitchVel.R = state->gimbal.pitchPos.Y;
+  PID_Filter(&config->pitchVel, &state->gimbal.pitchVel, pitchFilter.mean(), deltaTime);
+
+  float dynamicPitchFeedForward = cos((PI / 180.0) * pitchAngle) * 0.45;
+
+  // Set motor power
   if (calibrated) {
-    yawMotor.setPower(0.4);
-    // Serial.println("Sending 0.4");
-    // yawMotor.setPower(state->gimbal.yaw_PID.Y);
-    // pitchMotor.setPower(state->gimbal.pitch_PID.Y);
-    // Serial.println(state->gimbal.yaw_PID.Y);
+    yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
+    pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }
 }
 
 float Gimbal::realizeYawEncoder(float rawAngle) {
-  float yawAngle = ((rawAngle - config->yawOffset + (this->yawRollover * 360)) * 0.5);
+  float yawAngle = ((rawAngle - config->yawOffset + (this->yawRollover * 360)) * 0.5) + (this->state->gimbal.gyroAngle);
+  return yawAngle;
+}
 
-  yawAngle = fmod(yawAngle, 360.0);
-  if (yawAngle < 0)
-    yawAngle += 360;
+float Gimbal::realizeYawEncoderWithoutGyro(float rawAngle) {
+  float yawAngle = ((rawAngle - config->yawOffset + (this->yawRollover * 360)) * 0.5);
   return yawAngle;
 }
 
