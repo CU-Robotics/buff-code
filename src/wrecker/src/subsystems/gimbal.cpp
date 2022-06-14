@@ -24,23 +24,6 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
 
   pitchFilter.init(35);
   yawFilter.init(50);
-
-  config->yawPos.K[0] = 2.3;
-  config->yawPos.K[2] = 0.01;
-
-  config->yawVel.Ymin = -150.0;
-  config->yawVel.Ymax = 150.0;
-  config->yawVel.K[0] = 0.06;
-
-  config->pitchPos.K[0] = 3;
-  config->pitchPos.K[2] = 0.0;
-
-  config->pitchVel.K[0] = 0.012;
-
-  config->pitchMax = 50.0;
-  config->pitchMin = -18.0;
-  config->pitchOffset = 177;
-  config->yawOffset = 119.28;
 }
 
 void Gimbal::update(float deltaTime) {

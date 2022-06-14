@@ -26,7 +26,6 @@ void Shooter::update(unsigned long deltaTime) {
         calibrated = true;
 
     if (calibrated) {
-        Serial.println("enabled");
         // Spin flywheels
         this->topFlywheel.setPower(0.5);
         this->bottomFlywheel.setPower(0.5);
