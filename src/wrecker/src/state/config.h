@@ -94,12 +94,9 @@ struct C_Gimbal {
 // Configured for cooling focus by default
 struct C_Shooter17 {
   //  Feeder RPM for: low, high, burst
-  float feedRPMLow = 10.0;
-  float feedRPMHigh = 25.0;
-  float feedRPMBurst = 50.0;
-
-  //  Flywheel power for lvl: lvl0, lvl1, lvl2, lvl3
-  float flywheelPower[4] = {0.15, 0.17, 0.2, 0.22};
+  float feedRPMLow = 60.0;
+  float feedRPMHigh = 90.0;
+  float feedRPMBurst = 120.0;
 
   C_PID feedPID;
 };
@@ -107,6 +104,9 @@ struct C_Shooter17 {
 struct C_Shooter42 {
   //  Feeder timeout
   float feedTimeout = 0.5; // Minimum time between consecutive shots, in seconds
+
+  C_PID feedPIDVel;
+  C_PID feedPIDPos;
 
   //  Flywheel power for lvl: lvl0, lvl1, lvl2, lvl3
   float flywheelPower[4] = {0.15, 0.17, 0.2, 0.22};

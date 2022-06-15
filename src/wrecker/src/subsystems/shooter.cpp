@@ -49,24 +49,21 @@ void Shooter::update(unsigned long deltaTime) {
         if (state->driverInput.mouseLeft) {
             switch(this->state->shooter17.mode) {
                 case 0:
-                    state->shooter17.feedPID.R = -60 * 36;
+                    state->shooter17.feedPID.R = -config->feedRPMLow * 36;
                     break;
                 case 1:
-                    state->shooter17.feedPID.R = -90 * 36;
+                    state->shooter17.feedPID.R = -config->feedRPMHigh * 36;
                     break;
                 case 2:
-                    state->shooter17.feedPID.R = -120 * 36;
+                    state->shooter17.feedPID.R = -config->feedRPMBurst * 36;
                     break;
                 default:
-                    state->shooter17.feedPID.R = -60 * 36;
+                    state->shooter17.feedPID.R = -config->feedRPMLow * 36;
             }
         } else if (state->driverInput.f)
-            state->shooter17.feedPID.R = 60 * 36;
+            state->shooter17.feedPID.R = config->feedRPMLow * 36;
         else
             state->shooter17.feedPID.R = 0;
-
-        Serial.print(state->shooter17.feedPID.R);
-        Serial.print(" - ");
 
         // Feed PID
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);

@@ -173,6 +173,8 @@ struct S_Robot {
 
   S_RefSystem refSystem;
   DriverInput driverInput;
+
+  int mode;
 };
 
 #endif // STATE_H

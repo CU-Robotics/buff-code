@@ -362,10 +362,10 @@ void Shooter17_serial_event(C_Shooter17* config, S_Shooter* state){
       config->feedRPMBurst = Serial.parseInt();
       break;
 
-    case 'P':
-      m = Serial.parseInt();
-      config->flywheelPower[m] = Serial.parseFloat();
-      break;
+    // case 'P':
+    //   m = Serial.parseInt();
+    //   config->flywheelPower[m] = Serial.parseFloat();
+    //   break;
   }
 }
 
