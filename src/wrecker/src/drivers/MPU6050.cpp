@@ -1,6 +1,6 @@
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>        //Including the librariy for the Adafruit 6050 IMU
-#include <Wire.h>
+// #include <Adafruit_MPU6050.h>
+// #include <Adafruit_Sensor.h>        //Including the librariy for the Adafruit 6050 IMU
+// #include <Wire.h>
 
 #include "MPU6050.h"        //Including the header file for this driver
 
