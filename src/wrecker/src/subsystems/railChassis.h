@@ -1,6 +1,8 @@
 #include "state/state.h"
 #include "state/config.h"
 
+#include "drivers/c620.h"
+
 #ifndef RAIL_CHASSIS_H
 #define RAIL_CHASSIS_H
 
@@ -13,6 +15,9 @@ class RailChassis {
   private:
     S_Robot *state;
     C_RailChassis *config;
+
+    c620CAN leftDriveMotor;
+    c620CAN rightDriveMotor;
 
     void drive(float speed);
 };
