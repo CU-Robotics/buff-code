@@ -101,28 +101,21 @@ void setup() {
 
 // Runs continuously
 void loop() {
-
   // Necesary for motors to recieve data over CAN
-  // Needs to have usage
-  //  can.update(XXX, YYY);
-  //
   while (can1.read(tempMessage))
     canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
-  
-
-  while (can2.read(tempMessage)) {
+  while (can2.read(tempMessage))
     canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
-  }
-  
-  // // while (can3.read(tempMessage))
-  // //   canRecieveMessages[2][tempMessage.id - 0x201] = tempMessage;
   
   refSys.read_serial(); 
 
   // if (Serial.available() > 0)
   //   serial_event(&robot_config, &robot_state);
 
+  // Update devices
   reciever.update();
+
+  // Update subystems
   railChassis.update(deltaT);
   // gimbal.update(deltaT);
   // shooter.update(deltaT);
