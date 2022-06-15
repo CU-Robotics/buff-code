@@ -214,6 +214,7 @@ class DepthAI_Device:
 
 		# Define a camera control stream
 		controlIn = self.pipeline.create(dai.node.XLinkIn)
+		controlIn.out.link(cam.inputControl)
 		controlIn.setStreamName('control')
 
 
@@ -228,7 +229,8 @@ class DepthAI_Device:
 
 			controlQueue = device.getInputQueue('control')
 			ctrl = dai.CameraControl()
-			ctrl.setContrast(10)
+			ctrl.setContrast(-5)
+			ctrl.setBrightness(0)
 			ctrl.setAutoWhiteBalanceMode(dai.RawCameraControl.AutoWhiteBalanceMode.OFF)
 			ctrl.setAutoFocusMode(dai.RawCameraControl.AutoFocusMode.OFF)
 			controlQueue.send(ctrl)
