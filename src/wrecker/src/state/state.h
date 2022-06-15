@@ -17,6 +17,8 @@ struct S_SwerveModule {
   S_PID steerVel;
   S_PID steerPos;
   S_PID driveVel;
+
+  float inRange;
 };
 
 struct S_Chassis {
@@ -24,6 +26,9 @@ struct S_Chassis {
   float alpha = 0.0f; // angular acceleration
   float heading = 0.0f; // naming needs to be more consistent (greek letters, descriptive or units)
   float a[2] = {0.0f, 0.0f};
+
+  float maxRpm;
+  float rampRate;
 
   S_SwerveModule FL;
   S_SwerveModule FR;
@@ -34,17 +39,25 @@ struct S_Chassis {
   S_PID driveVel;
 };
 
+
 struct S_Gimbal {
   float yaw = 0.0f;
   float pitch = 0.0f;
   float yawGlobal = 0.0f;
+  float gyroDrift = 0.0f;
+  float gyroAngle = 0.0f;
+  float yaw_reference = 0.0f;
+  float pitch_reference = 0.0f;
 
-  S_PID yaw_PID;
-  S_PID pitch_PID;
+  S_PID yawVel;
+  S_PID yawPos;
+  S_PID pitchVel;
+  S_PID pitchPos;
 };
 
 struct S_Shooter {
   bool firing = false;
+  int mode = 0;
 
   S_PID feedPID;
 };
@@ -61,9 +74,9 @@ struct DriverInput {
   uint8_t s1 = 0;
   uint8_t s2 = 0;
 
-  float mouseX = 0.0f;
-  float mouseY = 0.0f;
-  float mouseZ = 0.0f;
+  int16_t mouseX = 0;
+  int16_t mouseY = 0;
+  int16_t mouseZ = 0;
   bool mouseLeft = false;
   bool mouseRight = false;
 
@@ -81,7 +94,7 @@ struct DriverInput {
   bool c = false;
   bool v = false;
   bool b = false;
-  bool shift = false;
+  bool shift = true;
   bool ctrl = false;
 
   //byte keyboard[2] = 15 bit value
@@ -114,6 +127,10 @@ struct S_RefSystem {
 
     char ref_warning = '\r';
     int foul_robot_id = -1;
+
+    int robot_id = -1;
+    int robot_level = -1;
+    int robot_health = -1;
     
     int red_hero_robot_level = -1;
     int red_infantry_robot_level = -1;
@@ -136,8 +153,8 @@ struct S_RefSystem {
 
     int robot_power_lim = -1;
 
-    int chasis_volt = -1;
-    int chasis_current = -1;
+    int chassis_voltage = -1;
+    int chassis_current = -1;
 
     int robot_buff = -1;
 
@@ -156,6 +173,8 @@ struct S_Robot {
 
   S_RefSystem refSystem;
   DriverInput driverInput;
+
+  int mode;
 };
 
 #endif // STATE_H

@@ -1,5 +1,5 @@
-FPS: 30
-FOV: 64
+FPS: 60
+FOV: 80
 DEVICE: 0
 RESOLUTION: 320
 DATA_DEFAULT: 'sample_competition.avi'

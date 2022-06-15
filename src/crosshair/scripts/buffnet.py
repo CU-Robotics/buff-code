@@ -28,19 +28,10 @@ class BuffNet:
 		"""
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, 'buffnet.pt')
-
-		print(model_path)
-		
-		if not os.path.exists(model_path):
-			print('No model')
-			return
-
-		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
-
-		self.bridge = CvBridge()
 
 		rospy.init_node('buffnet', anonymous=True)
+
+		self.bridge = CvBridge()
 
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 
@@ -51,12 +42,19 @@ class BuffNet:
 		if self.debug:
 			self.debug_pub = rospy.Publisher(topics['IMAGE_DEBUG'], Image, queue_size=1)
 
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/PT_FILE'))
+		
+		if not os.path.exists(model_path):
+			print('No model')
+			self.model = None
+			return
+
+		self.model = torch.hub.load('ultralytics/yolov5', 'custom', model_path)
+
 		self.im_subscriber = rospy.Subscriber(topics['IMAGE'], Image, self.imageCallBack, queue_size=1)
 
 		r = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 		self.image_size = (r, r)
-
-
 
 	def detect(self, image):
 		"""
@@ -66,18 +64,27 @@ class BuffNet:
 			@RETURNS:
 				annotations: bounding box of the detected object with color and class [class, name, (x1,y1), (w,h)]
 		"""
+		if self.model == None:
+			return
+
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 		prediction = np.array(self.model(image).pandas().xywh)[0]
-
 		annotation = []
-		detection = []
+		detection = np.array([])
 
 		if len(prediction) < 1:
 			return annotation, detection
 
 		for x,y,w,h,cf,cl,n in prediction:
-			annotation.append([round(x), round(y), round(w), round(h), cf, cl, n])
-			detection.append([round(x), round(y), round(w), round(h), cf, cl])
+			annotation.append([int(x), int(y), int(w), int(h), cf, cl, n])
+
+			x = int(x) / image.shape[1]
+			y = int(y) / image.shape[0]
+			w = int(w) / image.shape[1]
+			h = int(h) / image.shape[0]
+
+			if cf > 0.5:
+				detection = np.concatenate([detection, [x, y, w, h, cl]])
 
 		return annotation, detection
 
@@ -92,6 +99,7 @@ class BuffNet:
 		image = frame.copy()
 
 		colors = [(255,0,0), (0,0,255), (0,255,0)]
+
 		if len(labels) < 1:
 			return image
 
@@ -102,6 +110,7 @@ class BuffNet:
 			y2 = int(y + (h / 2))
 			image = cv2.rectangle(image, (x1, y1), (x2, y2), colors[int(c)], 2)
 			image = cv2.putText(image, name + f'-{np.round(cl, 4)}', (x1, y1 - 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv2.LINE_AA)
+		
 		return image
 
 	def detect_and_annotate(self, image):
@@ -136,12 +145,9 @@ class BuffNet:
 		annotations, predictions = self.detect(image)
 		mesg = Float64MultiArray()
 
-		if len(predictions) < 1:
-			mesg.data = [-1.0, -1.0, -1.0, -1.0, -1.0]
-		else:
-			for pred in predictions:
-				mesg.data = np.array(pred, dtype=np.float64)
-				self.target_pub.publish(mesg)
+		if len(predictions) > 3:
+			mesg.data = np.array(predictions, dtype=np.float64)
+			self.target_pub.publish(mesg)
 
 		if self.debug:
 			self.publish_annotated(self.annotate_image(image, annotations))

@@ -40,15 +40,19 @@ struct C_SwerveModule {
   C_PID steerVel;
   C_PID steerPos;
   C_PID driveVel;
+
+  float rampLimit = 0.001;
 };
 
 struct C_SwerveChassis {
-
   float baseWidth = 14.5;
   float baseLength = 14.5;
 
   //  Current limit for level: lvl0, lvl1, lvl2, lvl3
   float currentLimit[4] = {40.0 / 24.0, 60.0 / 24.0, 80.0 / 24.0, 100.0 / 24.0};
+
+  float levelMaxRpmMap[4] = {3000.0, 4000.0, 5000.0, 6000.0};
+  float levelRampRateMap[4] = {0.001, 0.002, 0.003, 0.004};
 
   //  SwerveModules
   C_SwerveModule FR;
@@ -67,26 +71,32 @@ struct C_RailChassis {
 };
 
 struct C_Gimbal {
+  float sensitivity = 0.0000025;
 
-  float sensitivity = 0.001;
-
-  //  angle offset for motors: yaw, pitch
+  // Angle offset for motors: yaw, pitch
   float yawOffset = 90.0;
   float pitchOffset = 12.0;
 
-  C_PID yaw_PID;
-  C_PID pitch_PID;
+  // Pitch softstops
+  float pitchMin = 0;
+  float pitchMax = 75;
+
+  // Motor IDs
+  float pitchMotorID = 1;
+  float yawMotorID = 2;
+
+  C_PID yawVel;
+  C_PID yawPos;
+  C_PID pitchVel;
+  C_PID pitchPos;
 };
 
 // Configured for cooling focus by default
 struct C_Shooter17 {
   //  Feeder RPM for: low, high, burst
-  float feedRPMLow = 10.0;
-  float feedRPMHigh = 25.0;
-  float feedRPMBurst = 50.0;
-
-  //  Flywheel power for lvl: lvl0, lvl1, lvl2, lvl3
-  float flywheelPower[4] = {0.15, 0.17, 0.2, 0.22};
+  float feedRPMLow = 60.0;
+  float feedRPMHigh = 90.0;
+  float feedRPMBurst = 120.0;
 
   C_PID feedPID;
 };
@@ -94,6 +104,9 @@ struct C_Shooter17 {
 struct C_Shooter42 {
   //  Feeder timeout
   float feedTimeout = 0.5; // Minimum time between consecutive shots, in seconds
+
+  C_PID feedPIDVel;
+  C_PID feedPIDPos;
 
   //  Flywheel power for lvl: lvl0, lvl1, lvl2, lvl3
   float flywheelPower[4] = {0.15, 0.17, 0.2, 0.22};

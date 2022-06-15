@@ -1,16 +1,5 @@
-DEBUG:
-  True
-  
-
-TOPICS:
-  IMAGE: 'image_raw'
-  TARGET_MAP: 'target_map'
-  IMAGE_DEBUG: 'image_debug'
-  SERIAL_OUT: 'serial_write'
-  GIMBAL_STATE: 'gimbal_state'
-  TRACKING_ERROR: 'tracking_error'
-  DETECTION_PIXEL: 'image_detection'
-  DETECTION_WORLD: 'world_detection'
+DEBUG: True
+FROM: 'debug.yaml'
 
 
 NODES:
@@ -20,20 +9,7 @@ NODES:
     REQUIRED: False
   LUXONIS:
     FILES: []
-    PACKAGE: 'buffpy'
     REQUIRED: False
-  TRACKER:     # spawns our tracker node
-    FILES: ['deadreckon_tracer.py', 'projector.py']
-    CONFIG: 'tracker_settings.yaml'
-    PACKAGE: 'buffpy'
   CAMERA:
-    CONFIG: 'camera_settings.yaml'
-    FILES: ['mds_camera.py']
+    FILES: ['mds_camera.py'] # ['data_streamer.py'] #
     PACKAGE: 'buffpy'
-  MODEL:
-    CONFIG: 'model_settings.yaml'
-  RQT_GUI:    # Opens an rqt_graph
-    FILES: ['rqt_gui']
-    PACKAGE: 'rqt_gui'
-    ARGS:
-      - '--perspective-file ${PROJECT_ROOT}/buffpy/config/data/buff_view.perspective'
