@@ -31,11 +31,13 @@ IntervalTimer serialDumpTmr;
 S_Robot robot_state;
 C_Robot robot_config;
 
+// Devices
+Ref_System refSys;
+dr16 reciever;
+
 // Subsystems
 Gimbal gimbal;
-dr16 reciever;
 Shooter shooter;
-Ref_System refSys;
 SwerveChassis swerveChassis;
 
 
