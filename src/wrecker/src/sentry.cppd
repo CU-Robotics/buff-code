@@ -49,7 +49,7 @@ Shooter shooter;
 void setup() {
   Serial.begin(1000000);
   delay(1000);
-  Serial.println("-- INFANTRY ROBOT START --");
+  Serial.println("-- SENTRY ROBOT START --");
 
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
