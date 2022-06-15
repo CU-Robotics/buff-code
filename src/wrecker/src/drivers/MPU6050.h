@@ -56,6 +56,8 @@ class MPU6050{
         sensors_vec_t a, g;
         sensors_vec_t a_at, g_at;
 
+        sensors_event_t a_temp, g_temp, temp;       //Declaring sensor event variables to be passed into the get event function that is included in the adafruit library 
+
 
 };
 
