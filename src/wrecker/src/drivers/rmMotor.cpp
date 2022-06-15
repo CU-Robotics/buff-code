@@ -8,7 +8,7 @@ short rmMotor::getRpm() {
     return rpm;
 }
 
-short rmMotor::getAngle() {
+float rmMotor::getAngle() {
     return angle;
 }
 

@@ -17,8 +17,7 @@ void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state, S_SwerveModule 
   moduleState = modState;
 
   this->steerMotor.init(config->steerMotorID, 1, config->steerEncoderID);
-
-  this->driveMotor.init(config->driveMotorID, 2);
+  this->driveMotor.init(config->driveMotorID, 1);
 }
 
 void SwerveModule::calibrate() {
@@ -26,11 +25,15 @@ void SwerveModule::calibrate() {
   this->steerOffset = findCalibrationMatch(this->steerMotor.getAngle(), this->config->alignment, 9);
   this->steerRollover = 0;
   calibrated = true;
+  rampedSpeed = 0;
 }
 
 void SwerveModule::update(float speed, float angle, float deltaTime) {
   // Convert sensor and input units
   float inputAngle = angle + config->absolute_offset;
+  if (speed == 0) {
+    inputAngle = prevSteerAngle;
+  }
   if (inputAngle < 0)
     inputAngle += 360;
 
@@ -43,12 +46,13 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
       this->steerRollover++;
   }
   this->prevRawSteerAngle = rawSteerAngle;
-  float steerAngle = convertSteerAngle(rawSteerAngle);
+  float steerAngle = realizeSteerAngle(rawSteerAngle);
   this->prevSteerAngle = steerAngle;
 
-  float rpm = steerMotor.getRpm() / 100.0; // 100.0 is based on the gear ratio of the motor and the steer belt
+  float rpm = steerMotor.getRpm() / 100.0; // The number 100 is based on the gear ratio of the motor and the steer belt
 
   // Inversion logic
+  // Decides wether or not to switch the wheel's drive direction
   int inversion = 1;
   float error = inputAngle - steerAngle;
   float shadow = error - 360.0;
@@ -56,9 +60,22 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     error = shadow;
   if (abs(error) > 90) {
     inversion = -1;
-    steerAngle -= 180;
-    if (steerAngle < 0)
-      steerAngle += 360;
+    inputAngle -= 180;
+    if (inputAngle < 0)
+      inputAngle += 360;
+  }
+
+  // Speed ramping
+  if (rampedSpeed < speed) {
+    rampedSpeed += this->config->rampLimit * (deltaTime / 1000.0);
+    if (rampedSpeed > speed) {
+      rampedSpeed = speed;
+    }
+  } else if (rampedSpeed > speed) {
+    rampedSpeed -= this->config->rampLimit * (deltaTime / 1000.0);
+    if (rampedSpeed < speed) {
+      rampedSpeed = speed;
+    }
   }
 
   // Steer Velocity PID
@@ -76,16 +93,17 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  moduleState->driveVel.R = speed * 4000;
+  moduleState->driveVel.R = rampedSpeed * inversion * 6000; // 8000 is the maximum RPM of the motor pre-gearbox
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
+
 
   // Set motor power
   if (calibrated) {
     steerMotor.setPower(tmp_steerVel.Y);
 
-    // Only drive if sufficiently close to target angle
-    if (abs(inputAngle - steerAngle) > 20.0)
-      driveMotor.setPower(moduleState->driveVel.Y * inversion);
+    // // Only drive if sufficiently close to target angle
+    if (abs(inputAngle - steerAngle) < 20.0)
+      driveMotor.setPower(moduleState->driveVel.Y);
     else
       driveMotor.setPower(0.0);
   }
@@ -96,6 +114,9 @@ int SwerveModule::findCalibrationMatch(int currValue, int* alignmentTable, int t
   int bestOffset = 0;
   for (int i = 0; i < tableSize; i++) {
     int distance = abs(currValue - alignmentTable[i]);
+    int shadowDistance = (currValue - alignmentTable[i]) + 360;
+    if (shadowDistance < distance)
+      distance = shadowDistance;
     if (distance < smallestDistance) {
       smallestDistance = distance;
       bestOffset = alignmentTable[i];
@@ -108,12 +129,11 @@ int SwerveModule::getSteerId() {
   return config->steerMotorID;
 }
 
-float SwerveModule::convertSteerAngle(float rawSteerAngle) {
+float SwerveModule::realizeSteerAngle(float rawSteerAngle) {
   float steerAngle = ((rawSteerAngle - this->steerOffset + (this->steerRollover * 360)) * (9.0/25.0));
 
   steerAngle = fmod(steerAngle, 360.0);
-  if (steerAngle < 0) {
+  if (steerAngle < 0)
     steerAngle += 360;
-  }
   return steerAngle;
 }

@@ -161,7 +161,7 @@ class DepthAI_Device:
 		self.image_size = rospy.get_param('/buffbot/CAMERA/RESOLUTION')
 
 		model_dir = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'models')
-		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/MODEL_FILE'))
+		model_path = os.path.join(model_dir, rospy.get_param('/buffbot/MODEL/BLOB_FILE'))
 
 		self.bridge = CvBridge()
 
@@ -212,6 +212,11 @@ class DepthAI_Device:
 
 		detection_nn.out.link(xout_nn.input)
 
+		# Define a camera control stream
+		controlIn = self.pipeline.create(dai.node.XLinkIn)
+		controlIn.out.link(cam.inputControl)
+		controlIn.setStreamName('control')
+
 
 	def spin(self):
 
@@ -221,6 +226,14 @@ class DepthAI_Device:
 				name="nn_input", maxSize=4, blocking=False)
 			q_nn = device.getOutputQueue(
 				name="nn", maxSize=4, blocking=False)
+
+			controlQueue = device.getInputQueue('control')
+			ctrl = dai.CameraControl()
+			ctrl.setContrast(-5)
+			ctrl.setBrightness(0)
+			ctrl.setAutoWhiteBalanceMode(dai.RawCameraControl.AutoWhiteBalanceMode.OFF)
+			ctrl.setAutoFocusMode(dai.RawCameraControl.AutoFocusMode.OFF)
+			controlQueue.send(ctrl)
 
 			start_time = time.time()
 			layer_info_printed = False
@@ -247,12 +260,19 @@ class DepthAI_Device:
 					output, conf_thres=self.confidence, iou_thres=self.iou)
 
 				boxes = boxes[0]
-
+				detections = []
 				if boxes is not None:
 					boxes = boxes.numpy() 
-					for box in boxes:
-						target_msg = Float64MultiArray(data=box)
-						self.det_pub.publish(target_msg)
+					for x1,x2,y1,y2,cf,cl in boxes:
+						x = (x1 + x2) / (2 * self.image_size)
+						y = (y1 + y2) / (2 * self.image_size)
+						w = abs(x1 - x2) / self.image_size
+						h = abs(y1 - y2) / self.image_size
+						
+						detections = np.concatenate([detections, [x,y,w,h,cl]])
+					
+					target_msg = Float64MultiArray(data=detections)
+					self.det_pub.publish(target_msg)
 
 				image_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
 				self.image_pub.publish(image_msg)

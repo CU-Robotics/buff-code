@@ -83,7 +83,7 @@ def train_model(model):
 
 	subprocess.run([setup_script])
 
-	default_args = ['--img', '320','--batch', '32', '--epochs', '5', '--cache', '--project', output_dir]
+	default_args = ['--img', '320','--batch', '64', '--epochs', '50', '--cache', '--project', output_dir]
 
 	while 1:
 		data_zips = glob.glob(os.path.join(data_dir, '*.zip'))
@@ -117,7 +117,7 @@ def train_model(model):
 			print(f'Executing {cmd}')
 			subprocess.run(cmd)
 
-			shutil.copy(os.path.join(output_dir, 'exp' + exp, 'weights', 'buffnet.pt'), model_dir)
+			shutil.copy(os.path.join(output_dir, 'exp' + exp, 'weights', 'best.pt'), os.path.join(model_dir, 'buffnet.pt'))
 			shutil.rmtree(data_path)
 
 			exp = get_current_exp(output_dir)

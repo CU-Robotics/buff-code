@@ -56,8 +56,10 @@ def main(data_dir):
 
 			print(f'{i}: image shape: {image.shape} ')
 			hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+			#bv.buffshow('image', image)
 			bv.display_annotated(image, label)
-		
+
 			for x, y in pixels:
 				h, s, v = hsv[y,x]
 

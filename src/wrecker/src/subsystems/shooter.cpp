@@ -15,18 +15,59 @@ void Shooter::setup(C_Shooter17 *config, S_Robot *state) {
     this->state = state;
 
     this->feedMotor.init(1, 2);
-
     this->bottomFlywheel.init(29);
-    
-    // this->topFlywheel.initCal(28);
+    this->topFlywheel.init(28);
+
+    this->config->feedPID.K[0] = 0.0005;
 }
 
 void Shooter::update(unsigned long deltaTime) {
-    // this->topFlywheel.setPower(0.4);
-    this->bottomFlywheel.setPower(0.4);
+    if (state->driverInput.b && !calibrated)
+        calibrated = true;
 
-    this->config->feedPID.K[0] = 0.05;
-    state->shooter17.feedPID.R = 100;
-    PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
-    //this->feedMotor.setPower(state->Shooter17.feedPID.R);
+    if (calibrated) {
+        // Spin flywheels
+        this->topFlywheel.setPower(0.5);
+        this->bottomFlywheel.setPower(0.5);
+
+        /// Death reset
+        if (state->driverInput.v) {
+            this->bottomFlywheel.init(29);
+            this->topFlywheel.init(28);
+        }
+
+        // Mode switching
+        if (state->driverInput.q) {
+            this->state->shooter17.mode = 0;
+        } else if (state->driverInput.e) {
+            this->state->shooter17.mode = 1;
+        } else if (state->driverInput.r) {
+            this->state->shooter17.mode = 2;
+        }
+
+        // Feeding
+        if (state->driverInput.mouseLeft) {
+            switch(this->state->shooter17.mode) {
+                case 0:
+                    state->shooter17.feedPID.R = -config->feedRPMLow * 36;
+                    break;
+                case 1:
+                    state->shooter17.feedPID.R = -config->feedRPMHigh * 36;
+                    break;
+                case 2:
+                    state->shooter17.feedPID.R = -config->feedRPMBurst * 36;
+                    break;
+                default:
+                    state->shooter17.feedPID.R = -config->feedRPMLow * 36;
+            }
+        } else if (state->driverInput.f)
+            state->shooter17.feedPID.R = config->feedRPMLow * 36;
+        else
+            state->shooter17.feedPID.R = 0;
+
+        // Feed PID
+        PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
+        this->feedMotor.setPower(state->shooter17.feedPID.Y);
+        Serial.println(state->shooter17.feedPID.Y);
+    }
 }
