@@ -117,30 +117,22 @@ labelMap = [
 cam_options = ['rgb', 'left', 'right']
 
 
-def draw_boxes(frame, boxes, total_classes):
-	if boxes is None or len(boxes) == 0:
-		return frame
+def draw_boxes(image, labels):
+	if labels is None or len(labels) == 0:
+		return image
 	else:
-		colors = [(255,0,0), (0,0,255), (0,255,0), (0, 0, 0)]
-		for box in boxes:
-			x1 = int(box[0])
-			y1 = int(box[1])
-			x2 = int(box[2])
-			y2 = int(box[3])
+		colors = [(255,0,0), (0,0,255), (0,255,0)]
 
-			conf, cl = box[4], int(box[5])
+		for c,x,y,w,h in labels:
+			# Draw a rectangle on the image, green 2px thick
+			[x, w] = np.array([x, w]) * image.shape[1]
+			[y, h] = np.array([y, h]) * image.shape[0]
 
-			label = f"{labelMap[cl]}: {conf:.2f}"
-			frame = cv2.rectangle(frame, (x1, y1), (x2, y2), colors[cl], 1)
+			image = cv2.rectangle(image, (int(x - (w/2)), int(y - (h/2))), (int(x + (w/2)), int(y + (h/2))), colors[int(c)], 2)
+			image = cv2.putText(image, f'{c}', (int(x - (w/2)), int(y - (h/2))-15), cv2.FONT_HERSHEY_SIMPLEX, 
+					1, (255,255,255), 2, cv2.LINE_AA)
 
-			# Get the width and height of label for bg square
-			(w, h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.3, 1)
-
-			# Shows the text.
-			frame = cv2.rectangle(frame, (x1, y1 - 2*h), (x1 + w, y1), colors[cl], -1)
-			frame = cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)
-
-	return frame
+	return image
 
 
 class DepthAI_Device:
@@ -214,6 +206,7 @@ class DepthAI_Device:
 
 		# Define a camera control stream
 		controlIn = self.pipeline.create(dai.node.XLinkIn)
+		controlIn.out.link(cam.inputControl)
 		controlIn.setStreamName('control')
 
 
@@ -229,8 +222,10 @@ class DepthAI_Device:
 			controlQueue = device.getInputQueue('control')
 			ctrl = dai.CameraControl()
 			ctrl.setContrast(10)
+			ctrl.setBrightness(0)
+			ctrl.setManualExposure(4000, 1600)
 			ctrl.setAutoWhiteBalanceMode(dai.RawCameraControl.AutoWhiteBalanceMode.OFF)
-			ctrl.setAutoFocusMode(dai.RawCameraControl.AutoFocusMode.OFF)
+			ctrl.setAutoFocusMode(dai.RawCameraControl.AutoFocusMode.CONTINUOUS_VIDEO)
 			controlQueue.send(ctrl)
 
 			start_time = time.time()
@@ -258,6 +253,8 @@ class DepthAI_Device:
 					output, conf_thres=self.confidence, iou_thres=self.iou)
 
 				boxes = boxes[0]
+
+				labels = []
 				detections = []
 				if boxes is not None:
 					boxes = boxes.numpy() 
@@ -267,7 +264,8 @@ class DepthAI_Device:
 						w = abs(x1 - x2) / self.image_size
 						h = abs(y1 - y2) / self.image_size
 						
-						detections = np.concatenate([detections, [x,y,w,h,cl]])
+						detections = np.concatenate([detections, [cl,x,y,w,h]])
+						labels.append([cl,x1,x2,y1,y2])
 					
 					target_msg = Float64MultiArray(data=detections)
 					self.det_pub.publish(target_msg)
@@ -276,7 +274,7 @@ class DepthAI_Device:
 				self.image_pub.publish(image_msg)
 					
 				if self.debug:
-					ann_frame = draw_boxes(frame, boxes, total_classes)
+					ann_frame = draw_boxes(frame, labels)
 					ann_img_msg = self.bridge.cv2_to_imgmsg(ann_frame, "bgr8")
 					self.ann_pub.publish(ann_img_msg)
 
