@@ -4,12 +4,12 @@ FROM: 'debug.yaml'
 
 NODES:
   BUFFNET: # spawns our detector node
-    FILES: ['buffnet.py']
+    FILES: ['tracker_demo_detector.py']
     PACKAGE: 'buffpy'
     REQUIRED: False
   LUXONIS:
     FILES: []
     REQUIRED: False
   CAMERA:
-    FILES: ['mds_camera.py'] # ['data_streamer.py'] #
+    FILES: [] # ['data_streamer.py'] #
     PACKAGE: 'buffpy'

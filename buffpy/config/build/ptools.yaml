@@ -1,5 +1,5 @@
 PYTHON3_SCRIPTS:
   'buff_ros': ['buffvision.py']
-  'crosshair': ['interactive_thresholder.py', 'image_generator.py', 'xml2txt.py', 'trainer.py', 'buffnet.py']
+  'crosshair': ['interactive_thresholder.py', 'image_generator.py', 'xml2txt.py', 'trainer.py', 'buffnet.py', 'tracker_demo_detector.py']
   'tech': ['gdrive_handler.py']
   'omega': ['mds_camera.py', 'data_streamer.py']
