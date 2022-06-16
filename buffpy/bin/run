@@ -255,7 +255,7 @@ def launch_system(target_path, config):
 			# launch the process and add it to the pool
 			if 'FILES' in node:
 				for program in node['FILES']:
-					process = roslaunch.core.Node(package, program, args=args, respawn=False, output='screen', required=required)
+					process = roslaunch.core.Node(package, program, args=args, output='screen', respawn=required)
 					pool.append(launch.launch(process))
 
 	return core_process, pool, launch
@@ -340,7 +340,7 @@ def spin(config, target_path, target_args):
 	rospy.sleep(3)
 
 	if not core_process is None:
-		core_process.kill()
+		core_process.terminate()
 
 def main(args):
 	"""
