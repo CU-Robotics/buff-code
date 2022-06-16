@@ -5,6 +5,7 @@
 
 extern FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 extern FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+extern FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
 extern CAN_message_t canRecieveMessages[3][11];
 
@@ -15,6 +16,8 @@ void sendC6x0() {
   can1.write(c6x0Messages[0][1]);
   can2.write(c6x0Messages[1][0]);
   can2.write(c6x0Messages[1][1]);
+  can3.write(c6x0Messages[2][0]);
+  can3.write(c6x0Messages[2][1]);
 }
 
 
@@ -58,6 +61,9 @@ void c620CAN::setPower(float power) {
   //     break;
   //   case 2:
   //     can2.write(*sendMsgPtr);
+  //     break;
+  //   case 3:
+  //     can3.write(*sendMsgPtr);
   //     break;
   // }
   updateMotor();
@@ -137,6 +143,9 @@ void c610Enc::setPower(float power) {
   //     break;
   //   case 2:
   //     can2.write(*sendMsgPtr);
+  //     break;
+  //   case 3:
+  //     can3.write(*sendMsgPtr);
   //     break;
   // }
   updateMotor();
