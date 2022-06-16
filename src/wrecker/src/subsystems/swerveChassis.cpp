@@ -59,7 +59,36 @@ void SwerveChassis::update(unsigned long deltaTime) {
   int y = state->driverInput.s - state->driverInput.w;
   int s = state->driverInput.z - state->driverInput.x;
 
+  if (this->state->driverInput.shift && !shiftPressed) {
+    if (this->state->chassis.beyblade) {
+      this->state->chassis.beyblade = false;
+    } else {
+      this->state->chassis.beyblade = true;
+    }
+    shiftPressed = true;
+  } else if (!this->state->driverInput.shift) {
+    shiftPressed = false;
+  }
+
+  if (this->state->chassis.beyblade) {
+    s = 1.0;
+  }
+
   drive(x, y, s, deltaTime);
+
+  if (s == 0) {
+    this->state->chassis.spin = 1.0;
+  } else if (s != 0 && x != 0) {
+    if (y != 0) {
+      this->state->chassis.spin = 1.0;
+    } else {
+      this->state->chassis.spin = 1.0;
+    }
+  } else if (s != 0 && y != 0) {
+    this->state->chassis.spin = 1.0;
+  } else {
+    this->state->chassis.spin = 1.725;
+  }
 }
 
 void SwerveChassis::calibrate() {

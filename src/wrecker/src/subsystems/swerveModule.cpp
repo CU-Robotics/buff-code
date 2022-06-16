@@ -78,6 +78,8 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     }
   }
 
+  rampedSpeed = speed;
+
   // Steer Velocity PID
   config->steerPos.continuous = true;
   tmp_steerPos.R = inputAngle;
@@ -99,9 +101,7 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
 
   // Set motor power
   if (calibrated) {
-    Serial.println(deltaTime);
-    //steerMotor.setPower(tmp_steerVel.Y);
-    steerMotor.setPower(0.5);
+    steerMotor.setPower(tmp_steerVel.Y);
 
     // // Only drive if sufficiently close to target angle
     if (abs(inputAngle - steerAngle) < 20.0)
