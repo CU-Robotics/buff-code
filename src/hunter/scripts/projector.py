@@ -85,7 +85,7 @@ class Projector:
 		blues = []
 		poses = []
 
-		for x, y, w, h, cl in detections.reshape((round(len(detections)/5), 5)):
+		for cl, x, y, w, h in detections.reshape((round(len(detections)/5), 5)):
 
 			if cl == 0:
 				blues = np.concatenate([blues, [x,y,w,h]])
