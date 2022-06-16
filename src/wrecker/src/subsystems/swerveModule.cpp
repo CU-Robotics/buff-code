@@ -99,7 +99,9 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
 
   // Set motor power
   if (calibrated) {
-    steerMotor.setPower(tmp_steerVel.Y);
+    Serial.println(deltaTime);
+    //steerMotor.setPower(tmp_steerVel.Y);
+    steerMotor.setPower(0.5);
 
     // // Only drive if sufficiently close to target angle
     if (abs(inputAngle - steerAngle) < 20.0)
