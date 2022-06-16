@@ -23,9 +23,12 @@ struct S_SwerveModule {
 
 struct S_Chassis {
   float rpm = 0.0f;
+  float spin = 0.0f;
   float alpha = 0.0f; // angular acceleration
   float heading = 0.0f; // naming needs to be more consistent (greek letters, descriptive or units)
   float a[2] = {0.0f, 0.0f};
+
+  bool beyblade = false;
 
   float maxRpm;
   float rampRate;
