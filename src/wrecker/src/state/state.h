@@ -42,6 +42,10 @@ struct S_Chassis {
   S_PID driveVel;
 };
 
+struct S_RailChassis {
+  S_PID drivePos;
+  S_PID driveVel;
+};
 
 struct S_Gimbal {
   float yaw = 0.0f;
@@ -171,6 +175,7 @@ struct S_RefSystem {
 struct S_Robot {
   S_Gimbal gimbal;
   S_Chassis chassis;
+  S_RailChassis railChassis;
   S_Shooter shooter17;
   S_Shooter shooter42;
 
