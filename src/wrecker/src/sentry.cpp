@@ -118,9 +118,11 @@ void loop() {
   reciever.update();
 
   // Update subystems
-  railChassis.update(deltaT);
-  // gimbal.update(deltaT);
+  //railChassis.update(deltaT);
+  gimbal.update(deltaT);
   // shooter.update(deltaT);
+
+  Serial.println();
 
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;
