@@ -158,7 +158,7 @@ void loop() {
 
   // Update subsystems
   swerveChassis.update(deltaT);
-  gimbal.update(deltaT);
+  //gimbal.update(deltaT);
   //shooter.update(deltaT);
 
   Serial.println();
