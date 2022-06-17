@@ -128,7 +128,6 @@ void setup() {
     robot_config.swerveChassis.RR.alignment[i] = br_alignment[i];
 
 
-
   // Driver setup
   refSys.init(&robot_state.refSystem);
   reciever.init(&robot_state.driverInput);
@@ -161,6 +160,7 @@ void loop() {
   gimbal.update(deltaT);
   shooter.update(deltaT);
 
+  // Send CAN every 5000 microseconds
   CANTimer += deltaT;
   if (CANTimer >= 5000) {
     sendC6x0();
@@ -169,7 +169,7 @@ void loop() {
   }
 
 
-  // Delta-time calculator: keep this at the bottom
+  // Loop manager: keep this at the bottom. DO NOT MODIFY.
   deltaT = micros() - lastTime;
 
   while (deltaT < 1000) // 1 ms
