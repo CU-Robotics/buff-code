@@ -6,9 +6,8 @@
 
 #include "drivers/dr16.h"
 #include "drivers/ref_system.h"
-// #include "drivers/serial_interface.h"
+#include "drivers/serial_interface.h"
 
-#include "subsystems/gimbal.h"
 #include "subsystems/gimbal.h"
 #include "subsystems/shooter.h"
 #include "subsystems/railChassis.h"

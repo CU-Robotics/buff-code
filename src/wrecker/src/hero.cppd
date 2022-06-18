@@ -9,7 +9,6 @@
 #include "drivers/serial_interface.h"
 
 #include "subsystems/gimbal.h"
-#include "subsystems/gimbal.h"
 #include "subsystems/shooter.h"
 #include "subsystems/swerveChassis.h"
 
