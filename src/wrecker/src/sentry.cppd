@@ -17,6 +17,7 @@
 // CAN
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t canRecieveMessages[3][11];
 CAN_message_t tempMessage;
 int CANTimer = 0;
@@ -61,15 +62,6 @@ void setup() {
   can1.setBaudRate(1000000);
   can2.setBaudRate(1000000);
 
-  // Driver setup
-  refSys.init(&robot_state.refSystem);
-  reciever.init(&robot_state.driverInput);
-
-  // Subsystem setup
-  railChassis.setup(&robot_config.railChassis, &robot_state);
-  gimbal.setup(&robot_config.gimbal, &robot_state);
-  shooter.setup(&robot_config.shooter17, &robot_state);
-
   // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
   // serialDumpTmr.begin(dump, dumpRate);
 
@@ -96,6 +88,16 @@ void setup() {
 
   // CHASSIS
 
+
+
+  // Driver setup
+  refSys.init(&robot_state.refSystem);
+  reciever.init(&robot_state.driverInput);
+
+  // Subsystem setup
+  railChassis.setup(&robot_config.railChassis, &robot_state);
+  gimbal.setup(&robot_config.gimbal, &robot_state);
+  shooter.setup(&robot_config.shooter17, &robot_state);
 }
 
 
@@ -116,10 +118,13 @@ void loop() {
   reciever.update();
 
   // Update subystems
-  railChassis.update(deltaT);
-  // gimbal.update(deltaT);
+  //railChassis.update(deltaT);
+  gimbal.update(deltaT);
   // shooter.update(deltaT);
 
+  Serial.println();
+
+  // Send CAN every 5000 microseconds
   CANTimer += deltaT;
   if (CANTimer >= 5000) {
     sendC6x0();
@@ -128,7 +133,7 @@ void loop() {
   }
 
 
-  // Delta-time calculator: keep this at the bottom
+  // Loop manager: keep this at the bottom. DO NOT MODIFY.
   deltaT = micros() - lastTime;
 
   while (deltaT < 1000) // 1 ms

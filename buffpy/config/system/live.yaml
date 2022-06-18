@@ -1,6 +1,5 @@
 DEBUG: False
   
-
 TOPICS:
   IMAGE: 'image_raw'
   GIMBAL_STATE: 'gimbal_state'

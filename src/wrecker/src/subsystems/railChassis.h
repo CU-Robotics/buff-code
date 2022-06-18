@@ -19,7 +19,20 @@ class RailChassis {
     c620CAN leftDriveMotor;
     c620CAN rightDriveMotor;
 
-    void drive(float speed);
+    bool calibrated = false;
+
+    float pos = 0.0;
+    int currNode = 0;
+
+    float leftOffset = 0;
+    float leftRollover = 0;
+    float leftPrev = 0;
+    float rightRollover = 0;
+    float rightOffset = 0;
+    float rightPrev;
+
+    void selectNode();
+    float realizePosition(float leftRawPos, float rightRawPos);
 };
 
 #endif // RAIL_CHASSIS_H

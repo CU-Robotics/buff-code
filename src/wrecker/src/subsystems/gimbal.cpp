@@ -40,7 +40,7 @@ void Gimbal::update(float deltaTime) {
     oldTime = newTime;
   }
   float gyroSpeed = (this->imu.get_gyro_z() - this->state->gimbal.gyroDrift) * (180.0 / M_PI) * (deltaTime / 1000000.0); // There are 1000000 microseconds in a second.
-  this->state->gimbal.gyroAngle += gyroSpeed;
+  this->state->gimbal.gyroAngle += gyroSpeed * this->state->chassis.spin;
 
   // Yaw encoder
   float rawYawAngle = yawMotor.getAngle();
@@ -60,8 +60,14 @@ void Gimbal::update(float deltaTime) {
 
   // Calculate gimbal setpoints
   if (state->driverInput.mouseRight) {
-    aimYaw += state->gimbal.yaw_reference;
-    aimPitch += state->gimbal.pitch_reference;
+    if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
+      aimYaw = yawAngle;
+      aimPitch = pitchAngle;
+      aimYaw -= state->gimbal.yaw_reference;
+      aimPitch += state->gimbal.pitch_reference;
+      yaw_reference_prev = state->gimbal.yaw_reference;
+      pitch_reference_prev = state->gimbal.pitch_reference;
+    }
     mouseReleased = 1;
   }
   else if (mouseReleased){
@@ -110,6 +116,12 @@ void Gimbal::update(float deltaTime) {
   if (calibrated) {
     yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
     pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
+    // yawMotor.setPower(0.0);
+    // pitchMotor.setPower(0.0);
+
+    // Serial.print(yawMotor.getAngle());
+    // Serial.print(" - ");
+    // Serial.print(pitchMotor.getAngle());
   }
 }
 
