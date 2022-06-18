@@ -18,7 +18,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
 
   // Configure PIDs
   data->FR.steerVel.K[0] = 0.03;
-  data->FR.steerPos.K[0] = 1.2;
+  data->FR.steerPos.K[0] = 3.75;//1.2;
   data->FR.steerPos.K[2] = 0;
   data->FR.driveVel.K[0] = 0.0006;
 

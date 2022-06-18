@@ -157,8 +157,10 @@ void loop() {
 
   // Update subsystems
   swerveChassis.update(deltaT);
-  gimbal.update(deltaT);
-  shooter.update(deltaT);
+  // gimbal.update(deltaT);
+  // shooter.update(deltaT);
+
+  Serial.println(robot_state.refSystem.robot_id);
 
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;
