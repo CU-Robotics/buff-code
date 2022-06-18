@@ -105,7 +105,7 @@ def display_annotated(image, labels):
 		@RETURNS
 			None
 	"""
-	colors = [(255,0,0), (0,0,255), (0,255,0)]
+	colors = [(255,0,0), (0,0,255), (255,0,255), (0,255,0)]
 
 	for c,x,y,w,h in labels:
 		# Draw a rectangle on the image, green 2px thick
@@ -142,7 +142,7 @@ def write_sample(save_path, key, image, label):
 			f.write('')
 		else:
 			for c, x, y, w, h in label:
-				f.write(f'{c} {x/image.shape[1]} {y/image.shape[0]} {w/image.shape[1]} {h/image.shape[0]}\n')
+				f.write(f'{c} {x} {y} {w} {h}\n')
 
 
 def save_txt_label_data(images, labels, gen_path):
@@ -150,15 +150,7 @@ def save_txt_label_data(images, labels, gen_path):
 	for i, (image,label) in enumerate(zip(images,labels)):
 
 		key = ''.join(random.choice(string.ascii_uppercase) for i in range(5))
-
-		if np.random.rand() > 0.95:
-			write_sample(os.path.join(gen_path, 'test'), key, image, label)
-
-		elif np.random.rand() > 0.8:
-			write_sample(os.path.join(gen_path, 'valid'), key, image, label)
-		
-		else:
-			write_sample(os.path.join(gen_path, 'train'), key, image, label)
+		write_sample(os.path.join(gen_path, 'train'), key, image, label)
 
 def clear_generated(gen_path):
 	if os.path.exists(gen_path):
