@@ -63,7 +63,7 @@ void Gimbal::update(float deltaTime) {
     if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
       aimYaw = yawAngle;
       aimPitch = pitchAngle;
-      aimYaw += state->gimbal.yaw_reference;
+      aimYaw -= state->gimbal.yaw_reference;
       aimPitch += state->gimbal.pitch_reference;
       yaw_reference_prev = state->gimbal.yaw_reference;
       pitch_reference_prev = state->gimbal.pitch_reference;
