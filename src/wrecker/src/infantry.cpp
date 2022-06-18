@@ -61,8 +61,8 @@ void setup() {
   can1.setBaudRate(1000000);
   can2.setBaudRate(1000000);
 
-  serialDumpTmr.priority(0); // Set interval timer to handle serial reads
-  serialDumpTmr.begin(dump, dumpRate);
+  // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
+  // serialDumpTmr.begin(dump, dumpRate);
 
 
   // Configure subsystems
@@ -149,16 +149,16 @@ void loop() {
   
   refSys.read_serial(); 
 
-  if (Serial.available() > 0)
-    serial_event(&robot_config, &robot_state);
+  // if (Serial.available() > 0)
+  //   serial_event(&robot_config, &robot_state);
 
   // Update devices
   reciever.update();
 
   // Update subsystems
-  //swerveChassis.update(deltaT);
+  swerveChassis.update(deltaT);
   gimbal.update(deltaT);
-  //shooter.update(deltaT);
+  shooter.update(deltaT);
 
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;
