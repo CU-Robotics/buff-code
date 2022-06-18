@@ -224,10 +224,10 @@ class DepthAI_Device:
 
 			controlQueue = device.getInputQueue('control')
 			ctrl = dai.CameraControl()
-			ctrl.setContrast(5)
-			# ctrl.setBrightness(0)
-			# ctrl.setSaturation(0)
-			# #ctrl.setManualExposure(3000, 1600)
+			ctrl.setContrast(10)
+			ctrl.setBrightness(-10)
+			ctrl.setSaturation(10)
+			# ctrl.setManualExposure(3000, 1600)
 			ctrl.setAutoWhiteBalanceMode(dai.RawCameraControl.AutoWhiteBalanceMode.OFF)
 			ctrl.setAutoFocusMode(dai.RawCameraControl.AutoFocusMode.CONTINUOUS_VIDEO)
 			controlQueue.send(ctrl)
@@ -244,7 +244,11 @@ class DepthAI_Device:
 				frame = in_nn_input.getCvFrame()
 
 				# get the "output" layer
-				output = np.array(in_nn.getLayerFp16("output"))
+				try:
+					output = np.array(in_nn.getLayerFp16("output"))
+				except:
+					rospy.loginfo("getLayerFp16")
+					continue
 
 				# reshape to proper format
 				cols = output.shape[0]//6300
