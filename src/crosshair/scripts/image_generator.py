@@ -35,7 +35,7 @@ def load_backgrounds(data_path):
 	images = []
 	for file in glob.glob(os.path.join(data_path, 'background', '*')):
 		image = cv2.imread(file)
-		images.append(stretch_or_cut(image, 320, 320))
+		images.append(stretch_or_cut(image, 416, 416))
 
 	return images
 
@@ -77,12 +77,13 @@ def pad_mask(mask, h, w, x, y):
 
 def generate_images(image, label, backgrounds):
 
-	n_samples = 1
+	# print(label)
+	n_samples = 2
 	augmented_images = []
 	augmented_labels = []
 
 	low = np.array([0,120,0])
-	high = np.array([100,255,100])
+	high = np.array([140,255,140])
 
 	if len(label) == 0:
 		x = round(image.shape[1] / 2)
@@ -90,16 +91,26 @@ def generate_images(image, label, backgrounds):
 		w = image.shape[1]
 		h = image.shape[0]
 		c = -1
-		cropped = crop_image(image, x, y, w, h)
+		cropped = image.copy()
 
 	else:
-		[[x, y, w, h, c]] = label
-		cropped = image.copy()
+		[[c, x, y, w, h]] = label
+		cropped = crop_image(image.copy(), x, y, w, h)
 
 
 	mask = cv2.bitwise_not(cv2.inRange(cropped, low, high))
+	# print(f'cropped: {cropped.shape}')
+	# print(f'mask: {mask.shape}')
 
 	rgb_mask = cv2.bitwise_and(cropped.copy(), cropped.copy(), mask=mask)
+
+	
+	if c == 0:
+		c = 0
+	elif c == 1:
+		c = 2
+	elif c == 2:
+		c = 1
 
 	for i in range(n_samples):
 		for l in range(n_samples):
@@ -110,9 +121,11 @@ def generate_images(image, label, backgrounds):
 			mask_h, mask_w, mask_c = rgb_mask.shape
 
 			mask = cv2.resize(mask, (mask_w, mask_h))
+			# print(f'resize: {mask.shape}')
 
 			background = backgrounds[int(background_idx[l])]
 			back_h, back_w, back_c = background.shape
+			# print(f'background: {background.shape}')
 
 			augmented_images.append(background)
 			augmented_labels.append([[]])
@@ -128,37 +141,44 @@ def generate_images(image, label, backgrounds):
 				
 				background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
 				augmented_image = cv2.add(background_mask, padded_mask)
-
-				
-
-				if not c == -1:
-					label = [[c, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]]
-				
-					bv.display_annotated(augmented_image, label)
-
+				# print(f'augmented: {augmented_image.shape}')
+				if c == -1:
 					augmented_images.append(augmented_image)
-					augmented_labels.append(label)
+					augmented_labels.append([[]])
+					continue
 
-					zero_mask = mask_background(background, mask, x, y)
-					inv_zero_mask = cv2.bitwise_not(zero_mask)
+				label = [[int(c), (x + (mask_w/2)) / augmented_image.shape[1], (y + (mask_h/2)) / augmented_image.shape[0], mask_w / augmented_image.shape[1], mask_h / augmented_image.shape[0]]]
+				# print(label)
+				# bv.display_annotated(augmented_image, label)
 
-					padded_mask = pad_image(cv2.cvtColor(rgb_mask, cv2.COLOR_RGB2BGR), back_h, back_w, x, y)
+				augmented_images.append(augmented_image)
+				augmented_labels.append(label)
+
+				zero_mask = mask_background(background, mask, x, y)
+				inv_zero_mask = cv2.bitwise_not(zero_mask)
+
+				padded_mask = pad_image(cv2.cvtColor(rgb_mask, cv2.COLOR_RGB2BGR), back_h, back_w, x, y)
+				
+				background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
+				augmented_image = cv2.add(background_mask, padded_mask)
+
+				if c == 0:
+					label = [[1, (x + (mask_w/2)) / augmented_image.shape[1], (y + (mask_h/2)) / augmented_image.shape[0], mask_w / augmented_image.shape[1], mask_h / augmented_image.shape[0]]]
 					
-					background_mask = cv2.bitwise_and(background, background, mask=inv_zero_mask)
-					augmented_image = cv2.add(background_mask, padded_mask)
-					label = [[not c, (x + (mask_w/2)), (y + (mask_h/2)), mask_w, mask_h]] # red is default
-
-					bv.display_annotated(augmented_image, label)
-					
-
-					augmented_images.append(augmented_image)
-					augmented_labels.append(label)
+				elif c == 1:
+					label = [[0, (x + (mask_w/2)) / augmented_image.shape[1], (y + (mask_h/2)) / augmented_image.shape[0], mask_w / augmented_image.shape[1], mask_h / augmented_image.shape[0]]]	
 
 				else:
-					augmented_images.append([[]])
-					augmented_labels.append(label)
+					label = [[2, (x + (mask_w/2)) / augmented_image.shape[1], (y + (mask_h/2)) / augmented_image.shape[0], mask_w / augmented_image.shape[1], mask_h / augmented_image.shape[0]]]	
 
-	return None, None
+				# print(label)
+				# bv.display_annotated(augmented_image, label)
+				
+
+				augmented_images.append(augmented_image)
+				augmented_labels.append(label)
+
+	# return None, None
 
 	return augmented_images, augmented_labels
 
@@ -195,7 +215,7 @@ def main(data_dir):
 			label = bv.load_label(labelf)
 
 			images, labels = generate_images(image, label, backgrounds)
-			continue
+			# continue
 
 			if generated_samples == -1:
 				print(f'Data samples: {len(label_files)}')

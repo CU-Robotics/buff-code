@@ -23,9 +23,12 @@ struct S_SwerveModule {
 
 struct S_Chassis {
   float rpm = 0.0f;
+  float spin = 0.0f;
   float alpha = 0.0f; // angular acceleration
   float heading = 0.0f; // naming needs to be more consistent (greek letters, descriptive or units)
   float a[2] = {0.0f, 0.0f};
+
+  bool beyblade = false;
 
   float maxRpm;
   float rampRate;
@@ -39,6 +42,10 @@ struct S_Chassis {
   S_PID driveVel;
 };
 
+struct S_RailChassis {
+  S_PID drivePos;
+  S_PID driveVel;
+};
 
 struct S_Gimbal {
   float yaw = 0.0f;
@@ -168,6 +175,7 @@ struct S_RefSystem {
 struct S_Robot {
   S_Gimbal gimbal;
   S_Chassis chassis;
+  S_RailChassis railChassis;
   S_Shooter shooter17;
   S_Shooter shooter42;
 

@@ -17,6 +17,7 @@
 // CAN
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t canRecieveMessages[3][11];
 CAN_message_t tempMessage;
 int CANTimer = 0;
@@ -24,7 +25,7 @@ int CANTimer = 0;
 // Loop timing
 unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
-unsigned long dumpRate = 1000000; // 1 sec
+unsigned long dumpRate = 2000000; // 2 sec
 IntervalTimer serialDumpTmr;
 
 // State
@@ -40,10 +41,9 @@ Gimbal gimbal;
 Shooter shooter;
 SwerveChassis swerveChassis;
 
-
-// void dump(){
-//   dump_Robot(&robot_config, &robot_state);
-// }
+void dump(){
+  dump_Robot(&robot_config, &robot_state);
+}
 
 // Runs once
 void setup() {
@@ -61,15 +61,6 @@ void setup() {
   can1.setBaudRate(1000000);
   can2.setBaudRate(1000000);
 
-  // Driver setup
-  refSys.init(&robot_state.refSystem);
-  reciever.init(&robot_state.driverInput);
-
-  // Subsystem setup
-  gimbal.setup(&robot_config.gimbal, &robot_state);
-  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
-  shooter.setup(&robot_config.shooter17, &robot_state);
-
   // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
   // serialDumpTmr.begin(dump, dumpRate);
 
@@ -77,7 +68,7 @@ void setup() {
   // Configure subsystems
 
   // GIMBAL
-  robot_config.gimbal.yawPos.K[0] = 2.3;
+  robot_config.gimbal.yawPos.K[0] = 2.0;
   robot_config.gimbal.yawPos.K[2] = 0.01;
 
   robot_config.gimbal.yawVel.Ymin = -150.0;
@@ -135,6 +126,16 @@ void setup() {
   int br_alignment[9] = {38, 77, 119, 157, 199, 240, 280, 321, 360};
   for (int i = 0; i < 9; i++)
     robot_config.swerveChassis.RR.alignment[i] = br_alignment[i];
+
+
+  // Driver setup
+  refSys.init(&robot_state.refSystem);
+  reciever.init(&robot_state.driverInput);
+
+  // Subsystem setup
+  gimbal.setup(&robot_config.gimbal, &robot_state);
+  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  shooter.setup(&robot_config.shooter17, &robot_state);
 }
 
 
@@ -159,6 +160,7 @@ void loop() {
   gimbal.update(deltaT);
   shooter.update(deltaT);
 
+  // Send CAN every 5000 microseconds
   CANTimer += deltaT;
   if (CANTimer >= 5000) {
     sendC6x0();
@@ -167,7 +169,7 @@ void loop() {
   }
 
 
-  // Delta-time calculator: keep this at the bottom
+  // Loop manager: keep this at the bottom. DO NOT MODIFY.
   deltaT = micros() - lastTime;
 
   while (deltaT < 1000) // 1 ms
