@@ -93,16 +93,16 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   // Ref limiting
   switch (state->refSystem.robot_level) {
     case 1:
-      state->chassis.maxRpm = 4200;
+      state->chassis.maxRpm = 3800;
       break;
     case 2:
-      state->chassis.maxRpm = 5600;
+      state->chassis.maxRpm = 5000;
       break;
     case 3:
-      state->chassis.maxRpm = 7000;
+      state->chassis.maxRpm = 6500;
       break;
     default:
-      state->chassis.maxRpm = 7000;
+      state->chassis.maxRpm = 6500;
       break;
   }
 

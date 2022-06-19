@@ -34,8 +34,8 @@ void Shooter::update(unsigned long deltaTime) {
             shooterOn = state->refSystem.gimbal_on;
         }
         if (shooterOn && shooterClear) {
-            this->topFlywheel.setPower(0.5);
-            this->bottomFlywheel.setPower(0.5);
+            this->topFlywheel.setPower(0.7);
+            this->bottomFlywheel.setPower(0.7);
         } else if (!shooterClear) {
             shooterTimer += deltaTime;
         } else {
