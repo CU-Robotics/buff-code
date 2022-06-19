@@ -32,6 +32,7 @@ class SwerveModule {
     float steerRollover = 0;
     float prevRawSteerAngle = 0;
     float prevSteerAngle = 0;
+    int prevInversion = 1;
 
     float rampedSpeed = 0.0;
 

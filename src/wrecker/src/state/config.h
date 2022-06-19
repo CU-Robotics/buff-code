@@ -41,7 +41,7 @@ struct C_SwerveModule {
   C_PID steerPos;
   C_PID driveVel;
 
-  float rampLimit = 0.001;
+  float rampLimit = 0.5; // How many seconds it takes to get from 0 to max rpm
 };
 
 struct C_SwerveChassis {

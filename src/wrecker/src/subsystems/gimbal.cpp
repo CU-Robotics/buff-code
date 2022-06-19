@@ -31,6 +31,7 @@ void Gimbal::update(float deltaTime) {
     calibrated = true;
     imu.update_MPU6050();
     this->state->gimbal.gyroDrift = this->imu.get_gyro_z();
+    aimYaw = 0;
   }
 
   // Gyro management
@@ -90,6 +91,14 @@ void Gimbal::update(float deltaTime) {
     aimPitch = config->pitchMin;
   else if (aimPitch > config->pitchMax)
     aimPitch = config->pitchMax;
+
+  // Death reset
+  if (state->driverInput.v && !deathResetFlag) {
+    config->yawOffset += 180;
+    deathResetFlag = true;
+  } else if (!state->driverInput.v) {
+    deathResetFlag = false;
+  }
 
 
   // Yaw PID

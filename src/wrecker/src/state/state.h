@@ -170,6 +170,10 @@ struct S_RefSystem {
 
     int rem_17_proj = -1;
     int rem_42_proj = -1;
+
+    int chassis_on = -1;
+    int gimbal_on = -1;
+    int shooter_on = -1;
 };
 
 struct S_Robot {
@@ -183,6 +187,7 @@ struct S_Robot {
   DriverInput driverInput;
 
   int mode;
+  int robot; // 1 = hero, 3 = infantry, 7 = sentry
 };
 
 #endif // STATE_H

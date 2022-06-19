@@ -27,14 +27,24 @@ void Shooter::update(unsigned long deltaTime) {
 
     if (calibrated) {
         // Spin flywheels
-        this->topFlywheel.setPower(0.5);
-        this->bottomFlywheel.setPower(0.5);
-
-        /// Death reset
-        if (state->driverInput.v) {
-            this->bottomFlywheel.init(29);
-            this->topFlywheel.init(28);
+        int shooterOn = 0;
+        if (state->robot == 3 || state->robot == 7) {
+            shooterOn = state->refSystem.shooter_on;
+        } else if (state->robot == 1) {
+            shooterOn = state->refSystem.gimbal_on;
         }
+        if (shooterOn && shooterClear) {
+            this->topFlywheel.setPower(0.6);
+            this->bottomFlywheel.setPower(0.6);
+        } else if (!shooterClear) {
+            shooterTimer += deltaTime;
+        } else {
+            shooterTimer = 0;
+            shooterClear = false;
+        }
+
+        if (shooterTimer > 1000000) // 1 sec
+            shooterClear = true;
 
         // Mode switching
         if (state->driverInput.q) {
