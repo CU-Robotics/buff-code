@@ -18,8 +18,8 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
 
   // Configure PIDs
   data->FR.steerVel.K[0] = 0.03;
-  data->FR.steerPos.K[0] = 3.75;//1.2;
-  data->FR.steerPos.K[2] = 0.5;
+  data->FR.steerPos.K[0] = 3.75;
+  data->FR.steerPos.K[2] = 1.0;
   data->FR.driveVel.K[0] = 0.0006;
   data->FR.driveVel.K[2] = 0;
 
@@ -98,7 +98,18 @@ void SwerveChassis::update(unsigned long deltaTime) {
   } else if (s != 0 && y != 0) {
     this->state->chassis.spin = 1.0;
   } else {
-    this->state->chassis.spin = 1.725;
+    switch(this->state->refSystem.robot_level) {
+      case 1:
+        break;
+      case 2:
+        break;
+      case 3:
+        this->state->chassis.spin = 1.725;
+        break;
+      default:
+        this->state->chassis.spin = 1.725;
+        break;
+    }
   }
 }
 
