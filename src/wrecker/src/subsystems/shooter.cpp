@@ -78,6 +78,6 @@ void Shooter::update(unsigned long deltaTime) {
         // Feed PID
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
         this->feedMotor.setPower(state->shooter17.feedPID.Y);
-        Serial.println(state->shooter17.feedPID.Y);
+        // Serial.println(state->shooter17.feedPID.Y);
     }
 }

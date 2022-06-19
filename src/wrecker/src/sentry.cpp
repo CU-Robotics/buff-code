@@ -26,6 +26,7 @@ unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
 unsigned long dumpRate = 1000000; // 1 sec
 IntervalTimer serialDumpTmr;
+bool dumpInit = false;
 
 // State
 S_Robot robot_state;
@@ -36,20 +37,21 @@ dr16 reciever;
 Ref_System refSys;
 
 // Subsystems
-RailChassis railChassis;
 Gimbal gimbal;
 Shooter shooter;
+RailChassis railChassis;
 
 
-// void dump(){
-//   dump_Robot(&robot_config, &robot_state);
-// }
+void dump(){
+  dump_Robot(&robot_config, &robot_state);
+}
 
 // Runs once
 void setup() {
   Serial.begin(1000000);
   delay(1000);
-  Serial.println("-- SENTRY ROBOT START --");
+  if (Serial)
+    Serial.println("-- SENTRY ROBOT START --");
 
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
@@ -60,9 +62,6 @@ void setup() {
 
   can1.setBaudRate(1000000);
   can2.setBaudRate(1000000);
-
-  // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
-  // serialDumpTmr.begin(dump, dumpRate);
 
   // Configure State
   robot_state.robot = 7;
@@ -89,8 +88,6 @@ void setup() {
 
   // CHASSIS
 
-
-
   // Driver setup
   refSys.init(&robot_state.refSystem);
   reciever.init(&robot_state.driverInput);
@@ -112,18 +109,27 @@ void loop() {
   
   refSys.read_serial(); 
 
-  // if (Serial.available() > 0)
-  //   serial_event(&robot_config, &robot_state);
+  if (Serial){
+    // if (!dumpInit){
+    //   serialDumpTmr.priority(0); // Set interval timer to handle serial reads
+    //   serialDumpTmr.begin(dump, dumpRate);
+    //   dumpInit = true;
+    // }
 
+    if (Serial.available() > 0)
+      serial_event(&robot_config, &robot_state);
+  }
+  else{
+    Serial.begin(1000000);
+  }
   // Update devices
-  reciever.update();
+  // reciever.update();
 
   // Update subystems
   //railChassis.update(deltaT);
-  gimbal.update(deltaT);
+  // gimbal.update(deltaT);
   // shooter.update(deltaT);
 
-  Serial.println();
 
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;
