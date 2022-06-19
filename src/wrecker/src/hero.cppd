@@ -64,6 +64,8 @@ void setup() {
   // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
   // serialDumpTmr.begin(dump, dumpRate);
 
+  // Configure State
+  robot_state.robot = 1;
 
   // Configure subsystems
 

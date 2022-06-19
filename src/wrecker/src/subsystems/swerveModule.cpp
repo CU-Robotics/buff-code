@@ -65,20 +65,46 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
       inputAngle += 360;
   }
 
+  if (abs(speed) > 0) {
+    this->prevInversion = inversion;
+  } else {
+    inversion = this->prevInversion;
+  }
+
+  speed = speed * inversion;
+
   // Speed ramping
   if (rampedSpeed < speed) {
-    rampedSpeed += this->config->rampLimit * (deltaTime / 1000.0);
+    rampedSpeed += (deltaTime / 1000000.0) / this->config->rampLimit;
     if (rampedSpeed > speed) {
       rampedSpeed = speed;
     }
   } else if (rampedSpeed > speed) {
-    rampedSpeed -= this->config->rampLimit * (deltaTime / 1000.0);
+    rampedSpeed -=  (deltaTime / 1000000.0) / this->config->rampLimit;
     if (rampedSpeed < speed) {
       rampedSpeed = speed;
     }
   }
 
-  rampedSpeed = speed;
+  Serial.println(rampedSpeed);
+
+  //rampedSpeed = speed;
+
+  // Ref limiting
+  switch (state->refSystem.robot_level) {
+    case 1:
+      state->chassis.maxRpm = 4200;
+      break;
+    case 2:
+      state->chassis.maxRpm = 5600;
+      break;
+    case 3:
+      state->chassis.maxRpm = 7000;
+      break;
+    default:
+      state->chassis.maxRpm = 7000;
+      break;
+  }
 
   // Steer Velocity PID
   config->steerPos.continuous = true;
@@ -95,7 +121,7 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  moduleState->driveVel.R = rampedSpeed * inversion * 6000; // 8000 is the maximum RPM of the motor pre-gearbox
+  moduleState->driveVel.R = rampedSpeed * state->chassis.maxRpm;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
 

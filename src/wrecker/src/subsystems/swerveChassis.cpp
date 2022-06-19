@@ -19,23 +19,27 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
   // Configure PIDs
   data->FR.steerVel.K[0] = 0.03;
   data->FR.steerPos.K[0] = 3.75;//1.2;
-  data->FR.steerPos.K[2] = 0;
+  data->FR.steerPos.K[2] = 0.5;
   data->FR.driveVel.K[0] = 0.0006;
+  data->FR.driveVel.K[2] = 0;
 
   data->FL.steerVel.K[0] = data->FR.steerVel.K[0];
   data->FL.steerPos.K[0] = data->FR.steerPos.K[0];
   data->FL.steerPos.K[2] = data->FR.steerPos.K[2];
   data->FL.driveVel.K[0] = data->FR.driveVel.K[0];
+  data->FL.driveVel.K[2] = data->FR.driveVel.K[2];
 
   data->RL.steerVel.K[0] = data->FR.steerVel.K[0];
   data->RL.steerPos.K[0] = data->FR.steerPos.K[0];
   data->RL.steerPos.K[2] = data->FR.steerPos.K[2];
   data->RL.driveVel.K[0] = data->FR.driveVel.K[0];
+  data->RL.driveVel.K[2] = data->FR.driveVel.K[2];
 
   data->RR.steerVel.K[0] = data->FR.steerVel.K[0];
   data->RR.steerPos.K[0] = data->FR.steerPos.K[0];
   data->RR.steerPos.K[2] = data->FR.steerPos.K[2];
   data->RR.driveVel.K[0] = data->FR.driveVel.K[0];
+  data->RR.driveVel.K[2] = data->FR.driveVel.K[2];
 
 
   // Init modules
@@ -58,6 +62,13 @@ void SwerveChassis::update(unsigned long deltaTime) {
   int x = state->driverInput.d - state->driverInput.a;
   int y = state->driverInput.s - state->driverInput.w;
   int s = state->driverInput.z - state->driverInput.x;
+
+  // Serial.print(x);
+  // Serial.print(" - ");
+  // Serial.print(y);
+  // Serial.print(" - ");
+  // Serial.print(s);
+  // Serial.println();
 
   if (this->state->driverInput.shift && !shiftPressed) {
     if (this->state->chassis.beyblade) {

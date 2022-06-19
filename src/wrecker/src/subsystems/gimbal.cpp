@@ -91,6 +91,14 @@ void Gimbal::update(float deltaTime) {
   else if (aimPitch > config->pitchMax)
     aimPitch = config->pitchMax;
 
+  // Death reset
+  if (state->driverInput.v && !deathResetFlag) {
+    aimYaw += 180;
+    deathResetFlag = true;
+  } else if (!state->driverInput.v) {
+    deathResetFlag = false;
+  }
+
 
   // Yaw PID
   state->gimbal.yawPos.R = aimYaw;

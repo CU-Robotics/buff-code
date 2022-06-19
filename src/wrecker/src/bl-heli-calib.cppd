@@ -73,13 +73,17 @@ void loop() {
       break;
     case 3:
       Serial.println("Calibration complete");
+      break;
     case 4:
       Serial.println("You've gone too far");
+      break;
     case 5:
       Serial.println("Turn back now");
+      break;
     default:
       Serial.println("I'm in your walls");
-  }
+      break;
+  } 
 
 
   // Loop manager: keep this at the bottom. DO NOT MODIFY.
