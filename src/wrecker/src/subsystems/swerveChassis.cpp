@@ -18,26 +18,35 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
 
   // Configure PIDs
   data->FR.steerVel.K[0] = 0.03;
-  data->FR.steerPos.K[0] = 3.75;
-  data->FR.steerPos.K[2] = 1.0;
+  data->FR.steerPos.K[0] = 2.8;
+  data->FR.steerPos.K[2] = 15.0;
+  data->FR.steerPos.Ymax = 4000;
+  data->FR.steerPos.Ymin = -4000;
   data->FR.driveVel.K[0] = 0.0006;
   data->FR.driveVel.K[2] = 0;
+
 
   data->FL.steerVel.K[0] = data->FR.steerVel.K[0];
   data->FL.steerPos.K[0] = data->FR.steerPos.K[0];
   data->FL.steerPos.K[2] = data->FR.steerPos.K[2];
+  data->FL.steerPos.Ymax = data->FR.steerPos.Ymax;
+  data->FL.steerPos.Ymin = data->FR.steerPos.Ymin;
   data->FL.driveVel.K[0] = data->FR.driveVel.K[0];
   data->FL.driveVel.K[2] = data->FR.driveVel.K[2];
 
   data->RL.steerVel.K[0] = data->FR.steerVel.K[0];
   data->RL.steerPos.K[0] = data->FR.steerPos.K[0];
   data->RL.steerPos.K[2] = data->FR.steerPos.K[2];
+  data->RL.steerPos.Ymax = data->FR.steerPos.Ymax;
+  data->RL.steerPos.Ymin = data->FR.steerPos.Ymin;
   data->RL.driveVel.K[0] = data->FR.driveVel.K[0];
   data->RL.driveVel.K[2] = data->FR.driveVel.K[2];
 
   data->RR.steerVel.K[0] = data->FR.steerVel.K[0];
   data->RR.steerPos.K[0] = data->FR.steerPos.K[0];
   data->RR.steerPos.K[2] = data->FR.steerPos.K[2];
+  data->RR.steerPos.Ymax = data->FR.steerPos.Ymax;
+  data->RR.steerPos.Ymin = data->FR.steerPos.Ymin;
   data->RR.driveVel.K[0] = data->FR.driveVel.K[0];
   data->RR.driveVel.K[2] = data->FR.driveVel.K[2];
 

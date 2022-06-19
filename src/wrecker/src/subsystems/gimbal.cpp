@@ -93,7 +93,7 @@ void Gimbal::update(float deltaTime) {
 
   // Death reset
   if (state->driverInput.v && !deathResetFlag) {
-    aimYaw += 180;
+    config->yawOffset += 180;
     deathResetFlag = true;
   } else if (!state->driverInput.v) {
     deathResetFlag = false;
