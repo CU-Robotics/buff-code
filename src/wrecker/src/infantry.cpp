@@ -9,7 +9,6 @@
 #include "drivers/serial_interface.h"
 
 #include "subsystems/gimbal.h"
-#include "subsystems/gimbal.h"
 #include "subsystems/shooter.h"
 #include "subsystems/swerveChassis.h"
 
@@ -64,6 +63,8 @@ void setup() {
   // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
   // serialDumpTmr.begin(dump, dumpRate);
 
+  // Configure State
+  robot_state.robot = 3;
 
   // Configure subsystems
 

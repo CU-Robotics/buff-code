@@ -22,6 +22,9 @@ class Shooter {
 
     float calibrated = false;
 
+    int shooterTimer = 0;
+    bool shooterClear = false;
+
     void fire(float speed);
 };
 
