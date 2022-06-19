@@ -467,11 +467,15 @@ bool Ref_System::read_serial(){
 				state->robot_power_lim = temp_stat;
 
 				/////////////////////////////////////////////////////////////////////////////
-		  
+
+				while(Serial2.readBytes(&temp, 1) != 1){}
+				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
+				state->chassis_on = (temp_stat >> 0) & 1;
+		  		state->gimbal_on = (temp_stat >> 1) & 1;
+				state->shooter_on = (temp_stat >> 2) & 1;
 			}
 
 			else if (cmd_id == 0x204){
-				Serial.println("health hit");
 				Serial2.readBytes(&temp, 1);
 				state->robot_health = temp;
 			}
