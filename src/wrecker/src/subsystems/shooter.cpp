@@ -43,8 +43,8 @@ void Shooter::update(unsigned long deltaTime) {
     if (calibrated) {
         if (shooterOn && shooterClear) {
             if (armed) {
-                this->topFlywheel.setPower(0.6);
-                this->bottomFlywheel.setPower(0.6);
+                this->topFlywheel.setPower(0.8);
+                this->bottomFlywheel.setPower(0.8);
             }
         } else if (!shooterClear) {
             shooterTimer += deltaTime;
