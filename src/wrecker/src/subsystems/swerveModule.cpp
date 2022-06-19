@@ -96,13 +96,13 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
       state->chassis.maxRpm = 3200;
       break;
     case 2:
-      state->chassis.maxRpm = 4500;
+      state->chassis.maxRpm = 4000;
       break;
     case 3:
-      state->chassis.maxRpm = 6000;
+      state->chassis.maxRpm = 5000;
       break;
     default:
-      state->chassis.maxRpm = 6000;
+      state->chassis.maxRpm = 3200;
       break;
   }
 

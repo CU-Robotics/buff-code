@@ -15,8 +15,6 @@ void Shooter::setup(C_Shooter17 *config, S_Robot *state) {
     this->state = state;
 
     this->feedMotor.init(1, 2);
-    this->bottomFlywheel.init(29);
-    this->topFlywheel.init(28);
 
     this->config->feedPID.K[0] = 0.0005;
 }
@@ -25,17 +23,29 @@ void Shooter::update(unsigned long deltaTime) {
     if (state->driverInput.b && !calibrated)
         calibrated = true;
 
+    // Spin flywheels
+    int shooterOn = 0;
+    if (state->robot == 3 || state->robot == 7) {
+        shooterOn = state->refSystem.shooter_on;
+    } else if (state->robot == 1) {
+        shooterOn = state->refSystem.gimbal_on;
+    }
+
+    if (shooterOn && !armed) {
+        Serial.println("Arming");
+        this->bottomFlywheel.init(29);
+        this->topFlywheel.init(28);
+        armed = true;
+    } else if (!shooterOn) {
+        armed = false;
+    }
+
     if (calibrated) {
-        // Spin flywheels
-        int shooterOn = 0;
-        if (state->robot == 3 || state->robot == 7) {
-            shooterOn = state->refSystem.shooter_on;
-        } else if (state->robot == 1) {
-            shooterOn = state->refSystem.gimbal_on;
-        }
         if (shooterOn && shooterClear) {
-            this->topFlywheel.setPower(0.6);
-            this->bottomFlywheel.setPower(0.6);
+            if (armed) {
+                this->topFlywheel.setPower(0.6);
+                this->bottomFlywheel.setPower(0.6);
+            }
         } else if (!shooterClear) {
             shooterTimer += deltaTime;
         } else {
@@ -43,7 +53,7 @@ void Shooter::update(unsigned long deltaTime) {
             shooterClear = false;
         }
 
-        if (shooterTimer > 1000000) // 1 sec
+        if (shooterTimer > 5000000) // 5 sec
             shooterClear = true;
 
         // Mode switching

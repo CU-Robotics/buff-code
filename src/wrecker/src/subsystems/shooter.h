@@ -24,6 +24,7 @@ class Shooter {
 
     int shooterTimer = 0;
     bool shooterClear = false;
+    bool armed = false;
 
     void fire(float speed);
 };
