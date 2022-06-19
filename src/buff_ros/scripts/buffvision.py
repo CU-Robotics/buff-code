@@ -42,6 +42,27 @@ def buffshow(title, image, wait=0):
 	cv2.waitKey(wait)
 	cv2.destroyAllWindows()
 
+def xywh2xyxy(x, y, w, h):
+	h2 = h / 2
+	w2 = w / 2
+	x1 = (x - w2)
+	x2 = (x + w2)
+	y1 = (y - h2)
+	y2 = (y + h2)
+	return x1, y1, x2, y2
+
+def crop_image(image, x, y, w, h):
+	x1,y1,x2,y2 = xywh2xyxy(x, y, w, h)
+	x1 *= image.shape[1]
+	x2 *= image.shape[1]
+	y1 *= image.shape[0]
+	y2 *= image.shape[0]
+
+	# print(f'image shape {image.shape}')
+	# print(f'cropping {x1} {x2} {y1} {y2}')
+	# print(f'shape: {round(abs(x1 - x2))} {round(abs(y1 - y2))}')
+	return image[round(y1):round(y2), round(x1):round(x2)]
+
 def display_annotated_raw(data_point):
 	"""
 		Uses buffshow to display an image with its annotation

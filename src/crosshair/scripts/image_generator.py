@@ -11,16 +11,6 @@ import numpy as np
 import buffvision as bv
 
 
-def crop_image(image, x, y, w, h):
-	h2 = h / 2
-	w2 = w / 2
-	x1 = int((x - w2) * image.shape[1])
-	x2 = int((x + w2) * image.shape[1])
-	y1 = int((y - h2) * image.shape[0])
-	y2 = int((y + h2) * image.shape[0])
-
-	return image[y1:y2,x1:x2]
-
 def stretch_or_cut(image, h, w):
 	if image.shape[0] > h and image.shape[1] > w:
 		x = np.random.randint(0, image.shape[1] - h)
@@ -41,7 +31,7 @@ def load_backgrounds(data_path):
 
 def preprocess(image, x, y, w, h):
 
-	cropped = crop_image(image, x, y, w, h)
+	cropped = bv.crop_image(image, x, y, w, h)
 	filtered = cv2.GaussianBlur(cropped.copy(), [3,3], 0.8, 0)
 	# hsv_image = cv2.cvtColor(filtered, cv2.COLOR_BGR2HSV)
 
@@ -95,7 +85,7 @@ def generate_images(image, label, backgrounds):
 
 	else:
 		[[c, x, y, w, h]] = label
-		cropped = crop_image(image.copy(), x, y, w, h)
+		cropped = bv.crop_image(image.copy(), x, y, w, h)
 
 
 	mask = cv2.bitwise_not(cv2.inRange(cropped, low, high))
