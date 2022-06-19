@@ -31,6 +31,7 @@ void Gimbal::update(float deltaTime) {
     calibrated = true;
     imu.update_MPU6050();
     this->state->gimbal.gyroDrift = this->imu.get_gyro_z();
+    aimYaw = 0;
   }
 
   // Gyro management
