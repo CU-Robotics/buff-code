@@ -26,7 +26,6 @@ unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
 unsigned long dumpRate = 1000000; // 1 sec
 IntervalTimer serialDumpTmr;
-bool dumpInit = false;
 
 // State
 S_Robot robot_state;
@@ -43,7 +42,9 @@ RailChassis railChassis;
 
 
 void dump(){
-  dump_Robot(&robot_config, &robot_state);
+  if (Serial){
+    dump_Robot(&robot_config, &robot_state);
+  }
 }
 
 // Runs once
@@ -62,6 +63,9 @@ void setup() {
 
   can1.setBaudRate(1000000);
   can2.setBaudRate(1000000);
+
+  serialDumpTmr.priority(0); // Set interval timer to handle serial reads
+  serialDumpTmr.begin(dump, dumpRate);
 
   // Configure State
   robot_state.robot = 7;
@@ -110,23 +114,15 @@ void loop() {
   refSys.read_serial(); 
 
   if (Serial){
-    // if (!dumpInit){
-    //   serialDumpTmr.priority(0); // Set interval timer to handle serial reads
-    //   serialDumpTmr.begin(dump, dumpRate);
-    //   dumpInit = true;
-    // }
-
     if (Serial.available() > 0)
       serial_event(&robot_config, &robot_state);
   }
-  else{
-    Serial.begin(1000000);
-  }
+
   // Update devices
   // reciever.update();
 
   // Update subystems
-  //railChassis.update(deltaT);
+  // railChassis.update(deltaT);
   // gimbal.update(deltaT);
   // shooter.update(deltaT);
 
