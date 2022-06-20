@@ -1,2 +1,6 @@
 FROM:
+<<<<<<< HEAD
   'hero.yaml'
+=======
+  'infantry.yaml'
+>>>>>>> 4348e455ad02f2143b523a184a1d99fd40c624c0

@@ -217,6 +217,10 @@ class DepthAI_Device:
 
 		with dai.Device(self.pipeline, usb2Mode=True) as device:
 
+			if 1:
+				device.setLogLevel(dai.LogLevel.DEBUG)
+				device.setLogOutputLevel(dai.LogLevel.DEBUG)
+
 			q_nn_input = device.getOutputQueue(
 				name="nn_input", maxSize=4, blocking=False)
 			q_nn = device.getOutputQueue(
@@ -225,9 +229,8 @@ class DepthAI_Device:
 			controlQueue = device.getInputQueue('control')
 			ctrl = dai.CameraControl()
 			ctrl.setContrast(10)
-			ctrl.setBrightness(-10)
+			ctrl.setBrightness(-5)
 			ctrl.setSaturation(10)
-			# ctrl.setManualExposure(3000, 1600)
 			ctrl.setAutoWhiteBalanceMode(dai.RawCameraControl.AutoWhiteBalanceMode.OFF)
 			ctrl.setAutoFocusMode(dai.RawCameraControl.AutoFocusMode.CONTINUOUS_VIDEO)
 			controlQueue.send(ctrl)
@@ -247,7 +250,7 @@ class DepthAI_Device:
 				try:
 					output = np.array(in_nn.getLayerFp16("output"))
 				except:
-					rospy.loginfo("getLayerFp16")
+					rospy.loginfo("getLayerFp16 Error occured, retrying")
 					continue
 
 				# reshape to proper format
@@ -292,11 +295,17 @@ class DepthAI_Device:
 
 def main(name):
 	device = DepthAI_Device()
-	device.spin()
+	try:
+		device.spin()
+	except Exception as e:
+		rospy.logerr(e)
+		exit(1)
+
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
 		main(sys.argv[1])
+
 
 
 		

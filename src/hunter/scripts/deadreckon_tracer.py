@@ -45,7 +45,7 @@ class Dead_Reckon_Tracer:
 		rospy.init_node('tracker', anonymous=True)
 
 		self.r_threshold = rospy.get_param('/buffbot/TRACKER/MATCH_THRESHOLD')
-		self.d_offset = rospy.get_param('/buffbot/TRACKER/SHOOTER_DROP')
+		self.d_offset = rospy.get_param('/buffbot/TRACKER/SHOOTER_OFFSET')
 		self.t_offset = rospy.get_param('/buffbot/TRACKER/LEAD_TIME')
 		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
 		
@@ -149,12 +149,14 @@ class Dead_Reckon_Tracer:
 
 			if time.time() - self.t > 0.1:
 				self.trajectory = np.zeros((3,2), dtype=np.float64)
-				self.history[0] = [10, 10]
+				self.history[0] = [self.d_offset[0], self.d_offset[1]]
 
 			self.predict(time.time())
-			
-			phi_err = (self.pose[1] - self.d_offset) * self.FOV
-			psi_err = (self.pose[0] - self.d_offset) * self.FOV
+
+			rospy.loginfo(f'pose {self.pose[0]}')
+			rospy.loginfo(f'history {self.history}')
+			phi_err = (self.pose[1] - self.d_offset[1]) * self.FOV
+			psi_err = (self.pose[0] - self.d_offset[0]) * self.FOV
 
 			msg = String(f'GW {round(psi_err)}\nGH {round(phi_err)}\n') 
 			self.prediction_pub.publish(msg)
