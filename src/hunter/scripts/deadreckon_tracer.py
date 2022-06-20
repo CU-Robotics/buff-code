@@ -152,8 +152,7 @@ class Dead_Reckon_Tracer:
 				self.history[0] = [10, 10]
 
 			self.predict(time.time())
-			rospy.loginfo(self.trajectory)
-
+			
 			phi_err = (self.pose[1] - self.d_offset) * self.FOV
 			psi_err = (self.pose[0] - self.d_offset) * self.FOV
 

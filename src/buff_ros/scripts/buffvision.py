@@ -118,6 +118,27 @@ def load_data(path='../data'): # default path only works in jupyter notebook or 
 				
 	return data
 
+def get_annotated(image, labels):
+	"""
+		returns an image with its annotation using buffshow.
+		@PARAMS
+			data: a touple (image, bounds)
+		@RETURNS
+			None
+	"""
+	colors = [(255,0,0), (0,0,255), (255,0,255), (0,255,0)]
+
+	for c,x,y,w,h in labels:
+		# Draw a rectangle on the image, green 2px thick
+		[x, w] = np.array([x, w]) * image.shape[1]
+		[y, h] = np.array([y, h]) * image.shape[0]
+
+		image = cv2.rectangle(image, (int(x - (w/2)), int(y - (h/2))), (int(x + (w/2)), int(y + (h/2))), colors[int(c)], 2)
+		image = cv2.putText(image, f'{c}', (int(x - (w/2)), int(y - (h/2))-15), cv2.FONT_HERSHEY_SIMPLEX, 
+                   1, (255,255,255), 2, cv2.LINE_AA)
+
+	return image
+
 def display_annotated(image, labels):
 	"""
 		Displays an image with its annotation using buffshow.
@@ -159,7 +180,7 @@ def write_sample(save_path, key, image, label):
 	label_path = os.path.join(save_path, 'labels')
 	label_date_path = os.path.join(label_path, date_string + '.txt')
 	with open(label_date_path, 'w+') as f:
-		if len(label[0]) < 1:
+		if len(label) < 1:
 			f.write('')
 		else:
 			for c, x, y, w, h in label:
