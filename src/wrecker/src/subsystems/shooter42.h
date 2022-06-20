@@ -24,6 +24,10 @@ class Shooter42 {
     int pos;
     bool mouseUp;
 
+    int shooterTimer = 0;
+    bool shooterClear = false;
+    bool armed = false;
+
     void fire();
 };
 

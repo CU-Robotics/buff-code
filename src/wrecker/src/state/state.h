@@ -181,7 +181,7 @@ struct S_Robot {
   S_Chassis chassis;
   S_RailChassis railChassis;
   S_Shooter shooter17;
-  S_Shooter shooter42;
+  S_Shooter42 shooter42;
 
   S_RefSystem refSystem;
   DriverInput driverInput;
