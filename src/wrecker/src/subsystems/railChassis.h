@@ -31,6 +31,8 @@ class RailChassis {
     float rightOffset = 0;
     float rightPrev;
 
+    float rampedSpeed = 0.0;
+
     void selectNode();
     float realizePosition(float leftRawPos, float rightRawPos);
 };

@@ -33,7 +33,9 @@ void Shooter::update(unsigned long deltaTime) {
 
     if (shooterOn && !armed) {
         Serial.println("Arming");
-        this->bottomFlywheel.init(29);
+        if (state->robot != 1) {
+            this->bottomFlywheel.init(29);
+        }
         this->topFlywheel.init(28);
         armed = true;
     } else if (!shooterOn) {
@@ -44,7 +46,9 @@ void Shooter::update(unsigned long deltaTime) {
         if (shooterOn && shooterClear) {
             if (armed) {
                 this->topFlywheel.setPower(0.8);
-                this->bottomFlywheel.setPower(0.8);
+                if (state->robot != 1) {
+                    this->bottomFlywheel.setPower(0.8);
+                }
             }
         } else if (!shooterClear) {
             shooterTimer += deltaTime;
@@ -88,6 +92,5 @@ void Shooter::update(unsigned long deltaTime) {
         // Feed PID
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
         this->feedMotor.setPower(state->shooter17.feedPID.Y);
-        Serial.println(state->shooter17.feedPID.Y);
     }
 }

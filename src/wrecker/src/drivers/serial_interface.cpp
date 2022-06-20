@@ -369,7 +369,7 @@ void Shooter17_serial_event(C_Shooter17* config, S_Shooter* state){
   }
 }
 
-void Shooter42_serial_event(C_Shooter42* config, S_Shooter* state){
+void Shooter42_serial_event(C_Shooter42* config, S_Shooter42* state){
   int m;
   char cmd = Serial.read();
   switch (cmd)

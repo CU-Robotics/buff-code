@@ -14,7 +14,7 @@ void Shooter42::setup(C_Shooter42 *config, S_Robot *state) {
     this->config = config;
     this->state = state;
 
-    this->feedMotor.init(1, 2);
+    this->feedMotor.init(2, 2);
     this->bottomFlywheel.init(29);
     this->topFlywheel.init(28);
 
@@ -41,6 +41,7 @@ void Shooter42::update(unsigned long deltaTime) {
         armed = true;
     } else if (!shooterOn) {
         armed = false;
+        shooterTimer = 0;
     }
 
     if (calibrated) {
