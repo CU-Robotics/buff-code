@@ -24,7 +24,7 @@ int CANTimer = 0;
 // Loop timing
 unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
-unsigned long dumpRate = 1000000; // 1 sec
+unsigned long dumpRate = 2000000; // 2 sec
 IntervalTimer serialDumpTmr;
 
 // State

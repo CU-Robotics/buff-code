@@ -22,7 +22,7 @@ flywheel fw_1;
 flywheel fw_2;
 
 // Calibration staging
-int stage = 0;
+int stage = -1;
 bool stageButtonFlag = false;
 
 // Runs once
@@ -39,10 +39,6 @@ void setup() {
 
   // Reciever setup
   reciever.init(&robot_state.driverInput);
-
-  // Initialize flywheels
-  fw_1.init(28);
-  fw_2.init(29);
 }
 
 
@@ -62,14 +58,20 @@ void loop() {
 
   switch (stage) {
     case 0:
+      // Initialize flywheels
+      fw_1.init(28);
+      fw_2.init(29);
+      Serial.println("Stage 0");
       break;
     case 1:
       fw_1.setPower(1.0);
       fw_2.setPower(1.0);
+      Serial.println("Stage 1");
       break;
     case 2:
       fw_1.setPower(0.0);
       fw_2.setPower(0.0);
+      Serial.println("Stage 2");
       break;
     case 3:
       Serial.println("Calibration complete");
