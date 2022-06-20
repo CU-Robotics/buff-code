@@ -62,11 +62,24 @@ void RailChassis::update(unsigned long deltaTime) {
   state->railChassis.driveVel.R = state->railChassis.drivePos.Y;
   PID_Filter(&config->driveVel, &state->railChassis.driveVel, leftDriveMotor.getRpm(), deltaTime);
 
+  float speed = state->railChassis.driveVel.Y;
+  if (rampedSpeed < speed) {
+    rampedSpeed += (deltaTime / 1000000.0) / this->config->rampLimit;
+    if (rampedSpeed > speed) {
+      rampedSpeed = speed;
+    }
+  } else if (rampedSpeed > speed) {
+    rampedSpeed -=  (deltaTime / 1000000.0) / this->config->rampLimit;
+    if (rampedSpeed < speed) {
+      rampedSpeed = speed;
+    }
+  }
+
 
   // Set motor output
   if (calibrated) {
-    leftDriveMotor.setPower(state->railChassis.driveVel.Y);
-    rightDriveMotor.setPower(state->railChassis.driveVel.Y);
+    leftDriveMotor.setPower(rampedSpeed);
+    rightDriveMotor.setPower(rampedSpeed);
 
     // leftDriveMotor.setPower(0.0);
     // rightDriveMotor.setPower(0.0);

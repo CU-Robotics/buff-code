@@ -23,7 +23,7 @@ struct S_SwerveModule {
 
 struct S_Chassis {
   float rpm = 0.0f;
-  float spin = 0.0f;
+  float spin = 1.0f;
   float alpha = 0.0f; // angular acceleration
   float heading = 0.0f; // naming needs to be more consistent (greek letters, descriptive or units)
   float a[2] = {0.0f, 0.0f};
@@ -67,6 +67,14 @@ struct S_Shooter {
   int mode = 0;
 
   S_PID feedPID;
+};
+
+struct S_Shooter42 {
+  bool firing = false;
+  int mode = 0;
+
+  S_PID feedPIDPos;
+  S_PID feedPIDVel;
 };
 
 struct DriverInput {
