@@ -27,7 +27,7 @@ class SerialLayer():
 		self.writer_sub = rospy.Subscriber(topics['SERIAL_OUT'], 
 			String, self.writer_callback, queue_size=1)
 
-		rospy.init_node('echo-serial', anonymous=True)
+		rospy.init_node('echo_serial', anonymous=True)
 
 	def write_device(self, packet):
 		"""

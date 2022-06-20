@@ -104,7 +104,7 @@ def fit_crop(image, x, y, w, h, labels):
 
 def filter_data(image, orig_labels):
 
-	n_samples = 1
+	n_samples = 4
 	img_shape = [416, 416]
 
 	img_shape[0] = min(image.shape[0], img_shape[0])
@@ -117,12 +117,12 @@ def filter_data(image, orig_labels):
 		x = np.random.uniform(w / 2, 1 - (w / 2))
 		y = np.random.uniform(h / 2, 1 - (h / 2))
 
-		x, y, w, h = fit_crop(image, x, y, w, h, orig_labels)
+		# x, y, w, h = fit_crop(image, x, y, w, h, orig_labels)
 
 		if x < 0 or y < 0:
 			return None, None
 
-		labels = []
+		crop_labels = []
 		# print(f'X range {x - w2}, {x + w2}')
 		# print(f'Y range {y - h2}, {y + h2}')
 		# print(f'{w2} {h2}')
@@ -130,19 +130,30 @@ def filter_data(image, orig_labels):
 			if abs(xl - x) < w / 2:
 				if abs(yl - y) < h / 2:
 					#x1, y1, x2, y2 = bv.xywh2xyxy(xl,yl,wl,hl)
-					print([c, round((xl - x + (w / 2)) * image.shape[1]), round((yl - y + (h / 2)) * image.shape[0]), wl * image.shape[1], hl * image.shape[0]])
-					label = np.array([c, round((xl - x + (w / 2)) * image.shape[1]) / img_shape[1], round((yl - y + (h / 2)) * image.shape[0]) / img_shape[0], round(wl * image.shape[1]) / img_shape[1], round(hl * image.shape[0]) / img_shape[0]])
-					labels.append(label)
+					#print([c, round((xl - x + (w / 2)) * image.shape[1]), round((yl - y + (h / 2)) * image.shape[0]), wl * image.shape[1], hl * image.shape[0]])
+					label = np.array([c, 
+						round((xl - x + (w / 2)) * image.shape[1]) / img_shape[1], 
+						round((yl - y + (h / 2)) * image.shape[0]) / img_shape[0], 
+						round(wl * image.shape[1]) / img_shape[1], 
+						round(hl * image.shape[0]) / img_shape[0]])
+					crop_labels.append(label)
 
 		cropped = bv.crop_image(image.copy(), x, y, w, h)
-		print(cropped.shape)
-		print(img_shape)
-		bv.display_annotated(cropped, labels)
+		cv2.imshow('image', bv.get_annotated(cropped.copy(), crop_labels))
+		k = cv2.waitKey(0)
+		if k == 115:
+			print(f'Saving...')
+			print(len(crop_labels))
+			return cropped, crop_labels
+
+		print(f'Discarding...')
 
 	return None, None
 
 
 def main(data_dir):
+
+	cv2.namedWindow('image')
 
 	project_root = os.getenv('PROJECT_ROOT')
 	data_path = os.path.join(project_root, 'data', data_dir)
@@ -151,7 +162,7 @@ def main(data_dir):
 	train_path = os.path.join(gen_path, 'train')
 	valid_path = os.path.join(gen_path, 'valid')
 
-	bv.clear_generated(gen_path)
+	# bv.clear_generated(gen_path)
 	bv.make_generated(gen_path)
 
 	xml_filenames = glob.glob(os.path.join(data_path, 'image_annotation', '*.xml'))
@@ -167,10 +178,12 @@ def main(data_dir):
 		if os.path.exists(jpg_filename):
 			image = cv2.imread(jpg_filename)
 			labels = get_txt_from_xml(xml, image.shape)
-			images, labels = filter_data(image, labels)
-			continue
-			bv.save_txt_label_data(images, labels, gen_path)
-			sample_counter += 1
+			image, label = filter_data(image, labels)
+
+			if not image is None and not labels is None:
+				bv.save_txt_label_data([image], [label], gen_path)
+				sample_counter += 1
+
 		else:
 			print(f'No image file {jpg_filename}')
 
