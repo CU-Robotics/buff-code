@@ -27,17 +27,37 @@ void Shooter42::setup(C_Shooter42 *config, S_Robot *state) {
 void Shooter42::update(unsigned long deltaTime) {
     if (state->driverInput.b && !calibrated)
         calibrated = true;
+    // Spin flywheels
+    int shooterOn = 0;
+    if (state->robot == 3 || state->robot == 7) {
+        shooterOn = state->refSystem.shooter_on;
+    } else if (state->robot == 1) {
+        shooterOn = state->refSystem.gimbal_on;
+    }
+
+    if (shooterOn && !armed) {
+        Serial.println("Arming");
+        this->bottomFlywheel.init(29);
+        armed = true;
+    } else if (!shooterOn) {
+        armed = false;
+    }
 
     if (calibrated) {
-        // Spin flywheels
-        this->topFlywheel.setPower(0.5);
-        this->bottomFlywheel.setPower(0.5);
-
-        /// Death reset
-        if (state->driverInput.v) {
-            this->bottomFlywheel.init(29);
-            this->topFlywheel.init(28);
+        if (shooterOn && shooterClear) {
+            if (armed) {
+                this->topFlywheel.setPower(0.8);
+                this->bottomFlywheel.setPower(0.8);
+            }
+        } else if (!shooterClear) {
+            shooterTimer += deltaTime;
+        } else {
+            shooterTimer = 0;
+            shooterClear = false;
         }
+
+        if (shooterTimer > 5000000) // 5 sec
+            shooterClear = true;
 
         // Feeding
         if (state->driverInput.mouseLeft && mouseUp) {
@@ -52,13 +72,13 @@ void Shooter42::update(unsigned long deltaTime) {
             mouseUp = true;
 
         // Feed PID
-        // state->shooter42.feedPIDPos.R = pos;
-        // PID_Filter(&config->feedPIDPos, &state->shooter42.feedPIDPos, feedMotor.getAngle(), deltaTime);
-        // this->feedMotor.setPower(state->shooter17.feedPID.Y);
-        // Serial.println(state->shooter17.feedPID.Y);
+        state->shooter42.feedPIDPos.R = pos;
+        PID_Filter(&config->feedPIDPos, &state->shooter42.feedPIDPos, feedMotor.getAngle(), deltaTime);
+        this->feedMotor.setPower(state->shooter17.feedPID.Y);
+        Serial.println(state->shooter17.feedPID.Y);
 
-        // PID_Filter(&config->feedPIDVel, &state->shooter42.feedPIDVel, feedMotor.getRpm(), deltaTime);
-        // this->feedMotor.setPower(state->shooter17.feedPID.Y);
-        // Serial.println(state->shooter17.feedPID.Y);
+        PID_Filter(&config->feedPIDVel, &state->shooter42.feedPIDVel, feedMotor.getRpm(), deltaTime);
+        this->feedMotor.setPower(state->shooter17.feedPID.Y);
+        Serial.println(state->shooter17.feedPID.Y);
     }
 }

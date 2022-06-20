@@ -19,7 +19,6 @@ void flywheel::init(byte tempPinNum) {
     esc.attach(pinNum);
 
     esc.writeMicroseconds(1000);
-
 }
 
 void flywheel::setPower(float newPower) {

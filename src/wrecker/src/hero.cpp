@@ -24,7 +24,7 @@ int CANTimer = 0;
 // Loop timing
 unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
-unsigned long dumpRate = 1000000; // 1 sec
+unsigned long dumpRate = 2000000; // 2 sec
 IntervalTimer serialDumpTmr;
 
 // State
@@ -39,7 +39,6 @@ dr16 reciever;
 Gimbal gimbal;
 Shooter shooter;
 SwerveChassis swerveChassis;
-
 
 // void dump(){
 //   dump_Robot(&robot_config, &robot_state);
@@ -70,7 +69,7 @@ void setup() {
   // Configure subsystems
 
   // GIMBAL
-  robot_config.gimbal.yawPos.K[0] = 2.3;
+  robot_config.gimbal.yawPos.K[0] = 2.0;
   robot_config.gimbal.yawPos.K[2] = 0.01;
 
   robot_config.gimbal.yawVel.Ymin = -150.0;
@@ -95,7 +94,7 @@ void setup() {
   robot_config.swerveChassis.FR.steerEncoderID = 1 + 1;
   robot_config.swerveChassis.FR.driveMotorID = 5;
   robot_config.swerveChassis.FR.absolute_offset = 45;
-  int fr_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
+  int fr_alignment[9] = {27, 68, 106, 148, 186, 228, 268, 306, 346};
   for (int i = 0; i < 9; i++)
     robot_config.swerveChassis.FR.alignment[i] = fr_alignment[i];
 
@@ -105,7 +104,7 @@ void setup() {
   robot_config.swerveChassis.FL.steerEncoderID = 1 + 2;
   robot_config.swerveChassis.FL.driveMotorID = 6;
   robot_config.swerveChassis.FL.absolute_offset = -45;
-  int fl_alignment[9] = {2, 42, 85, 125, 166, 206, 246, 288, 327};
+  int fl_alignment[9] = {36, 75, 115, 155, 196, 235, 275, 315, 355};
   for (int i = 0; i < 9; i++)
     robot_config.swerveChassis.FL.alignment[i] = fl_alignment[i];
 
@@ -115,7 +114,7 @@ void setup() {
   robot_config.swerveChassis.RL.steerEncoderID = 1 + 3;
   robot_config.swerveChassis.RL.driveMotorID = 7;
   robot_config.swerveChassis.RL.absolute_offset = -135;
-  int bl_alignment[9] = {23, 63, 102, 142, 182, 222, 261, 301, 340};
+  int bl_alignment[9] = {30, 69, 108, 149, 186, 228, 266, 305, 344};
   for (int i = 0; i < 9; i++)
     robot_config.swerveChassis.RL.alignment[i] = bl_alignment[i];
 
@@ -125,7 +124,7 @@ void setup() {
   robot_config.swerveChassis.RR.steerEncoderID = 1 + 4;
   robot_config.swerveChassis.RR.driveMotorID = 8;
   robot_config.swerveChassis.RR.absolute_offset = 135;
-  int br_alignment[9] = {38, 77, 119, 157, 199, 240, 280, 321, 360};
+  int br_alignment[9] = {7, 47, 87, 127, 167, 207, 247, 287, 327};
   for (int i = 0; i < 9; i++)
     robot_config.swerveChassis.RR.alignment[i] = br_alignment[i];
 
@@ -149,7 +148,7 @@ void loop() {
   while (can2.read(tempMessage))
     canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
   
-  refSys.read_serial(); 
+  //refSys.read_serial(); 
 
   // if (Serial.available() > 0)
   //   serial_event(&robot_config, &robot_state);

@@ -86,8 +86,6 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     }
   }
 
-  Serial.println(rampedSpeed);
-
   //rampedSpeed = speed;
 
   // Ref limiting
@@ -96,13 +94,13 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
       state->chassis.maxRpm = 3200;
       break;
     case 2:
-      state->chassis.maxRpm = 4500;
+      state->chassis.maxRpm = 4000;
       break;
     case 3:
-      state->chassis.maxRpm = 6000;
+      state->chassis.maxRpm = 5000;
       break;
     default:
-      state->chassis.maxRpm = 6000;
+      state->chassis.maxRpm = 3200;
       break;
   }
 
@@ -126,15 +124,19 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
 
 
   // Set motor power
-  if (calibrated) {
-    steerMotor.setPower(tmp_steerVel.Y);
+  //if (calibrated) {
+    // steerMotor.setPower(tmp_steerVel.Y);
 
-    // Only drive if sufficiently close to target angle
-    if (abs(inputAngle - steerAngle) < 20.0)
-      driveMotor.setPower(moduleState->driveVel.Y);
-    else
-      driveMotor.setPower(0.0);
-  }
+    // // Only drive if sufficiently close to target angle
+    // if (abs(inputAngle - steerAngle) < 20.0)
+    //   driveMotor.setPower(moduleState->driveVel.Y);
+    // else
+    //   driveMotor.setPower(0.0);
+
+    steerMotor.setPower(0.0);
+    Serial.print(steerMotor.getAngle());
+    Serial.print(" - ");
+  //}
 }
 
 int SwerveModule::findCalibrationMatch(int currValue, int* alignmentTable, int tableSize) {
