@@ -41,11 +41,20 @@ void Gimbal::update(float deltaTime) {
     oldTime = newTime;
   }
   float gyroSpeed = (this->imu.get_gyro_z() - this->state->gimbal.gyroDrift) * (180.0 / M_PI) * (deltaTime / 1000000.0); // There are 1000000 microseconds in a second.
+  if (state->robot == 1) {
+    gyroSpeed = 0;
+  }
   this->state->gimbal.gyroAngle += gyroSpeed * this->state->chassis.spin;
+
+  // Serial.print(this->imu.get_gyro_z());
+  // Serial.print(" - ");
+  // Serial.print(gyroSpeed);
+  // Serial.print(" - ");
+  // Serial.print(this->state->gimbal.gyroAngle);
 
   // Yaw encoder
   float rawYawAngle = yawMotor.getAngle();
-  if (calibrated) {
+  if (calibrated || state->robot == 7) {
     float yawDifference = this->prevRawYawAngle - rawYawAngle;
     if (yawDifference < -180)
       this->yawRollover--;
@@ -60,30 +69,59 @@ void Gimbal::update(float deltaTime) {
   float pitchAngle = realizePitchEncoder(pitchMotor.getAngle());
 
   // Calculate gimbal setpoints
-  if (state->driverInput.mouseRight) {
+  if (state->robot == 7) {
+    float time_yaw = millis() % 10000;
+    float time_pitch = millis() % 5000;
+
+    float phase_yaw = (time_yaw / 10000.0) * 2.0 * PI;
+    float searchAngleYaw = sin(phase_yaw) * 60.0;
+
+    float phase_pitch = (time_pitch / 5000.0) * 2.0 * PI;
+    float searchAnglePitch = sin(phase_pitch) * 10.0 + 35;
+
+
     if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
       aimYaw = yawAngle;
       aimPitch = pitchAngle;
-      aimYaw -= state->gimbal.yaw_reference;
+      aimYaw += state->gimbal.yaw_reference;
       aimPitch += state->gimbal.pitch_reference;
       yaw_reference_prev = state->gimbal.yaw_reference;
       pitch_reference_prev = state->gimbal.pitch_reference;
+      trackingTimeout = 0;
+    } else {
+      trackingTimeout += deltaTime;
     }
-    mouseReleased = 1;
-  }
-  else if (mouseReleased){
-    aimYaw = yawAngle;
-    aimPitch = pitchAngle;
-    mouseReleased = 0;
-  }
-  else {
-    float moveYaw = state->driverInput.mouseX * config->sensitivity * deltaTime;
-    mouseXFilter.push(moveYaw);
-    aimYaw += mouseXFilter.mean();
 
-    float movePitch = state->driverInput.mouseY * config->sensitivity * deltaTime;
-    mouseYFilter.push(movePitch);
-    aimPitch -= mouseYFilter.mean();
+    if (trackingTimeout > 2000000) { // 2 sec
+      aimYaw = searchAngleYaw;
+      aimPitch = searchAnglePitch;
+    }
+  } else {
+    if (state->driverInput.mouseRight) {
+      if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
+        aimYaw = yawAngle;
+        aimPitch = pitchAngle;
+        aimYaw += state->gimbal.yaw_reference;
+        aimPitch += state->gimbal.pitch_reference;
+        yaw_reference_prev = state->gimbal.yaw_reference;
+        pitch_reference_prev = state->gimbal.pitch_reference;
+      }
+      mouseReleased = 1;
+    }
+    else if (mouseReleased){
+      aimYaw = yawAngle;
+      aimPitch = pitchAngle;
+      mouseReleased = 0;
+    }
+    else {
+      float moveYaw = state->driverInput.mouseX * config->sensitivity * deltaTime;
+      mouseXFilter.push(moveYaw);
+      aimYaw += mouseXFilter.mean();
+
+      float movePitch = state->driverInput.mouseY * config->sensitivity * deltaTime;
+      mouseYFilter.push(movePitch);
+      aimPitch -= mouseYFilter.mean();
+    }
   }
   
   // Pich softstops
@@ -94,11 +132,12 @@ void Gimbal::update(float deltaTime) {
 
   // Death reset
   if (state->driverInput.v && !deathResetFlag) {
-    config->yawOffset += 180;
+    config->yawOffset += 360;
     deathResetFlag = true;
   } else if (!state->driverInput.v) {
     deathResetFlag = false;
   }
+
 
 
   // Yaw PID
@@ -119,18 +158,16 @@ void Gimbal::update(float deltaTime) {
   state->gimbal.pitchVel.R = state->gimbal.pitchPos.Y;
   PID_Filter(&config->pitchVel, &state->gimbal.pitchVel, pitchFilter.mean(), deltaTime);
 
-  float dynamicPitchFeedForward = cos((PI / 180.0) * pitchAngle) * 0.45;
+  float pitchF = 0.45;
+  if (state->robot == 1) {
+    pitchF = 0.7;
+  }
+  float dynamicPitchFeedForward = cos((PI / 180.0) * pitchAngle) * pitchF;
 
   // Set motor power
-  if (calibrated) {
-    // yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
-    // pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
-    yawMotor.setPower(0.0);
-    pitchMotor.setPower(0.0);
-
-    Serial.print(yawMotor.getAngle());
-    Serial.print(" - ");
-    Serial.print(pitchMotor.getAngle());
+  if (calibrated || state->robot == 7) {
+    yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
+    pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }
 }
 

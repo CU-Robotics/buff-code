@@ -11,9 +11,9 @@ if [[ ! -d "l_openvino_toolkit_p_2021.4.582" ]]; then
     tar xf "l_openvino_toolkit_p_2021.4.582.tgz"
     cd l_openvino_toolkit_p_2021.4.582/
 
-    ./install_openvino_dependencies.sh && \
+    sudo ./install_openvino_dependencies.sh && \
         sed -i 's/decline/accept/g' silent.cfg && \
-        ./install.sh --silent silent.cfg
+        sudo ./install.sh --silent silent.cfg
 
     rm -rf "../l_openvino_toolkit_p_2021.4.582.tgz"
 

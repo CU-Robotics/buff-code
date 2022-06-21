@@ -25,7 +25,7 @@ class SerialLayer():
 
 		topics = rospy.get_param('/buffbot/TOPICS')
 		self.writer_sub = rospy.Subscriber(topics['SERIAL_OUT'], 
-			String, self.writer_callback, queue_size=1)
+			String, self.writer_callback, queue_size=3)
 
 		rospy.init_node('echo_serial', anonymous=True)
 
@@ -42,6 +42,7 @@ class SerialLayer():
 		"""
 		byte_string = bytes(msg.data, 'utf-8')
 		self.write_device(byte_string)
+
 
 	def try_connect(self):
 		"""

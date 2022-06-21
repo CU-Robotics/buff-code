@@ -25,7 +25,7 @@ void MPU6050::init(){       //Our init function
     delay(100);
 }
 
-bool MPU6050::update_MPU6050(){
+void MPU6050::update_MPU6050(){
 
     sensors_event_t a_temp, g_temp, temp;       //Declaring sensor event variables to be passed into the get event function that is included in the adafruit library 
 

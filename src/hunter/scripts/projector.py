@@ -41,12 +41,6 @@ class Projector:
 		self.gimbal_sub = rospy.Subscriber(
 		 	topics['GIMBAL_STATE'], Float64MultiArray, self.gimbal_callback, queue_size=1)
 
-		self.red_pub = rospy.Publisher(
-			topics['DETECTION_RED'], Float64MultiArray, queue_size=1)
-
-		self.blue_pub = rospy.Publisher(
-			topics['DETECTION_BLUE'], Float64MultiArray, queue_size=1)
-
 		self.project_pub = rospy.Publisher(
 			topics['DETECTION_WORLD'], Float64MultiArray, queue_size=1)
 
@@ -87,25 +81,12 @@ class Projector:
 
 		for cl, x, y, w, h in detections.reshape((round(len(detections)/5), 5)):
 
-			if cl == 0:
-				blues = np.concatenate([blues, [x,y,w,h]])
-			elif cl == 1:
-				reds = np.concatenate([reds, [x,y,w,h]])
-
-
 			d = self.height_2_distance(h * self.image_size[0])
 			alphaX = np.radians((0.5 - x) * self.FOV)
 			alphaY = np.radians((y - 0.5) * self.FOV)
 			poses = np.concatenate([poses, [cl, 
 				d * np.cos(self.phi + alphaY) * np.cos(self.psi + alphaX), 
 				d * np.cos(self.phi + alphaY) * np.sin(self.psi + alphaX)]])
-
-		if len(reds) > 1:
-			msg = Float64MultiArray(data=reds)
-			self.red_pub.publish(msg)
-		elif len(blues) > 1:
-			msg = Float64MultiArray(data=blues)
-			self.blue_pub.publish(msg)
 
 		return poses
 

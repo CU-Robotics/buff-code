@@ -42,9 +42,11 @@ RailChassis railChassis;
 
 
 void dump(){
+
   if (Serial){
     dump_Robot(&robot_config, &robot_state);
   }
+
 }
 
 // Runs once
@@ -85,12 +87,10 @@ void setup() {
 
   robot_config.gimbal.pitchVel.K[0] = 0.012;
 
-  robot_config.gimbal.pitchMax = 50.0;
-  robot_config.gimbal.pitchMin = -18.0;
-  robot_config.gimbal.pitchOffset = 177;
-  robot_config.gimbal.yawOffset = 119.28;
-
-  // CHASSIS
+  robot_config.gimbal.pitchMax = 46.0;
+  robot_config.gimbal.pitchMin = 10.0;
+  robot_config.gimbal.pitchOffset = 0;
+  robot_config.gimbal.yawOffset = 13.5;
 
   // Driver setup
   refSys.init(&robot_state.refSystem);
@@ -100,6 +100,8 @@ void setup() {
   railChassis.setup(&robot_config.railChassis, &robot_state);
   gimbal.setup(&robot_config.gimbal, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
+
+  delay(5000);
 }
 
 
@@ -111,21 +113,21 @@ void loop() {
   while (can2.read(tempMessage))
     canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
   
-  refSys.read_serial(); 
+  refSys.read_serial();
 
   if (Serial){
     if (Serial.available() > 0)
       serial_event(&robot_config, &robot_state);
   }
 
+
   // Update devices
   // reciever.update();
 
   // Update subystems
   // railChassis.update(deltaT);
-  // gimbal.update(deltaT);
+  gimbal.update(deltaT);
   // shooter.update(deltaT);
-
 
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;

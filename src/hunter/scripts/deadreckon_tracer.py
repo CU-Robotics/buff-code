@@ -32,6 +32,7 @@ class Dead_Reckon_Tracer:
 	"""
 	
 	def __init__(self, name):
+		self.name = name
 		self.pose = None
 		self.t = time.time() 
 		self.old_t = time.time()
@@ -153,12 +154,15 @@ class Dead_Reckon_Tracer:
 
 			self.predict(time.time())
 
-			rospy.loginfo(f'pose {self.pose[0]}')
-			rospy.loginfo(f'history {self.history}')
-			phi_err = (self.pose[1] - self.d_offset[1]) * self.FOV
-			psi_err = (self.pose[0] - self.d_offset[0]) * self.FOV
+			phi_err = (self.pose[1] - self.d_offset[1]) * self.FOV / 2.5
+			psi_err = (self.pose[0] - self.d_offset[0]) * self.FOV / 2.5
 
-			msg = String(f'GW {round(psi_err)}\nGH {round(phi_err)}\n') 
+			if self.name == '/buffbot/BLUE_TRACKER':
+				msg = String(f'GL {psi_err:.4f}\nGK {phi_err:.4f}\n') 
+
+			elif self.name == '/buffbot/RED_TRACKER':
+				msg = String(f'GW {psi_err:.4f}\nGH {phi_err:.4f}\n') 
+
 			self.prediction_pub.publish(msg)
 
 			if self.debug:
