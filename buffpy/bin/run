@@ -224,11 +224,12 @@ def launch_system(target_path, config):
 				is_opened = False
 				args = []
 				for arg in node['ARGS']:
-					s = ''
-					items = arg.split()
-					args.append(items[0])
 
-					if '${' in items[1]:		# Need to pass env vars sometimes
+					if '${' in arg:		# Need to pass env vars sometimes
+						s = ''
+						items = arg.split()
+						args.append(items[0])
+
 						substr = ''
 						if '$' != items[1][0]:
 							substr += items[1][0]
@@ -253,7 +254,7 @@ def launch_system(target_path, config):
 						args.append(s)
 
 					else:
-						args.append(items[1])
+						args += arg.split()
 
 			if 'REQUIRED' in node:
 				required = node['REQUIRED']

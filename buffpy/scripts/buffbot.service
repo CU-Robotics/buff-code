@@ -3,11 +3,12 @@ Description=CU Robotics Startup Service
 ConditionPathExists=/home/cu-robotics/buff-code/buffpy
 
 [Service]
-User=cu-robotics
 Type=forking
-StandardOutput=console
+Restart=always
+User=cu-robotics
+TimeoutStartSec=900
 WorkingDirectory=/home/cu-robotics/buff-code
 ExecStart=/bin/bash -c 'source /home/cu-robotics/buff-code/buffpy/buff.bash && run self.yaml'
 
 [Install]
-#WantedBy=
+WantedBy=multi-user.target
