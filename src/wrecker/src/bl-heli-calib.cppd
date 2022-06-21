@@ -22,7 +22,7 @@ flywheel fw_1;
 flywheel fw_2;
 
 // Calibration staging
-int stage = -1;
+int stage = 0;
 bool stageButtonFlag = false;
 
 // Runs once
@@ -75,9 +75,13 @@ void loop() {
       break;
     case 3:
       Serial.println("Calibration complete");
+      fw_1.setPower(0.0);
+      fw_2.setPower(0.0);
       break;
     case 4:
       Serial.println("You've gone too far");
+      fw_1.setPower(0.5);
+      fw_2.setPower(0.5);
       break;
     case 5:
       Serial.println("Turn back now");

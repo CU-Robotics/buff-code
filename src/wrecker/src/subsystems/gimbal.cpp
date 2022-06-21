@@ -19,7 +19,11 @@ void Gimbal::setup(C_Gimbal *data, S_Robot *r_state) {
   this->pitchMotor.init(7, 2);
 
   this->imu.init();
-  mouseXFilter.init(50);
+  if (state->robot == 1) {
+    mouseXFilter.init(100);
+  } else {
+    mouseXFilter.init(50);
+  }
   mouseYFilter.init(50);
 
   pitchFilter.init(35);

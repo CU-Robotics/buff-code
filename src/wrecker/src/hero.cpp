@@ -42,6 +42,9 @@ Shooter shooter;
 Shooter42 shooter42;
 SwerveChassis swerveChassis;
 
+flywheel fw_1;
+flywheel fw_2;
+
 // void dump(){
 //   dump_Robot(&robot_config, &robot_state);
 // }
@@ -71,17 +74,16 @@ void setup() {
   // Configure subsystems
 
   // GIMBAL
-  robot_config.gimbal.yawPos.K[0] = 2.0;
-  robot_config.gimbal.yawPos.K[2] = 0.01;
+  robot_config.gimbal.yawPos.K[0] = 2.2;
 
   robot_config.gimbal.yawVel.Ymin = -150.0;
   robot_config.gimbal.yawVel.Ymax = 150.0;
-  robot_config.gimbal.yawVel.K[0] = 0.1;
+  robot_config.gimbal.yawVel.K[0] = 0.08;
 
-  robot_config.gimbal.pitchPos.K[0] = 3;
+  robot_config.gimbal.pitchPos.K[0] = 4.5;
   robot_config.gimbal.pitchPos.K[2] = 0.0;
 
-  robot_config.gimbal.pitchVel.K[0] = 0.012;
+  robot_config.gimbal.pitchVel.K[0] = 0.03;
 
   robot_config.gimbal.pitchMax = 30;
   robot_config.gimbal.pitchMin = -15;
@@ -136,9 +138,13 @@ void setup() {
   reciever.init(&robot_state.driverInput);
 
   // Subsystem setup
-  gimbal.setup(&robot_config.gimbal, &robot_state);
-  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  // gimbal.setup(&robot_config.gimbal, &robot_state);
+  // swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
+  shooter42.setup(&robot_config.shooter42, &robot_state);
+
+  fw_1.init(28);
+  fw_2.init(29);
 }
 
 
@@ -159,12 +165,18 @@ void loop() {
   reciever.update();
 
   // Update subsystems
-  // swerveChassis.update(deltaT);
-  // gimbal.update(deltaT);
+  //swerveChassis.update(deltaT);
+  //gimbal.update(deltaT);
   shooter.update(deltaT);
-  //shooter42.update(deltaT);
+  shooter42.update(deltaT);
 
-  Serial.println();
+  // Serial.println(robot_state.refSystem.shooter_on);
+  // float stick = (robot_state.driverInput.leftStickY - 268) / 1416.0;
+  // Serial.println(stick);
+  
+
+  // fw_1.setPower(stick);
+  // fw_2.setPower(stick);
 
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;

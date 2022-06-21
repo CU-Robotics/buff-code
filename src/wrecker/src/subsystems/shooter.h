@@ -6,6 +6,9 @@
 #ifndef SHOOTER_H
 #define SHOOTER_H
 
+extern flywheel fw_1;
+extern flywheel fw_2;
+
 class Shooter {
  public:
     Shooter();
@@ -17,10 +20,11 @@ class Shooter {
     C_Shooter17 *config;
 
     c620CAN feedMotor;
-    flywheel topFlywheel;
-    flywheel bottomFlywheel;
 
     float calibrated = false;
+
+    int stage = 0;
+    bool c_flag = false;
 
     int shooterTimer = 0;
     bool shooterClear = false;

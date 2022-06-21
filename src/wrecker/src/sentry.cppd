@@ -40,6 +40,9 @@ RailChassis railChassis;
 Gimbal gimbal;
 Shooter shooter;
 
+flywheel fw_1;
+flywheel fw_2;
+
 
 void dump(){
   dump_Robot(&robot_config, &robot_state);
@@ -80,7 +83,7 @@ void setup() {
   robot_config.gimbal.pitchPos.K[0] = 3;
   robot_config.gimbal.pitchPos.K[2] = 0.0;
 
-  robot_config.gimbal.pitchVel.K[0] = 0.012;
+  robot_config.gimbal.pitchVel.K[0] = 0.014;
 
   robot_config.gimbal.pitchMax = 46.0;
   robot_config.gimbal.pitchMin = 10.0;
@@ -95,6 +98,9 @@ void setup() {
   railChassis.setup(&robot_config.railChassis, &robot_state);
   gimbal.setup(&robot_config.gimbal, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
+
+  fw_1.init(28);
+  fw_2.init(29);
 }
 
 
