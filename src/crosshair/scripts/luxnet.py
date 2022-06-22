@@ -117,6 +117,7 @@ def non_max_suppression(prediction, conf_thres=0.1, iou_thres=0.6, merge=False, 
 labelMap = [
 	'blue-armor',
 	'red-armor',
+	'purple-armor',
 	'robot'
 ]
 
@@ -127,13 +128,14 @@ def draw_boxes(image, labels):
 	if labels is None or len(labels) == 0:
 		return image
 	else:
-		colors = [(255,0,0), (0,0,255), (0,255,0)]
+		colors = [(255,0,0), (0,0,255), (255,0,255), (0,255,0)]
 
-		for c,x,y,w,h in labels:
+		for c,cf,x,y,w,h in labels:
 			# Draw a rectangle on the image
 			image = cv2.rectangle(image, (int(x - (w/2)), int(y - (h/2))), (int(x + (w/2)), int(y + (h/2))), colors[int(c)], 2)
-			image = cv2.putText(image, f'{c}', (int(x - (w/2)), int(y - (h/2))-15), cv2.FONT_HERSHEY_SIMPLEX, 
-					1, (255,255,255), 2, cv2.LINE_AA)
+
+			image = cv2.rectangle(image, (int(x - (w/2)), int(y - (h/2)) - 20), (int(x - (w/2)) + 75, int(y - (h/2))), colors[int(c)], -1)
+			cv2.putText(image, f'{int(c)}: {cf:.2f}', (int(x - (w/2)), int(y - (h/2))), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 1)
 
 	return image
 
@@ -166,6 +168,12 @@ class DepthAI_Device:
 		rospy.init_node('buffnet', anonymous=True)
 		self.det_pub = rospy.Publisher(
 			topics['DETECTION_PIXEL'], Float64MultiArray, queue_size=1)
+
+		self.red_pub = rospy.Publisher(
+			topics['DETECTION_RED'], Float64MultiArray, queue_size=1)
+
+		self.blue_pub = rospy.Publisher(
+			topics['DETECTION_BLUE'], Float64MultiArray, queue_size=1)
 
 		self.image_pub = rospy.Publisher(
 			topics['IMAGE'], Image, queue_size=1)
@@ -217,6 +225,10 @@ class DepthAI_Device:
 
 		with dai.Device(self.pipeline, usb2Mode=True) as device:
 
+			if 1:
+				device.setLogLevel(dai.LogLevel.TRACE)
+				device.setLogOutputLevel(dai.LogLevel.TRACE)
+
 			q_nn_input = device.getOutputQueue(
 				name="nn_input", maxSize=4, blocking=False)
 			q_nn = device.getOutputQueue(
@@ -224,12 +236,12 @@ class DepthAI_Device:
 
 			controlQueue = device.getInputQueue('control')
 			ctrl = dai.CameraControl()
-			ctrl.setContrast(5)
-			# ctrl.setBrightness(0)
-			# ctrl.setSaturation(0)
-			# #ctrl.setManualExposure(3000, 1600)
-			ctrl.setAutoWhiteBalanceMode(dai.RawCameraControl.AutoWhiteBalanceMode.OFF)
-			ctrl.setAutoFocusMode(dai.RawCameraControl.AutoFocusMode.CONTINUOUS_VIDEO)
+			# ctrl.setContrast(10)
+			# ctrl.setBrightness(-5)
+			# ctrl.setSaturation(10)
+			# ctrl.setAutoWhiteBalanceMode(dai.RawCameraControl.AutoWhiteBalanceMode.OFF)
+			ctrl.setAutoFocusMode(dai.RawCameraControl.AutoFocusMode.OFF)
+			ctrl.setManualFocus(100)
 			controlQueue.send(ctrl)
 
 			start_time = time.time()
@@ -244,7 +256,11 @@ class DepthAI_Device:
 				frame = in_nn_input.getCvFrame()
 
 				# get the "output" layer
-				output = np.array(in_nn.getLayerFp16("output"))
+				try:
+					output = np.array(in_nn.getLayerFp16("output"))
+				except:
+					rospy.loginfo("getLayerFp16 Error occured, retrying")
+					continue
 
 				# reshape to proper format
 				cols = output.shape[0]//6300
@@ -257,6 +273,8 @@ class DepthAI_Device:
 
 				boxes = boxes[0]
 
+				reds = []
+				blues = []
 				labels = []
 				detections = []
 
@@ -268,15 +286,27 @@ class DepthAI_Device:
 						w = abs(x2 - x1)
 						h = abs(y2 - y1)
 
-						detections = np.concatenate([detections, [cl, 
-																	x / self.image_size,
-																	y / self.image_size,
-																	w / self.image_size,
-																	h / self.image_size]])
-						labels.append([cl,x,y,w,h])
-					
-					target_msg = Float64MultiArray(data=detections)
-					self.det_pub.publish(target_msg)
+						if cl == 0:
+							blues = np.concatenate([blues, 
+								[x / self.image_size,
+								y / self.image_size,
+								w / self.image_size,
+								h / self.image_size]])
+						elif cl == 1:
+							reds = np.concatenate([reds, 
+								[x / self.image_size,
+								y / self.image_size,
+								w / self.image_size,
+								h / self.image_size]])
+
+						labels.append([cl,cf,x,y,w,h])
+
+					if len(reds) > 1:
+						msg = Float64MultiArray(data=reds)
+						self.red_pub.publish(msg)
+					elif len(blues) > 1:
+						msg = Float64MultiArray(data=blues)
+						self.blue_pub.publish(msg)
 
 				image_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
 				self.image_pub.publish(image_msg)
@@ -288,11 +318,17 @@ class DepthAI_Device:
 
 def main(name):
 	device = DepthAI_Device()
-	device.spin()
+	try:
+		device.spin()
+	except Exception as e:
+		rospy.logerr(e)
+		exit(1)
+
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
 		main(sys.argv[1])
+
 
 
 		

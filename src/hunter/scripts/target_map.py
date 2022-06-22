@@ -66,12 +66,16 @@ class Target_Map:
 			if not self.history[i] is None:
 				for j, (x,y) in enumerate(self.history[i]):
 					color = self.get_class_color(i)
-					target = (int(origin[0] + x), int(origin[1] + y))
-					if i < 2:
+					target = [int(origin[0] + x), int(origin[1] + y)]
+					if i < 3:
 						image = cv2.circle(image, target, 5, color * 5 / (j+1), 2)
 					else:
-						t1 = (target[0] - 5, target[1] - 5)
-						t2 = (target[0] + 5, target[1] + 5)
+						robot_size = 20
+						target[0] = round(target[0] * 1.5)
+						target[1] = round(target[1] * 1.5)
+
+						t1 = (target[0] - robot_size, target[1] - robot_size)
+						t2 = (target[0] + robot_size, target[1] + robot_size) 
 						image = cv2.rectangle(image, t1, t2, color * 5 / (j+1), 2)
 
 		self.map = image
@@ -104,7 +108,7 @@ class Target_Map:
 		self.phi = state[1]
 
 	def get_class_color(self, cl):
-		colors = [[0, 0, 255], [255, 0, 0], [0, 255, 0]]
+		colors = [[0, 0, 255], [255, 0, 0], [255, 0, 255], [0, 255, 0]]
 		return np.array(colors[cl])
 
 	def publish_map(self):

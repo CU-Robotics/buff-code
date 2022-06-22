@@ -31,6 +31,12 @@ class RailChassis {
     float rightOffset = 0;
     float rightPrev;
 
+    float trackingTimeout = 0;
+
+        float yaw_reference_prev = 0;
+    float pitch_reference_prev = 0;
+
+
     float rampedSpeed = 0.0;
 
     void selectNode();

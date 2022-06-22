@@ -163,7 +163,10 @@ def launch_system(target_path, config):
 			pool: list of roslaunch processes
 	"""
 	
-	pool = []	
+	args = []
+	pool = []
+	respawn = []
+	commands = []	
 	cmd = 'roscore'
 	core_process = None
 
@@ -195,10 +198,16 @@ def launch_system(target_path, config):
 		for name in nodes:
 			node = config['NODES'][name]
 
+			if 'PACKAGE' in node:
+				package = node['PACKAGE']
+			else:
+				package = 'buffpy'
+
+			if package == 'buffpy':
+				args = [f'{namespace}/{name}']
+
 			# Not all packages handle our launch params
 			if 'CONFIG' in node:
-				args = f'{namespace}/{name}'
-
 				if not node['CONFIG'] == 'None':
 					config_path = os.path.join(data_path, node['CONFIG'])
 
@@ -208,17 +217,19 @@ def launch_system(target_path, config):
 					if not config_data is None:
 						node.update(config_data) # Add the yaml data to the roslaunch node
 						
-				rospy.set_param(args, node)
+				rospy.set_param(f'{namespace}/{name}', node)
 
 			elif 'ARGS' in node:
 				# can use args tag to send args to non-buffpy packages
 				is_opened = False
-				args = ''
+				args = []
 				for arg in node['ARGS']:
-					items = arg.split()
-					args += items[0] + ' '
 
-					if '${' in items[1]:		# Need to pass env vars sometimes
+					if '${' in arg:		# Need to pass env vars sometimes
+						s = ''
+						items = arg.split()
+						args.append(items[0])
+
 						substr = ''
 						if '$' != items[1][0]:
 							substr += items[1][0]
@@ -226,26 +237,24 @@ def launch_system(target_path, config):
 						for i,c in enumerate(items[1][1:]):
 							if c == '{' and items[1][i] == '$':
 								is_opened = True
+								s += substr
+								substr = ''
+
 							elif c == '}' and is_opened:
-								args += os.getenv(substr)
+								s += os.getenv(substr)
 								substr = ''
 								is_opened = False
+
 							elif is_opened:
 								substr += c
+
 							else:
-								args += c
+								s += c
+
+						args.append(s)
 
 					else:
-						args += items[1]
-
-			else:
-				# no args passed
-				args = ''
-
-			if 'PACKAGE' in node:
-				package = node['PACKAGE']
-			else:
-				package = 'buffpy'
+						args += arg.split()
 
 			if 'REQUIRED' in node:
 				required = node['REQUIRED']
@@ -255,10 +264,14 @@ def launch_system(target_path, config):
 			# launch the process and add it to the pool
 			if 'FILES' in node:
 				for program in node['FILES']:
-					process = roslaunch.core.Node(package, program, args=args, output='screen', respawn=required)
-					pool.append(launch.launch(process))
+					cmd = ['rosrun', package, program] + args
+					process = sb.Popen(cmd)
+					commands.append(cmd)
+					pool.append(process)
+					respawn.append(required)
 
-	return core_process, pool, launch
+
+	return core_process, pool, respawn, commands
 
 def launch_python(target_path, target_args):
 	"""
@@ -304,7 +317,7 @@ def spin(config, target_path, target_args):
 		if config == 'python':
 			core_process = launch_python(target_path, target_args)
 		elif not config is None:
-			core_process, pool, launch = launch_system(target_path, config)
+			core_process, pool, respawn, commands = launch_system(target_path, config)
 		else:
 			print('Config Empty: Exiting...')
 			exit(0)
@@ -318,16 +331,19 @@ def spin(config, target_path, target_args):
 		# this will loop until an interrupt or the core dies.
 		while core_process.poll() is None:
 			# if output/errors print them
-			mesg = core_process.communicate()
-			if mesg[0]:
-				print(mesg[0].decode('utf-8')) # this will force us to use rospy.log to print info I think
-			if mesg[1]:
-				print(mesg[1].decode('utf-8')) # output is sent from program to roscore then printed here
+			# mesg = core_process.communicate()
+			# if mesg[0]:
+			# 	print(mesg[0].decode('utf-8')) # this will force us to use rospy.log to print info I think
+			# if mesg[1]:
+			# 	print(mesg[1].decode('utf-8')) # output is sent from program to roscore then printed here
 
-		# core finished so kill any other pool
-		# # supposedly handled by roslaunch but I wanted to be safe
-		# for proc in pool:
-		# 	proc.stop()
+			# restart processes with the respawn flag
+			if not pool is None:
+				for i,proc in enumerate(pool):
+					if not proc.poll() is None and proc.returncode != 0 and respawn[i]:
+						print(f'{commands[i]} died: {proc.returncode}')
+						print(f'restarting {commands[i]}')
+						pool[i] = sb.Popen(commands[i])
 
 	except KeyboardInterrupt as e:
 		print(e)
@@ -337,7 +353,9 @@ def spin(config, target_path, target_args):
 		print(e)
 		print('Killed due to error')
 
-	rospy.sleep(3)
+	if not pool is None:
+		for i,proc in enumerate(pool):
+			proc.terminate()
 
 	if not core_process is None:
 		core_process.terminate()

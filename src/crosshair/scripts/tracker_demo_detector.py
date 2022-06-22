@@ -108,9 +108,9 @@ class TrackerDataGenerator:
         # elif self.position[3] < 15:
         #     self.position[3] = 15
         t = time.time() 
-        h =  50 * np.sin(t * 2) + 60
-        x =  50 * np.sin(t) + 150
-        self.position = np.array([0, x, 160, 50, h]) / 320
+        h =  2 * np.sin(t) + 20
+        x =  320 * np.sin(t) + 150
+        self.position = np.array([0, x, 160, h * 1.2, h]) / 320
 
 
     def spin(self):
