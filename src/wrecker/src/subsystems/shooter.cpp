@@ -31,7 +31,7 @@ void Shooter::update(unsigned long deltaTime) {
         shooterOn = state->refSystem.gimbal_on;
     }
 
-    Serial.print("Gimbal on ");
+    Serial.print("Shooter on ");
     Serial.println(state->refSystem.shooter_on);
 
     if (calibrated || (state->robot == 7 && state->driverInput.s2 == 2)) {
@@ -43,10 +43,17 @@ void Shooter::update(unsigned long deltaTime) {
                 fw_2.setPower(0.5);
                 fw_1.setPower(0.5);
             } else {
-                if (state->robot != 1) {
-                    fw_2.setPower(0.8);
+                if (state->robot == 3 && state->driverInput.s2 == 2) {
+                    // 1v1
+                    fw_2.setPower(0.5);
+                    fw_1.setPower(0.5);
+                } else {
+                    // 3v3
+                    if (state->robot != 1) {
+                        fw_2.setPower(0.8);
+                    }
+                        fw_1.setPower(0.8);
                 }
-                fw_1.setPower(0.8);
             }
         } else if (!shooterOn) {
             // Serial.println("this is bad");
