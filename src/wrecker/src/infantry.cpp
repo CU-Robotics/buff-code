@@ -156,6 +156,8 @@ void loop() {
   
   refSys.read_serial(); 
 
+  Serial.println(robot_state.driverInput.s2);
+
   // if (Serial.available() > 0)
   //   serial_event(&robot_config, &robot_state);
 
