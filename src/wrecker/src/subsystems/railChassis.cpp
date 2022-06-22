@@ -26,10 +26,12 @@ void RailChassis::setup(C_RailChassis *data, S_Robot *r_state) {
 }
 
 void RailChassis::update(unsigned long deltaTime) {
-  if (state->driverInput.b && !calibrated) {
+  if (state->driverInput.s2 == 2 && !calibrated) {
     calibrated = true;
     leftOffset = leftDriveMotor.getAngle();
     rightOffset = rightDriveMotor.getAngle();
+  } else {
+    calibrated = false;
   }
 
   float leftRawPos = leftDriveMotor.getAngle();
@@ -80,12 +82,6 @@ void RailChassis::update(unsigned long deltaTime) {
   if (calibrated) {
     leftDriveMotor.setPower(rampedSpeed);
     rightDriveMotor.setPower(rampedSpeed);
-
-    // leftDriveMotor.setPower(0.0);
-    // rightDriveMotor.setPower(0.0);
-
-    Serial.println(pos);
-    //Serial.println(leftDriveMotor.getAngle());
   }
 }
 
