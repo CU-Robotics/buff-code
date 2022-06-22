@@ -31,30 +31,22 @@ void Shooter::update(unsigned long deltaTime) {
         shooterOn = state->refSystem.gimbal_on;
     }
 
-    if (shooterOn && !armed) {
-        Serial.println("Arming");
-        if (state->robot != 1) {
-            this->bottomFlywheel.init(29);
-        }
-        this->topFlywheel.init(28);
-        armed = true;
-    } else if (!shooterOn) {
-        armed = false;
-    }
-
     if (calibrated) {
         if (shooterOn && shooterClear) {
-            if (armed) {
-                this->topFlywheel.setPower(0.8);
-                if (state->robot != 1) {
-                    this->bottomFlywheel.setPower(0.8);
-                }
+            Serial.println("sending");
+            if (state->robot != 1) {
+                fw_2.setPower(0.8);
             }
+            fw_1.setPower(0.8);  
         } else if (!shooterClear) {
             shooterTimer += deltaTime;
         } else {
             shooterTimer = 0;
             shooterClear = false;
+            if (state->robot != 1) {
+                fw_2.setPower(0.0);
+            }
+            fw_1.setPower(0.0);
         }
 
         if (shooterTimer > 5000000) // 5 sec
