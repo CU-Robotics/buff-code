@@ -57,8 +57,10 @@ void RailChassis::update(unsigned long deltaTime) {
 
   if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
     trackingTimeout = 0;
+    Serial.println("bad 1");
   } else {
     trackingTimeout += deltaTime;
+    Serial.println("good 1");
   }
 
   state->railChassis.driveVel.R = 0;
@@ -69,11 +71,7 @@ void RailChassis::update(unsigned long deltaTime) {
 
   PID_Filter(&config->driveVel, &state->railChassis.driveVel, leftDriveMotor.getRpm(), deltaTime);
 
-
-
-// Set motor output
-
-
+  // Set motor output
 
   float speed = state->railChassis.driveVel.Y;
   if (rampedSpeed < speed) {
@@ -88,18 +86,18 @@ void RailChassis::update(unsigned long deltaTime) {
     }
   }
 
-    Serial.print(rampedSpeed);
+  Serial.print(rampedSpeed);
   Serial.print(" - ");
   Serial.println(speed);
 
-  leftDriveMotor.setPower(rampedSpeed);
-  rightDriveMotor.setPower(rampedSpeed);
+  // leftDriveMotor.setPower(rampedSpeed);
+  // rightDriveMotor.setPower(rampedSpeed);
 
   // leftDriveMotor.setPower(0.0);
   // rightDriveMotor.setPower(0.0);
 
-  Serial.println(pos);
-  //Serial.println(leftDriveMotor.getAngle());
+  // Serial.println(pos);
+  // Serial.println(leftDriveMotor.getAngle());
 }
 
 
