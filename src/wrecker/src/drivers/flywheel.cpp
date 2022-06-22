@@ -22,13 +22,16 @@ void flywheel::init(byte tempPinNum) {
 }
 
 void flywheel::setPower(float newPower) {
-    // if (newPower > 1.0)
-    // {
-    //     newPower = 1.0;
-    // } else if (newPower < 0.0) {
-    //     newPower = 0.0;
-    // }
+    if (newPower > 1.0)
+    {
+        newPower = 1.0;
+    } else if (newPower < 0.0) {
+        newPower = 0.0;
+    }
     int sendPower = 1000 + (newPower * 1000);
     esc.writeMicroseconds(sendPower);
-    // Serial.println(sendPower);
+}
+
+void flywheel::reset() {
+    esc.writeMicroseconds(1000);
 }
