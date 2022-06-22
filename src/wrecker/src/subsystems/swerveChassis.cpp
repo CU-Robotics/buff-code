@@ -109,14 +109,16 @@ void SwerveChassis::update(unsigned long deltaTime) {
   } else {
     switch(this->state->refSystem.robot_level) {
       case 1:
+        this->state->chassis.spin = 1;
         break;
       case 2:
+        this->state->chassis.spin = 1.5;
         break;
       case 3:
-        this->state->chassis.spin = 1.725;
+        this->state->chassis.spin = 1.7;
         break;
       default:
-        this->state->chassis.spin = 1.725;
+        this->state->chassis.spin = 1.7;
         break;
     }
   }

@@ -58,7 +58,7 @@ void Gimbal::update(float deltaTime) {
 
   // Yaw encoder
   float rawYawAngle = yawMotor.getAngle();
-  if (calibrated || state->robot == 7) {
+  if (calibrated || state->robot == 7 &&  state->driverInput.s2 > 1) {
     float yawDifference = this->prevRawYawAngle - rawYawAngle;
     if (yawDifference < -180)
       this->yawRollover--;
@@ -74,41 +74,42 @@ void Gimbal::update(float deltaTime) {
 
   // Calculate gimbal setpoints
   if (state->robot == 7) {
-    float time_yaw = millis() % 10000;
-    float time_pitch = millis() % 5000;
 
-    float phase_yaw = (time_yaw / 10000.0) * 2.0 * PI;
-    float searchAngleYaw = sin(phase_yaw) * 60.0;
-
-    float phase_pitch = (time_pitch / 5000.0) * 2.0 * PI;
-    float searchAnglePitch = sin(phase_pitch) * 10.0 + 35;
-
-
-    if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
+    if (state->gimbal.yaw_reference != state->gimbal.yaw_reference_prev || state->gimbal.pitch_reference != state->gimbal.pitch_reference_prev) {
       aimYaw = yawAngle;
       aimPitch = pitchAngle;
       aimYaw += state->gimbal.yaw_reference;
       aimPitch += state->gimbal.pitch_reference;
-      yaw_reference_prev = state->gimbal.yaw_reference;
-      pitch_reference_prev = state->gimbal.pitch_reference;
+      state->gimbal.yaw_reference_prev = state->gimbal.yaw_reference;
+      state->gimbal.pitch_reference_prev = state->gimbal.pitch_reference;
       trackingTimeout = 0;
     } else {
       trackingTimeout += deltaTime;
     }
 
-    if (trackingTimeout > 2000000) { // 2 sec
+    if (trackingTimeout > 1000000) { // 1 sec
+      int time = millis() % 3000;
+      float phase_yaw = (time / 3000.0) * 2.0 * PI;
+      float searchAngleYaw = sin(phase_yaw) * 60.0;
+
+      float phase_pitch = (time / 800.0) * 2.0 * PI;
+      float searchAnglePitch = sin(phase_pitch) * 15.0 + 30;
+
       aimYaw = searchAngleYaw;
       aimPitch = searchAnglePitch;
+      state->gimbal.tracking = true;
+    } else {
+      state->gimbal.tracking = false;
     }
   } else {
     if (state->driverInput.mouseRight) {
-      if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
+      if (state->gimbal.yaw_reference != state->gimbal.yaw_reference_prev || state->gimbal.pitch_reference != state->gimbal.pitch_reference_prev) {
         aimYaw = yawAngle;
         aimPitch = pitchAngle;
         aimYaw += state->gimbal.yaw_reference;
         aimPitch += state->gimbal.pitch_reference;
-        yaw_reference_prev = state->gimbal.yaw_reference;
-        pitch_reference_prev = state->gimbal.pitch_reference;
+        state->gimbal.yaw_reference_prev = state->gimbal.yaw_reference;
+        state->gimbal.pitch_reference_prev = state->gimbal.pitch_reference;
       }
       mouseReleased = 1;
     }
@@ -169,7 +170,7 @@ void Gimbal::update(float deltaTime) {
   float dynamicPitchFeedForward = cos((PI / 180.0) * pitchAngle) * pitchF;
 
   // Set motor power
-  if (calibrated || state->robot == 7) {
+  if (calibrated || state->robot == 7 &&  state->driverInput.s2 > 1) {
     yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
     pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }

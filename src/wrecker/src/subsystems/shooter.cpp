@@ -31,25 +31,32 @@ void Shooter::update(unsigned long deltaTime) {
         shooterOn = state->refSystem.gimbal_on;
     }
 
-    if (calibrated) {
+    if (calibrated || (state->robot == 7 && state->driverInput.s2 == 2)) {
+        //Serial.println(shooterTimer);
+
         if (shooterOn && shooterClear) {
-            Serial.println("sending");
-            if (state->robot != 1) {
-                fw_2.setPower(0.8);
+            //Serial.println("sending");
+            if (state->robot == 7) {
+                fw_2.setPower(0.5);
+                fw_1.setPower(0.5);
+            } else {
+                if (state->robot != 1) {
+                    fw_2.setPower(0.8);
+                }
+                fw_1.setPower(0.8);
             }
-            fw_1.setPower(0.8);  
-        } else if (!shooterClear) {
-            shooterTimer += deltaTime;
-        } else {
+        } else if (!shooterOn) {
             shooterTimer = 0;
             shooterClear = false;
             if (state->robot != 1) {
-                fw_2.setPower(0.0);
+                fw_2.reset();
             }
-            fw_1.setPower(0.0);
+            fw_1.reset();
+        } else {
+            shooterTimer += deltaTime;
         }
 
-        if (shooterTimer > 5000000) // 5 sec
+        if (shooterTimer > 4500000) // 4.5 sec
             shooterClear = true;
 
         // Mode switching
@@ -62,24 +69,32 @@ void Shooter::update(unsigned long deltaTime) {
         }
 
         // Feeding
-        if (state->driverInput.mouseLeft) {
-            switch(this->state->shooter17.mode) {
-                case 0:
-                    state->shooter17.feedPID.R = -config->feedRPMLow * 36;
-                    break;
-                case 1:
-                    state->shooter17.feedPID.R = -config->feedRPMHigh * 36;
-                    break;
-                case 2:
-                    state->shooter17.feedPID.R = -config->feedRPMBurst * 36;
-                    break;
-                default:
-                    state->shooter17.feedPID.R = -config->feedRPMLow * 36;
+        if (state->robot == 7) {
+            if (state->gimbal.tracking) {
+                state->shooter17.feedPID.R = -config->feedRPMLow * 36;
+            } else {
+                state->shooter17.feedPID.R = 0;
             }
-        } else if (state->driverInput.f)
-            state->shooter17.feedPID.R = config->feedRPMLow * 36;
-        else
-            state->shooter17.feedPID.R = 0;
+        } else {
+            if (state->driverInput.mouseLeft) {
+                switch(this->state->shooter17.mode) {
+                    case 0:
+                        state->shooter17.feedPID.R = -config->feedRPMLow * 36;
+                        break;
+                    case 1:
+                        state->shooter17.feedPID.R = -config->feedRPMHigh * 36;
+                        break;
+                    case 2:
+                        state->shooter17.feedPID.R = -config->feedRPMBurst * 36;
+                        break;
+                    default:
+                        state->shooter17.feedPID.R = -config->feedRPMLow * 36;
+                }
+            } else if (state->driverInput.f)
+                state->shooter17.feedPID.R = config->feedRPMLow * 36;
+            else
+                state->shooter17.feedPID.R = 0;
+        }
 
         // Feed PID
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
