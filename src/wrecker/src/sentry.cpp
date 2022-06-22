@@ -36,23 +36,28 @@ dr16 reciever;
 Ref_System refSys;
 
 // Subsystems
-RailChassis railChassis;
 Gimbal gimbal;
 Shooter shooter;
+RailChassis railChassis;
 
 flywheel fw_1;
 flywheel fw_2;
 
 
 void dump(){
-  dump_Robot(&robot_config, &robot_state);
+
+  if (Serial){
+    dump_Robot(&robot_config, &robot_state);
+  }
+
 }
 
 // Runs once
 void setup() {
   Serial.begin(1000000);
   delay(1000);
-  Serial.println("-- SENTRY ROBOT START --");
+  if (Serial)
+    Serial.println("-- SENTRY ROBOT START --");
 
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
@@ -112,16 +117,19 @@ void loop() {
   while (can2.read(tempMessage))
     canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
   
-  refSys.read_serial(); 
+  refSys.read_serial();
 
-  if (Serial.available() > 0)
-    serial_event(&robot_config, &robot_state);
+  if (Serial){
+    if (Serial.available() > 0)
+      serial_event(&robot_config, &robot_state);
+  }
+
 
   // Update devices
   reciever.update();
 
   // Update subystems
-  //railChassis.update(deltaT);
+  railChassis.update(deltaT);
   gimbal.update(deltaT);
   shooter.update(deltaT);
 

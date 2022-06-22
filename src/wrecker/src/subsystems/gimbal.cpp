@@ -81,18 +81,19 @@ void Gimbal::update(float deltaTime) {
     }
 
     if (trackingTimeout > 1000000) { // 1 sec
-      int time = millis() % 3000;
-      float phase_yaw = (time / 3000.0) * 2.0 * PI;
+      int time_yaw = millis() % 8000;
+      float phase_yaw = (time_yaw / 8000.0) * 2.0 * PI;
       float searchAngleYaw = sin(phase_yaw) * 60.0;
 
-      float phase_pitch = (time / 800.0) * 2.0 * PI;
+      int time_pitch = millis() % 1200;
+      float phase_pitch = (time_pitch / 1200.0) * 2.0 * PI;
       float searchAnglePitch = sin(phase_pitch) * 15.0 + 30;
 
       aimYaw = searchAngleYaw;
       aimPitch = searchAnglePitch;
-      state->gimbal.tracking = true;
-    } else {
       state->gimbal.tracking = false;
+    } else {
+      state->gimbal.tracking = true;
     }
   } else {
     if (state->driverInput.mouseRight) {
@@ -137,6 +138,7 @@ void Gimbal::update(float deltaTime) {
   }
 
 
+
   // Yaw PID
   state->gimbal.yawPos.R = aimYaw;
   PID_Filter(&config->yawPos, &state->gimbal.yawPos, yawAngle, deltaTime);
@@ -162,7 +164,12 @@ void Gimbal::update(float deltaTime) {
   float dynamicPitchFeedForward = cos((PI / 180.0) * pitchAngle) * pitchF;
 
   // Set motor power
-  if (calibrated || state->robot == 7 &&  state->driverInput.s2 > 1) {
+  if (state->driverInput.s2 == 1){
+    yawMotor.setPower(0.0);
+    pitchMotor.setPower(0.0);
+  }
+
+  else if (calibrated || state->robot == 7) {
     yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
     pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }

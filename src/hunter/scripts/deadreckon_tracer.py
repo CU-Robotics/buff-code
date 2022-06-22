@@ -32,10 +32,11 @@ class Dead_Reckon_Tracer:
 	"""
 	
 	def __init__(self, name):
+		self.name = name
 		self.pose = None
-		self.history = None
 		self.t = time.time() 
 		self.old_t = time.time()
+		self.history = np.zeros((4,2), dtype=np.float64)
 		self.trajectory = np.zeros((3,2), dtype=np.float64)
 
 		self.init_ros(name)
@@ -45,12 +46,12 @@ class Dead_Reckon_Tracer:
 		rospy.init_node('tracker', anonymous=True)
 
 		self.r_threshold = rospy.get_param('/buffbot/TRACKER/MATCH_THRESHOLD')
-		self.d_offset = rospy.get_param('/buffbot/TRACKER/SHOOTER_DROP')
+		self.d_offset = rospy.get_param('/buffbot/TRACKER/SHOOTER_OFFSET')
 		self.t_offset = rospy.get_param('/buffbot/TRACKER/LEAD_TIME')
 		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
 		
 		hz = rospy.get_param('/buffbot/CAMERA/FPS')
-		self.rate = rospy.Rate(hz / 2)
+		self.rate = rospy.Rate(hz)
 		
 		self.debug = rospy.get_param('/buffbot/DEBUG')
 		topics = rospy.get_param('/buffbot/TOPICS')
@@ -88,7 +89,6 @@ class Dead_Reckon_Tracer:
 		self.update_trajectory(t, np.array(closest_det[:2]))
 
 	def reset(self):
-		self.history = None
 		self.trajectory = np.zeros((3,2), dtype=np.float64)
 
 	def predict(self, t, pose=None):
@@ -122,18 +122,13 @@ class Dead_Reckon_Tracer:
 		if dt == 0:
 			return
 
-		if self.history is None:
-			self.history = np.zeros((4,2), dtype=np.float64)
-			self.history[0] = measure
-			self.history[1] = measure
 
-		else:
-			if np.linalg.norm(measure - self.history[0]) > self.r_threshold:
-				self.trajectory = np.zeros((3,2), dtype=np.float64)
-				self.history[0] = measure
-
-			self.history[1:] =  self.history[:3]
+		if np.linalg.norm(measure - self.history[0]) > self.r_threshold:
+			self.trajectory = np.zeros((3,2), dtype=np.float64)
 			self.history[0] = measure
+
+		self.history[1:] = self.history[:3]
+		self.history[0] = measure
 
 		velocity, acceleration, jerk = self.trajectory
 
@@ -153,21 +148,25 @@ class Dead_Reckon_Tracer:
 	def spin(self):
 		while not rospy.is_shutdown():
 
-			if time.time() - self.t > 5:
-				self.reset()
+			if time.time() - self.t > 0.1:
+				self.trajectory = np.zeros((3,2), dtype=np.float64)
+				self.history[0] = [self.d_offset[0], self.d_offset[1]]
 
-			if not self.history is None:
+			self.predict(time.time())
 
-				self.predict(time.time())
+			phi_err = (self.pose[1] - self.d_offset[1]) * self.FOV / 2.5
+			psi_err = (self.pose[0] - self.d_offset[0]) * self.FOV / 2.5
 
-				phi_err = (self.pose[1] - self.d_offset) * self.FOV
-				psi_err = (self.pose[0] - 0.5) * self.FOV
+			if self.name == '/buffbot/BLUE_TRACKER':
+				msg = String(f'GL {psi_err:.4f}\nGK {phi_err:.4f}\n') 
 
-				msg = String(f'GW {round(psi_err)}\nGH {round(phi_err)}\n') # 
-				self.prediction_pub.publish(msg)
+			elif self.name == '/buffbot/RED_TRACKER':
+				msg = String(f'GW {psi_err:.4f}\nGH {phi_err:.4f}\n') 
 
-				if self.debug:
-					self.publish_error()
+			self.prediction_pub.publish(msg)
+
+			if self.debug:
+				self.publish_error()
 
 			self.rate.sleep()
 

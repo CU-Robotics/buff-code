@@ -63,12 +63,12 @@ struct C_SwerveChassis {
 
 struct C_RailChassis {
   // Stopping nodes
-  float nodes[5] = {-8000, -15000.0, -22000.0, -29000.0, -36000.0};
-  int numNodes = 5;
+  float nodes[2] = {0, 10000}; //{-8000, -15000.0, -22000.0, -29000.0, -36000.0};
+  int numNodes = 2;
 
   float acceptanceRange = 400.0;
 
-  float rampLimit = 0.3;
+  float rampLimit = 5;
 
   // PIDs
   C_PID drivePos;
