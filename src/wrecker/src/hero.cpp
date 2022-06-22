@@ -138,8 +138,8 @@ void setup() {
   reciever.init(&robot_state.driverInput);
 
   // Subsystem setup
-  // gimbal.setup(&robot_config.gimbal, &robot_state);
-  // swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  gimbal.setup(&robot_config.gimbal, &robot_state);
+  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
   shooter42.setup(&robot_config.shooter42, &robot_state);
 
@@ -165,10 +165,11 @@ void loop() {
   reciever.update();
 
   // Update subsystems
-  //swerveChassis.update(deltaT);
-  //gimbal.update(deltaT);
+  swerveChassis.update(deltaT);
+  gimbal.update(deltaT);
   shooter.update(deltaT);
   shooter42.update(deltaT);
+
 
   // Serial.println(robot_state.refSystem.shooter_on);
   // float stick = (robot_state.driverInput.leftStickY - 268) / 1416.0;

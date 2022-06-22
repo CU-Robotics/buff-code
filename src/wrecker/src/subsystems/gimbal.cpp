@@ -50,12 +50,6 @@ void Gimbal::update(float deltaTime) {
   }
   this->state->gimbal.gyroAngle += gyroSpeed * this->state->chassis.spin;
 
-  // Serial.print(this->imu.get_gyro_z());
-  // Serial.print(" - ");
-  // Serial.print(gyroSpeed);
-  // Serial.print(" - ");
-  // Serial.print(this->state->gimbal.gyroAngle);
-
   // Yaw encoder
   float rawYawAngle = yawMotor.getAngle();
   if (calibrated || state->robot == 7 &&  state->driverInput.s2 > 1) {

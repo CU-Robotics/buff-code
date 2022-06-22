@@ -91,7 +91,11 @@ void SwerveChassis::update(unsigned long deltaTime) {
   }
 
   if (this->state->chassis.beyblade) {
-    s = 1.0;
+    if (x == 0 && y == 0) {
+      s = 1.0;
+    } else {
+      s = 0.7;
+    }
   }
 
   drive(x, y, s, deltaTime);
@@ -107,19 +111,36 @@ void SwerveChassis::update(unsigned long deltaTime) {
   } else if (s != 0 && y != 0) {
     this->state->chassis.spin = 1.0;
   } else {
-    switch(this->state->refSystem.robot_level) {
-      case 1:
-        this->state->chassis.spin = 1;
-        break;
-      case 2:
-        this->state->chassis.spin = 1.5;
-        break;
-      case 3:
-        this->state->chassis.spin = 1.7;
-        break;
-      default:
-        this->state->chassis.spin = 1.7;
-        break;
+    if (state->robot == 3) {
+      switch(this->state->refSystem.robot_level) {
+        case 1:
+          this->state->chassis.spin = 1;
+          break;
+        case 2:
+          this->state->chassis.spin = 1.1;
+          break;
+        case 3:
+          this->state->chassis.spin = 1.4;
+          break;
+        default:
+          this->state->chassis.spin = 1;
+          break;
+      }
+    } else if (state->robot == 1) {
+      switch(this->state->refSystem.robot_level) {
+        case 1:
+          this->state->chassis.spin = 1;
+          break;
+        case 2:
+          this->state->chassis.spin = 1;
+          break;
+        case 3:
+          this->state->chassis.spin = 1;
+          break;
+        default:
+          this->state->chassis.spin = 1;
+          break;
+      }
     }
   }
 }
