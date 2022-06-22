@@ -28,6 +28,7 @@ NODES:
   SERIAL:
     FILES: ['serial_layer.py']
     CONFIG: 'serial_settings.yaml'
+    REQUIRED: True
   TRACKER:
     FILES: []
     CONFIG: 'tracker_settings.yaml'

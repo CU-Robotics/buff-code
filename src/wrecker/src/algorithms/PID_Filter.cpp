@@ -10,10 +10,10 @@ void PID_Filter(C_PID* config, S_PID* state, float feedback, long dt) {
   
   // Derivative term = change in error (X[0])
   state->X[2] = (error - state->X[0]) / dt;
-  
+ 
   // Integral term = sum of error
   state->X[1] = max(config->Imin, min(config->Imax, state->X[1] + (state->X[0] * dt)));
-  
+
   // Proportional term = error (Reference - Measure)
   state->X[0] = error;
   if (config->continuous) {

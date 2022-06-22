@@ -126,7 +126,7 @@ void loop() {
 
 
   // Update devices
-  // reciever.update();
+  reciever.update();
 
   // Update subystems
   railChassis.update(deltaT);

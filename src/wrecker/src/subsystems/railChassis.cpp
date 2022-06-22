@@ -20,8 +20,16 @@ void RailChassis::setup(C_RailChassis *data, S_Robot *r_state) {
   // PID Tuning
   data->drivePos.Ymax = 4000;
   data->drivePos.Ymin = -4000;
-  data->driveVel.K[0] = 0.0006;
-  data->drivePos.K[0] = 1;
+  data->driveVel.Imin = -20000;
+  data->driveVel.Imax = 20000;
+
+  data->drivePos.K[0] = 0.2;
+  data->drivePos.K[1] = 0.0;
+  data->drivePos.K[2] = 0.0;
+
+  data->driveVel.K[0] = 0.0003;
+  data->driveVel.K[1] = 0.00001;
+  data->driveVel.K[2] = 1;
   //data->drivePos.K[2] = 400000;
 }
 
@@ -52,53 +60,63 @@ void RailChassis::update(unsigned long deltaTime) {
   this->rightPrev = rightRawPos;
 
   pos = realizePosition(leftDriveMotor.getAngle(), rightDriveMotor.getAngle());
+  // Serial.print("measured "); Serial.println(pos);
 
   if(abs(pos - this->config->nodes[this->currNode]) < config->acceptanceRange)
     selectNode();
 
   // PID
   state->railChassis.drivePos.R = this->config->nodes[this->currNode];
+  // Serial.print("Reference "); Serial.println(state->railChassis.drivePos.R);
   PID_Filter(&config->drivePos, &state->railChassis.drivePos, pos, deltaTime);
 
-  if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
-    trackingTimeout = 0;
-    Serial.println("bad 1");
-  } else {
-    trackingTimeout += deltaTime;
-    Serial.println("good 1");
-  }
-
-  state->railChassis.driveVel.R = 0;
-
-  if (trackingTimeout > 2000000) { // 1 sec
-    state->railChassis.driveVel.R = state->railChassis.drivePos.Y;
-  }
-
+  // if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
+  //   trackingTimeout = 0;
+  // } else {
+  //   trackingTimeout += deltaTime;
+  // }
+  state->railChassis.driveVel.R = state->railChassis.drivePos.Y;
   PID_Filter(&config->driveVel, &state->railChassis.driveVel, leftDriveMotor.getRpm(), deltaTime);
 
   // Set motor output
 
-  float speed = state->railChassis.driveVel.Y;
-  if (rampedSpeed < speed) {
-    rampedSpeed += (deltaTime / 1000000.0) / this->config->rampLimit;
-    if (rampedSpeed > speed) {
-      rampedSpeed = speed;
-    }
-  } else if (rampedSpeed > speed) {
-    rampedSpeed -=  (deltaTime / 1000000.0) / this->config->rampLimit;
-    if (rampedSpeed < speed) {
-      rampedSpeed = speed;
+  if (state->driverInput.s2 == 2 && !state->gimbal.tracking){
+    // float speed = state->railChassis.driveVel.Y;
+    // if (rampedSpeed < speed) {
+    //   rampedSpeed += (deltaTime / 1000000.0) / this->config->rampLimit;
+    //   if (rampedSpeed > speed) {
+    //     rampedSpeed = speed;
+    //   }
+    // } else if (rampedSpeed > speed) {
+    //   rampedSpeed -= (deltaTime / 1000000.0) / this->config->rampLimit;
+    //   if (rampedSpeed < speed) {
+    //     rampedSpeed = speed;
+    //   }
+    // }
+
+    // Serial.print(rampedSpeed);
+    // Serial.print(" - ");
+    // Serial.println(speed);
+
+    // Set motor output
+
+
+    if (calibrated) {
+      // Serial.print(state->railChassis.driveVel.X[0]); Serial.print("  ||  ");
+      // Serial.print(state->railChassis.driveVel.X[1]); Serial.print("  ||  ");
+      // Serial.println(state->railChassis.driveVel.X[2]);
+
+      // Serial.print("Power "); Serial.println(state->railChassis.driveVel.Y);
+
+      leftDriveMotor.setPower(state->railChassis.driveVel.Y);
+      rightDriveMotor.setPower(state->railChassis.driveVel.Y);
     }
   }
+  else{
+    // Serial.println(0.0);
 
-  Serial.print(rampedSpeed);
-  Serial.print(" - ");
-  Serial.println(speed);
-
-  // Set motor output
-  if (calibrated) {
-    leftDriveMotor.setPower(rampedSpeed);
-    rightDriveMotor.setPower(rampedSpeed);
+    leftDriveMotor.setPower(0);
+    rightDriveMotor.setPower(0);
   }
 }
 
