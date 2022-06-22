@@ -104,12 +104,8 @@ void setup() {
   gimbal.setup(&robot_config.gimbal, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
 
-<<<<<<< HEAD:src/wrecker/src/sentry.cpp
-  delay(5000);
-=======
   fw_1.init(28);
   fw_2.init(29);
->>>>>>> 5672190416ecaea62edb364360ae5bc1c62af468:src/wrecker/src/sentry.cppd
 }
 
 
@@ -133,7 +129,7 @@ void loop() {
   // reciever.update();
 
   // Update subystems
-  // railChassis.update(deltaT);
+  railChassis.update(deltaT);
   gimbal.update(deltaT);
   // shooter.update(deltaT);
 
