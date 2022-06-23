@@ -166,7 +166,7 @@ class Dead_Reckon_Tracer:
 			if not self.shape is None:
 				d = self.height_2_distance(self.shape[1])
 				self.shape = None
-				dist_scale = (d * 0.0006)
+				dist_scale = 0.0002 * pow(d * 0.037, 2)
 
 				rospy.loginfo(dist_scale)
 				phi_err = ((self.pose[1] - self.d_offset[1]) * self.FOV / 2.5) + dist_scale
