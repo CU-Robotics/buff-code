@@ -74,6 +74,11 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   speed = speed * inversion;
 
   // Speed ramping
+  float rampLimit = this->config->rampLimit;
+  if (this->state->refSystem.robot_level == 3 || this->state->driverInput.s2 == 2) {
+    rampLimit = this->config->rampLimitHigh;
+  }
+
   if (rampedSpeed < speed) {
     rampedSpeed += (deltaTime / 1000000.0) / this->config->rampLimit;
     if (rampedSpeed > speed) {
@@ -86,12 +91,11 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     }
   }
 
-  //rampedSpeed = speed;
 
   // Ref limiting
   if (state->robot == 3 && state->driverInput.s2 == 2) {
     // 1v1
-    state->chassis.maxRpm = 3200;
+    state->chassis.maxRpm = 6000;
   } else {
     // 3v3
     switch (state->refSystem.robot_level) {
@@ -105,7 +109,7 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
         state->chassis.maxRpm = 5000;
         break;
       default:
-        state->chassis.maxRpm = 3200;
+        state->chassis.maxRpm = 3000;
         break;
     }
   }
@@ -127,6 +131,9 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   // Drive Velocity PID
   moduleState->driveVel.R = rampedSpeed * state->chassis.maxRpm;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
+
+  
+  Serial.println(calibrated);
 
 
   // Set motor power

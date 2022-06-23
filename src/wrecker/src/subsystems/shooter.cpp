@@ -31,9 +31,6 @@ void Shooter::update(unsigned long deltaTime) {
         shooterOn = state->refSystem.gimbal_on;
     }
 
-    Serial.print("Shooter on ");
-    Serial.println(state->refSystem.shooter_on);
-
     if (calibrated || (state->robot == 7 && state->driverInput.s2 == 2)) {
         //Serial.println(shooterTimer);
 
