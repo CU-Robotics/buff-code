@@ -169,6 +169,7 @@ void loop() {
   gimbal.update(deltaT);
   shooter.update(deltaT);
 
+
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;
   if (CANTimer >= 5000) {

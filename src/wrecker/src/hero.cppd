@@ -171,14 +171,6 @@ void loop() {
   shooter42.update(deltaT);
 
 
-  // Serial.println(robot_state.refSystem.shooter_on);
-  // float stick = (robot_state.driverInput.leftStickY - 268) / 1416.0;
-  // Serial.println(stick);
-  
-
-  // fw_1.setPower(stick);
-  // fw_2.setPower(stick);
-
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;
   if (CANTimer >= 5000) {
