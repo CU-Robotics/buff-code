@@ -19,7 +19,7 @@ void Shooter42::setup(C_Shooter42 *config, S_Robot *state) {
     this->config->feedPIDVel.K[0] = 0.0005;
 
     this->config->feedPIDPos.continuous = true;
-    this->config->feedPIDPos.K[0] = 0.01;
+    this->config->feedPIDPos.K[0] = 0.0125;
 }
 
 void Shooter42::update(unsigned long deltaTime) {
@@ -43,7 +43,7 @@ void Shooter42::update(unsigned long deltaTime) {
 
     if (calibrated) {
         if (shooterOn && shooterClear) {
-            fw_2.setPower(0.5);
+            fw_2.setPower(0.8);
         } else if (!shooterOn) {
             shooterTimer = 0;
             shooterClear = false;
@@ -52,7 +52,7 @@ void Shooter42::update(unsigned long deltaTime) {
             shooterTimer += deltaTime;
         }
 
-        if (shooterTimer > 4500000) // 4.5 sec
+        if (shooterTimer > 500000) // 5 sec
             shooterClear = true;
 
         // Feeding

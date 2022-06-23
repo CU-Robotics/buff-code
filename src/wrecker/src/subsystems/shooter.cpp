@@ -61,7 +61,11 @@ void Shooter::update(unsigned long deltaTime) {
             shooterTimer += deltaTime;
         }
 
-        if (shooterTimer > 4500000) // 4.5 sec
+        int timeout = 4000000; // 4 sec
+        if (state->robot == 1) {
+            timeout = 5000000; // 5 sec on the Hero
+        }
+        if (shooterTimer > timeout) // 4.5 sec
             shooterClear = true;
 
         // Mode switching

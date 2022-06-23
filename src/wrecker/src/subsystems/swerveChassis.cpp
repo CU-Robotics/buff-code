@@ -72,13 +72,6 @@ void SwerveChassis::update(unsigned long deltaTime) {
   int y = state->driverInput.s - state->driverInput.w;
   int s = state->driverInput.z - state->driverInput.x;
 
-  // Serial.print(x);
-  // Serial.print(" - ");
-  // Serial.print(y);
-  // Serial.print(" - ");
-  // Serial.print(s);
-  // Serial.println();
-
   if (this->state->driverInput.shift && !shiftPressed) {
     if (this->state->chassis.beyblade) {
       this->state->chassis.beyblade = false;
