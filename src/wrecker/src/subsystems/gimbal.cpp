@@ -85,8 +85,8 @@ void Gimbal::update(float deltaTime) {
       float phase_yaw = (time_yaw / 8000.0) * 2.0 * PI;
       float searchAngleYaw = sin(phase_yaw) * 60.0;
 
-      int time_pitch = millis() % 1800;
-      float phase_pitch = (time_pitch / 1800.0) * 2.0 * PI;
+      int time_pitch = millis() % 2200;
+      float phase_pitch = (time_pitch / 2200.0) * 2.0 * PI;
       float searchAnglePitch = sin(phase_pitch) * 15.0 + 30;
 
       aimYaw = searchAngleYaw;
