@@ -33,14 +33,15 @@ void Shooter::update(unsigned long deltaTime) {
 
     if (calibrated || (state->robot == 7 && state->driverInput.s2 == 2)) {
         if (shooterOn && shooterClear) {
+            // Sentry
             if (state->robot == 7) {
-                fw_2.setPower(0.5);
-                fw_1.setPower(0.5);
+                fw_2.setPower(0.55);
+                fw_1.setPower(0.55);
             } else {
                 if (state->robot == 3 && state->driverInput.s2 == 2) {
                     // 1v1
-                    fw_2.setPower(0.5);
-                    fw_1.setPower(0.5);
+                    fw_2.setPower(0.55);
+                    fw_1.setPower(0.55);
                 } else {
                     // 3v3
                     if (state->robot != 1) {
