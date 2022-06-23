@@ -38,9 +38,9 @@ class Gimbal
     float aimPitch = 0;
 
     int mouseReleased = 0;
+    bool deathResetFlag = false;
 
-    float yaw_reference_prev = 0;
-    float pitch_reference_prev = 0;
+    float trackingTimeout = 0;
 
     float realizeYawEncoder(float rawAngle);
     float realizeYawEncoderWithoutGyro(float rawAngle);

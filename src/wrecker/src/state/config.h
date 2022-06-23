@@ -41,7 +41,8 @@ struct C_SwerveModule {
   C_PID steerPos;
   C_PID driveVel;
 
-  float rampLimit = 0.001;
+  float rampLimit = 0.55; // How many seconds it takes to get from 0 to max rpm
+  float rampLimitHigh = 0.8;
 };
 
 struct C_SwerveChassis {
@@ -63,10 +64,12 @@ struct C_SwerveChassis {
 
 struct C_RailChassis {
   // Stopping nodes
-  float nodes[5] = {-8000, -15000.0, -22000.0, -29000.0, -36000.0};
-  int numNodes = 5;
+  float nodes[2] = {0, 10000}; //{-8000, -15000.0, -22000.0, -29000.0, -36000.0};
+  int numNodes = 2;
 
   float acceptanceRange = 400.0;
+
+  float rampLimit = 5;
 
   // PIDs
   C_PID drivePos;
@@ -97,8 +100,8 @@ struct C_Gimbal {
 // Configured for cooling focus by default
 struct C_Shooter17 {
   //  Feeder RPM for: low, high, burst
-  float feedRPMLow = 60.0;
-  float feedRPMHigh = 90.0;
+  float feedRPMLow = 40.0;
+  float feedRPMHigh = 75.0;
   float feedRPMBurst = 120.0;
 
   C_PID feedPID;

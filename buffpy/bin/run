@@ -163,6 +163,7 @@ def launch_system(target_path, config):
 			pool: list of roslaunch processes
 	"""
 	
+	args = []
 	pool = []
 	respawn = []
 	commands = []	
@@ -223,11 +224,12 @@ def launch_system(target_path, config):
 				is_opened = False
 				args = []
 				for arg in node['ARGS']:
-					s = ''
-					items = arg.split()
-					args.append(items[0])
 
-					if '${' in items[1]:		# Need to pass env vars sometimes
+					if '${' in arg:		# Need to pass env vars sometimes
+						s = ''
+						items = arg.split()
+						args.append(items[0])
+
 						substr = ''
 						if '$' != items[1][0]:
 							substr += items[1][0]
@@ -252,11 +254,7 @@ def launch_system(target_path, config):
 						args.append(s)
 
 					else:
-						args.append(items[1])
-
-			else:
-				# no args passed
-				args = []
+						args += arg.split()
 
 			if 'REQUIRED' in node:
 				required = node['REQUIRED']
@@ -333,18 +331,19 @@ def spin(config, target_path, target_args):
 		# this will loop until an interrupt or the core dies.
 		while core_process.poll() is None:
 			# if output/errors print them
-			mesg = core_process.communicate()
-			if mesg[0]:
-				print(mesg[0].decode('utf-8')) # this will force us to use rospy.log to print info I think
-			if mesg[1]:
-				print(mesg[1].decode('utf-8')) # output is sent from program to roscore then printed here
+			# mesg = core_process.communicate()
+			# if mesg[0]:
+			# 	print(mesg[0].decode('utf-8')) # this will force us to use rospy.log to print info I think
+			# if mesg[1]:
+			# 	print(mesg[1].decode('utf-8')) # output is sent from program to roscore then printed here
 
 			# restart processes with the respawn flag
 			if not pool is None:
 				for i,proc in enumerate(pool):
-					if not proc.poll() is None:
-						if proc.returncode == 1 and respawn[i]:
-							pool[i] = subprocess.Popen(cmd)
+					if not proc.poll() is None and proc.returncode != 0 and respawn[i]:
+						print(f'{commands[i]} died: {proc.returncode}')
+						print(f'restarting {commands[i]}')
+						pool[i] = sb.Popen(commands[i])
 
 	except KeyboardInterrupt as e:
 		print(e)
