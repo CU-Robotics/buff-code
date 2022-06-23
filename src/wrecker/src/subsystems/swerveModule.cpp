@@ -89,19 +89,25 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   //rampedSpeed = speed;
 
   // Ref limiting
-  switch (state->refSystem.robot_level) {
-    case 1:
-      state->chassis.maxRpm = 3200;
-      break;
-    case 2:
-      state->chassis.maxRpm = 4000;
-      break;
-    case 3:
-      state->chassis.maxRpm = 5000;
-      break;
-    default:
-      state->chassis.maxRpm = 3200;
-      break;
+  if (state->robot == 3 && state->driverInput.s2 == 2) {
+    // 1v1
+    state->chassis.maxRpm = 3200;
+  } else {
+    // 3v3
+    switch (state->refSystem.robot_level) {
+      case 1:
+        state->chassis.maxRpm = 3200;
+        break;
+      case 2:
+        state->chassis.maxRpm = 4000;
+        break;
+      case 3:
+        state->chassis.maxRpm = 5000;
+        break;
+      default:
+        state->chassis.maxRpm = 3200;
+        break;
+    }
   }
 
   // Steer Velocity PID
