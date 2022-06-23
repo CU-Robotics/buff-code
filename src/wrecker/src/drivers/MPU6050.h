@@ -13,7 +13,7 @@ class MPU6050{
 
     void init();
 
-    bool update_MPU6050();
+    void update_MPU6050();
 
     float get_accel_x();
 

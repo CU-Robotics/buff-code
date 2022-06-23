@@ -297,8 +297,10 @@ void dump_Gimbal(S_Gimbal* gm){
   Serial.print("/GT: "); 
   Serial.print(gm->yaw, 4); Serial.print(","); 
   Serial.print(gm->pitch, 4); Serial.print(",");
-  Serial.print(gm->yaw_reference, 4); Serial.print(",");
-  Serial.print(gm->pitch_reference, 4); Serial.print(",");
+  Serial.print(gm->yaw_reference_red, 4); Serial.print(",");
+  Serial.print(gm->pitch_reference_red, 4); Serial.print(",");
+  Serial.print(gm->yaw_reference_blue, 4); Serial.print(",");
+  Serial.print(gm->pitch_reference_blue, 4); Serial.print(",");
   Serial.println(gm->yawGlobal, 4);
 
   dump_PID(&gm->yawVel, "/GY");
@@ -338,11 +340,19 @@ void Gimbal_serial_event(C_Gimbal* config, S_Gimbal* state){
       break;
 
     case 'W':
-      state->yaw_reference = Serial.parseFloat();
+      state->yaw_reference_red = Serial.parseFloat();
       break;
 
     case 'H':
-      state->pitch_reference = Serial.parseFloat();
+      state->pitch_reference_red = Serial.parseFloat();
+      break;
+
+    case 'L':
+      state->yaw_reference_blue = Serial.parseFloat();
+      break;
+
+    case 'K':
+      state->pitch_reference_blue = Serial.parseFloat();
       break;
 
     case 'Y':
@@ -385,7 +395,7 @@ void Shooter17_serial_event(C_Shooter17* config, S_Shooter* state){
   }
 }
 
-void Shooter42_serial_event(C_Shooter42* config, S_Shooter* state){
+void Shooter42_serial_event(C_Shooter42* config, S_Shooter42* state){
   int m;
   char cmd = Serial.read();
   switch (cmd)
@@ -448,6 +458,17 @@ void serial_event(C_Robot* config, S_Robot* state){
     {
       case 'G':
         Gimbal_serial_event(&config->gimbal, &state->gimbal);
+        if (state->refSystem.robot_id > 100){
+          state->gimbal.yaw_reference = state->gimbal.yaw_reference_red;
+          state->gimbal.pitch_reference = state->gimbal.pitch_reference_red;
+        }
+        else{
+          state->gimbal.yaw_reference = state->gimbal.yaw_reference_blue;
+          state->gimbal.pitch_reference = state->gimbal.pitch_reference_blue;
+        }
+        // Serial.print(state->gimbal.yaw_reference);
+        // Serial.print("  ==  ");
+        // Serial.println(state->gimbal.pitch_reference);
         break;
 
       case 'V':
@@ -480,7 +501,7 @@ void dump_Robot(C_Robot* r_config, S_Robot* r_state){
     dump_Gimbal(&r_state->gimbal);
     // dump_Gimbal(&r_config->gimbal);
 
-    // dump_RefSystem_State(&r_state->refSystem);
+    dump_RefSystem_State(&r_state->refSystem);
     // dump_DriverInput(&r_state->driverInput);
 }
 

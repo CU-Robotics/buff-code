@@ -23,7 +23,7 @@ struct S_SwerveModule {
 
 struct S_Chassis {
   float rpm = 0.0f;
-  float spin = 0.0f;
+  float spin = 1.0f;
   float alpha = 0.0f; // angular acceleration
   float heading = 0.0f; // naming needs to be more consistent (greek letters, descriptive or units)
   float a[2] = {0.0f, 0.0f};
@@ -53,8 +53,17 @@ struct S_Gimbal {
   float yawGlobal = 0.0f;
   float gyroDrift = 0.0f;
   float gyroAngle = 0.0f;
+  float yaw_reference_red = 0.0f;
+  float pitch_reference_red = 0.0f;
+  float yaw_reference_blue = 0.0f;
+  float pitch_reference_blue = 0.0f;
+
   float yaw_reference = 0.0f;
   float pitch_reference = 0.0f;
+  float yaw_reference_prev = 0.0f;
+  float pitch_reference_prev = 0.0f;
+
+  float tracking = false;
 
   S_PID yawVel;
   S_PID yawPos;
@@ -67,6 +76,14 @@ struct S_Shooter {
   int mode = 0;
 
   S_PID feedPID;
+};
+
+struct S_Shooter42 {
+  bool firing = false;
+  int mode = 0;
+
+  S_PID feedPIDPos;
+  S_PID feedPIDVel;
 };
 
 struct DriverInput {
@@ -170,6 +187,10 @@ struct S_RefSystem {
 
     int rem_17_proj = -1;
     int rem_42_proj = -1;
+
+    int chassis_on = -1;
+    int gimbal_on = -1;
+    int shooter_on = -1;
 };
 
 struct S_Robot {
@@ -177,12 +198,13 @@ struct S_Robot {
   S_Chassis chassis;
   S_RailChassis railChassis;
   S_Shooter shooter17;
-  S_Shooter shooter42;
+  S_Shooter42 shooter42;
 
   S_RefSystem refSystem;
   DriverInput driverInput;
 
   int mode;
+  int robot; // 1 = hero, 3 = infantry, 7 = sentry
 };
 
 #endif // STATE_H

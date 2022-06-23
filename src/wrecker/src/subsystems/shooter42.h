@@ -6,6 +6,8 @@
 #ifndef SHOOTER42_H
 #define SHOOTER42_H
 
+extern flywheel fw_2;
+
 class Shooter42 {
  public:
     Shooter42();
@@ -17,12 +19,17 @@ class Shooter42 {
     C_Shooter42 *config;
 
     c620CAN feedMotor;
-    flywheel topFlywheel;
-    flywheel bottomFlywheel;
 
     float calibrated = false;
     int pos;
+    int posRollover;
+    int prevPos;
+    int feedAngle;
     bool mouseUp;
+
+    int shooterTimer = 0;
+    bool shooterClear = false;
+    bool armed = false;
 
     void fire();
 };

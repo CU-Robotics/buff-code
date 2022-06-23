@@ -23,7 +23,7 @@ void dump_Gimbal(S_Gimbal*);
 
 
 void Shooter17_serial_event(C_Shooter17*, S_Shooter*);
-void Shooter42_serial_event(C_Shooter42*, S_Shooter*);
+void Shooter42_serial_event(C_Shooter42*, S_Shooter42*);
 void dump_Shooter_State(S_Shooter*, String);
 
 

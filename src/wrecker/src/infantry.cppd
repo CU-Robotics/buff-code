@@ -9,7 +9,6 @@
 #include "drivers/serial_interface.h"
 
 #include "subsystems/gimbal.h"
-#include "subsystems/gimbal.h"
 #include "subsystems/shooter.h"
 #include "subsystems/swerveChassis.h"
 
@@ -41,6 +40,9 @@ Gimbal gimbal;
 Shooter shooter;
 SwerveChassis swerveChassis;
 
+flywheel fw_1;
+flywheel fw_2;
+
 void dump(){
   dump_Robot(&robot_config, &robot_state);
 }
@@ -64,6 +66,8 @@ void setup() {
   // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
   // serialDumpTmr.begin(dump, dumpRate);
 
+  // Configure State
+  robot_state.robot = 3;
 
   // Configure subsystems
 
@@ -78,7 +82,7 @@ void setup() {
   robot_config.gimbal.pitchPos.K[0] = 3;
   robot_config.gimbal.pitchPos.K[2] = 0.0;
 
-  robot_config.gimbal.pitchVel.K[0] = 0.012;
+  robot_config.gimbal.pitchVel.K[0] = 0.014;
 
   robot_config.gimbal.pitchMax = 50.0;
   robot_config.gimbal.pitchMin = -18.0;
@@ -136,6 +140,9 @@ void setup() {
   gimbal.setup(&robot_config.gimbal, &robot_state);
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
+
+  fw_1.init(28);
+  fw_2.init(29);
 }
 
 
@@ -149,6 +156,8 @@ void loop() {
   
   refSys.read_serial(); 
 
+  Serial.println(robot_state.driverInput.s2);
+
   // if (Serial.available() > 0)
   //   serial_event(&robot_config, &robot_state);
 
@@ -159,6 +168,7 @@ void loop() {
   swerveChassis.update(deltaT);
   gimbal.update(deltaT);
   shooter.update(deltaT);
+
 
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;

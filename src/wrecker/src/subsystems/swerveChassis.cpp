@@ -18,24 +18,37 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
 
   // Configure PIDs
   data->FR.steerVel.K[0] = 0.03;
-  data->FR.steerPos.K[0] = 1.2;
-  data->FR.steerPos.K[2] = 0;
+  data->FR.steerPos.K[0] = 1.8;
+  data->FR.steerPos.K[2] = 10.0;
+  data->FR.steerPos.Ymax = 1000;
+  data->FR.steerPos.Ymin = -1000;
   data->FR.driveVel.K[0] = 0.0006;
+  data->FR.driveVel.K[2] = 0;
+
 
   data->FL.steerVel.K[0] = data->FR.steerVel.K[0];
   data->FL.steerPos.K[0] = data->FR.steerPos.K[0];
   data->FL.steerPos.K[2] = data->FR.steerPos.K[2];
+  data->FL.steerPos.Ymax = data->FR.steerPos.Ymax;
+  data->FL.steerPos.Ymin = data->FR.steerPos.Ymin;
   data->FL.driveVel.K[0] = data->FR.driveVel.K[0];
+  data->FL.driveVel.K[2] = data->FR.driveVel.K[2];
 
   data->RL.steerVel.K[0] = data->FR.steerVel.K[0];
   data->RL.steerPos.K[0] = data->FR.steerPos.K[0];
   data->RL.steerPos.K[2] = data->FR.steerPos.K[2];
+  data->RL.steerPos.Ymax = data->FR.steerPos.Ymax;
+  data->RL.steerPos.Ymin = data->FR.steerPos.Ymin;
   data->RL.driveVel.K[0] = data->FR.driveVel.K[0];
+  data->RL.driveVel.K[2] = data->FR.driveVel.K[2];
 
   data->RR.steerVel.K[0] = data->FR.steerVel.K[0];
   data->RR.steerPos.K[0] = data->FR.steerPos.K[0];
   data->RR.steerPos.K[2] = data->FR.steerPos.K[2];
+  data->RR.steerPos.Ymax = data->FR.steerPos.Ymax;
+  data->RR.steerPos.Ymin = data->FR.steerPos.Ymin;
   data->RR.driveVel.K[0] = data->FR.driveVel.K[0];
+  data->RR.driveVel.K[2] = data->FR.driveVel.K[2];
 
 
   // Init modules
@@ -58,6 +71,13 @@ void SwerveChassis::update(unsigned long deltaTime) {
   int x = state->driverInput.d - state->driverInput.a;
   int y = state->driverInput.s - state->driverInput.w;
   int s = state->driverInput.z - state->driverInput.x;
+
+  // Serial.print(x);
+  // Serial.print(" - ");
+  // Serial.print(y);
+  // Serial.print(" - ");
+  // Serial.print(s);
+  // Serial.println();
 
   if (this->state->driverInput.shift && !shiftPressed) {
     if (this->state->chassis.beyblade) {
@@ -87,7 +107,37 @@ void SwerveChassis::update(unsigned long deltaTime) {
   } else if (s != 0 && y != 0) {
     this->state->chassis.spin = 1.0;
   } else {
-    this->state->chassis.spin = 1.725;
+    if (state->robot == 3) {
+      switch(this->state->refSystem.robot_level) {
+        case 1:
+          this->state->chassis.spin = 1;
+          break;
+        case 2:
+          this->state->chassis.spin = 1.1;
+          break;
+        case 3:
+          this->state->chassis.spin = 1.4;
+          break;
+        default:
+          this->state->chassis.spin = 1;
+          break;
+      }
+    } else if (state->robot == 1) {
+      switch(this->state->refSystem.robot_level) {
+        case 1:
+          this->state->chassis.spin = 1;
+          break;
+        case 2:
+          this->state->chassis.spin = 1;
+          break;
+        case 3:
+          this->state->chassis.spin = 1;
+          break;
+        default:
+          this->state->chassis.spin = 1;
+          break;
+      }
+    }
   }
 }
 

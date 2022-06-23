@@ -6,9 +6,8 @@
 
 #include "drivers/dr16.h"
 #include "drivers/ref_system.h"
-// #include "drivers/serial_interface.h"
+#include "drivers/serial_interface.h"
 
-#include "subsystems/gimbal.h"
 #include "subsystems/gimbal.h"
 #include "subsystems/shooter.h"
 #include "subsystems/railChassis.h"
@@ -25,7 +24,7 @@ int CANTimer = 0;
 // Loop timing
 unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
-unsigned long dumpRate = 1000000; // 1 sec
+unsigned long dumpRate = 2000000; // 2 sec
 IntervalTimer serialDumpTmr;
 
 // State
@@ -37,20 +36,28 @@ dr16 reciever;
 Ref_System refSys;
 
 // Subsystems
-RailChassis railChassis;
 Gimbal gimbal;
 Shooter shooter;
+RailChassis railChassis;
+
+flywheel fw_1;
+flywheel fw_2;
 
 
-// void dump(){
-//   dump_Robot(&robot_config, &robot_state);
-// }
+void dump(){
+
+  if (Serial){
+    dump_Robot(&robot_config, &robot_state);
+  }
+
+}
 
 // Runs once
 void setup() {
   Serial.begin(1000000);
   delay(1000);
-  Serial.println("-- SENTRY ROBOT START --");
+  if (Serial)
+    Serial.println("-- SENTRY ROBOT START --");
 
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
@@ -62,9 +69,11 @@ void setup() {
   can1.setBaudRate(1000000);
   can2.setBaudRate(1000000);
 
-  // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
-  // serialDumpTmr.begin(dump, dumpRate);
+  serialDumpTmr.priority(0); // Set interval timer to handle serial reads
+  serialDumpTmr.begin(dump, dumpRate);
 
+  // Configure State
+  robot_state.robot = 7;
 
   // Configure subsystems
 
@@ -79,16 +88,12 @@ void setup() {
   robot_config.gimbal.pitchPos.K[0] = 3;
   robot_config.gimbal.pitchPos.K[2] = 0.0;
 
-  robot_config.gimbal.pitchVel.K[0] = 0.012;
+  robot_config.gimbal.pitchVel.K[0] = 0.014;
 
-  robot_config.gimbal.pitchMax = 50.0;
-  robot_config.gimbal.pitchMin = -18.0;
-  robot_config.gimbal.pitchOffset = 177;
-  robot_config.gimbal.yawOffset = 119.28;
-
-  // CHASSIS
-
-
+  robot_config.gimbal.pitchMax = 46.0;
+  robot_config.gimbal.pitchMin = 10.0;
+  robot_config.gimbal.pitchOffset = 0;
+  robot_config.gimbal.yawOffset = 13.5;
 
   // Driver setup
   refSys.init(&robot_state.refSystem);
@@ -98,6 +103,9 @@ void setup() {
   railChassis.setup(&robot_config.railChassis, &robot_state);
   gimbal.setup(&robot_config.gimbal, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
+
+  fw_1.init(28);
+  fw_2.init(29);
 }
 
 
@@ -109,20 +117,22 @@ void loop() {
   while (can2.read(tempMessage))
     canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
   
-  refSys.read_serial(); 
+  refSys.read_serial();
 
-  // if (Serial.available() > 0)
-  //   serial_event(&robot_config, &robot_state);
+  if (Serial){
+    if (Serial.available() > 0)
+      serial_event(&robot_config, &robot_state);
+  }
+
 
   // Update devices
   reciever.update();
 
   // Update subystems
-  //railChassis.update(deltaT);
+  railChassis.update(deltaT);
   gimbal.update(deltaT);
-  // shooter.update(deltaT);
+  shooter.update(deltaT);
 
-  Serial.println();
 
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;

@@ -19,7 +19,6 @@ void flywheel::init(byte tempPinNum) {
     esc.attach(pinNum);
 
     esc.writeMicroseconds(1000);
-
 }
 
 void flywheel::setPower(float newPower) {
@@ -31,5 +30,8 @@ void flywheel::setPower(float newPower) {
     }
     int sendPower = 1000 + (newPower * 1000);
     esc.writeMicroseconds(sendPower);
-    // Serial.println(sendPower);
+}
+
+void flywheel::reset() {
+    esc.writeMicroseconds(1000);
 }

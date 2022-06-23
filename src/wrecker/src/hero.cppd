@@ -9,8 +9,8 @@
 #include "drivers/serial_interface.h"
 
 #include "subsystems/gimbal.h"
-#include "subsystems/gimbal.h"
 #include "subsystems/shooter.h"
+#include "subsystems/shooter42.h"
 #include "subsystems/swerveChassis.h"
 
 
@@ -25,7 +25,7 @@ int CANTimer = 0;
 // Loop timing
 unsigned long deltaT = 5000;
 unsigned long lastTime = 0;
-unsigned long dumpRate = 1000000; // 1 sec
+unsigned long dumpRate = 2000000; // 2 sec
 IntervalTimer serialDumpTmr;
 
 // State
@@ -39,8 +39,11 @@ dr16 reciever;
 // Subsystems
 Gimbal gimbal;
 Shooter shooter;
+Shooter42 shooter42;
 SwerveChassis swerveChassis;
 
+flywheel fw_1;
+flywheel fw_2;
 
 // void dump(){
 //   dump_Robot(&robot_config, &robot_state);
@@ -65,66 +68,67 @@ void setup() {
   // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
   // serialDumpTmr.begin(dump, dumpRate);
 
+  // Configure State
+  robot_state.robot = 1;
 
   // Configure subsystems
 
   // GIMBAL
-  robot_config.gimbal.yawPos.K[0] = 2.3;
-  robot_config.gimbal.yawPos.K[2] = 0.01;
+  robot_config.gimbal.yawPos.K[0] = 2.2;
 
   robot_config.gimbal.yawVel.Ymin = -150.0;
   robot_config.gimbal.yawVel.Ymax = 150.0;
-  robot_config.gimbal.yawVel.K[0] = 0.06;
+  robot_config.gimbal.yawVel.K[0] = 0.08;
 
-  robot_config.gimbal.pitchPos.K[0] = 3;
+  robot_config.gimbal.pitchPos.K[0] = 4.5;
   robot_config.gimbal.pitchPos.K[2] = 0.0;
 
-  robot_config.gimbal.pitchVel.K[0] = 0.012;
+  robot_config.gimbal.pitchVel.K[0] = 0.03;
 
-  robot_config.gimbal.pitchMax = 360;//50.0;
-  robot_config.gimbal.pitchMin = -360;//-18.0;
-  robot_config.gimbal.pitchOffset = 0;
-  robot_config.gimbal.yawOffset = 0;
+  robot_config.gimbal.pitchMax = 30;
+  robot_config.gimbal.pitchMin = -15;
+  robot_config.gimbal.pitchOffset = 60;
+  robot_config.gimbal.yawOffset = 109;
 
   // CHASSIS
 
   // FR
   robot_config.swerveChassis.FR.cornerID = 0;
   robot_config.swerveChassis.FR.steerMotorID = 4;
-  robot_config.swerveChassis.FR.steerEncoderID = 1 + 1;
+  robot_config.swerveChassis.FR.steerEncoderID = 1 + 2;
   robot_config.swerveChassis.FR.driveMotorID = 5;
   robot_config.swerveChassis.FR.absolute_offset = 45;
-  int fr_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
+  int fr_alignment[9] = {27, 68, 106, 148, 186, 228, 268, 306, 346};
   for (int i = 0; i < 9; i++)
     robot_config.swerveChassis.FR.alignment[i] = fr_alignment[i];
 
   // FL
   robot_config.swerveChassis.FL.cornerID = 1;
   robot_config.swerveChassis.FL.steerMotorID = 3;
-  robot_config.swerveChassis.FL.steerEncoderID = 1 + 2;
+  robot_config.swerveChassis.FL.steerEncoderID = 1 + 1;
   robot_config.swerveChassis.FL.driveMotorID = 6;
   robot_config.swerveChassis.FL.absolute_offset = -45;
-  int fl_alignment[9] = {2, 42, 85, 125, 166, 206, 246, 288, 327};
+  int fl_alignment[9] = {36, 75, 115, 155, 196, 235, 275, 315, 355};
   for (int i = 0; i < 9; i++)
     robot_config.swerveChassis.FL.alignment[i] = fl_alignment[i];
 
   // BL
   robot_config.swerveChassis.RL.cornerID = 2;
   robot_config.swerveChassis.RL.steerMotorID = 2;
-  robot_config.swerveChassis.RL.steerEncoderID = 1 + 3;
+  robot_config.swerveChassis.RL.steerEncoderID = 1 + 4;
   robot_config.swerveChassis.RL.driveMotorID = 7;
   robot_config.swerveChassis.RL.absolute_offset = -135;
-  int bl_alignment[9] = {23, 63, 102, 142, 182, 222, 261, 301, 340};
+  int bl_alignment[9] = {30, 69, 108, 149, 186, 228, 266, 305, 344};
   for (int i = 0; i < 9; i++)
     robot_config.swerveChassis.RL.alignment[i] = bl_alignment[i];
 
   // BR
   robot_config.swerveChassis.RR.cornerID = 3;
   robot_config.swerveChassis.RR.steerMotorID = 1;
-  robot_config.swerveChassis.RR.steerEncoderID = 1 + 4;
+  robot_config.swerveChassis.RR.steerEncoderID = 1 + 3;
   robot_config.swerveChassis.RR.driveMotorID = 8;
   robot_config.swerveChassis.RR.absolute_offset = 135;
-  int br_alignment[9] = {38, 77, 119, 157, 199, 240, 280, 321, 360};
+  int br_alignment[9] = {7, 47, 87, 127, 167, 207, 247, 287, 327};
   for (int i = 0; i < 9; i++)
     robot_config.swerveChassis.RR.alignment[i] = br_alignment[i];
 
@@ -137,6 +141,10 @@ void setup() {
   gimbal.setup(&robot_config.gimbal, &robot_state);
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
+  shooter42.setup(&robot_config.shooter42, &robot_state);
+
+  fw_1.init(28);
+  fw_2.init(29);
 }
 
 
@@ -158,10 +166,10 @@ void loop() {
 
   // Update subsystems
   swerveChassis.update(deltaT);
-  //gimbal.update(deltaT);
-  //shooter.update(deltaT);
+  gimbal.update(deltaT);
+  shooter.update(deltaT);
+  shooter42.update(deltaT);
 
-  Serial.println();
 
   // Send CAN every 5000 microseconds
   CANTimer += deltaT;

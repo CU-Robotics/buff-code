@@ -14,51 +14,67 @@ void Shooter42::setup(C_Shooter42 *config, S_Robot *state) {
     this->config = config;
     this->state = state;
 
-    this->feedMotor.init(1, 2);
-    this->bottomFlywheel.init(29);
-    this->topFlywheel.init(28);
+    this->feedMotor.init(2, 2);
 
     this->config->feedPIDVel.K[0] = 0.0005;
 
     this->config->feedPIDPos.continuous = true;
-    this->config->feedPIDPos.K[0] = 1.2;
+    this->config->feedPIDPos.K[0] = 0.01;
 }
 
 void Shooter42::update(unsigned long deltaTime) {
     if (state->driverInput.b && !calibrated)
         calibrated = true;
 
+    float rawPos = feedMotor.getAngle();
     if (calibrated) {
-        // Spin flywheels
-        this->topFlywheel.setPower(0.5);
-        this->bottomFlywheel.setPower(0.5);
+        float difference = this->prevPos - rawPos;
+        if (difference < -180)
+        this->posRollover--;
+        else if (difference > 180)
+        this->posRollover++;
+    }
+    this->prevPos = rawPos;
 
-        /// Death reset
-        if (state->driverInput.v) {
-            this->bottomFlywheel.init(29);
-            this->topFlywheel.init(28);
+    // Spin flywheels
+    int shooterOn = 0;
+    shooterOn = state->refSystem.shooter_on;
+
+
+    if (calibrated) {
+        if (shooterOn && shooterClear) {
+            fw_2.setPower(0.5);
+        } else if (!shooterOn) {
+            shooterTimer = 0;
+            shooterClear = false;
+            fw_2.reset();
+        } else {
+            shooterTimer += deltaTime;
         }
 
+        if (shooterTimer > 4500000) // 4.5 sec
+            shooterClear = true;
+
         // Feeding
-        if (state->driverInput.mouseLeft && mouseUp) {
-            pos += 90 * 36;
-            if (pos >= 360 * 36) {
-                pos -= 360 * 36;
-            }
+        if (state->driverInput.ctrl && mouseUp) {
+            pos -= 90 * 36;
             mouseUp = false;
         } else if (state->driverInput.f)
-            state->shooter17.feedPID.R = 60 * 36;
-        else
+            state->shooter42.feedPIDVel.R = 60 * 36;
+        else if (!state->driverInput.ctrl)
             mouseUp = true;
 
-        // Feed PID
-        // state->shooter42.feedPIDPos.R = pos;
-        // PID_Filter(&config->feedPIDPos, &state->shooter42.feedPIDPos, feedMotor.getAngle(), deltaTime);
-        // this->feedMotor.setPower(state->shooter17.feedPID.Y);
-        // Serial.println(state->shooter17.feedPID.Y);
+        Serial.println(pos);
 
-        // PID_Filter(&config->feedPIDVel, &state->shooter42.feedPIDVel, feedMotor.getRpm(), deltaTime);
-        // this->feedMotor.setPower(state->shooter17.feedPID.Y);
-        // Serial.println(state->shooter17.feedPID.Y);
+        // Feed PID
+        float angle = this->feedMotor.getAngle() + (this->posRollover * 360);
+        state->shooter42.feedPIDPos.R = pos;
+        PID_Filter(&config->feedPIDPos, &state->shooter42.feedPIDPos, angle, deltaTime);
+
+        if (!state->driverInput.f) {
+            state->shooter42.feedPIDVel.R = state->shooter42.feedPIDPos.Y * 100;
+        }
+        PID_Filter(&config->feedPIDVel, &state->shooter42.feedPIDVel, feedMotor.getRpm(), deltaTime);
+        this->feedMotor.setPower(state->shooter42.feedPIDVel.Y);
     }
 }

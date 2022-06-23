@@ -65,20 +65,54 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
       inputAngle += 360;
   }
 
+  if (abs(speed) > 0) {
+    this->prevInversion = inversion;
+  } else {
+    inversion = this->prevInversion;
+  }
+
+  speed = speed * inversion;
+
   // Speed ramping
+  float rampLimit = this->config->rampLimit;
+  if (this->state->refSystem.robot_level == 3 || this->state->driverInput.s2 == 2) {
+    rampLimit = this->config->rampLimitHigh;
+  }
+
   if (rampedSpeed < speed) {
-    rampedSpeed += this->config->rampLimit * (deltaTime / 1000.0);
+    rampedSpeed += (deltaTime / 1000000.0) / this->config->rampLimit;
     if (rampedSpeed > speed) {
       rampedSpeed = speed;
     }
   } else if (rampedSpeed > speed) {
-    rampedSpeed -= this->config->rampLimit * (deltaTime / 1000.0);
+    rampedSpeed -=  (deltaTime / 1000000.0) / this->config->rampLimit;
     if (rampedSpeed < speed) {
       rampedSpeed = speed;
     }
   }
 
-  rampedSpeed = speed;
+
+  // Ref limiting
+  if (state->robot == 3 && state->driverInput.s2 == 2) {
+    // 1v1
+    state->chassis.maxRpm = 6000;
+  } else {
+    // 3v3
+    switch (state->refSystem.robot_level) {
+      case 1:
+        state->chassis.maxRpm = 3200;
+        break;
+      case 2:
+        state->chassis.maxRpm = 4000;
+        break;
+      case 3:
+        state->chassis.maxRpm = 5000;
+        break;
+      default:
+        state->chassis.maxRpm = 3000;
+        break;
+    }
+  }
 
   // Steer Velocity PID
   config->steerPos.continuous = true;
@@ -95,16 +129,15 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  moduleState->driveVel.R = rampedSpeed * inversion * 6000; // 8000 is the maximum RPM of the motor pre-gearbox
+  moduleState->driveVel.R = rampedSpeed * state->chassis.maxRpm;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
+
+  
+  Serial.println(calibrated);
 
 
   // Set motor power
   if (calibrated) {
-    // steerMotor.setPower(0.0);
-    // Serial.print(steerMotor.getAngle());
-    // Serial.print(" - ");
-
     steerMotor.setPower(tmp_steerVel.Y);
 
     // Only drive if sufficiently close to target angle

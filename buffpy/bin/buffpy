@@ -87,8 +87,8 @@ def clean_buffpy():
 	if not 'edge' in os.getenv('HOSTNAME'):
 		clear_directory(lib_path)
 		for firmware_pkg in data['FIRMWARE_INI']:
-			firmware_ini_path = os.path.join(project_root, 'src', firmware_pkg, data['FIRMWARE_INI'][firmware_pkg])
-			result = subprocess.run(['platformio', 'run', '-t', 'clean', '-c', firmware_ini_path])
+			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
+			result = subprocess.run(f'cd {firmware_path} && pio run -t clean', shell=True)
 
 	clear_directory(data_path)
 	
