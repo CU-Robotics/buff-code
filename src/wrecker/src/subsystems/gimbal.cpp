@@ -164,7 +164,7 @@ void Gimbal::update(float deltaTime) {
   float dynamicPitchFeedForward = cos((PI / 180.0) * pitchAngle) * pitchF;
 
   // Set motor power
-  if (state->driverInput.s2 == 1){
+  if (state->robot == 7 && state->driverInput.s2 == 1){
     yawMotor.setPower(0.0);
     pitchMotor.setPower(0.0);
   }

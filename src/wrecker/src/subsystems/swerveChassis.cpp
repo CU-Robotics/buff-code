@@ -91,11 +91,7 @@ void SwerveChassis::update(unsigned long deltaTime) {
   }
 
   if (this->state->chassis.beyblade) {
-    if (x == 0 && y == 0) {
-      s = 1.0;
-    } else {
-      s = 0.7;
-    }
+    s = 1.0;
   }
 
   drive(x, y, s, deltaTime);
