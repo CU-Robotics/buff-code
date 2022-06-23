@@ -90,7 +90,7 @@ void setup() {
 
   robot_config.gimbal.pitchVel.K[0] = 0.014;
 
-  robot_config.gimbal.pitchMax = 46.0;
+  robot_config.gimbal.pitchMax = 48.0;
   robot_config.gimbal.pitchMin = 10.0;
   robot_config.gimbal.pitchOffset = 0;
   robot_config.gimbal.yawOffset = 13.5;
