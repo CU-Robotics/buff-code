@@ -32,10 +32,7 @@ void Shooter::update(unsigned long deltaTime) {
     }
 
     if (calibrated || (state->robot == 7 && state->driverInput.s2 == 2)) {
-        //Serial.println(shooterTimer);
-
         if (shooterOn && shooterClear) {
-            //Serial.println("sending");
             if (state->robot == 7) {
                 fw_2.setPower(0.5);
                 fw_1.setPower(0.5);
@@ -53,7 +50,6 @@ void Shooter::update(unsigned long deltaTime) {
                 }
             }
         } else if (!shooterOn) {
-            // Serial.println("this is bad");
             shooterTimer = 0;
             shooterClear = false;
             if (state->robot != 1) {
