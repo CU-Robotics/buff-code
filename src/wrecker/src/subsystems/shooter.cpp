@@ -34,6 +34,7 @@ void Shooter::update(unsigned long deltaTime) {
     // Serial.print("Gimbal on ");
     // Serial.println(state->refSystem.shooter_on);
 
+
     if (calibrated || (state->robot == 7 && state->driverInput.s2 == 2)) {
         //Serial.println(shooterTimer);
 
@@ -43,10 +44,17 @@ void Shooter::update(unsigned long deltaTime) {
                 fw_2.setPower(0.5);
                 fw_1.setPower(0.5);
             } else {
-                if (state->robot != 1) {
-                    fw_2.setPower(0.8);
+                if (state->robot == 3 && state->driverInput.s2 == 2) {
+                    // 1v1
+                    fw_2.setPower(0.5);
+                    fw_1.setPower(0.5);
+                } else {
+                    // 3v3
+                    if (state->robot != 1) {
+                        fw_2.setPower(0.8);
+                    }
+                        fw_1.setPower(0.8);
                 }
-                fw_1.setPower(0.8);
             }
         } else if (!shooterOn) {
             // Serial.println("this is bad");
@@ -102,14 +110,14 @@ void Shooter::update(unsigned long deltaTime) {
 
         // Feed PID
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
-        if (abs(state->gimbal.yaw_reference) < 2 && abs(state->gimbal.pitch_reference) < 2){
-            this->feedMotor.setPower(state->shooter17.feedPID.Y);
-        }
-        else{
-            this->feedMotor.setPower(0.0);            
-        }
+        this->feedMotor.setPower(state->shooter17.feedPID.Y);
+
+    } else if (state->robot == 7 && state->driverInput.s2 != 2) {
+        fw_1.setPower(0.0);
+        fw_2.setPower(0.0);
+        this->feedMotor.setPower(0.0);     
     }
-    else{
-        this->feedMotor.setPower(0.0);            
+    else {
+        this->feedMotor.setPower(0.0);       
     }
 }

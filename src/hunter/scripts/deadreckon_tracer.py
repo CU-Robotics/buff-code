@@ -39,6 +39,8 @@ class Dead_Reckon_Tracer:
 		self.history = np.zeros((4,2), dtype=np.float64)
 		self.trajectory = np.zeros((3,2), dtype=np.float64)
 
+		self.shape = None
+
 		self.init_ros(name)
 
 	def init_ros(self, name):
@@ -49,7 +51,9 @@ class Dead_Reckon_Tracer:
 		self.d_offset = rospy.get_param('/buffbot/TRACKER/SHOOTER_OFFSET')
 		self.t_offset = rospy.get_param('/buffbot/TRACKER/LEAD_TIME')
 		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
-		
+		self.a = rospy.get_param(f'/buffbot/TRACKER/A')
+		self.m = rospy.get_param(f'/buffbot/TRACKER/M')
+
 		hz = rospy.get_param('/buffbot/CAMERA/FPS')
 		self.rate = rospy.Rate(hz)
 		
@@ -85,6 +89,7 @@ class Dead_Reckon_Tracer:
 		for detection in detections.reshape(round(len(detections)/4), 4):
 			if detection[3] > closest_det[3]:
 				closest_det = detection
+				self.shape = detection[2:]
 
 		self.update_trajectory(t, np.array(closest_det[:2]))
 
@@ -145,6 +150,9 @@ class Dead_Reckon_Tracer:
 		# save updates
 		self.trajectory = np.array([velocity, acceleration, jerk])
 
+	def height_2_distance(self, h):
+		return (self.a * h) + (self.m / h)
+
 	def spin(self):
 		while not rospy.is_shutdown():
 
@@ -154,19 +162,26 @@ class Dead_Reckon_Tracer:
 
 			self.predict(time.time())
 
-			phi_err = (self.pose[1] - self.d_offset[1]) * self.FOV / 2.5
-			psi_err = (self.pose[0] - self.d_offset[0]) * self.FOV / 2.5
+			# (inches * 0.006) + 2
+			if not self.shape is None:
+				d = self.height_2_distance(self.shape[1])
+				self.shape = None
+				dist_scale = (d * 0.0006)
 
-			if self.name == '/buffbot/BLUE_TRACKER':
-				msg = String(f'GL {psi_err:.4f}\nGK {phi_err:.4f}\n') 
+				rospy.loginfo(dist_scale)
+				phi_err = ((self.pose[1] - self.d_offset[1]) * self.FOV / 2.5) + dist_scale
+				psi_err = (self.pose[0] - self.d_offset[0]) * self.FOV / 2.5
 
-			elif self.name == '/buffbot/RED_TRACKER':
-				msg = String(f'GW {psi_err:.4f}\nGH {phi_err:.4f}\n') 
+				if self.name == '/buffbot/BLUE_TRACKER':
+					msg = String(f'GL {psi_err:.4f}\nGK {phi_err:.4f}\n') 
 
-			self.prediction_pub.publish(msg)
+				elif self.name == '/buffbot/RED_TRACKER':
+					msg = String(f'GW {psi_err:.4f}\nGH {phi_err:.4f}\n') 
 
-			if self.debug:
-				self.publish_error()
+				self.prediction_pub.publish(msg)
+
+				if self.debug:
+					self.publish_error()
 
 			self.rate.sleep()
 
