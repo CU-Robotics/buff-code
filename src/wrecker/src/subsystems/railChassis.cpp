@@ -18,12 +18,12 @@ void RailChassis::setup(C_RailChassis *data, S_Robot *r_state) {
   rightDriveMotor.init(2, 1);
 
   // PID Tuning
-  data->drivePos.Ymax = 4000;
-  data->drivePos.Ymin = -4000;
+  data->drivePos.Ymax = 1;
+  data->drivePos.Ymin = -1;
   data->driveVel.Imin = -20000;
   data->driveVel.Imax = 20000;
 
-  data->drivePos.K[0] = 0.0005;
+  data->drivePos.K[0] = 0.000005;
   data->drivePos.K[1] = 0.0;
   data->drivePos.K[2] = 0.0;
 
@@ -70,51 +70,32 @@ void RailChassis::update(unsigned long deltaTime) {
   // Serial.print("Reference "); Serial.println(state->railChassis.drivePos.R);
   PID_Filter(&config->drivePos, &state->railChassis.drivePos, pos, deltaTime);
 
-  // if (state->gimbal.yaw_reference != yaw_reference_prev || state->gimbal.pitch_reference != pitch_reference_prev) {
-  //   trackingTimeout = 0;
-  // } else {
-  //   trackingTimeout += deltaTime;
-  // }
-  state->railChassis.driveVel.R = state->railChassis.drivePos.Y;
+  float speed = state->railChassis.drivePos.Y * 2000;
+  if (rampedSpeed < speed) {
+    rampedSpeed += (deltaTime / 1000000.0) / this->config->rampLimit;
+    if (rampedSpeed > speed) {
+      rampedSpeed = speed;
+    }
+  } else if (rampedSpeed > speed) {
+    rampedSpeed -= (deltaTime / 1000000.0) / this->config->rampLimit;
+    if (rampedSpeed < speed) {
+      rampedSpeed = speed;
+    }
+  }
+
+  state->railChassis.driveVel.R = speed;
   PID_Filter(&config->driveVel, &state->railChassis.driveVel, leftDriveMotor.getRpm(), deltaTime);
 
   // Set motor output
 
   if (state->driverInput.s2 == 2 && !state->gimbal.tracking){
-    // float speed = state->railChassis.driveVel.Y;
-    // if (rampedSpeed < speed) {
-    //   rampedSpeed += (deltaTime / 1000000.0) / this->config->rampLimit;
-    //   if (rampedSpeed > speed) {
-    //     rampedSpeed = speed;
-    //   }
-    // } else if (rampedSpeed > speed) {
-    //   rampedSpeed -= (deltaTime / 1000000.0) / this->config->rampLimit;
-    //   if (rampedSpeed < speed) {
-    //     rampedSpeed = speed;
-    //   }
-    // }
-
-    // Serial.print(rampedSpeed);
-    // Serial.print(" - ");
-    // Serial.println(speed);
-
     // Set motor output
-
-
     if (calibrated) {
-      // Serial.print(state->railChassis.driveVel.X[0]); Serial.print("  ||  ");
-      // Serial.print(state->railChassis.driveVel.X[1]); Serial.print("  ||  ");
-      // Serial.println(state->railChassis.driveVel.X[2]);
-
-      // Serial.print("Power "); Serial.println(state->railChassis.driveVel.Y);
-
       leftDriveMotor.setPower(state->railChassis.driveVel.Y);
       rightDriveMotor.setPower(state->railChassis.driveVel.Y);
     }
   }
   else{
-    // Serial.println(0.0);
-
     leftDriveMotor.setPower(0);
     rightDriveMotor.setPower(0);
   }

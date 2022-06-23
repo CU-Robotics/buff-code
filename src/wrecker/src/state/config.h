@@ -69,7 +69,7 @@ struct C_RailChassis {
 
   float acceptanceRange = 400.0;
 
-  float rampLimit = 5;
+  float rampLimit = 1;
 
   // PIDs
   C_PID drivePos;
