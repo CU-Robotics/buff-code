@@ -23,7 +23,7 @@ void RailChassis::setup(C_RailChassis *data, S_Robot *r_state) {
   data->driveVel.Imin = -20000;
   data->driveVel.Imax = 20000;
 
-  data->drivePos.K[0] = 0.000005;
+  data->drivePos.K[0] = 0.0002;
   data->drivePos.K[1] = 0.0;
   data->drivePos.K[2] = 0.0;
 
@@ -70,7 +70,7 @@ void RailChassis::update(unsigned long deltaTime) {
   // Serial.print("Reference "); Serial.println(state->railChassis.drivePos.R);
   PID_Filter(&config->drivePos, &state->railChassis.drivePos, pos, deltaTime);
 
-  float speed = state->railChassis.drivePos.Y * 2000;
+  float speed = state->railChassis.drivePos.Y;
   if (rampedSpeed < speed) {
     rampedSpeed += (deltaTime / 1000000.0) / this->config->rampLimit;
     if (rampedSpeed > speed) {
@@ -83,11 +83,21 @@ void RailChassis::update(unsigned long deltaTime) {
     }
   }
 
-  state->railChassis.driveVel.R = speed;
+  state->railChassis.driveVel.R = rampedSpeed * 5000;
   PID_Filter(&config->driveVel, &state->railChassis.driveVel, leftDriveMotor.getRpm(), deltaTime);
 
-  // Set motor output
+  Serial.print(pos);
+  Serial.print(" - ");
+  Serial.print(state->railChassis.drivePos.Y);
+  Serial.print(" - ");
+  Serial.print(speed);
+  Serial.print(" - ");
+  Serial.print(rampedSpeed);
+  Serial.print(" - ");
+  Serial.print(state->railChassis.driveVel.Y);
+  Serial.println();
 
+  // Set motor output
   if (state->driverInput.s2 == 2 && !state->gimbal.tracking){
     // Set motor output
     if (calibrated) {
