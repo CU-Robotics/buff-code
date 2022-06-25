@@ -40,14 +40,6 @@ void Shooter42::update(unsigned long deltaTime) {
     int shooterOn = 0;
     shooterOn = state->refSystem.shooter_on;
 
-    Serial.print(state->refSystem.shooter_on);
-    Serial.print(" - ");
-    Serial.print(shooterClear);
-    Serial.print(" - ");
-    Serial.print(shooterTimer);
-    Serial.println();
-
-
     if (calibrated) {
         if (shooterOn && shooterClear) {
             fw_2.setPower(1.0);

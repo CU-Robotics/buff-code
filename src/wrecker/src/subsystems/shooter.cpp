@@ -31,12 +31,13 @@ void Shooter::update(unsigned long deltaTime) {
         shooterOn = state->refSystem.gimbal_on;
     }
 
-    if (calibrated || (state->robot == 7 && state->driverInput.s2 == 2)) {
+    if (calibrated || ((state->robot == 7 && state->driverInput.s2 == 2) || (state->robot == 7 && state->driverInput.s1 == 2))) {
         if (shooterOn && shooterClear) {
             // Sentry
             if (state->robot == 7) {
                 fw_2.setPower(0.55);
                 fw_1.setPower(0.55);
+                Serial.println ("Flywheels should be spinning");
             } else {
                 if (state->robot == 3 && state->driverInput.s2 == 2) {
                     // 1v1
@@ -79,7 +80,7 @@ void Shooter::update(unsigned long deltaTime) {
 
         // Feeding
         if (state->robot == 7) {
-            if (state->gimbal.tracking) {
+            if (state->gimbal.tracking || state->driverInput.s1 == 2) {
                 state->shooter17.feedPID.R = -config->feedRPMLow * 36;
             } else {
                 state->shooter17.feedPID.R = 0;
