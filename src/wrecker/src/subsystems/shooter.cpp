@@ -35,14 +35,14 @@ void Shooter::update(unsigned long deltaTime) {
         if (shooterOn && shooterClear) {
             // Sentry
             if (state->robot == 7) {
-                fw_2.setPower(0.55);
-                fw_1.setPower(0.55);
+                fw_2.setPower(0.6);
+                fw_1.setPower(0.6);
                 Serial.println ("Flywheels should be spinning");
             } else {
                 if (state->robot == 3 && state->driverInput.s2 == 2) {
                     // 1v1
-                    fw_2.setPower(0.55);
-                    fw_1.setPower(0.55);
+                    fw_2.setPower(0.6);
+                    fw_1.setPower(0.6);
                 } else {
                     // 3v3
                     if (state->robot != 1) {
