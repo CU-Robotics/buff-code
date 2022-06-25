@@ -23,7 +23,7 @@ void RailChassis::setup(C_RailChassis *data, S_Robot *r_state) {
   data->driveVel.Imin = -20000;
   data->driveVel.Imax = 20000;
 
-  data->drivePos.K[0] = 0.00015;
+  data->drivePos.K[0] = 0.0001; // 0.00015
   data->drivePos.K[1] = 0.0;
   data->drivePos.K[2] = 0.0;
 

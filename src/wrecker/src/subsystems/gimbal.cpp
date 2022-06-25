@@ -164,15 +164,17 @@ void Gimbal::update(float deltaTime) {
   float dynamicPitchFeedForward = cos((PI / 180.0) * pitchAngle) * pitchF;
 
   // Set motor power
-  if (state->robot == 7 && state->driverInput.s2 == 1){
+  if (state->robot == 7 && state->driverInput.s2 == 1) {
     yawMotor.setPower(0.0);
     pitchMotor.setPower(0.0);
-  }
-
-  else if (calibrated || state->robot == 7) {
+  } else if (calibrated || state->robot == 7) {
     yawMotor.setPower(state->gimbal.yawVel.Y + dynamicYawFeedforward);
     pitchMotor.setPower(state->gimbal.pitchVel.Y + dynamicPitchFeedForward);
   }
+
+
+  yawMotor.updateMotor();
+  Serial.println(yawMotor.getAngle());
 }
 
 float Gimbal::realizeYawEncoder(float rawAngle) {
