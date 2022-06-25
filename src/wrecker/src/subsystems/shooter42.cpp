@@ -40,10 +40,17 @@ void Shooter42::update(unsigned long deltaTime) {
     int shooterOn = 0;
     shooterOn = state->refSystem.shooter_on;
 
+    Serial.print(state->refSystem.shooter_on);
+    Serial.print(" - ");
+    Serial.print(shooterClear);
+    Serial.print(" - ");
+    Serial.print(shooterTimer);
+    Serial.println();
+
 
     if (calibrated) {
         if (shooterOn && shooterClear) {
-            fw_2.setPower(0.8);
+            fw_2.setPower(1.0);
         } else if (!shooterOn) {
             shooterTimer = 0;
             shooterClear = false;
@@ -52,7 +59,7 @@ void Shooter42::update(unsigned long deltaTime) {
             shooterTimer += deltaTime;
         }
 
-        if (shooterTimer > 500000) // 5 sec
+        if (shooterTimer > 5000000) // 5 sec
             shooterClear = true;
 
         // Feeding
@@ -63,8 +70,6 @@ void Shooter42::update(unsigned long deltaTime) {
             state->shooter42.feedPIDVel.R = 60 * 36;
         else if (!state->driverInput.ctrl)
             mouseUp = true;
-
-        Serial.println(pos);
 
         // Feed PID
         float angle = this->feedMotor.getAngle() + (this->posRollover * 360);

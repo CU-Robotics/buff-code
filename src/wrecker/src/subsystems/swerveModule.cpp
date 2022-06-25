@@ -132,9 +132,6 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   moduleState->driveVel.R = rampedSpeed * state->chassis.maxRpm;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
-  
-  Serial.println(calibrated);
-
 
   // Set motor power
   if (calibrated) {

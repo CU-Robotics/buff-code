@@ -23,7 +23,7 @@ void RailChassis::setup(C_RailChassis *data, S_Robot *r_state) {
   data->driveVel.Imin = -20000;
   data->driveVel.Imax = 20000;
 
-  data->drivePos.K[0] = 0.0002;
+  data->drivePos.K[0] = 0.00015;
   data->drivePos.K[1] = 0.0;
   data->drivePos.K[2] = 0.0;
 
@@ -83,7 +83,7 @@ void RailChassis::update(unsigned long deltaTime) {
     }
   }
 
-  state->railChassis.driveVel.R = rampedSpeed * 5000;
+  state->railChassis.driveVel.R = rampedSpeed * 4000;
   PID_Filter(&config->driveVel, &state->railChassis.driveVel, leftDriveMotor.getRpm(), deltaTime);
 
   Serial.print(pos);
