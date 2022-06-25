@@ -83,15 +83,15 @@ class Dead_Reckon_Tracer:
 		t = time.time()
 		# do tracker stuff
 		detections = np.array(msg.data)
-		closest_det = np.ones(4) / 2
-		closest_det[3] = 0
+		most_center = np.ones(4) / 2
+		most_center[3] = 0
 
 		for detection in detections.reshape(round(len(detections)/4), 4):
-			if detection[3] > closest_det[3]:
-				closest_det = detection
+			if abs(detection[0] - 0.5) > abs(most_center[0] - 0.5):
+				most_center = detection
 				self.shape = detection[2:]
 
-		self.update_trajectory(t, np.array(closest_det[:2]))
+		self.update_trajectory(t, np.array(most_center[:2]))
 
 	def reset(self):
 		self.trajectory = np.zeros((3,2), dtype=np.float64)
@@ -166,7 +166,7 @@ class Dead_Reckon_Tracer:
 			if not self.shape is None:
 				d = self.height_2_distance(self.shape[1])
 				self.shape = None
-				dist_scale = 0.0002 * pow(d * 0.037, 2)
+				dist_scale = 0.0006 * pow(d * 0.00005, 2)
 
 				rospy.loginfo(dist_scale)
 				phi_err = ((self.pose[1] - self.d_offset[1]) * self.FOV / 2.5) + dist_scale
