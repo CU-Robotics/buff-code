@@ -174,7 +174,7 @@ void Gimbal::update(float deltaTime) {
 
 
   yawMotor.updateMotor();
-  Serial.println(yawMotor.getAngle());
+  // Serial.println(yawMotor.getAngle());
 }
 
 float Gimbal::realizeYawEncoder(float rawAngle) {
