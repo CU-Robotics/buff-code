@@ -35,10 +35,14 @@ void RailChassis::setup(C_RailChassis *data, S_Robot *r_state) {
 
 void RailChassis::update(unsigned long deltaTime) {
 
-  if (state->driverInput.s2 == 2 && !calibrated) {
-    calibrated = true;
-    leftOffset = leftDriveMotor.getAngle();
-    rightOffset = rightDriveMotor.getAngle();
+  if (state->driverInput.s2 == 2) {
+    if (!calibrated){
+      calibrated = true;
+      leftOffset = leftDriveMotor.getAngle();
+      rightOffset = rightDriveMotor.getAngle();
+      leftRollover = 0.0;
+      rightRollover = 0.0;
+    }
   } else {
     calibrated = false;
   }
@@ -86,23 +90,28 @@ void RailChassis::update(unsigned long deltaTime) {
   state->railChassis.driveVel.R = rampedSpeed * 4000;
   PID_Filter(&config->driveVel, &state->railChassis.driveVel, leftDriveMotor.getRpm(), deltaTime);
 
+  Serial.print(state->railChassis.drivePos.R);
+  Serial.print(" - ");
   Serial.print(pos);
   Serial.print(" - ");
   Serial.print(state->railChassis.drivePos.Y);
   Serial.print(" - ");
-  Serial.print(speed);
-  Serial.print(" - ");
-  Serial.print(rampedSpeed);
+  Serial.print(state->railChassis.driveVel.R);
   Serial.print(" - ");
   Serial.print(state->railChassis.driveVel.Y);
-  Serial.println();
+  Serial.print(" - ");
+  Serial.print(speed);
+  Serial.print(" - ");
+  Serial.println(rampedSpeed);
 
   // Set motor output
   if (state->driverInput.s2 == 2 && !state->gimbal.tracking){
     // Set motor output
     if (calibrated) {
-      leftDriveMotor.setPower(state->railChassis.driveVel.Y);
-      rightDriveMotor.setPower(state->railChassis.driveVel.Y);
+      leftDriveMotor.setPower(0);
+      rightDriveMotor.setPower(0);
+      // leftDriveMotor.setPower(state->railChassis.driveVel.Y);
+      // rightDriveMotor.setPower(state->railChassis.driveVel.Y);
     }
   }
   else{
