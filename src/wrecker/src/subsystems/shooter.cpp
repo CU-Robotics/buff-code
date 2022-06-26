@@ -31,8 +31,13 @@ void Shooter::update(unsigned long deltaTime) {
         shooterOn = state->refSystem.gimbal_on;
     }
 
-    if (calibrated || ((state->robot == 7 && state->driverInput.s2 == 2) || (state->robot == 7 && state->driverInput.s1 == 2))) {
-        if (shooterOn && shooterClear) {
+    if ((calibrated && state->driverInput.s1 != 1) || ((state->robot == 7 && state->driverInput.s2 == 2) || (state->robot == 7 && state->driverInput.s1 == 2))) {
+        if (state->robot != 7 && state->driverInput.s1 == 1) {
+            fw_1.reset();
+            fw_2.reset();
+            shooterTimer = 0;
+            shooterClear = false;
+        } else if (shooterOn && shooterClear) {
             // Sentry
             if (state->robot == 7) {
                 fw_2.setPower(0.6);
@@ -41,14 +46,17 @@ void Shooter::update(unsigned long deltaTime) {
             } else {
                 if (state->robot == 3 && state->driverInput.s2 == 2) {
                     // 1v1
-                    fw_2.setPower(0.6);
-                    fw_1.setPower(0.6);
+                    fw_2.setPower(0.56);
+                    fw_1.setPower(0.56);
                 } else {
                     // 3v3
-                    if (state->robot != 1) {
-                        fw_2.setPower(0.8);
+                    if (state->robot == 1) {
+                        fw_2.setPower(0.3);
+                        fw_1.setPower(0.3);
+                    } else {
+                        fw_2.setPower(0.56);
+                        fw_1.setPower(0.56);
                     }
-                        fw_1.setPower(0.8);
                 }
             }
         } else if (!shooterOn) {
@@ -64,7 +72,7 @@ void Shooter::update(unsigned long deltaTime) {
 
         int timeout = 4000000; // 4 sec
         if (state->robot == 1) {
-            timeout = 5000000; // 5 sec on the Hero
+            timeout = 6000000; // 6 sec on the Hero
         }
         if (shooterTimer > timeout) // 4.5 sec
             shooterClear = true;
@@ -111,11 +119,8 @@ void Shooter::update(unsigned long deltaTime) {
         this->feedMotor.setPower(state->shooter17.feedPID.Y);
 
     } else if (state->robot == 7 && state->driverInput.s2 != 2) {
-        fw_1.setPower(0.0);
-        fw_2.setPower(0.0);
         this->feedMotor.setPower(0.0);     
-    }
-    else {
+    } else {
         this->feedMotor.setPower(0.0);       
     }
 }

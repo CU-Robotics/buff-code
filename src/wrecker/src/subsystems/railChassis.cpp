@@ -88,13 +88,6 @@ void RailChassis::update(unsigned long deltaTime) {
 
   Serial.print(pos);
   Serial.print(" - ");
-  Serial.print(state->railChassis.drivePos.Y);
-  Serial.print(" - ");
-  Serial.print(speed);
-  Serial.print(" - ");
-  Serial.print(rampedSpeed);
-  Serial.print(" - ");
-  Serial.print(state->railChassis.driveVel.Y);
   Serial.println();
 
   // Set motor output
@@ -105,7 +98,7 @@ void RailChassis::update(unsigned long deltaTime) {
       rightDriveMotor.setPower(state->railChassis.driveVel.Y);
     }
   }
-  else{
+  else {
     leftDriveMotor.setPower(0);
     rightDriveMotor.setPower(0);
   }
@@ -120,5 +113,6 @@ void RailChassis::selectNode() {
 float RailChassis::realizePosition(float leftRawPos, float rightRawPos) {
   float leftPos = leftRawPos - leftOffset + (this->leftRollover * 360);
   float rightPos = rightRawPos - rightOffset + (this->rightRollover * 360);
-  return ((leftPos + rightPos) / 2.0);
+  //return ((leftPos + rightPos) / 2.0);
+  return leftPos;
 }

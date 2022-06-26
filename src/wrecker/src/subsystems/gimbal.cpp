@@ -52,7 +52,7 @@ void Gimbal::update(float deltaTime) {
 
   // Yaw encoder
   float rawYawAngle = yawMotor.getAngle();
-  if (calibrated || state->robot == 7 &&  state->driverInput.s2 > 1) {
+  if (calibrated || (state->robot == 7 && state->driverInput.s2 > 1)) {
     float yawDifference = this->prevRawYawAngle - rawYawAngle;
     if (yawDifference < -180)
       this->yawRollover--;

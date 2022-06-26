@@ -95,21 +95,21 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   // Ref limiting
   if (state->robot == 3 && state->driverInput.s2 == 2) {
     // 1v1
-    state->chassis.maxRpm = 6000;
+    state->chassis.maxRpm = 4000;
   } else {
     // 3v3
     switch (state->refSystem.robot_level) {
       case 1:
-        state->chassis.maxRpm = 3200;
+        state->chassis.maxRpm = 2800;
         break;
       case 2:
-        state->chassis.maxRpm = 4000;
+        state->chassis.maxRpm = 3600;
         break;
       case 3:
-        state->chassis.maxRpm = 5000;
+        state->chassis.maxRpm = 4000;
         break;
       default:
-        state->chassis.maxRpm = 3000;
+        state->chassis.maxRpm = 2800;
         break;
     }
   }

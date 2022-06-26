@@ -154,9 +154,7 @@ void loop() {
   while (can2.read(tempMessage))
     canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
   
-  refSys.read_serial(); 
-
-  Serial.println(robot_state.driverInput.s1);
+  refSys.read_serial();
 
   // if (Serial.available() > 0)
   //   serial_event(&robot_config, &robot_state);
@@ -168,6 +166,11 @@ void loop() {
   swerveChassis.update(deltaT);
   gimbal.update(deltaT);
   shooter.update(deltaT);
+
+
+//58% power gave a high velocity of of 14.9 and a low of 12.9.
+//55% power we are fairly confident will never go over if you want but we also are reasonably confident that 58% should work
+
 
 
   // Send CAN every 5000 microseconds

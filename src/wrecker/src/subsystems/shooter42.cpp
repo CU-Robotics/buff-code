@@ -40,9 +40,9 @@ void Shooter42::update(unsigned long deltaTime) {
     int shooterOn = 0;
     shooterOn = state->refSystem.shooter_on;
 
-    if (calibrated) {
+    if ((calibrated && state->driverInput.s1 != 1)) {
         if (shooterOn && shooterClear) {
-            fw_2.setPower(1.0);
+            fw_2.setPower(0.6);
         } else if (!shooterOn) {
             shooterTimer = 0;
             shooterClear = false;
@@ -51,7 +51,7 @@ void Shooter42::update(unsigned long deltaTime) {
             shooterTimer += deltaTime;
         }
 
-        if (shooterTimer > 5000000) // 5 sec
+        if (shooterTimer > 6000000) // 6 sec
             shooterClear = true;
 
         // Feeding
