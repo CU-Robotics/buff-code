@@ -53,6 +53,8 @@ class Dead_Reckon_Tracer:
 		self.FOV = rospy.get_param('/buffbot/CAMERA/FOV')
 		self.a = rospy.get_param(f'/buffbot/TRACKER/A')
 		self.m = rospy.get_param(f'/buffbot/TRACKER/M')
+		self.h = rospy.get_param(f'/buffbot/TRACKER/H')
+
 
 		hz = rospy.get_param('/buffbot/CAMERA/FPS')
 		self.rate = rospy.Rate(hz)
@@ -151,7 +153,10 @@ class Dead_Reckon_Tracer:
 		self.trajectory = np.array([velocity, acceleration, jerk])
 
 	def height_2_distance(self, h):
-		return (self.a * h) + (self.m / h)
+		return ((h / self.a) + (self.m / h**2)) + 15
+
+	def distance_compenstation(self, d):
+		return np.degrees(self.h / d) - ((9.8 * d) / (2 * 196))
 
 	def spin(self):
 		while not rospy.is_shutdown():
@@ -164,11 +169,12 @@ class Dead_Reckon_Tracer:
 
 			# (inches * 0.006) + 2
 			if not self.shape is None:
-				d = self.height_2_distance(self.shape[1])
-				self.shape = None
-				dist_scale = 0.0002 * pow(d * 0.037, 2)
+				d = self.height_2_distance(self.shape[1] * 320)
 
-				rospy.loginfo(dist_scale)
+				self.shape = None
+				dist_scale = self.distance_compenstation(d)
+
+				rospy.loginfo(d)
 				phi_err = ((self.pose[1] - self.d_offset[1]) * self.FOV / 2.5) + dist_scale
 				psi_err = (self.pose[0] - self.d_offset[0]) * self.FOV / 2.5
 
