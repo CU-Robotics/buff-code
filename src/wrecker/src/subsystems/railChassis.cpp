@@ -90,37 +90,41 @@ void RailChassis::update(unsigned long deltaTime) {
   state->railChassis.driveVel.R = rampedSpeed * 4000;
   PID_Filter(&config->driveVel, &state->railChassis.driveVel, leftDriveMotor.getRpm(), deltaTime);
 
-  Serial.print("state->railChassis.drivePos.R: ");//C
-  //input: 10000
-  Serial.print(state->railChassis.drivePos.R);
-  Serial.print(" - pos: ");//C
-  //0
-  Serial.print(pos);
-  Serial.print(" -  state->railChassis.drivePos.Y: ");
-  //p*(10000-0)+i*integral(10000-0)+d*(10000-0)
-  Serial.print(state->railChassis.drivePos.Y);//C
-  Serial.print(" - state->railChassis.driveVel.R: ");
-  //calculated vel (slow->fast->slow)
-  Serial.print(state->railChassis.driveVel.R);//C
-  Serial.print(" - state->railChassis.driveVel.Y: ");
-  //power output ()
-  Serial.print(state->railChassis.driveVel.Y);//C
-  Serial.print("leftDriveMotor.getRpm()");//C
-  //encoder rpm
-  Serial.print(leftDriveMotor.getRpm());//C
-  Serial.print(" - speed: ");
-  Serial.print(speed);//C
-  Serial.print(" - rampedSpeed: ");
-  Serial.println(rampedSpeed);//C
-
+  // if (state->driverInput.s2 == 2){
+    // Serial.print("drivePos.R ");//C
+    // //input: 10000
+    // Serial.println(state->railChassis.drivePos.R);
+    // Serial.print("pos ");//C
+    // // //0
+    // Serial.println(pos);
+    // // Serial.print(" -  drivePos.Y: ");
+    // // //p*(10000-0)+i*integral(10000-0)+d*(10000-0)
+    // // Serial.print(state->railChassis.drivePos.Y);//C
+    // // Serial.print(" - driveVel.R: ");
+    // // //calculated vel (slow->fast->slow)
+    // // Serial.print(state->railChassis.driveVel.R);//C
+    // Serial.print("speed ");
+    // Serial.println(speed);//C
+    // Serial.print("rampedSpeed ");
+    // Serial.println(rampedSpeed);//C
+    // Serial.print("driveVel.Y ");
+    // //power output ()
+    // Serial.println(state->railChassis.driveVel.Y);//C
+    // Serial.print("leftgetRpm ");//C
+    // //encoder rpm
+    // Serial.println(rightDriveMotor.getRpm());//C
+    // Serial.print("rightgetRpm ");//C
+    // //encoder rpm
+    // Serial.println(rightDriveMotor.getRpm());//C
+  // }
   // Set motor output
   if (state->driverInput.s2 == 2 && !state->gimbal.tracking){
     // Set motor output
     if (calibrated) {
-      leftDriveMotor.setPower(0);
-      rightDriveMotor.setPower(0);
-      // leftDriveMotor.setPower(state->railChassis.driveVel.Y);
-      // rightDriveMotor.setPower(state->railChassis.driveVel.Y);
+      // leftDriveMotor.setPower(0);
+      // rightDriveMotor.setPower(0);
+      leftDriveMotor.setPower(state->railChassis.driveVel.Y);
+      rightDriveMotor.setPower(state->railChassis.driveVel.Y);
     }
   }
   else{

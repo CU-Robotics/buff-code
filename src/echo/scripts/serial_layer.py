@@ -16,7 +16,12 @@ class SerialLayer():
 		self.publishers = {}
 		self.connected = False
 
+		rospy.init_node('echo_serial', anonymous=True)
+
 		self.debug = rospy.get_param('/buffbot/DEBUG')
+
+		hz = rospy.get_param('/buffbot/CAMERA/FPS')
+		self.rate = rospy.Rate(hz)
 
 		self.lives = int(rospy.get_param(f'{name}/LIVES'))
 		self.serial_LUT = rospy.get_param(f'{name}/SERIAL_LUT')
@@ -26,8 +31,6 @@ class SerialLayer():
 		topics = rospy.get_param('/buffbot/TOPICS')
 		self.writer_sub = rospy.Subscriber(topics['SERIAL_OUT'], 
 			String, self.writer_callback, queue_size=3)
-
-		rospy.init_node('echo_serial', anonymous=True)
 
 	def write_device(self, packet):
 		"""
@@ -133,6 +136,8 @@ class SerialLayer():
 
 				elif self.device.in_waiting:
 					self.parse_packet()
+
+				self.rate.sleep()
 
 			except KeyboardInterrupt:
 				if self.device:

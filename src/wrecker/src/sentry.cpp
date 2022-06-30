@@ -69,8 +69,8 @@ void setup() {
   can1.setBaudRate(1000000);
   can2.setBaudRate(1000000);
 
-  serialDumpTmr.priority(0); // Set interval timer to handle serial reads
-  serialDumpTmr.begin(dump, dumpRate);
+  // serialDumpTmr.priority(0); // Set interval timer to handle serial reads
+  // serialDumpTmr.begin(dump, dumpRate);
 
   // Configure State
   robot_state.robot = 7;
@@ -90,7 +90,7 @@ void setup() {
 
   robot_config.gimbal.pitchVel.K[0] = 0.014;
 
-  robot_config.gimbal.pitchMax = 48.0;
+  robot_config.gimbal.pitchMax = 58.0;
   robot_config.gimbal.pitchMin = 10.0;
   robot_config.gimbal.pitchOffset = 0;
   robot_config.gimbal.yawOffset = 13.5;
