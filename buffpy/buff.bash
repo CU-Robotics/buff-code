@@ -59,6 +59,10 @@ fi
 # 	source {PROJECT_ROOT}/install/setup.bash
 # fi
 
+#		setup Cargo tools
+
+CARGO_TARGET_DIR="${PROJECT_ROOT}/buffpy/lib"
+
 #		Setup python tools
 
 if [[ "${PATH}" != *"${PROJECT_ROOT}/buffpy/bin"* ]]; then
