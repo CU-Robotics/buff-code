@@ -131,6 +131,15 @@ Version info
 
 ## CHANGES
 *Changes include all PRs that modify the directory structure, the installed binaries and any changes that will effect workspace usage*
+ - Version 0.07
+   - Date: June 30, 2022
+   - Editor: Mitchell D Scott
+   - Status: Seems stable
+   - Description: 
+      - Odyssey is functional
+      - buffpy makes use of platformio and cargo to build files
+      - buffpy can successfully install to all devices
+      - buffpy installation is still a little buggy (doesn't include cargo atm)
  - Version 0.06
    - Date: March 17, 2022
    - Editor: Mitchell D Scott
