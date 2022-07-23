@@ -1,0 +1,48 @@
+version: "3.9"
+services:
+  aarch64-base:
+    build: 
+      context: ../
+      dockerfile: containers/base/Dockerfile
+      args:
+        IMAGE_NAME: nvcr.io/nvidia/l4t-base:r32.6.1
+    network_mode: host
+    volumes: 
+      - ../:/home/cu-robotics/buff-code
+    image: curobotics/buffbox:aarch64-base
+  x86_64-base:
+    build: 
+      context: ../
+      dockerfile: containers/base/Dockerfile
+      args:
+        IMAGE_NAME: ubuntu:18.04
+    network_mode: host
+    volumes: 
+      - ../:/home/cu-robotics/buff-code
+    image: curobotics/buffbox:x86_64-base
+  aarch64-dev:
+    build: 
+      context: ../
+      dockerfile: containers/dev/Dockerfile
+      args:
+        IMAGE_NAME: curobotics/buffbox:aarch64-base
+    network_mode: host
+    volumes: 
+      - ../:/home/cu-robotics/buff-code
+      - /tmp/.X11-unix
+    environment: 
+      - DISPLAY
+    image: curobotics/buffbox:aarch64-dev
+  x86_64-dev:
+    build:
+      context: ../
+      dockerfile: containers/dev/Dockerfile
+      args:
+        IMAGE_NAME: curobotics/buffbox:x86_64-base
+    network_mode: host
+    volumes: 
+      - ../:/home/cu-robotics/buff-code
+      - /tmp/.X11-unix
+    environment: 
+      - DISPLAY
+    image: curobotics/buffbox:x86_64-dev
