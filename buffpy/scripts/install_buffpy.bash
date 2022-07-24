@@ -18,7 +18,7 @@ echo -e "\n\tInstalling pip3\n"
 
 curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py
 
-sudo python3 get-pip.py
+sudo python3.6 get-pip.py
 
 rm get-pip.py
 
