@@ -9,5 +9,3 @@ buffpy/lib/*
 buffpy/build/*
 buffpy/models/*
 buffpy/config/sensitive/*
-
-rustlings

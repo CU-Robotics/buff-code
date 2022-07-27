@@ -17,17 +17,21 @@ NODES:
   LUXONIS: # spawns our detector node
     FILES: ['luxnet.py']
     REQUIRED: True
+    PACKAGE: 'crosshair'
   RED_TRACKER:     # spawns our tracker node
     FILES: ['deadreckon_tracer.py']
     CONFIG: None
     DETECTION_TOPIC: 'DETECTION_RED'
+    PACKAGE: 'hunter'
   BLUE_TRACKER:     # spawns our tracker node
     FILES: ['deadreckon_tracer.py']
     CONFIG: None
     DETECTION_TOPIC: 'DETECTION_BLUE'
+    PACKAGE: 'hunter'
   TRACKER:
     FILES: []
     CONFIG: 'tracker_settings.yaml'
+    PACKAGE: 'hunter'
   # ROSBAGGER:    # This will record all system runs and allow us to play them back
   #   FILES: ['record']
   #   PACKAGE: 'rosbag'
