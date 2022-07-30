@@ -3,30 +3,12 @@
 
 #include "RMMotor.h"
 
-// struct rmMotor_config{
-//   short byteNum = -1;
-//   short MAX_VALUE = -1;
-
-//   uint8_t id = -1;
-//   uint8_t canBusID = -1;
-//   CAN_message_t *sendMsgPtr;
-// };
-
-// // Create a struct that contains all the
-// // changing data (sensor readings, generated values)
-// struct rmMotor_state{
-//   short rpm = -1;
-//   short torque = -1;
-
-//   float angle = -1;
-// };
-
-rmMotor* RMMotor_Factory(rmMotor_LUT* motor_lut, uint8_t id, uint8_t motorId, uint8_t canBusNum, bool is_gm6020){
+rmMotor* RMMotor_Factory(rmMotor_LUT* motor_lut, uint8_t id, uint8_t canBusNum, bool is_gm6020){
   // Go in each motors init function try to replicate what happens here
 
   rmMotor* motor = new rmMotor;
 
-  motor->config.id = motorId;
+  motor->config.id = id;
   motor->config.byteNum = id - 1;
   motor->config.canBusID = canBusNum;
 
