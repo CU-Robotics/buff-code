@@ -139,19 +139,19 @@ def build_buffpy(build):
 	
 	data = load_build_config(build)
 	
-	# if 'PYTHON3_SCRIPTS' in data:
-	# 	for pkg in data['PYTHON3_SCRIPTS']:
-	# 		for file in data['PYTHON3_SCRIPTS'][pkg]:
-	# 			dest = os.path.join(lib_path, file)
-	# 			f_path = os.path.join(project_root, 'src', pkg, 'scripts', file)
-	# 			result = subprocess.run(['cp', f_path, dest])
-	# 			result = subprocess.run(['chmod', '+x', dest])
-	# 			print(f'Installing {f_path}')
+	if 'PYTHON3_SCRIPTS' in data:
+		for pkg in data['PYTHON3_SCRIPTS']:
+			for file in data['PYTHON3_SCRIPTS'][pkg]:
+				dest = os.path.join(lib_path, file)
+				f_path = os.path.join(project_root, 'src', pkg, 'scripts', file)
+				result = subprocess.run(['cp', f_path, dest])
+				result = subprocess.run(['chmod', '+x', dest])
+				print(f'Installing {f_path}')
 
-	# if 'CARGO_TOML' in data:
-	# 	for cargo_toml in data['CARGO_TOML']:
-	# 		cargo_path = os.path.join(project_root, 'src', cargo_toml)
-	# 		result = subprocess.run(f'cd {cargo_path} && cargo build && cp target/debug/{cargo_toml} ../../buffpy/lib', shell=True)
+	if 'CARGO_TOML' in data:
+		for cargo_toml in data['CARGO_TOML']:
+			cargo_path = os.path.join(project_root, 'src', cargo_toml)
+			result = subprocess.run(f'cd {cargo_path} && cargo build && cp target/debug/{cargo_toml} ../../buffpy/lib', shell=True)
 
 
 	# Build the Firmware with pio 

@@ -34,10 +34,14 @@ struct rmMotor_config{
 // Create a struct that contains all the
 // changing data (sensor readings, generated values)
 struct rmMotor_state{
-  short rpm = -1;
-  short torque = -1;
 
-  float angle = -1;
+  float p_ref = -1;
+  float v_ref = -1;
+  float t_ref = -1;
+
+  float p_act = -1;
+  float v_act = -1;
+  float t_act = -1;
 };
 
 struct rmMotor{
