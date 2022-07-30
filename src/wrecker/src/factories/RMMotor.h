@@ -73,7 +73,7 @@ rmMotor* RMMotor_Factory(rmMotor_LUT*, uint8_t, uint8_t, uint8_t, bool);
 void initCAN(rmMotor_LUT*);
 
 // update a single motors IO
-void updateRMMotor(rmMotor_config*, rmMotor_state*);
+void updateRMMotor(rmMotor_LUT*, rmMotor*);
 
 // update the IO signals to all the motors in the table
 // I could see reasons to do this differently
@@ -85,6 +85,11 @@ void writeGM6020_CAN(rmMotor_LUT*);
 
 // Write the can packets
 void writeCAN(rmMotor_LUT*);
+
+void setPower(rmMotor_LUT*, rmMotor*, short);
+void setRPM(rmMotor_LUT*, rmMotor*, short);
+void setTorque(rmMotor_LUT*, rmMotor*, short);
+void setAngle(rmMotor_LUT*, rmMotor*, short);
 
 
 #endif

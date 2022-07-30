@@ -68,8 +68,25 @@ void initCAN(rmMotor_LUT* motor_lut){
   motor_lut->can3.setBaudRate(1000000);
 }
 
-void updateRMMotor(rmMotor_config* config, rmMotor_state* state){
+void updateRMMotor(rmMotor_LUT* lut, rmMotor* motor){
   // use the update functions from the motor classes and replicate them here
+  CAN_message_t *recMsg = &(lut->canRecieveMessages[motor->config.canBusID - 1][motor->config.id + 3]);
+  
+  uint16_t temp;
+  temp = recMsg->buf[0];
+  temp = temp << 8;
+  temp = temp | recMsg->buf[1];
+  motor->state.angle = map(temp, 0, 8191, 0, 36000) / 100.0;
+
+  temp = recMsg->buf[2];
+  temp = temp << 8;
+  motor->state.rpm = temp | recMsg->buf[3];
+
+  temp = recMsg->buf[4];
+  temp = temp << 8;
+  motor->state.torque = temp | recMsg->buf[5];
+
+  temp = recMsg->buf[6];
 }
 
 void updateIO(rmMotor_LUT* motor_lut){
@@ -101,4 +118,23 @@ void writeGM6020_CAN(rmMotor_LUT* motor_lut){
 void writeCAN(rmMotor_LUT* motor_lut){
   writeCX20_CAN(motor_lut);
   writeGM6020_CAN(motor_lut);
+}
+
+void setPower(rmMotor_LUT* motor_lut, rmMotor* motor, short power){
+
+}
+
+void setAngle(rmMotor_LUT* motor_lut, rmMotor* motor, short angle){
+  motor->state.angle = angle;
+  updateRMMotor(motor_lut, motor);
+}
+
+void setRPM(rmMotor_LUT* motor_lut, rmMotor* motor, short rpm){
+  motor->state.rpm = rpm;
+  updateRMMotor(motor_lut, motor);
+}
+
+void setTorque(rmMotor_LUT* motor_lut, rmMotor* motor, short torque){
+  motor->state.torque = torque;
+  updateRMMotor(motor_lut, motor);
 }
