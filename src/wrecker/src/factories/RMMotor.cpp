@@ -3,30 +3,12 @@
 
 #include "RMMotor.h"
 
-// struct rmMotor_config{
-//   short byteNum = -1;
-//   short MAX_VALUE = -1;
-
-//   uint8_t id = -1;
-//   uint8_t canBusID = -1;
-//   CAN_message_t *sendMsgPtr;
-// };
-
-// // Create a struct that contains all the
-// // changing data (sensor readings, generated values)
-// struct rmMotor_state{
-//   short rpm = -1;
-//   short torque = -1;
-
-//   float angle = -1;
-// };
-
-rmMotor* RMMotor_Factory(rmMotor_LUT* motor_lut, uint8_t id, uint8_t motorId, uint8_t canBusNum, bool is_gm6020){
+rmMotor* RMMotor_Factory(rmMotor_LUT* motor_lut, uint8_t id, uint8_t canBusNum, bool is_gm6020){
   // Go in each motors init function try to replicate what happens here
 
   rmMotor* motor = new rmMotor;
 
-  motor->config.id = motorId;
+  motor->config.id = id;
   motor->config.byteNum = id - 1;
   motor->config.canBusID = canBusNum;
 
@@ -76,15 +58,15 @@ void updateRMMotor(rmMotor_LUT* lut, rmMotor* motor){
   temp = recMsg->buf[0];
   temp = temp << 8;
   temp = temp | recMsg->buf[1];
-  motor->state.angle = map(temp, 0, 8191, 0, 36000) / 100.0;
+  motor->state.p_ref = map(temp, 0, 8191, 0, 36000) / 100.0;
 
   temp = recMsg->buf[2];
   temp = temp << 8;
-  motor->state.rpm = temp | recMsg->buf[3];
+  motor->state.v_ref = temp | recMsg->buf[3];
 
   temp = recMsg->buf[4];
   temp = temp << 8;
-  motor->state.torque = temp | recMsg->buf[5];
+  motor->state.t_ref = temp | recMsg->buf[5];
 
   temp = recMsg->buf[6];
 }
@@ -92,7 +74,7 @@ void updateRMMotor(rmMotor_LUT* lut, rmMotor* motor){
 void updateIO(rmMotor_LUT* motor_lut){
   int i = 0;
   while (i < motor_lut->n_items){
-    updateRMMotor(&motor_lut->LUT[i]->config, &motor_lut->LUT[i]->state);
+    updateRMMotor(motor_lut, motor_lut->LUT[i]);
     i ++;
   }
 }
@@ -125,16 +107,16 @@ void setPower(rmMotor_LUT* motor_lut, rmMotor* motor, short power){
 }
 
 void setAngle(rmMotor_LUT* motor_lut, rmMotor* motor, short angle){
-  motor->state.angle = angle;
+  motor->state.p_ref = angle;
   updateRMMotor(motor_lut, motor);
 }
 
 void setRPM(rmMotor_LUT* motor_lut, rmMotor* motor, short rpm){
-  motor->state.rpm = rpm;
+  motor->state.v_ref = rpm;
   updateRMMotor(motor_lut, motor);
 }
 
 void setTorque(rmMotor_LUT* motor_lut, rmMotor* motor, short torque){
-  motor->state.torque = torque;
+  motor->state.t_ref = torque;
   updateRMMotor(motor_lut, motor);
 }

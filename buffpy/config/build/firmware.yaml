@@ -1,2 +1,8 @@
+<<<<<<< HEAD
 FIRMWARE_INI:
   'wrecker': 'platformio.ini'
+=======
+FIRMWARE_INI:
+  'wrecker': 'platformio.ini'
+  'wrecker': 'example/RAWHID/platformio.ini'
+>>>>>>> 0d6ccaacf964cb391ab0206cf7f532effdba410f
