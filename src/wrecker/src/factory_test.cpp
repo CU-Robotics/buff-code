@@ -1,18 +1,21 @@
 #include <Arduino.h>
 #include <FlexCAN_T4.h>
 
+#include "drivers/Buff_HID.h"
 #include "factories/RMMotor.h"
 
-IntervalTimer canDumpTmr;
-
-
+HID_Device hid;
 rmMotor_LUT motor_lut;
 rmMotor_init_data data;
 
-unsigned long canRate = 5000;
-
+//		Timing variables
 unsigned long top_time;
+unsigned long canRate = 5000;
+unsigned long hidRate = 1000;
 unsigned long cycle_time = 1000;
+
+IntervalTimer canDumpTmr;
+IntervalTimer hidtmr;
 
 
 void sendCAN(){
@@ -35,10 +38,10 @@ void setup() {
 	canDumpTmr.priority(0); // Set interval timer to handle serial reads
   	canDumpTmr.begin(sendCAN, canRate);
 
-  	rmMotor* motor = RMMotor_Factory(&motor_lut, 3, 0, 1, false);
-  	  // again we need a better data structure to store motors
-	motor_lut.LUT[0] = motor;
-	motor_lut.n_items += 1;
+ //  	rmMotor* motor = RMMotor_Factory(&motor_lut, 3, 0, 1, false);
+ //  	  // again we need a better data structure to store motors
+	// motor_lut.LUT[0] = motor;
+	// motor_lut.n_items += 1;
 }
 
 
@@ -46,17 +49,10 @@ void setup() {
 void loop() {
 	top_time = micros();
 
-	// switch (serial input){
-	// 	case 'make-motor':
-	// 		RMMotor_Factory(&motor_lut, id, motorId, canBusNum);
-	// 		break;
-	// 	default:
-	// 		break;
-	// }
-
 	updateIO(&motor_lut);
 
-	Serial.println(motor_lut.LUT[0]->config.byteNum);
+	send_HID(&hid);
+	read_HID(&hid);
 
 	while (micros() - top_time < cycle_time){}
 }
