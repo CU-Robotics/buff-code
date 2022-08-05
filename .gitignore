@@ -2,10 +2,13 @@
 **/.piopm
 **/.vscode
 **/.DS_store
+**/Cargo.lock
 **/__pycache__
+**/.catkin_tools
 
 data/*
 buffpy/lib/*
 buffpy/build/*
 buffpy/models/*
+buffpy/bin/fimware.hex
 buffpy/config/sensitive/*

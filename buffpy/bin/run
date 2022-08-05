@@ -194,6 +194,9 @@ def launch_system(target_path, config):
 		rospy.set_param(f'{namespace}/DEBUG', config['DEBUG'])
 		rospy.set_param(f'{namespace}/TOPICS', config['TOPICS'])
 
+		if 'DEVICES' in config:
+			rospy.set_param(f'{namespace}/DEVICES', config['DEVICES'])
+
 		# load and launch each node in the config
 		for name in nodes:
 			node = config['NODES'][name]

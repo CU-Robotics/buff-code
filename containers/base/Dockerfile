@@ -133,7 +133,9 @@ RUN cd /home/cu-robotics && mkdir opencv_ws && cd opencv_ws && \
 	rm -rf /home/cu-robotics/opencv_ws
 
 
+# Get rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
+
 #
 #	Clean apt
 #

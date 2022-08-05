@@ -5,6 +5,7 @@ tmux
 wget
 curl
 gnupg2
+libusb-dev
 lsb-release
 python3-dev
 iputils-ping

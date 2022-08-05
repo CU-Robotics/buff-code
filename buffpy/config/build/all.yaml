@@ -1,1 +1,1 @@
-INCLUDE: ['rust.yaml', 'firmware.yaml', 'perception.yaml', 'ptools.yaml']
+INCLUDE: ['rust.yaml', 'firmware.yaml']

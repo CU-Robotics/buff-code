@@ -1,4 +1,0 @@
-PYTHON3_SCRIPTS:
-  'crosshair': ['luxnet.py']
-  'hunter': ['projector.py', 'deadreckon_tracer.py', 'target_map.py']
-  'echo': ['serial_layer.py']

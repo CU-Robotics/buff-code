@@ -93,11 +93,11 @@ def clean_buffpy():
 
 		for cargo_toml in data['CARGO_TOML']:
 			cargo_path = os.path.join(project_root, 'src', cargo_toml)
-			result = subprocess.run(f'cd {cargo_path} && rm -rf target', shell=True)
+			result = subprocess.run(f'cd {cargo_path} && cargo clean', shell=True)
 
 		for firmware_pkg in data['FIRMWARE_INI']:
 			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
-			result = subprocess.run(f'cd {firmware_path} && pio run -t clean', shell=True)
+			result = subprocess.run(f'cd /{firmware_path} && pio run -t clean', shell=True)
 
 	clear_directory(data_path)
 	
@@ -139,26 +139,29 @@ def build_buffpy(build):
 	
 	data = load_build_config(build)
 	
-	# if 'PYTHON3_SCRIPTS' in data:
-	# 	for pkg in data['PYTHON3_SCRIPTS']:
-	# 		for file in data['PYTHON3_SCRIPTS'][pkg]:
-	# 			dest = os.path.join(lib_path, file)
-	# 			f_path = os.path.join(project_root, 'src', pkg, 'scripts', file)
-	# 			result = subprocess.run(['cp', f_path, dest])
-	# 			result = subprocess.run(['chmod', '+x', dest])
-	# 			print(f'Installing {f_path}')
+	if 'PYTHON3_SCRIPTS' in data:
+		for pkg in data['PYTHON3_SCRIPTS']:
+			for file in data['PYTHON3_SCRIPTS'][pkg]:
+				dest = os.path.join(lib_path, file)
+				f_path = os.path.join(project_root, 'src', pkg, 'scripts', file)
+				result = subprocess.run(['cp', f_path, dest])
+				result = subprocess.run(['chmod', '+x', dest])
+				print(f'Installing {f_path}')
 
-	# if 'CARGO_TOML' in data:
-	# 	for cargo_toml in data['CARGO_TOML']:
-	# 		cargo_path = os.path.join(project_root, 'src', cargo_toml)
-	# 		result = subprocess.run(f'cd {cargo_path} && cargo build && cp target/debug/{cargo_toml} ../../buffpy/lib', shell=True)
+	if 'CARGO_TOML' in data:
+		for cargo_toml in data['CARGO_TOML']:
+			cargo_path = os.path.join(project_root, 'src', cargo_toml)
+			install_path = os.path.join(project_root, 'buffpy', 'lib')
+			result = subprocess.run(f'cd {cargo_path} && cargo build && cp target/debug/{cargo_toml} {install_path}', shell=True)
 
 
 	# Build the Firmware with pio 
 	if 'FIRMWARE_INI' in data:
 		for firmware_pkg in data['FIRMWARE_INI']:
 			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
-			result = subprocess.run(f'cd {firmware_path} && pio run', shell=True)
+			target_path = os.path.join(project_root, 'src', firmware_pkg, '.pio', 'build', 'teensy41', 'firmware.hex')
+			bin_path = os.path.join(project_root, 'buffpy', 'bin')
+			result = subprocess.run(f'cd {firmware_path} && pio run && cp {target_path} {bin_path}', shell=True)
 
 
 def get_devices():
@@ -441,7 +444,8 @@ def main(ap):
 		deploy_all_devices()
 
 	if ap.upload:
-		result = subprocess.run('cd src/wrecker && pio run -t upload', shell=True)
+		path = os.path.join(os.getenv('PROJECT_ROOT'), 'src', 'firmware')
+		result = subprocess.run(f'cd {path} && pio run -t upload', shell=True)
 
 	# May be Deprecated
 	# Consider moving to buff.bash as an alias
@@ -454,4 +458,3 @@ def main(ap):
 if __name__ == '__main__':
 	ap = parse_arguments()
 	main(ap)
-

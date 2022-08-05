@@ -8,14 +8,22 @@ sudo apt-get install \
 	ca-certificates \
 	curl \
 	gnupg \
-	lsb-release
+	lsb-release \
+	apt-transport-https \
+	software-properties-common
 
-sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu `lsb_release -cs` test"
+sudo apt update
+sudo apt install docker-ce
 
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
 sudo apt-get update
 
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 docker run hello-world
+
+sudo apt-get install qemu binfmt-support qemu-user-static
+
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
