@@ -1,4 +1,5 @@
 
+#include <Wire.h>
 #include <Adafruit_MPU6050.h>
 
 #include "algorithms/Buffers.h"
@@ -6,15 +7,18 @@
 #ifndef MPU6050_H
 #define MPU6050_H
 
+#define MPU 0x68
+
 class MPU6050{
     public:
         MPU6050();
-        MPU6050(int, int);
+        void init(int, int);
         void read(HIDBuffer*);
 
     private:
-        int hidid;
+        int id;
         int filterlvl;
+        unsigned long d_t;
         Buffer3 gyro;
         Buffer3 accel;
         Adafruit_MPU6050  mpu;

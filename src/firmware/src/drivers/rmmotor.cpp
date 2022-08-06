@@ -37,7 +37,7 @@ int RMMotor::read(HIDBuffer* buffer) {
     if (id != -1){
         // add buffer3 to filter these values
 
-        if (buffer->check_of(11)) {
+        if (!buffer->check_of(11)) {
             buffer->put('X');
             buffer->put('X');
             buffer->put(6);
@@ -48,9 +48,12 @@ int RMMotor::read(HIDBuffer* buffer) {
             buffer->put_u16((recMsgPtr->buf[4] << 8) | recMsgPtr->buf[5]);
             return 1;
         }
+        else {
+            return 0;
+        }
     }
 	
-    return 0;
+    return 1;
 }
 
 void new_motor(Motor_LUT* minfo, int idx, unsigned int canBusID, unsigned int byte_num, unsigned int motor_type){

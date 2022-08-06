@@ -1,15 +1,13 @@
 mod buff_hid;
 mod remote_control;
 
+use rosrust::ros_info;
 use std::time::Duration;
-use rosrust::{ros_info};
-use std::{sync::{Arc}, time::{Instant}, thread, thread::sleep};
+use std::{sync::Arc, thread, thread::sleep, time::Instant};
 
-use rosrust_msg::{std_msgs::{Float64MultiArray}, std_msgs};
-
+use rosrust_msg::{std_msgs, std_msgs::Float64MultiArray};
 
 fn main() {
-
     // launch programs in threads here or as scripts in run
     env_logger::init();
 
@@ -19,14 +17,14 @@ fn main() {
 
     let hid_output = Arc::clone(&layer.output_queue);
 
-    let hid_handle = thread::spawn( move || {
-        layer.spin();   
+    let hid_handle = thread::spawn(move || {
+        layer.spin();
     });
 
     let mut rc = remote_control::RemoteInput::new();
 
-    let rc_handle = thread::spawn( move || {
-       rc.spin();   
+    let rc_handle = thread::spawn(move || {
+        rc.spin();
     });
 
     hid_handle.join().unwrap();

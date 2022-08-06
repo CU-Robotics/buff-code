@@ -12,7 +12,7 @@ TOPICS:
   FR_SWERVE_DRIVE: 'front_right_swerve_drive'
   RR_SWERVE_DRIVE: 'rear_right_swerve_drive'
   RL_SWERVE_DRIVE: 'rear_left_swerve_drive'
-  REMOTE_CONTROL: 'rc_input'
+  REMOTE_CONTROL: 'remote_control'
 
 NODES:
   RUST:
@@ -36,51 +36,60 @@ DEVICES:
     DR16:
       TYPE: 'dr16'
       ENABLED: True
+      INPUTMODE: 0
 
     FL_SWERVE_STEER:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
       MOTORID: 0
+      MOTORTYPE: 0
 
     FR_SWERVE_STEER:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
       MOTORID: 0
+      MOTORTYPE: 0
 
     RR_SWERVE_STEER:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
       MOTORID: 0
+      MOTORTYPE: 0
 
     RL_SWERVE_STEER:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
       MOTORID: 0
+      MOTORTYPE: 0
 
     FL_SWERVE_DRIVE:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
       MOTORID: 0
+      MOTORTYPE: 0
 
     FR_SWERVE_DRIVE:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
       MOTORID: 0
+      MOTORTYPE: 0
 
     RR_SWERVE_DRIVE:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
       MOTORID: 0
+      MOTORTYPE: 0
 
     RL_SWERVE_DRIVE:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
       MOTORID: 0
+      MOTORTYPE: 0

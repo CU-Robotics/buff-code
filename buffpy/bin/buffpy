@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-#! /usr/bin/env python3
+#! /usr/bin/python3
 """
 	Project: BuffPy
 	Author: Mitchell D Scott
@@ -96,478 +93,12 @@ def clean_buffpy():
 
 		for cargo_toml in data['CARGO_TOML']:
 			cargo_path = os.path.join(project_root, 'src', cargo_toml)
-			result = subprocess.run(f'cd {cargo_path} && rm -rf target', shell=True)
-
-		for firmware_pkg in data['FIRMWARE_INI']:
-			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
-			result = subprocess.run(f'cd {firmware_path} && pio run -t clean', shell=True)
-
-	clear_directory(data_path)
-	
-def load_build_config(build):
-
-	project_root = os.getenv('PROJECT_ROOT')
-	lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	config_path = os.path.join(project_root, 'buffpy', 'config')
-	base_config = os.path.join(config_path, 'build', f'{build}.yaml')
-	
-	if not os.path.exists(base_config):
-		print(f'Could not find {base_config}')
-		return
-
-	with open(base_config, 'r') as f:
-		data = yaml.safe_load(f)
-		if 'INCLUDE' in data:
-			for file in data['INCLUDE']:
-				child_config = os.path.join(config_path, 'build', file)
-				with open(child_config, 'r') as fc:
-					child_data = yaml.safe_load(fc)
-					for item in child_data:
-						if item in data:
-							data[item].update(child_data[item])
-
-						else:
-							data[item] = child_data[item]
-
-	return data
-
-def build_buffpy(build):
-	"""
-		Builds the current workspace locally.
-		PARAMS:
-			profile: string, the profile to build
-	"""
-	project_root = os.getenv('PROJECT_ROOT')
-	lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	
-	data = load_build_config(build)
-	
-	# if 'PYTHON3_SCRIPTS' in data:
-	# 	for pkg in data['PYTHON3_SCRIPTS']:
-	# 		for file in data['PYTHON3_SCRIPTS'][pkg]:
-	# 			dest = os.path.join(lib_path, file)
-	# 			f_path = os.path.join(project_root, 'src', pkg, 'scripts', file)
-	# 			result = subprocess.run(['cp', f_path, dest])
-	# 			result = subprocess.run(['chmod', '+x', dest])
-	# 			print(f'Installing {f_path}')
-
-	# if 'CARGO_TOML' in data:
-	# 	for cargo_toml in data['CARGO_TOML']:
-	# 		cargo_path = os.path.join(project_root, 'src', cargo_toml)
-	# 		result = subprocess.run(f'cd {cargo_path} && cargo build && cp target/debug/{cargo_toml} ../../buffpy/lib', shell=True)
-
-
-	# Build the Firmware with pio 
-	if 'FIRMWARE_INI' in data:
-		for firmware_pkg in data['FIRMWARE_INI']:
-			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
-			result = subprocess.run(f'cd {firmware_path} && pio run', shell=True)
-
-
-def get_devices():
-	"""
-		Load all registered devices from
-		robots.yaml
-	"""
-	robots = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'robots', 'robots.yaml')
-	if os.path.exists(robots):
-		with open(robots, 'r') as f:
-			return yaml.safe_load(f)
-
-
-def install_ssh_keys():
-	"""
-		Generate and push ed25519 keys to
-		registered devices. This may be a huge 
-		security risk. But it makes installing
-		and sshing really nice.
-		requires password (per device)
-			2 - without installed keys
-			0 - with installed keys
-	"""
-
-	devices = get_devices()
-	home = os.getenv('HOME')
-
-	# only generate keys if they do not exist already
-	if not os.path.exists(f'{home}/.ssh/id_ed25519.pub'):
-		result = subprocess.run(['ssh-keygen', '-t', 'ed25519'])
-
-	for robot in devices:
-		robot_address = f'cu-robotics@{robot}'
-		try:
-			result = subprocess.run(['ssh', robot_address, f'if [[ ! -f /home/cu-robotics/.ssh/id_ed25519.pub ]]; then ssh-keygen -t ed25519; fi'], timeout=10)
-			if result.returncode == 0:
-				result = subprocess.run(['ssh-copy-id', '-i', f'{home}/.ssh/id_ed25519.pub', robot_address])
-				if result.returncode == 0:
-					print(f'{robot} Success')
-
-		except subprocess.TimeoutExpired:
-			print(f'{robot} Timed out')
-
-
-def deploy_buffpy(robot_address, robot_type, source, target, ID):
-	""" 
-		Install buffpy to a bot with scp.
-		PARAMS:
-			robot_address: string, USERNAME@<IP/HOSTNAME>
-			robot_type: string, the bot type to install
-			source: string or path like object, the target directory to copy
-			target: string or path like object, the target directory to copy to
-			ID: string or path like object, the identify file of the install (self.yaml)
-		RETURNS:
-			returncode: int, the return code of the install (failed = 13)
-	"""
-	with open(ID, 'w+') as f:
-		f.write(f"FROM:\n  '{robot_type}.yaml'\n")
-	# if root does exist remove it
-	try:	
-		clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target}/buffpy ]]; then rm -rf {target}/buffpy; fi; mkdir -p {target}'], timeout=10)
-		if clean_dir_result.returncode == 0:
-			install_result = subprocess.run(['scp', '-r', source, f'{robot_address}:{target}'])
-			print(install_result)
-
-			return install_result.returncode
-				
-	except subprocess.TimeoutExpired:
-		print(f'{robot_address} Timed out')
-
-	return 13
-
-
-def load_install_params():
-	"""
-		Get installation definition
-		RETURNS:
-			source: string or path like object, the target directory to copy
-			target: string or path like object, the target directory to copy to
-			ID: string or path like object, the identify file of the install (self.yaml)
-	"""
-
-	# Setup Parameters for install
-	project_root = os.getenv('PROJECT_ROOT')
-	source = os.path.join(project_root, 'buffpy')
-	target = os.path.join('/home', 'cu-robotics', 'buff-code')
-	ID = os.path.join(project_root, 'buffpy', 'config', 'robots', 'self.yaml')
-
-	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
-		print("Workspace not built, run:\n\t \'buffpy --build <profile>\'")
-		return
-
-	# Don't install from edge devices (robot)
-	if 'edge' in os.getenv('HOSTNAME'):
-		print(f'Can\'t install from device: {os.getenv("HOSTNAME")}')
-		return
-
-	devices = get_devices()
-
-	return source, target, ID, devices
-
-def deploy_all_devices():
-	"""
-		Install built code to all robots
-		regestered in robots.yaml
-		requires password
-			1 - without installed keys
-			0 - with installed keys
-	"""
-
-	# define the installation
-	source, target, ID, devices = load_install_params()
-
-	print(f'Deploying with\n\tSource: {source}\n\tTarget: {target}\n\tID: {ID}\n\tDevices: {devices}')
-
-	for robot in devices:
-
-		# get robot type
-		robot_type = devices[robot]
-		# set target destination
-		robot_address = f'cu-robotics@{robot}'
-		# deploy build
-		deploy_buffpy(robot_address, robot_type, source, target, ID)
-
-
-def initialize_devices():
-	"""
-		Deploy buffpy and run installation on
-		each registered device.
-	"""
-
-	# define the installation
-	source, target, ID, devices = load_install_params()
-
-	print(f'Running install as\n\tSource: {source}\n\tTarget: {target}\n\tID: {ID}\n\tDevices: {devices}')
-
-	for robot in devices:
-
-		# get robot type
-		robot_type = devices[robot]
-		# set target destination
-		robot_address = f'cu-robotics@{robot}'
-		# deploy buffpy and source the install scripts
-		if deploy_buffpy(robot_address, robot_type, source, target, ID) != 0:
-			continue
-		try:
-			setup_result = subprocess.run(['ssh', 
-					'-t',
-					robot_address, 
-					f'cd /home/cu-robotics/buff-code && source buffpy/scripts/install.bash'])
-
-		except subprocess.TimeoutExpired:
-			print(f'{robot_address} Timed out')
-
-
-def diagnostic():
-	"""
-		Test the various parts of buffpy.
-		currently only checks the install.
-	"""
-	print(f'\n\tBuffPy Diagnostic Running...\n')
-	try:
-		import cv2			# Test opencv-python import
-		print(f'cv2 import success')
-		import yaml			# Test pyyaml import
-		print(f'yaml import success')
-		import torch		# Test pytorch import
-		print(f'torch import success')
-		import numpy		# Test numpy import
-		print(f'numpy import success')
-		import pydrive 		# Test pydrive import
-		print(f'pydrive import success')
-		from cv_bridge import CvBridge	# Test cv_bridge
-		print(f'CV bridge import success')
-		import rospy		# Test rospy import
-		print(f'rospy import success')
-
-		if cv2.__version__ != '4.5.5':
-			print(f'Open-CV version mis-match: {cv2.__version__} != 4.5.5')
-		if yaml.__version__ != '6.0':
-			print(f'PyYaml version mis-match: {yaml.__version__} != 6.0')
-		if not '1.9.0' in torch.__version__:
-			print(f'PyTorch version mis-match: {torch.__version__} != 1.9.0*')
-
-		print(f'\n\tDiagnostic Successful\n')
-
-	except Exception as e:
-		print(e)
-
-def train_model(model):
-	
-	if model == 'new' or model == 'scratch':
-		project_root = os.getenv('PROJECT_ROOT')
-		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
-		shutil.rmtree(output_dir)
-		os.mkdir(output_dir)
-
-		model = 'fake-model-file.gotcha'
-
-	if model == 'clean':
-		project_root = os.getenv('PROJECT_ROOT')
-		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
-		shutil.rmtree(output_dir)
-		os.mkdir(output_dir)
-		return
-
-	build_buffpy('ptools')
-	subprocess.run(['python3', 'buffpy/lib/trainer.py', model])
-
-def parse_arguments():
-	"""
-		Handles parsing all inputs to buff
-		PARAMS
-			None
-		RETURNS
-			parsedargs: argparse args object
-	"""
-	parser = argparse.ArgumentParser(prog=sys.argv[0],
-	description='CU-Robotics Multi-Agent Deployment Manager')
-	parser.add_argument('--installKeys',
-		action='store_true',
-		help='Push local sshkeys to the robots')
-	parser.add_argument('--launch', 
-		nargs=1,
-		metavar='LOCATION',
-		default=False,
-		help='Launch the robots software on robots')
-	parser.add_argument('--botPull', 
-		action='store_true',
-		help='Pull data from the robot at ROBOT_IP')
-	parser.add_argument('--build', 
-		nargs=1,
-		metavar='PROFILE',
-		default='',
-		help='Builds the workspace locally')
-	parser.add_argument('--train', 
-		metavar='MODEL',
-		default='',
-		help='Trains a Yolov5 model locally')
-	parser.add_argument('--install', 
-		action='store_true',
-		help='Installs build to the registered robots')
-	parser.add_argument('--diagnostic', 
-		action='store_true',
-		help='Tests a workspace installation and tools')
-	parser.add_argument('--initialize', 
-		action='store_true',
-		help='Initializes registered devices')
-	parser.add_argument('--upload', 
-		action='store_true',
-		help='Uploads firmware with PIO')
-	parser.add_argument('--clean',
-		action='store_true',
-		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
-
-	return parser.parse_args(sys.argv[1:])
-						
-def main(ap):
-
-	if ap.clean:
-		clean_buffpy()
-
-	if ap.diagnostic:
-		diagnostic()
-
-	if ap.installKeys:
-		install_ssh_keys()
-
-	if ap.initialize:
-		initialize_devices()
-
-	if ap.build:
-		build_buffpy(ap.build[0])
-
-	if ap.train:
-		train_model(ap.train)
-
-	if ap.install:
-		#build_buffpy('deploy')
-		deploy_all_devices()
-
-	if ap.upload:
-		result = subprocess.run('cd src/wrecker && pio run -t upload', shell=True)
-
-	# May be Deprecated
-	# Consider moving to buff.bash as an alias
-	if ap.launch == 'bot':
-		result = subprocess.run(['ssh', os.getenv("ROBOT_ADDRESS"), 'cd buff-code && source buff.bash && launch'])
-
-	if ap.botPull:
-		result = subprocess.run(['scp', f'{os.getenv("ROBOT_ADDRESS")}:{os.getenv("ROBOT_ROOT")}/data', f'{os.getenv("PROJECT_ROOT")}/data'])
-
-if __name__ == '__main__':
-	ap = parse_arguments()
-	main(ap)
-
-=======
->>>>>>> db47332867d8a5f93e9a4f32b8eaf22255f80dfb
-#! /usr/bin/env python3
-"""
-	Project: BuffPy
-	Author: Mitchell D Scott
-	Description:
-	  This is a python3 command line tool from CU Robotics.
-	It is meant to simplify development of robotics software.
-	BuffPy handles the backend of software development, which 
-	includes but is not limited to:
-
-	 - installing/initializing devices
-	 - data management
-	 - realtime diagnostics
-
-	  The goal is to eliminate any backend blockers from our
-	  development flow. This novel part of this program is 
-	  the team management capabilities. Instead of having many
-	  repositories for a group of robots, BuffPy can redistribute
-	  ros nodes for a variety of applications.
-
-	TODO:
-	  - Improve quality and scope of the diagnostic
-	  - Implement multi agent debug (ie buffpy --debug $HOSTNAME
-	  	will open debug dialog with HOSTNAME)
-	  - Cached install, check buffpy to see which files do not 
-	  	need to be installed
-	  - Parallel initialization, don't wait for install on 
-	  	each device. Instead run simultaneously while monitoring 
-	  	progress and errors
-
-	NOTES:
-		Need better testing protocols (not diagnostic)
-"""
-
-import os
-import sys
-import yaml
-import glob
-import shutil
-import argparse
-import subprocess
-
-
-def clear_directory(path):
-	"""
-		Used for cleaning. Clears a directory and or replaces it.
-		The cleared directory will be empty after.
-		PARAMS:
-			path: string or path object, specifies the directory to clear
-	"""
-
-	# 		Idoit Security
-	#  this function could wipe the entire disk
-	# if not used with caution. It's probably not safe because if
-	# PROJECT_ROOT changes there could be catastrophic effects.
-	if len(path.split('/')) < 3:
-		print(f'Illegal Directory: cannot remove {path}')
-		return
-
-	# Delete dir if it exists
-	if os.path.exists(path):
-		shutil.rmtree(path)
-	
-	# Recreate empty directory
-	os.mkdir(path)
-
-
-def clean_buffpy():
-	"""
-		Removes the data folder, and when it becomes necesary
-		will also remove any generated binaries and configs.
-		This is an end-all clean up. It will clean everything.
-	"""
-
-	project_root = os.getenv('PROJECT_ROOT')
-	data_path = os.path.join(project_root, 'data')
-	lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	cargo_config = os.path.join(project_root, 'buffpy', 'config', 'build', 'rust.yaml')
-	firmware_config = os.path.join(project_root, 'buffpy', 'config', 'build', 'firmware.yaml')
-	
-	if not os.path.exists(firmware_config) and not os.path.exists(cargo_config):
-		print('No build specified exiting:...')
-		return
-
-	with open(firmware_config, 'r') as f:
-		data = yaml.safe_load(f)
-
-	with open(cargo_config, 'r') as f:
-		data.update(yaml.safe_load(f))
-
-	if not 'edge' in os.getenv('HOSTNAME'):
-		clear_directory(lib_path)
-
-		for cargo_toml in data['CARGO_TOML']:
-			cargo_path = os.path.join(project_root, 'src', cargo_toml)
-<<<<<<< HEAD
 			result = subprocess.run(f'cd {cargo_path} && cargo clean', shell=True)
 
 		for firmware_pkg in data['FIRMWARE_INI']:
 			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
 			result = subprocess.run(f'cd /{firmware_path} && pio run -t clean', shell=True)
-=======
-			result = subprocess.run(f'cd {cargo_path} && rm -rf target', shell=True)
 
-		for firmware_pkg in data['FIRMWARE_INI']:
-			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
-			result = subprocess.run(f'cd {firmware_path} && pio run -t clean', shell=True)
->>>>>>> db47332867d8a5f93e9a4f32b8eaf22255f80dfb
 
 	clear_directory(data_path)
 	
@@ -621,25 +152,18 @@ def build_buffpy(build):
 	if 'CARGO_TOML' in data:
 		for cargo_toml in data['CARGO_TOML']:
 			cargo_path = os.path.join(project_root, 'src', cargo_toml)
-<<<<<<< HEAD
 			install_path = os.path.join(project_root, 'buffpy', 'lib')
-			result = subprocess.run(f'cd {cargo_path} && cargo build && cp target/debug/{cargo_toml} {install_path}', shell=True)
-=======
-			result = subprocess.run(f'cd {cargo_path} && cargo build && cp target/debug/{cargo_toml} ../../buffpy/lib', shell=True)
->>>>>>> db47332867d8a5f93e9a4f32b8eaf22255f80dfb
+			result = subprocess.run(f'cd {cargo_path} && cargo fmt && \
+				cargo build && cp target/debug/{cargo_toml} {install_path}', shell=True)
 
 
 	# Build the Firmware with pio 
 	if 'FIRMWARE_INI' in data:
 		for firmware_pkg in data['FIRMWARE_INI']:
 			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
-<<<<<<< HEAD
 			target_path = os.path.join(project_root, 'src', firmware_pkg, '.pio', 'build', 'teensy41', 'firmware.hex')
 			bin_path = os.path.join(project_root, 'buffpy', 'bin')
 			result = subprocess.run(f'cd {firmware_path} && pio run && cp {target_path} {bin_path}', shell=True)
-=======
-			result = subprocess.run(f'cd {firmware_path} && pio run', shell=True)
->>>>>>> db47332867d8a5f93e9a4f32b8eaf22255f80dfb
 
 
 def get_devices():
@@ -849,6 +373,21 @@ def train_model(model):
 	build_buffpy('ptools')
 	subprocess.run(['python3', 'buffpy/lib/trainer.py', model])
 
+def dig(path):
+	compose_file = os.path.join(path, 'docker-compose.yaml')
+	with open(compose_file, 'r')  as f:
+		compose_data = yaml.safe_load(f)
+
+	for build in compose_data['services']:
+		if 'base' in build:
+			subprocess.run(f'cd {path} && \
+				docker compose build {build}', shell=True)
+
+	for build in compose_data['services']:
+		if 'dev' in build:
+			subprocess.run(f'cd {path} && \
+				docker compose build {build}', shell=True)
+			
 def parse_arguments():
 	"""
 		Handles parsing all inputs to buff
@@ -891,6 +430,9 @@ def parse_arguments():
 	parser.add_argument('--upload', 
 		action='store_true',
 		help='Uploads firmware with PIO')
+	parser.add_argument('--dig', 
+		action='store_true',
+		help='Builds the docker images')
 	parser.add_argument('--clean',
 		action='store_true',
 		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
@@ -921,13 +463,13 @@ def main(ap):
 		#build_buffpy('deploy')
 		deploy_all_devices()
 
+	if ap.dig:
+		path = os.path.join(os.getenv('PROJECT_ROOT'), 'containers')
+		dig(path)
+
 	if ap.upload:
-<<<<<<< HEAD
 		path = os.path.join(os.getenv('PROJECT_ROOT'), 'src', 'firmware')
 		result = subprocess.run(f'cd {path} && pio run -t upload', shell=True)
-=======
-		result = subprocess.run('cd src/wrecker && pio run -t upload', shell=True)
->>>>>>> db47332867d8a5f93e9a4f32b8eaf22255f80dfb
 
 	# May be Deprecated
 	# Consider moving to buff.bash as an alias
@@ -940,8 +482,4 @@ def main(ap):
 if __name__ == '__main__':
 	ap = parse_arguments()
 	main(ap)
-<<<<<<< HEAD
-=======
 
->>>>>>> 0d6ccaacf964cb391ab0206cf7f532effdba410f
->>>>>>> db47332867d8a5f93e9a4f32b8eaf22255f80dfb

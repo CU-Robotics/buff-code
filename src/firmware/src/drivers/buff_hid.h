@@ -17,7 +17,7 @@ struct HID_Device {
 };
 
 void init_HID(HID_Device*);
-int send_HID(HID_Device*, Motor_LUT*); // writes HID packet
-int read_HID(HID_Device*, Motor_LUT*); // read HID packet
+int8_t send_HID(HID_Device*, Motor_LUT*); // writes HID packet
+int8_t read_HID(HID_Device*, Motor_LUT*); // read HID packet
 
 #endif
