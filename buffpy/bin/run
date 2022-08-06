@@ -191,11 +191,7 @@ def launch_system(target_path, config):
 		launch = roslaunch.scriptapi.ROSLaunch()
 		launch.start()
 
-		rospy.set_param(f'{namespace}/DEBUG', config['DEBUG'])
-		rospy.set_param(f'{namespace}/TOPICS', config['TOPICS'])
-
-		if 'DEVICES' in config:
-			rospy.set_param(f'{namespace}/DEVICES', config['DEVICES'])
+		rospy.set_param(f'{namespace}', config)
 
 		# load and launch each node in the config
 		for name in nodes:
@@ -205,9 +201,6 @@ def launch_system(target_path, config):
 				package = node['PACKAGE']
 			else:
 				package = 'buffpy'
-
-			if package == 'buffpy':
-				args = [f'{namespace}/{name}']
 
 			# Not all packages handle our launch params
 			if 'CONFIG' in node:
