@@ -7,16 +7,16 @@
 
 echo -e "\n\tSetting up ROS ${ROS_DISTRO} ${ROS_PKG}\n"
 
-sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+$SUDO sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 
 
 #
 # Setup ROS keys
 # 
 
-curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | $SUDO apt-key add -
 
-sudo apt update
+$SUDO apt update
 
 
 #
@@ -25,13 +25,13 @@ sudo apt update
 
 echo -e "\n\tInstalling ros-${ROS_DISTRO}-${ROS_PKG}\n"
 
-sudo apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin python-catkin-tools
+$SUDO apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin python-catkin-tools
 
 if [[ "${HOSTNAME}" != "edge"* ]]; then
-	sudo apt install -y --no-install-recommends ros-${ROS_DISTRO}-rqt-robot-plugins
+	$SUDO apt install -y --no-install-recommends ros-${ROS_DISTRO}-rqt-robot-plugins
 fi
 
-sudo apt update
+$SUDO apt update
 
 
 #
@@ -50,12 +50,12 @@ pip3 install -r ${PROJECT_ROOT}/buffpy/config/install/ros_python_requirements.tx
 if [[ "${HOSTNAME}" != "edge"* ]]; then
 	echo -e "\n\tSetting up rosdep\n"
 
-	sudo apt update
-	sudo apt install python-rosdep
+	$SUDO apt update
+	$SUDO apt install python-rosdep
 	
 	cd /opt/ros/${ROS_DISTRO}
 
-	sudo rosdep init
+	$SUDO rosdep init
 	rosdep update
 fi
 
@@ -64,7 +64,7 @@ fi
 #	Source buff.bash
 #
 
-sudo apt update 
+$SUDO apt update 
 
 cd ${PROJECT_ROOT}
 
@@ -86,7 +86,7 @@ source ${PROJECT_ROOT}/buffpy/buff.bash
 
 # catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
 
-# catkin build cv_bridge && sudo cp -r install/lib/python3/dist-packages/* /opt/ros/melodic/lib/python2.7/dist-packages/ && cd $HOME
+# catkin build cv_bridge && $SUDO cp -r install/lib/python3/dist-packages/* /opt/ros/melodic/lib/python2.7/dist-packages/ && cd $HOME
 
 # if [[ -d ${HOME}/opencv_ws ]]; then
 # 	rm -rf ${HOME}/opencv_ws

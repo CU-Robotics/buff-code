@@ -1,21 +1,22 @@
-#! /usr/bin/bash
+#! /bin/bash
 
-
-if [[ "${PWD}" != */buff-code ]]; then
-	echo -e "running from ${PWD}, is this your project root?"
-	return
-fi
 
 #		Setup robot params
 export DOCKER=False
 export PROJECT_ROOT=${PWD}
 export HOSTNAME=$HOSTNAME 
+export SUDO='sudo'
 
 if [[ -f /proc/1/cgroup ]]; then
 	if grep -q docker /proc/1/cgroup; then 
-	   DOCKER=True
-	elif [[ "${HOSTNAME}" == "docker-desktop" ]]; then
+		SUDO=''
 		DOCKER=True
+		PROJECT_ROOT=/home/cu-robotics/buff-code
+	elif [[ "${HOSTNAME}" == "docker-desktop" ]]; then
+		SUDO=''
+		DOCKER=True
+		PROJECT_ROOT=/home/cu-robotics/buff-code
+
 	fi
 fi
 
@@ -27,6 +28,11 @@ if [[ "${DOCKER}" == "False" ]]; then
 else
 	export LC_ALL=C.UTF-8
     export LANG=C.UTF-8
+fi
+
+if [[ "${PROJECT_ROOT}" != */buff-code ]]; then
+	echo -e "running from ${PWD}, is this your project root?"
+	return
 fi
 
 PYTHONPATH=

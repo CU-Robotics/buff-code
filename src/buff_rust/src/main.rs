@@ -1,4 +1,5 @@
 mod buff_hid;
+mod localization;
 mod remote_control;
 
 use rosrust::ros_info;
@@ -15,18 +16,26 @@ fn main() {
 
     let mut layer = buff_hid::HidLayer::new();
 
-    let hid_output = Arc::clone(&layer.output_queue);
+    let hid_imu = Arc::clone(&layer.imu_input);
+    let hid_dr16 = Arc::clone(&layer.dr16_input);
+    let hid_output_queue = Arc::clone(&layer.output_queue);
+
+    let mut imu = localization::IMU::new(hid_imu);
+    let mut rc = remote_control::RemoteInput::new(hid_dr16);
 
     let hid_handle = thread::spawn(move || {
         layer.spin();
     });
 
-    let mut rc = remote_control::RemoteInput::new();
+    let imu_handle = thread::spawn(move || {
+        imu.spin();
+    });
 
     let rc_handle = thread::spawn(move || {
         rc.spin();
     });
 
     hid_handle.join().unwrap();
+    imu_handle.join().unwrap();
     rc_handle.join().unwrap();
 }

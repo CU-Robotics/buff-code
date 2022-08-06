@@ -38,8 +38,8 @@ int RMMotor::read(HIDBuffer* buffer) {
         // add buffer3 to filter these values
 
         if (!buffer->check_of(11)) {
-            buffer->put('X');
-            buffer->put('X');
+            buffer->put('M');
+            buffer->put('M');
             buffer->put(6);
             buffer->put(id);
             buffer->put(1);

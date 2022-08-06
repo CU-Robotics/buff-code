@@ -1,0 +1,23 @@
+DEBUG: True
+
+TOPICS:
+  IMU: 'imu'
+  DR16: 'remote_input'
+  HID_OUTPUT: 'teensy_commands'
+  REMOTE_CONTROL: 'remote_control'
+
+NODES:
+  RUST:
+    FILES: ['buff_rust']
+  
+DEVICES:
+    LUT: [IMU, DR16]
+
+    IMU:
+      TYPE: 'imu'
+      ENABLED: True
+
+    DR16:
+      TYPE: 'dr16'
+      ENABLED: True
+      INPUTMODE: 0

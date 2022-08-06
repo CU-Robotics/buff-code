@@ -107,7 +107,8 @@ pub struct HidLayer {
     pub pid: u16,
     pub input: HidBuffer,
     pub output: HidBuffer,
-    pub dr16_input: Arc<RwLock<[u8; 18]>>,
+    pub imu_input: Arc<RwLock<Vec<f64>>>,
+    pub dr16_input: Arc<RwLock<Vec<u8>>>,
     pub teensy: Result<HidDevice, HidError>,
     pub output_queue: Arc<RwLock<HidBuffer>>,
     pub subscriber: rosrust::Subscriber,
@@ -150,7 +151,8 @@ impl HidLayer {
         })
         .unwrap();
 
-        let dr16 = Arc::new(RwLock::new([0u8; 18]));
+        let dr16 = Arc::new(RwLock::new(vec![0u8; 18]));
+        let imu = Arc::new(RwLock::new(vec![0f64; 6]));
 
         let api = HidApi::new().expect("Failed to create API instance");
         let teensy = api.open(0x0000, 0x0000);
@@ -160,6 +162,7 @@ impl HidLayer {
             vid: 0x16C0,
             pid: 0x0486,
             teensy: teensy,
+            imu_input: imu,
             dr16_input: dr16,
             input: HidBuffer::new(),
             output: HidBuffer::new(),
@@ -214,8 +217,7 @@ impl HidLayer {
                         .unwrap();
 
                     let mut queue = self.output_queue.write().unwrap();
-                    queue.put('X' as u8);
-                    queue.put('X' as u8);
+                    queue.put('M' as u8);
                     queue.put('M' as u8);
                     queue.put(i as u8);
                     queue.put(canid);
@@ -225,8 +227,7 @@ impl HidLayer {
 
                 "imu" => {
                     let mut queue = self.output_queue.write().unwrap();
-                    queue.put('X' as u8);
-                    queue.put('X' as u8);
+                    queue.put('I' as u8);
                     queue.put('I' as u8);
                     queue.put(i as u8);
                     queue.put(1);
@@ -235,8 +236,7 @@ impl HidLayer {
 
                 "dr16" => {
                     let mut queue = self.output_queue.write().unwrap();
-                    queue.put('X' as u8);
-                    queue.put('X' as u8);
+                    queue.put('D' as u8);
                     queue.put('D' as u8);
                     queue.put(i as u8);
                     drop(queue);
@@ -253,7 +253,7 @@ impl HidLayer {
         }
     }
 
-    pub fn read_bytes_as_bytes(&mut self, n_bytes: u8) -> Vec<f64> {
+    pub fn read_bytes_as_f64(&mut self, n_bytes: u8) -> Vec<f64> {
         let mut j = 0;
         let mut data = Vec::<f64>::new();
 
@@ -264,7 +264,7 @@ impl HidLayer {
         data
     }
 
-    pub fn read_bytes_as_u16(&mut self, n_bytes: u8) -> Vec<f64> {
+    pub fn read_u16_as_f64(&mut self, n_bytes: u8) -> Vec<f64> {
         let mut j = 0;
         let mut data = Vec::<f64>::new();
 
@@ -275,15 +275,61 @@ impl HidLayer {
         data
     }
 
-    pub fn read_bytes_as_f32(&mut self, n_bytes: u8) -> Vec<f64> {
+    pub fn read_f32_as_f64(&mut self, n_bytes: u8) -> Vec<f64> {
         let mut j = 0;
         let mut data = Vec::<f64>::new();
 
-        while j < n_bytes - 3 {
+        while j < n_bytes - 4 {
             data.push(self.input.seek_f32(None) as f64);
             j += 3;
         }
         data
+    }
+
+    pub fn read_bytes_as_bytes(&mut self, n_bytes: u8) -> Vec<u8> {
+        let mut j = 0;
+        let mut data = Vec::<u8>::new();
+
+        while j < n_bytes {
+            data.push(self.input.seek(None));
+            j += 1;
+        }
+        data
+    }
+
+    pub fn read_u16_as_u16(&mut self, n_bytes: u8) -> Vec<u16> {
+        let mut j = 0;
+        let mut data = Vec::<u16>::new();
+
+        while j <= n_bytes - 2 {
+            data.push(self.input.seek_u16(None));
+            j += 2;
+        }
+        data
+    }
+
+    pub fn publish_msg(&mut self) {
+        let data_bytes = self.input.seek(None);
+        let data_id = self.input.seek(None) as usize;
+        let data_type = self.input.seek(None) as usize;
+
+        let data = match data_type {
+            0 => Some(self.read_bytes_as_f64(data_bytes)),
+            1 => Some(self.read_u16_as_f64(data_bytes)),
+            2 => Some(self.read_f32_as_f64(data_bytes)),
+            _ => {
+                ros_info!("Data type {} Not implemented", data_type);
+                None
+            }
+        };
+        match data {
+            Some(data) => {
+                let mut msg = Float64MultiArray::default();
+                msg.data = data;
+                let _result = self.publishers[data_id].send(msg).unwrap();
+            }
+            None => {}
+        };
     }
 
     pub fn parse_hid(&mut self, n: usize) {
@@ -292,23 +338,39 @@ impl HidLayer {
             return;
         }
         while self.input.seek_ptr < n - 1 {
-            if self.input.seek(None) == 'X' as u8 {
-                if self.input.seek(None) == 'X' as u8 {
-                    let data_bytes = self.input.seek(None);
-                    let data_id = self.input.seek(None) as usize;
-                    let data_type = self.input.seek(None) as usize;
-
-                    let data: Vec<f64> = match data_type {
-                        0 => self.read_bytes_as_bytes(data_bytes),
-                        1 => self.read_bytes_as_u16(data_bytes),
-                        2 => self.read_bytes_as_f32(data_bytes),
-                        _ => continue,
-                    };
-                    let mut msg = Float64MultiArray::default();
-                    msg.data = data;
-                    let _result = self.publishers[data_id].send(msg).unwrap();
-                    continue;
+            match self.input.seek(None) as char {
+                'M' => {
+                    if self.input.seek(None) == 'M' as u8 {
+                        self.publish_msg();
+                    }
                 }
+
+                'I' => {
+                    if self.input.seek(None) == 'I' as u8 {
+                        let data_bytes = self.input.seek(None);
+                        let data_id = self.input.seek(None) as usize;
+                        let data_type = self.input.seek(None) as usize;
+                        let data = self.read_f32_as_f64(data_bytes);
+                        let mut buff = self.imu_input.write().unwrap();
+                        for (i, c) in data.iter().enumerate() {
+                            buff[i] = *c;
+                        }
+                    }
+                }
+
+                'D' => {
+                    if self.input.seek(None) == 'D' as u8 {
+                        let data_bytes = self.input.seek(None);
+                        let data_id = self.input.seek(None) as usize;
+                        let data_type = self.input.seek(None) as usize;
+                        let data = self.read_bytes_as_bytes(data_bytes);
+                        let mut buff = self.dr16_input.write().unwrap();
+                        for (i, c) in data.iter().enumerate() {
+                            buff[i] = *c;
+                        }
+                    }
+                }
+                _ => continue,
             }
         }
         self.input.reset();
@@ -399,7 +461,7 @@ impl HidLayer {
             self.read();
             self.write();
 
-            let mut micros = timestamp.elapsed().as_micros();
+            let micros = timestamp.elapsed().as_micros();
 
             if micros < 500 {
                 sleep(Duration::from_micros(500 - micros as u64));
