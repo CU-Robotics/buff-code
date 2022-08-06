@@ -68,6 +68,8 @@ sudo apt update
 
 cd ${PROJECT_ROOT}
 
+echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
+
 source ${PROJECT_ROOT}/buffpy/buff.bash
 
 #

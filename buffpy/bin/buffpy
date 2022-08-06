@@ -82,6 +82,9 @@ def clean_buffpy():
 		print('No build specified exiting:...')
 		return
 
+	subprocess.run(f'sudo apt clean && sudo apt autoremove && sudo apt update', shell=True)
+	subprocess.run(f'docker image prune -f && docker container prune -f', shell=True)
+
 	with open(firmware_config, 'r') as f:
 		data = yaml.safe_load(f)
 

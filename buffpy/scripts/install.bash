@@ -73,6 +73,10 @@ source "${PROJECT_ROOT}/buffpy/scripts/install_tytools.bash"
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
 
+echo "source ${HOME}/.cargo/env" >> ~/.bashrc
+
+source "${PROJECT_ROOT}/buffpy/scripts/install_docker.bash"
+
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 
 	sudo cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
