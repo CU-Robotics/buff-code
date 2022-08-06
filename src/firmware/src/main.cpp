@@ -41,7 +41,7 @@ void setup() {
   	cycle_history.init(10);
 
   	init_HID(&hid);
-  	Serial.println("Hid initialized");
+  	// Serial.println("Hid initialized");
 }
 
 void blink(){
@@ -64,13 +64,13 @@ void loop() {
 
 	send_HID(&hid, &motor_lut);
 	int n = read_HID(&hid, &motor_lut);
-
 	if (ENABLE_HID){	// This should enable/diable the robot if there are connection issues
+
 		blink();		
 
 		if (canctr > 5){
 			canctr = 0;
-			writeCAN(&motor_lut);
+			//writeCAN(&motor_lut);
 		}
 		else {
 			canctr ++;
@@ -78,10 +78,12 @@ void loop() {
 
 		cycle_history.push(micros() - top_time);
 
-		if (cycle_history.mean() > 1.5 * cycle_time){
+		if (cycle_history.mean() > 2 * cycle_time){
 			cycle_history.reset();
 			Serial.print("Disabling per Cycle Limit: ");
 			Serial.println(micros() - top_time);
+			hid.imu = MPU6050();
+			hid.receiver = DR16();
 			ENABLE_HID = false;
 			// should also disable the motors and sensors
 		}
@@ -89,8 +91,6 @@ void loop() {
 	else {
 		ENABLE_HID = n > 0;
 	}
-
-
 
 	while (micros() - top_time < cycle_time){}
 }

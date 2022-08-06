@@ -21,17 +21,9 @@ fi
 
 
 if [[ "${DOCKER}" == "False" ]]; then
-	if [[ "$(uname)" == "MINGW"* ]]; then
-		alias spinup="winpty docker run -it \
-		-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
-		-e DISPLAY=host.docker.internal:0 \
-		--net=host "
-	else
-		alias spinup="docker run -it \
-		-e DISPLAY=host.docker.internal:0 \
-		-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
-		--net=host "
-	fi
+	alias spinup="cd ${PROJECT_ROOT}/containers && \
+		docker  compose run "
+	
 else
 	export LC_ALL=C.UTF-8
     export LANG=C.UTF-8

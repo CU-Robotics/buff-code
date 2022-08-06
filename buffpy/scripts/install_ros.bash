@@ -74,21 +74,21 @@ source ${PROJECT_ROOT}/buffpy/buff.bash
 # Install cv2 bridge for python3
 #
 
-echo -e "\n\tCloning vision_opencv to ${HOME}/opencv_ws\n"
+# echo -e "\n\tCloning vision_opencv to ${HOME}/opencv_ws\n"
 
-cd $HOME && mkdir opencv_ws && cd opencv_ws && \
+# cd $HOME && mkdir opencv_ws && cd opencv_ws && \
 
-git clone -b noetic https://github.com/ros-perception/vision_opencv.git src/vision_opencv && \
+# git clone -b noetic https://github.com/ros-perception/vision_opencv.git src/vision_opencv && \
 
-cd src/vision_opencv  && sed -i 's/python37/python3/g' cv_bridge/CMakeLists.txt && cd ../.. && catkin init && \
+# cd src/vision_opencv  && sed -i 's/python37/python3/g' cv_bridge/CMakeLists.txt && cd ../.. && catkin init && \
 
-catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
+# catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
 
-catkin build cv_bridge && sudo cp -r install/lib/python3/dist-packages/* /opt/ros/melodic/lib/python2.7/dist-packages/ && cd $HOME
+# catkin build cv_bridge && sudo cp -r install/lib/python3/dist-packages/* /opt/ros/melodic/lib/python2.7/dist-packages/ && cd $HOME
 
-if [[ -d ${HOME}/opencv_ws ]]; then
-	rm -rf ${HOME}/opencv_ws
-fi
+# if [[ -d ${HOME}/opencv_ws ]]; then
+# 	rm -rf ${HOME}/opencv_ws
+# fi
 
 #
 #	Return to project

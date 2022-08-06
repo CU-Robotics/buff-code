@@ -4,6 +4,7 @@ htop
 tmux
 wget
 curl
+qemu
 gnupg2
 libusb-dev
 lsb-release
