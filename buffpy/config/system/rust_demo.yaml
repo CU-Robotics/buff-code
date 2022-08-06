@@ -1,9 +1,0 @@
-DEBUG: 'True'
-
-TOPICS: 
-  IMAGE: 'image_raw'
-
-NODES:
-  WRECKER_RUST:
-    FILES: ['echo']
-    CONFIG: None

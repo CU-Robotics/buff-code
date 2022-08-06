@@ -23,8 +23,8 @@ void DR16::read(HIDBuffer* buffer) {
         if(Serial5.available() >= 18) {
             Serial5.readBytes(buf, 18);
             if (!buffer->check_of(23)){
-                buffer->put('X');
-                buffer->put('X');
+                buffer->put('D');
+                buffer->put('D');
                 buffer->put(18);
                 buffer->put(id);
                 buffer->put(0);

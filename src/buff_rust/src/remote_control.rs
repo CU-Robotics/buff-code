@@ -10,7 +10,7 @@ use std::{
 pub struct RemoteInput {
     connected: bool,
     input_mode: u8,
-    input: Arc<RwLock<[u8; 18]>>,
+    input: Arc<RwLock<Vec<u8>>>,
     dr16_timestamp: Arc<RwLock<Instant>>,
 
     channels: [u16; 4],
@@ -25,35 +25,35 @@ pub struct RemoteInput {
 
     keyboard: [bool; 16],
     publisher: rosrust::Publisher<Float64MultiArray>,
-    subscriber: rosrust::Subscriber,
+    // subscriber: rosrust::Subscriber,
 }
 
 impl RemoteInput {
-    pub fn new() -> RemoteInput {
-        let input_buffer = Arc::new(RwLock::new([0u8; 18]));
+    pub fn new(input_buffer: Arc<RwLock<Vec<u8>>>) -> RemoteInput {
+        // let input_buffer = Arc::new(RwLock::new([0u8; 18]));
         let timestamp = Arc::new(RwLock::new(Instant::now()));
 
-        let remote_id = "/buffbot/TOPICS/DR16".to_string();
-        let remote_topic = rosrust::param(&remote_id).unwrap().get::<String>().unwrap();
+        // let remote_id = "/buffbot/TOPICS/DR16".to_string();
+        // let remote_topic = rosrust::param(&remote_id).unwrap().get::<String>().unwrap();
 
-        let buffer = Arc::clone(&input_buffer);
-        let ts_clone = Arc::clone(&timestamp);
+        // let buffer = Arc::clone(&input_buffer);
+        // let ts_clone = Arc::clone(&timestamp);
 
-        let sub = rosrust::subscribe(&remote_topic, 5, move |msg: Float64MultiArray| {
-            let mut buf = buffer.write().unwrap();
-            for (i, c) in msg.data.iter().enumerate() {
-                buf[i] = *c as u8;
-            }
-            let mut ts = ts_clone.write().unwrap();
-            *ts = Instant::now();
-        });
+        // let sub = rosrust::subscribe(&remote_topic, 5, move |msg: Float64MultiArray| {
+        //     let mut buf = buffer.write().unwrap();
+        //     for (i, c) in msg.data.iter().enumerate() {
+        //         buf[i] = *c as u8;
+        //     }
+        //     let mut ts = ts_clone.write().unwrap();
+        //     *ts = Instant::now();
+        // });
 
-        match &sub {
-            Ok(s) => {}
-            _ => {
-                ros_info!("subscriber bad");
-            }
-        }
+        // match &sub {
+        //     Ok(s) => {}
+        //     _ => {
+        //         ros_info!("subscriber bad");
+        //     }
+        // }
 
         let topic_param = "/buffbot/TOPICS/REMOTE_CONTROL".to_string();
         let topic = rosrust::param(&topic_param)
@@ -80,12 +80,13 @@ impl RemoteInput {
             dr16_timestamp: timestamp,
 
             publisher: publish,
-            subscriber: sub.unwrap(),
+            // subscriber: sub.unwrap(),
         }
     }
 
     pub fn parse_buffer(&mut self) {
         let buf = self.input.read().unwrap();
+
         self.channels[0] = ((buf[1] as u16 & 0x07) << 8) | buf[0] as u16;
         self.channels[1] = ((buf[2] as u16 & 0xFC) << 5) | ((buf[1] as u16 & 0xF8) >> 3);
         self.channels[2] =
@@ -159,7 +160,7 @@ impl RemoteInput {
     pub fn broadcast_keyboard(&self) {}
 
     pub fn broadcast_control(&self) {
-        // ctrl_msg = [inputType,xdot,ydot,psidotC,phidotT,psidotT]
+        // ctrl_msg = [inputType,xdot,ydot,psidotC,phidotT,psidotT,feederEnable,flyWheelEnable]
         match self.input_mode {
             0 => self.broadcast_joysticks(),
             1 => self.broadcast_keyboard(),

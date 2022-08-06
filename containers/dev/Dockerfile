@@ -23,6 +23,8 @@ RUN apt-get update && \
 	apt-get autoremove --purge -y && \
 	apt-get clean -y
 
+RUN python3 /home/cu-robotics/buff-code/buffpy/bin/buffpy --build all
+
 #
 # Set up the environment
 # not sure how to utilize the project_root variable

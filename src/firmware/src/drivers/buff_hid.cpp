@@ -1,6 +1,5 @@
 #include <Arduino.h>
 
-//#include "drivers/mpu6050.h"
 #include "drivers/rmmotor.h"
 #include "drivers/buff_hid.h"
 
@@ -43,30 +42,35 @@ int8_t read_HID(HID_Device* hid, Motor_LUT* minfo){
 	int8_t n = usb_rawhid_recv(&hid->input.data, 0);
 
 	while (i < n){
-		if (hid->input.seek() == 'X') {
-			if (hid->input.seek() == 'X') {
-				switch (hid->input.seek()) {
-					case 'M':
-						Serial.println("Init new motor");
-						new_motor(minfo, 
-							hid->input.seek(), 
-							hid->input.seek(), 
-							hid->input.seek(), 
-							hid->input.seek());
-						break;
-
-					case 'I':
-						hid->imu.init(hid->input.seek(), 
-							hid->input.seek());
-						break;
-
-					case 'D':
-						hid->receiver.init(int(hid->input.seek()));
-						break;
-					
+		switch (hid->input.seek()) {
+			case 'M':
+				if (hid->input.seek() == 'M'){
+					Serial.println("Init new motor");
+					new_motor(minfo, 
+						hid->input.seek(), 
+						hid->input.seek(), 
+						hid->input.seek(), 
+						hid->input.seek());
 				}
-			}
+				break;
+
+			case 'I':
+				if (hid->input.seek() == 'I'){
+					hid->imu.init(hid->input.seek(), 
+						hid->input.seek());
+				}
+				break;
+
+			case 'D':
+				if (hid->input.seek() == 'D'){
+					hid->receiver.init(int(hid->input.seek()));
+				}
+				break;
+
+			default:
+				break;
 		}
+
 		if (hid->input.seek_ptr < i) {
 			break;
 		}
