@@ -24,6 +24,11 @@ RUN apt-get update && \
 	apt-get clean -y
 
 RUN python3 /home/cu-robotics/buff-code/buffpy/bin/buffpy --build all
+RUN chmod +x /home/cu-robotics/buff-code/buffpy/scripts/yolov5_setup.bash 
+RUN chmod +x /home/cu-robotics/buff-code/buffpy/scripts/openvino_setup.bash
+RUN /home/cu-robotics/buff-code/buffpy/scripts/yolov5_setup.bash 
+RUN /home/cu-robotics/buff-code/buffpy/scripts/openvino_setup.bash
+
 
 #
 # Set up the environment

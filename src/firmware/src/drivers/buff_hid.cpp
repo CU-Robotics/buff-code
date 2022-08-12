@@ -14,19 +14,11 @@ void init_HID(HID_Device* hid){
 
 int8_t send_HID(HID_Device* hid, Motor_LUT* minfo){
 
+	// unsigned long t = micros();
 	hid->imu.read(&hid->output);
+	// Serial.println(micros() - t);
 	hid->receiver.read(&hid->output);
-
-	static int motor_seek = 0;
-	while (motor_seek <= 29) {
-		if (minfo->motors[motor_seek].read(&hid->output) == 0){
-			break;
-		}
-		motor_seek++;
-	}
-	if (motor_seek >= 29){
-		motor_seek = 0;
-	}
+	read_motors(minfo, &hid->output);
 
 	int8_t n = usb_rawhid_send(&hid->output.data, 0);
 
@@ -45,25 +37,32 @@ int8_t read_HID(HID_Device* hid, Motor_LUT* minfo){
 		switch (hid->input.seek()) {
 			case 'M':
 				if (hid->input.seek() == 'M'){
-					Serial.println("Init new motor");
 					new_motor(minfo, 
-						hid->input.seek(), 
+						hid->input.seek(),
 						hid->input.seek(), 
 						hid->input.seek(), 
 						hid->input.seek());
 				}
 				break;
 
+			case 'm':
+				if (hid->input.seek() == 'm'){
+					int id = hid->input.seek(); 
+					float power = hid->input.seek_f32();;
+					
+					minfo->motors[id].setPower(power);
+				}
+
 			case 'I':
 				if (hid->input.seek() == 'I'){
-					hid->imu.init(hid->input.seek(), 
-						hid->input.seek());
+					hid->imu.init(hid->input.seek(), hid->input.seek());
 				}
 				break;
 
 			case 'D':
 				if (hid->input.seek() == 'D'){
-					hid->receiver.init(int(hid->input.seek()));
+					hid->receiver.init(hid->input.seek());
+					hid->input.seek();
 				}
 				break;
 

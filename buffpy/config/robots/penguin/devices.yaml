@@ -1,0 +1,15 @@
+devices:
+  DR16:
+    group: receiver
+    key: D
+    options: [0]
+    with_ros: true
+    input_size: 6
+    output_size: 0
+  MPU6050:
+    group: imu
+    key: I
+    options: [1]
+    with_ros: true
+    input_size: 6
+    output_size: 0

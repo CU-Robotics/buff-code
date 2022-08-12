@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<robot name="materials">
+
+  <material name="black">
+    <color rgba="0 0 0 1"/>
+  </material>
+
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+
+  <material name="dark-gray">
+    <color rgba="86 90 92 1"/>
+  </material>
+
+  <material name="light-gray">
+    <color rgba="162 164 163 1"/>
+  </material>
+
+  <material name="gold">
+    <color rgba="207 184 124 1"/>
+  </material>
+
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="0.34, 0.34, 0.025"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <link name="fr_swerve">
+    <visual>
+      <geometry>
+        <box size="0.1 0.1 0.2"/>
+      </geometry>
+      <origin rpy="0 0 0.785" xyz="0.17 0.17 -0.05"/>
+      <material name="black"/>
+    </visual>
+  </link>
+
+</robot>

@@ -19,7 +19,9 @@ MPU6050::MPU6050() {
 void MPU6050::init(int idx, int flvl){         //Our default constructor
     id = idx;
     filterlvl = flvl;
-   
+
+    // Serial.print("New imu "); Serial.print(id); Serial.print(" "); Serial.println(filterlvl);
+
     gyro = Buffer3(10);
     accel = Buffer3(10);
 
@@ -35,20 +37,22 @@ void MPU6050::read(HIDBuffer* buffer){
         return;
     }
 
-    if (millis() - d_t < 25){
+    if (millis() - d_t < 5){
         return;
     }
 
-    unsigned long t = micros();
-    unsigned long t1 = micros();
-    bool success = mpu.getEvent(&a, &g, &temp);           //calling the getEvent function which updates the sensor events passed through its parameters
+    if(!mpu.getEvent(&a, &g, &temp)){
+        return;
+    }
 
+    // Serial.println("IMU packet");
 
     gyro.push(g.gyro.x, g.gyro.y, g.gyro.z);
     accel.push(a.acceleration.x, a.acceleration.y, a.acceleration.z);
 
     Vector3 a_avg;
     Vector3 g_avg;
+
     if (filterlvl > 0) {
         g_avg = gyro.mean();
         a_avg = accel.mean();
@@ -64,11 +68,10 @@ void MPU6050::read(HIDBuffer* buffer){
     
 
     if (!buffer->check_of(29)){
-        buffer->put('I');
-        buffer->put('I');
+        buffer->put('T');
+        buffer->put('T');
         buffer->put(24);
         buffer->put(id);
-        buffer->put(2);
         buffer->put_f32(a_avg.x);
         buffer->put_f32(a_avg.y);
         buffer->put_f32(a_avg.z);

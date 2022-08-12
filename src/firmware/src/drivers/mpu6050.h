@@ -14,9 +14,9 @@ class MPU6050{
         MPU6050();
         void init(int, int);
         void read(HIDBuffer*);
+        int id;
 
     private:
-        int id;
         int filterlvl;
         unsigned long d_t;
         Buffer3 gyro;

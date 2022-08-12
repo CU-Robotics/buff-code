@@ -4,15 +4,14 @@
 
 
 RMMotor::RMMotor() {
-    id = -1;
-    byte_num = -1;
-    canBusID = -1;
+    motor_id = -1;
+    can_id = -1;
 }
 
-RMMotor::RMMotor(CAN_message_t* send, CAN_message_t* rec, int idx, unsigned int canBusID, unsigned int byteNum){
+RMMotor::RMMotor(CAN_message_t* send, CAN_message_t* rec, int idx, int canid, int motorid){
     id = idx;
-	byte_num = byteNum;
-	canBusID = canBusID;
+	motor_id = motorid;
+	can_id = canid;
     sendMsgPtr = send;
     recMsgPtr = rec;
 }
@@ -25,24 +24,26 @@ void RMMotor::setPower(float power) {
         power = -1.0;
     }
 
+    // Serial.print("Setting power ");
+    // Serial.println(power);
+
     int16_t newPower = (int16_t)(power * 16384);
     byte byteOne = highByte(newPower);
     byte byteTwo = lowByte(newPower);
-    sendMsgPtr->buf[byte_num << 1] = byteOne;
-    sendMsgPtr->buf[(byte_num << 1) + 1] = byteTwo;
+    sendMsgPtr->buf[motor_id << 1] = byteOne;
+    sendMsgPtr->buf[(motor_id << 1) + 1] = byteTwo;
 }
 
 int RMMotor::read(HIDBuffer* buffer) {
 
-    if (id != -1){
+    if (motor_id != -1){
         // add buffer3 to filter these values
 
         if (!buffer->check_of(11)) {
-            buffer->put('M');
-            buffer->put('M');
+            buffer->put('T');
+            buffer->put('T');
             buffer->put(6);
             buffer->put(id);
-            buffer->put(1);
             buffer->put_u16(map((recMsgPtr->buf[0] << 8) | recMsgPtr->buf[1], 0, 8191, 0, 36000));
             buffer->put_u16((recMsgPtr->buf[2] << 8) | recMsgPtr->buf[3]);
             buffer->put_u16((recMsgPtr->buf[4] << 8) | recMsgPtr->buf[5]);
@@ -53,28 +54,55 @@ int RMMotor::read(HIDBuffer* buffer) {
         }
     }
 	
-    return 1;
+    return -1;
 }
 
-void new_motor(Motor_LUT* minfo, int idx, unsigned int canBusID, unsigned int byte_num, unsigned int motor_type){
+void new_motor(Motor_LUT* minfo, int idx, int can_id, int motor_id, int motor_type){
 
-    CAN_message_t* recMsgPtr = &minfo->canReceiveMessages[canBusID - 1][byte_num + 4];
+    CAN_message_t* recMsgPtr = &minfo->canReceiveMessages[can_id - 1][motor_id + 4];
     CAN_message_t* sendMsgPtr;
+
+    int tmp_can = can_id;
+    int tmp_mot = motor_id;
+
+    // Serial.print("New motor "); Serial.print(tmp_can); Serial.print(" "); Serial.println(tmp_mot);
 
     switch (motor_type) {
         case 0:
-            sendMsgPtr = &minfo->canSendMessages[canBusID - 1][1 - byte_num / 4];
-            sendMsgPtr->id = (byte_num / 4 >= 1)? 0x1FF:0x200;
-            byte_num = byte_num % 4;
-            minfo->motors[idx] = RMMotor(sendMsgPtr, recMsgPtr, idx, canBusID, byte_num);
+            sendMsgPtr = &minfo->canSendMessages[can_id - 1][1 - motor_id / 4];
+            sendMsgPtr->id = (motor_id / 4 >= 1)? 0x1FF:0x200;
+            motor_id = motor_id % 4;
             break;
 
         case 1:
-            sendMsgPtr = &minfo->canSendMessages[canBusID + 2][1 - byte_num / 4];
-            sendMsgPtr->id = (byte_num / 4 >= 1)? 0x2FF:0x1FF;
-            byte_num = byte_num % 4;
-            minfo->motors[idx] = RMMotor(sendMsgPtr, recMsgPtr, idx, canBusID, byte_num);
+            sendMsgPtr = &minfo->canSendMessages[can_id + 2][1 - motor_id / 4];
+            sendMsgPtr->id = (motor_id / 4 >= 1)? 0x2FF:0x1FF;
+            motor_id = motor_id % 4;
             break;
+    }
+    minfo->motors[idx] = RMMotor(sendMsgPtr, recMsgPtr, idx, tmp_can, tmp_mot);
+}
+
+void read_motors(Motor_LUT* minfo, HIDBuffer* buffer) {
+    static int seek_id = 0;
+    unsigned long timeout = micros();
+
+    while (seek_id < 24) {
+        if (minfo->motors[seek_id].id != -1) {
+            if (minfo->motors[seek_id].read(buffer) == 0){
+                break;
+            }
+        }
+        
+        seek_id++;
+
+        if (micros() - timeout > 100){
+            break;
+        }
+    }
+
+    if (seek_id >= 24){
+        seek_id = 0;
     }
 }
 

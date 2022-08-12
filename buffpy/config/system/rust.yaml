@@ -38,58 +38,60 @@ DEVICES:
       ENABLED: True
       INPUTMODE: 0
 
-    FL_SWERVE_STEER:
-      TYPE: 'motor'
-      ENABLED: False
-      CANBUS: 2
-      MOTORID: 0
-      MOTORTYPE: 0
-
-    FR_SWERVE_STEER:
-      TYPE: 'motor'
-      ENABLED: False
-      CANBUS: 2
-      MOTORID: 0
-      MOTORTYPE: 0
-
     RR_SWERVE_STEER:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
-      MOTORID: 0
+      MOTORID: 1
       MOTORTYPE: 0
 
     RL_SWERVE_STEER:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
-      MOTORID: 0
+      MOTORID: 2
       MOTORTYPE: 0
 
-    FL_SWERVE_DRIVE:
+    FL_SWERVE_STEER:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
-      MOTORID: 0
+      MOTORID: 3
+      MOTORTYPE: 0
+
+    FR_SWERVE_STEER:
+      TYPE: 'motor'
+      ENABLED: False
+      CANBUS: 2
+      MOTORID: 4
       MOTORTYPE: 0
 
     FR_SWERVE_DRIVE:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
-      MOTORID: 0
+      MOTORID: 5
       MOTORTYPE: 0
 
-    RR_SWERVE_DRIVE:
+    FL_SWERVE_DRIVE:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
-      MOTORID: 0
+      MOTORID: 6
       MOTORTYPE: 0
 
     RL_SWERVE_DRIVE:
       TYPE: 'motor'
       ENABLED: False
       CANBUS: 2
-      MOTORID: 0
+      MOTORID: 7
       MOTORTYPE: 0
+
+    RR_SWERVE_DRIVE:
+      TYPE: 'motor'
+      ENABLED: False
+      CANBUS: 2
+      MOTORID: 8
+      MOTORTYPE: 0
+
+

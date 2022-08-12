@@ -83,7 +83,7 @@ def clean_buffpy():
 		return
 
 	subprocess.run(f'sudo apt clean && sudo apt autoremove && sudo apt update', shell=True)
-	subprocess.run(f'docker system prune -f', shell=True)
+	subprocess.run(f'docker system prune -a -f', shell=True)
 
 	with open(firmware_config, 'r') as f:
 		data = yaml.safe_load(f)
@@ -392,7 +392,7 @@ def dig(path):
 				docker compose build {build}', shell=True)
 
 	for build in compose_data['services']:
-		subprocess.run(f"docker push {compose_data['services'][build]['image']}")
+		subprocess.run(f"docker push {compose_data['services'][build]['image']}", shell=True)
 			
 def parse_arguments():
 	"""

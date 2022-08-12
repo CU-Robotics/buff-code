@@ -46,3 +46,15 @@ services:
     environment: 
       - DISPLAY
     image: curobotics/buffbox:x86_64-dev
+  cross-build:
+    build:
+      context: ../
+      dockerfile: containers/dev/Dockerfile
+      args:
+        IMAGE_NAME: curobotics/buffbox:aarch64-dev
+    volumes: 
+      - ../:/home/cu-robotics/buff-code
+      - /tmp/.X11-unix
+    image: curobotics/buffbox:aarch64-dev
+    command: /home/cu-robotics/buff-code/buffpy/bin/buffpy --build rust
+

@@ -27,10 +27,10 @@ RUN useradd -ms /bin/bash cu-robotics
 
 COPY . /home/cu-robotics/buff-code
 
-RUN chmod +x ${PROJECT_ROOT}/buffpy/scripts
-RUN chmod +x ${PROJECT_ROOT}/buffpy/buff.bash
-RUN ${PROJECT_ROOT}/buffpy/buff.bash
-RUN ${PROJECT_ROOT}/buffpy/scripts/install.bash
+# RUN chmod +x ${PROJECT_ROOT}/buffpy/scripts
+# RUN chmod +x ${PROJECT_ROOT}/buffpy/buff.bash
+# RUN ${PROJECT_ROOT}/buffpy/buff.bash
+# RUN ${PROJECT_ROOT}/buffpy/scripts/install.bash
 
 
 # RUN ["/home/cu-robotics/buff-code/buffpy/buff.bash"]
@@ -38,10 +38,10 @@ RUN ${PROJECT_ROOT}/buffpy/scripts/install.bash
 
 
 
-# RUN cd /home/cu-robotics/buff-code && \
-# 	apt update && \
-# 	apt upgrade -y && \
-# 	xargs apt install -y --no-install-recommends <buffpy/config/install/dependencies.txt
+RUN cd /home/cu-robotics/buff-code && \
+	apt update && \
+	apt upgrade -y && \
+	xargs apt install -y --no-install-recommends <buffpy/config/install/dependencies.txt
 # #		htop=2.1.0-3 \
 # #		tmux=2.6-3ubuntu0.2 \
 # #		wget=1.19.4-1ubuntu2.2 \
@@ -57,20 +57,20 @@ RUN ${PROJECT_ROOT}/buffpy/scripts/install.bash
 # #		openssh-client=1:7.6p1-4ubuntu0.7 \
 # #		openssh-server=1:7.6p1-4ubuntu0.7
 
-# RUN curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && \
-# 	python3 get-pip.py && \
-# 	rm get-pip.py && \
-# 	cd /home/cu-robotics/buff-code && \
-# 	pip3 install -r buffpy/config/install/python3_requirements.txt
+RUN curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && \
+	python3 get-pip.py && \
+	rm get-pip.py && \
+	cd /home/cu-robotics/buff-code && \
+	pip3 install -r buffpy/config/install/python3_requirements.txt
 
 
 # #
 # #	Clean apt
 # #
 
-# RUN apt update && \
-# 	apt clean && \
-# 	apt autoremove -y
+RUN apt update && \
+	apt clean && \
+	apt autoremove -y
 
 
 # # 
@@ -79,13 +79,13 @@ RUN ${PROJECT_ROOT}/buffpy/scripts/install.bash
 # #
 
 
-# RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
-# 	curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
-# 	apt update && \
-# 	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} python-rosdep \
-# 	ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins  ros-${ROS_DISTRO}-rqt-robot-plugins
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
+	curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
+	apt update && \
+	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} python-rosdep \
+	ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins  ros-${ROS_DISTRO}-rqt-robot-plugins
 
-# RUN cd /home/cu-robotics/buff-code && pip3 install -r buffpy/config/install/ros_python_requirements.txt
+RUN cd /home/cu-robotics/buff-code && pip3 install -r buffpy/config/install/ros_python_requirements.txt
 # #RUN pip3 install \
 # #		pyyaml==6.0 \
 # #		torch==1.9.0 \
@@ -112,18 +112,18 @@ RUN ${PROJECT_ROOT}/buffpy/scripts/install.bash
 
 
 
-# RUN cd ${ROS_ROOT} && \
-# 	rosdep init && \
-# 	rosdep update
+RUN cd ${ROS_ROOT} && \
+	rosdep init && \
+	rosdep update
 
 
 # #
 # #	Clean apt
 # #
 
-# RUN apt update && \
-# 	apt clean && \
-# 	apt autoremove -y
+RUN apt update && \
+	apt clean && \
+	apt autoremove -y
 
 
 # #
@@ -142,7 +142,8 @@ RUN ${PROJECT_ROOT}/buffpy/scripts/install.bash
 
 
 # # Get rust
-# RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y && \
+	echo "source ${HOME}/.cargo/env" >> ~/.bashrc
 
 # #
 # #	Clean apt

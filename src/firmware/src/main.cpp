@@ -82,8 +82,8 @@ void loop() {
 			cycle_history.reset();
 			Serial.print("Disabling per Cycle Limit: ");
 			Serial.println(micros() - top_time);
-			hid.imu = MPU6050();
-			hid.receiver = DR16();
+			hid.imu.id = -1;
+			hid.receiver.id = -1;
 			ENABLE_HID = false;
 			// should also disable the motors and sensors
 		}
