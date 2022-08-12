@@ -1,8 +1,8 @@
 extern crate hidapi;
 
+use crate::device;
 use hidapi::{HidApi, HidDevice, HidError};
-use rosrust::ros_info;
-use rosrust_msg::{std_msgs, std_msgs::Float64MultiArray};
+use rosrust_msg::std_msgs;
 use std::thread::sleep;
 use std::time::Duration;
 use std::{
@@ -40,32 +40,32 @@ impl HidBuffer {
         tmp
     }
 
-    pub fn seek_u16(&mut self, set: Option<usize>) -> u16 {
-        self.seek_ptr = set.unwrap_or(self.seek_ptr);
+    // pub fn seek_u16(&mut self, set: Option<usize>) -> u16 {
+    //     self.seek_ptr = set.unwrap_or(self.seek_ptr);
 
-        u16::from_be_bytes([self.seek(None), self.seek(None)])
-    }
+    //     u16::from_be_bytes([self.seek(None), self.seek(None)])
+    // }
 
-    pub fn seek_f32(&mut self, set: Option<usize>) -> f32 {
-        self.seek_ptr = set.unwrap_or(self.seek_ptr);
+    // pub fn seek_f32(&mut self, set: Option<usize>) -> f32 {
+    //     self.seek_ptr = set.unwrap_or(self.seek_ptr);
 
-        f32::from_le_bytes([
-            self.seek(None),
-            self.seek(None),
-            self.seek(None),
-            self.seek(None),
-        ])
-    }
+    //     f32::from_le_bytes([
+    //         self.seek(None),
+    //         self.seek(None),
+    //         self.seek(None),
+    //         self.seek(None),
+    //     ])
+    // }
 
-    pub fn unseek(&mut self) -> u8 {
-        if self.seek_ptr <= 0 {
-            self.seek_ptr = 63;
-        } else {
-            self.seek_ptr -= 1;
-        }
+    // pub fn unseek(&mut self) -> u8 {
+    //     if self.seek_ptr <= 0 {
+    //         self.seek_ptr = 63;
+    //     } else {
+    //         self.seek_ptr -= 1;
+    //     }
 
-        self.data[self.seek_ptr]
-    }
+    //     self.data[self.seek_ptr]
+    // }
 
     pub fn put(&mut self, value: u8) {
         self.data[self.seek_ptr] = value;
@@ -74,6 +74,19 @@ impl HidBuffer {
         } else {
             self.seek_ptr = 0;
         }
+    }
+
+    pub fn puts(&mut self, data: Vec<u8>) {
+        for d in data {
+            self.put(d);
+        }
+    }
+
+    pub fn check_of(&self, n: usize) -> bool {
+        if 64 - self.seek_ptr > n {
+            return false;
+        }
+        true
     }
 
     pub fn reset(&mut self) {
@@ -107,39 +120,18 @@ pub struct HidLayer {
     pub pid: u16,
     pub input: HidBuffer,
     pub output: HidBuffer,
-    pub imu_input: Arc<RwLock<Vec<f64>>>,
-    pub dr16_input: Arc<RwLock<Vec<u8>>>,
+    pub dtable: device::DeviceTable,
     pub teensy: Result<HidDevice, HidError>,
     pub output_queue: Arc<RwLock<HidBuffer>>,
     pub subscriber: rosrust::Subscriber,
-    pub publishers: Vec<rosrust::Publisher<Float64MultiArray>>,
-    pub write_time: Instant,
 }
 
 impl HidLayer {
     pub fn new() -> HidLayer {
-        let mut publishers = Vec::<rosrust::Publisher<Float64MultiArray>>::new();
-
-        let io_topics = rosrust::param("/buffbot/DEVICES/LUT")
-            .unwrap()
-            .get::<Vec<String>>()
-            .unwrap();
-
-        for topic in io_topics {
-            let topic_prefix = "/buffbot/TOPICS/".to_string();
-            let topic = rosrust::param(&(topic_prefix + &topic))
-                .unwrap()
-                .get::<String>()
-                .unwrap();
-            let pubber = rosrust::publish::<Float64MultiArray>(&topic, 1).unwrap();
-            publishers.push(pubber);
-        }
-
         let output_buffer = Arc::new(RwLock::new(HidBuffer::new()));
 
         let buffer = Arc::clone(&output_buffer);
-        let writer_id = "/buffbot/TOPICS/HID_OUTPUT".to_string();
-        let writer_topic = rosrust::param(&writer_id).unwrap().get::<String>().unwrap();
+        let writer_topic = "teensy_commands";
 
         let sub = rosrust::subscribe(&writer_topic, 5, move |msg: std_msgs::String| {
             let mut w = buffer.write().unwrap();
@@ -151,8 +143,13 @@ impl HidLayer {
         })
         .unwrap();
 
-        let dr16 = Arc::new(RwLock::new(vec![0u8; 18]));
-        let imu = Arc::new(RwLock::new(vec![0f64; 6]));
+        let robot_desc = format!("/buffbot/self");
+        let filepath = rosrust::param(&robot_desc)
+            .unwrap()
+            .get::<String>()
+            .unwrap();
+
+        let dt = device::DeviceTable::from_yaml(filepath);
 
         let api = HidApi::new().expect("Failed to create API instance");
         let teensy = api.open(0x0000, 0x0000);
@@ -162,19 +159,15 @@ impl HidLayer {
             vid: 0x16C0,
             pid: 0x0486,
             teensy: teensy,
-            imu_input: imu,
-            dr16_input: dr16,
+            dtable: dt,
             input: HidBuffer::new(),
             output: HidBuffer::new(),
             output_queue: output_buffer,
             subscriber: sub,
-            publishers: publishers,
-            write_time: Instant::now(),
         }
     }
 
     pub fn reset(&mut self) {
-        self.write_time = Instant::now();
         self.input.reset();
         self.output.reset();
         self.output_queue.write().unwrap().reset();
@@ -182,111 +175,59 @@ impl HidLayer {
 
     pub fn dump_config(&mut self) {
         self.reset();
-        let devices = rosrust::param("/buffbot/DEVICES/LUT")
-            .unwrap()
-            .get::<Vec<String>>()
-            .unwrap();
 
-        for (i, dtype) in devices
-            .iter()
-            .map(|device| {
-                rosrust::param(&format!("/buffbot/DEVICES/{}/TYPE", device))
-                    .unwrap()
-                    .get::<String>()
-                    .unwrap()
-            })
-            .enumerate()
-        {
-            match dtype.as_str() {
-                "motor" => {
-                    let canbus_param_id = format!("/buffbot/DEVICES/{}/CANBUS", devices[i]);
-                    let motorid_param_id = format!("/buffbot/DEVICES/{}/MOTORID", devices[i]);
-                    let motortype_param_id = format!("/buffbot/DEVICES/{}/MOTORTYPE", devices[i]);
+        while self.dtable.dev_seek < self.dtable.devices.len() - 1 {
+            let input_length = &self.dtable.devices[self.dtable.dev_seek]
+                .input
+                .read()
+                .unwrap()
+                .len();
 
-                    let canid = rosrust::param(&canbus_param_id)
-                        .unwrap()
-                        .get::<u8>()
-                        .unwrap();
-                    let motorid = rosrust::param(&motorid_param_id)
-                        .unwrap()
-                        .get::<u8>()
-                        .unwrap();
-                    let motortype = rosrust::param(&motortype_param_id)
-                        .unwrap()
-                        .get::<u8>()
-                        .unwrap();
-
-                    let mut queue = self.output_queue.write().unwrap();
-                    queue.put('M' as u8);
-                    queue.put('M' as u8);
-                    queue.put(i as u8);
-                    queue.put(canid);
-                    queue.put(motorid);
-                    queue.put(motortype);
-                }
-
-                "imu" => {
-                    let mut queue = self.output_queue.write().unwrap();
-                    queue.put('I' as u8);
-                    queue.put('I' as u8);
-                    queue.put(i as u8);
-                    queue.put(1);
-                    drop(queue);
-                }
-
-                "dr16" => {
-                    let mut queue = self.output_queue.write().unwrap();
-                    queue.put('D' as u8);
-                    queue.put('D' as u8);
-                    queue.put(i as u8);
-                    drop(queue);
-                }
-
-                _ => continue,
-            }
-
-            if self.output_queue.write().unwrap().seek_ptr >= 57 {
-                self.read();
+            if self.output_queue.write().unwrap().check_of(*input_length) {
                 self.write();
-                sleep(Duration::from_millis(1));
+                self.read();
             }
+
+            let dev = &self.dtable.devices[self.dtable.dev_seek];
+            self.output_queue
+                .write()
+                .unwrap()
+                .puts(dev.generate_init(self.dtable.dev_seek as u8));
+            self.dtable.dev_seek += 1;
         }
+
+        self.dtable.dev_seek = 0;
+        // self.output_queue.write().unwrap().print_buffer();
     }
 
-    pub fn read_bytes_as_f64(&mut self, n_bytes: u8) -> Vec<f64> {
-        let mut j = 0;
-        let mut data = Vec::<f64>::new();
+    pub fn dump_state(&mut self) {
+        self.reset();
 
-        while j < n_bytes {
-            data.push(self.input.seek(None) as f64);
-            j += 1;
+        while self.dtable.dev_seek < self.dtable.devices.len() - 1 {
+            let input_length = &self.dtable.devices[self.dtable.dev_seek]
+                .input
+                .read()
+                .unwrap()
+                .len();
+
+            if self.output_queue.write().unwrap().check_of(*input_length) {
+                self.write();
+                self.read();
+            }
+
+            let dev = &self.dtable.devices[self.dtable.dev_seek];
+            self.output_queue
+                .write()
+                .unwrap()
+                .puts(dev.generate_state(self.dtable.dev_seek as u8));
+            self.dtable.dev_seek += 1;
         }
-        data
+
+        self.dtable.dev_seek = 0;
+        // self.output_queue.write().unwrap().print_buffer();
     }
 
-    pub fn read_u16_as_f64(&mut self, n_bytes: u8) -> Vec<f64> {
-        let mut j = 0;
-        let mut data = Vec::<f64>::new();
-
-        while j <= n_bytes - 2 {
-            data.push(self.input.seek_u16(None) as f64);
-            j += 2;
-        }
-        data
-    }
-
-    pub fn read_f32_as_f64(&mut self, n_bytes: u8) -> Vec<f64> {
-        let mut j = 0;
-        let mut data = Vec::<f64>::new();
-
-        while j < n_bytes - 4 {
-            data.push(self.input.seek_f32(None) as f64);
-            j += 3;
-        }
-        data
-    }
-
-    pub fn read_bytes_as_bytes(&mut self, n_bytes: u8) -> Vec<u8> {
+    pub fn read_bytes(&mut self, n_bytes: u8) -> Vec<u8> {
         let mut j = 0;
         let mut data = Vec::<u8>::new();
 
@@ -297,41 +238,6 @@ impl HidLayer {
         data
     }
 
-    pub fn read_u16_as_u16(&mut self, n_bytes: u8) -> Vec<u16> {
-        let mut j = 0;
-        let mut data = Vec::<u16>::new();
-
-        while j <= n_bytes - 2 {
-            data.push(self.input.seek_u16(None));
-            j += 2;
-        }
-        data
-    }
-
-    pub fn publish_msg(&mut self) {
-        let data_bytes = self.input.seek(None);
-        let data_id = self.input.seek(None) as usize;
-        let data_type = self.input.seek(None) as usize;
-
-        let data = match data_type {
-            0 => Some(self.read_bytes_as_f64(data_bytes)),
-            1 => Some(self.read_u16_as_f64(data_bytes)),
-            2 => Some(self.read_f32_as_f64(data_bytes)),
-            _ => {
-                ros_info!("Data type {} Not implemented", data_type);
-                None
-            }
-        };
-        match data {
-            Some(data) => {
-                let mut msg = Float64MultiArray::default();
-                msg.data = data;
-                let _result = self.publishers[data_id].send(msg).unwrap();
-            }
-            None => {}
-        };
-    }
-
     pub fn parse_hid(&mut self, n: usize) {
         self.input.seek_ptr = 0;
         if n == 0 {
@@ -339,37 +245,19 @@ impl HidLayer {
         }
         while self.input.seek_ptr < n - 1 {
             match self.input.seek(None) as char {
-                'M' => {
-                    if self.input.seek(None) == 'M' as u8 {
-                        self.publish_msg();
+                'T' => {
+                    match self.input.seek(None) as char {
+                        'T' => {
+                            // self.publish_msg();
+                            let num_bytes = self.input.seek(None);
+                            let dev_id = self.input.seek(None);
+                            let data = self.read_bytes(num_bytes);
+                            self.dtable.set_input(num_bytes, dev_id, data);
+                        }
+                        _ => continue,
                     }
                 }
 
-                'I' => {
-                    if self.input.seek(None) == 'I' as u8 {
-                        let data_bytes = self.input.seek(None);
-                        let data_id = self.input.seek(None) as usize;
-                        let data_type = self.input.seek(None) as usize;
-                        let data = self.read_f32_as_f64(data_bytes);
-                        let mut buff = self.imu_input.write().unwrap();
-                        for (i, c) in data.iter().enumerate() {
-                            buff[i] = *c;
-                        }
-                    }
-                }
-
-                'D' => {
-                    if self.input.seek(None) == 'D' as u8 {
-                        let data_bytes = self.input.seek(None);
-                        let data_id = self.input.seek(None) as usize;
-                        let data_type = self.input.seek(None) as usize;
-                        let data = self.read_bytes_as_bytes(data_bytes);
-                        let mut buff = self.dr16_input.write().unwrap();
-                        for (i, c) in data.iter().enumerate() {
-                            buff[i] = *c;
-                        }
-                    }
-                }
                 _ => continue,
             }
         }
@@ -381,7 +269,10 @@ impl HidLayer {
 
         match &self.teensy {
             Ok(dev) => match dev.read(&mut self.input.data) {
-                Ok(value) => n = value,
+                Ok(value) => {
+                    n = value;
+                    self.input.timestamp = Instant::now();
+                }
                 _ => {
                     n = 0;
                     self.connection_repair();
@@ -390,8 +281,7 @@ impl HidLayer {
             _ => self.connection_repair(),
         }
 
-        self.input.timestamp = Instant::now();
-        //self.input.print_buffer();
+        // self.input.print_buffer();
         self.parse_hid(n);
     }
 
@@ -404,24 +294,27 @@ impl HidLayer {
 
         match &self.teensy {
             Ok(dev) => {
-                let t = Instant::now();
+                // let t = Instant::now();
 
                 match dev.write(&self.output.data) {
-                    Ok(value) => self.output.timestamp = Instant::now(),
-                    Err(e) => self.connection_repair(),
-                    _ => println!("Default Write case"),
+                    Ok(_) => self.output.timestamp = Instant::now(),
+                    Err(_) => self.connection_repair(),
                 }
+                // println!("write time {}", t.elapsed().as_micros());
             }
             _ => {
                 self.connection_repair();
                 return;
             }
         }
+
+        // self.output.print_buffer();
         self.output.reset();
     }
 
     pub fn init_comms(&mut self) {
         self.teensy = self.hidapi.open(self.vid, self.pid);
+
         match &self.teensy {
             Ok(_) => {
                 self.dump_config();
@@ -453,19 +346,27 @@ impl HidLayer {
     pub fn spin(&mut self) {
         self.init_comms();
 
-        let mut timestamp = Instant::now();
+        let mut timestamp;
+        let mut micros;
 
         while rosrust::is_ok() {
             timestamp = Instant::now();
 
             self.read();
+            // micros = timestamp.elapsed().as_micros();
+            // println!("Read time {}", micros);
             self.write();
+            // println!("Write time {}", timestamp.elapsed().as_micros() - micros);
 
-            let micros = timestamp.elapsed().as_micros();
+            self.dump_state();
 
-            if micros < 500 {
-                sleep(Duration::from_micros(500 - micros as u64));
-            }
+            micros = timestamp.elapsed().as_micros();
+
+            if micros < 1000 {
+                sleep(Duration::from_micros(1000 - micros as u64));
+            } // else {
+              //     println!("overtime {}", micros);
+              // }
         }
     }
 }

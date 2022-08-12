@@ -13,6 +13,8 @@ class DR16 {
         DR16();
         void init(int);
         void read(HIDBuffer*);
+    private:
+        unsigned long d_t;
 };
 
 #endif // DR16_H

@@ -1,0 +1,6 @@
+buff_rust:
+  debug: True
+  files: ['buff_rust']    
+
+
+robot: 'infantry'

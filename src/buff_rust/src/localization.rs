@@ -22,7 +22,7 @@ impl IMU_6DOF {
     }
 }
 
-pub struct IMU {
+pub struct localization {
     input: IMU_6DOF,
 }
 

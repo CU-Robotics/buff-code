@@ -1,12 +1,9 @@
 mod buff_hid;
-mod localization;
-mod remote_control;
+mod device;
+mod swerve_controller;
 
 use rosrust::ros_info;
-use std::time::Duration;
-use std::{sync::Arc, thread, thread::sleep, time::Instant};
-
-use rosrust_msg::{std_msgs, std_msgs::Float64MultiArray};
+use std::thread;
 
 fn main() {
     // launch programs in threads here or as scripts in run
@@ -14,28 +11,30 @@ fn main() {
 
     rosrust::init("buff_rust");
 
+    ros_info!("Buff-Rust is up");
+
+    // let robot_desc = format!("/buffbot/self");
+    // let filepath = rosrust::param(&robot_desc)
+    //     .unwrap()
+    //     .get::<String>()
+    //     .unwrap();
+
+    // let dt = device::DeviceTable::from_yaml(filepath);
+
     let mut layer = buff_hid::HidLayer::new();
 
-    let hid_imu = Arc::clone(&layer.imu_input);
-    let hid_dr16 = Arc::clone(&layer.dr16_input);
-    let hid_output_queue = Arc::clone(&layer.output_queue);
+    let motor_outpipe = layer.dtable.get_motors();
 
-    let mut imu = localization::IMU::new(hid_imu);
-    let mut rc = remote_control::RemoteInput::new(hid_dr16);
+    let mut swrv_ctrl = swerve_controller::SwerveController::new(motor_outpipe);
 
     let hid_handle = thread::spawn(move || {
         layer.spin();
     });
 
-    let imu_handle = thread::spawn(move || {
-        imu.spin();
-    });
-
-    let rc_handle = thread::spawn(move || {
-        rc.spin();
+    let ctrl_handle = thread::spawn(move || {
+        swrv_ctrl.spin();
     });
 
     hid_handle.join().unwrap();
-    imu_handle.join().unwrap();
-    rc_handle.join().unwrap();
+    ctrl_handle.join().unwrap();
 }
