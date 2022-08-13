@@ -1,0 +1,26 @@
+buff_rust:
+  debug: True
+  files: ['buff_rust']  
+
+gazebo:
+  files: ['gazebo']
+  package: gazebo_ros
+  args: ["--verbose"]
+
+spawn_urdf:
+  files: ['spawn_model']
+  package: gazebo_ros
+  args: ["-param robot_description -urdf -model buffbot -z 1"]
+
+# Position Controllers ---------------------------------------
+fr_steer_controller:
+  type: effort_controllers/JointPositionController
+  joint: fr_steer
+  pid: {p: 100.0, i: 0.01, d: 10.0}
+fr_drive_controller:
+  type: effort_controllers/JointEffortController
+  joint: fr_drive
+  pid: {p: 100.0, i: 0.01, d: 10.0}
+
+robot: 'infantry'
+
