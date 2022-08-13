@@ -214,42 +214,42 @@ def launch_system(target_path, nodes):
 						
 			# 	rospy.set_param(f'{namespace}/{name}', node)
 
-			# elif 'args' in node:
-			# 	# can use args tag to send args to non-buffpy packages
-			# 	is_opened = False
-			# 	args = []
-			# 	for arg in node['args']:
+			if 'args' in node:
+				# can use args tag to send args to non-buffpy packages
+				is_opened = False
+				args = []
+				for arg in node['args']:
 
-			# 		if '${' in arg:		# Need to pass env vars sometimes
-			# 			s = ''
-			# 			items = arg.split()
-			# 			args.append(items[0])
+					if '${' in arg:		# Need to pass env vars sometimes
+						s = ''
+						items = arg.split()
+						args.append(items[0])
 
-			# 			substr = ''
-			# 			if '$' != items[1][0]:
-			# 				substr += items[1][0]
+						substr = ''
+						if '$' != items[1][0]:
+							substr += items[1][0]
 
-			# 			for i,c in enumerate(items[1][1:]):
-			# 				if c == '{' and items[1][i] == '$':
-			# 					is_opened = True
-			# 					s += substr
-			# 					substr = ''
+						for i,c in enumerate(items[1][1:]):
+							if c == '{' and items[1][i] == '$':
+								is_opened = True
+								s += substr
+								substr = ''
 
-			# 				elif c == '}' and is_opened:
-			# 					s += os.getenv(substr)
-			# 					substr = ''
-			# 					is_opened = False
+							elif c == '}' and is_opened:
+								s += os.getenv(substr)
+								substr = ''
+								is_opened = False
 
-			# 				elif is_opened:
-			# 					substr += c
+							elif is_opened:
+								substr += c
 
-			# 				else:
-			# 					s += c
+							else:
+								s += c
 
-			# 			args.append(s)
+						args.append(s)
 
-			# 		else:
-			# 			args += arg.split()
+					else:
+						args += arg.split()
 
 
 			if 'required' in node:

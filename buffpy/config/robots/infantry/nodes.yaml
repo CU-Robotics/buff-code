@@ -1,5 +1,5 @@
 buff_rust:
-  debug: True
+  debug: False
   files: ['buff_rust']    
 
 

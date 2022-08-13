@@ -81,7 +81,7 @@ impl RobotState {
         let mut tf_publisher = None;
 
         if debug {
-            rosrust::param("/robot_description")
+            rosrust::param("robot_description")
                 .unwrap()
                 .set::<String>(&urdf_text)
                 .unwrap();
