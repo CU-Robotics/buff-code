@@ -1,5 +1,6 @@
 mod buff_hid;
 mod device;
+mod localization;
 mod swerve_controller;
 
 use rosrust::ros_info;
@@ -13,28 +14,33 @@ fn main() {
 
     ros_info!("Buff-Rust is up");
 
-    // let robot_desc = format!("/buffbot/self");
-    // let filepath = rosrust::param(&robot_desc)
-    //     .unwrap()
-    //     .get::<String>()
-    //     .unwrap();
-
-    // let dt = device::DeviceTable::from_yaml(filepath);
+    let robot_desc = format!("/buffbot/self");
+    let filepath = rosrust::param(&robot_desc)
+        .unwrap()
+        .get::<String>()
+        .unwrap();
 
     let mut layer = buff_hid::HidLayer::new();
 
-    let motor_outpipe = layer.dtable.get_motors();
+    let motor_inpipe = layer.dtable.get_motor_inputs();
 
-    let mut swrv_ctrl = swerve_controller::SwerveController::new(motor_outpipe);
+    let mut rstate = localization::RobotState::new(filepath, motor_inpipe);
 
-    let hid_handle = thread::spawn(move || {
-        layer.spin();
+    // let mut swrv_ctrl = swerve_controller::SwerveController::new(motor_outpipe);
+
+    let rs_handle = thread::spawn(move || {
+        rstate.spin();
     });
 
-    let ctrl_handle = thread::spawn(move || {
-        swrv_ctrl.spin();
-    });
+    // let hid_handle = thread::spawn(move || {
+    //     layer.spin();
+    // });
 
-    hid_handle.join().unwrap();
-    ctrl_handle.join().unwrap();
+    // let ctrl_handle = thread::spawn(move || {
+    //     swrv_ctrl.spin();
+    // });
+
+    rs_handle.join().unwrap();
+    // hid_handle.join().unwrap();
+    // ctrl_handle.join().unwrap();
 }

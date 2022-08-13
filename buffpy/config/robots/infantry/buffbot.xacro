@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="buffbot">
+  <material name="black">
+    <color rgba="0 0 0 1"/>
+  </material>
+
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+
+  <material name="dark-gray">
+    <color rgba="0.33 0.35 0.36 1"/>
+  </material>
+
+  <material name="light-gray">
+    <color rgba="0.63 0.64 0.63 1"/>
+  </material>
+
+  <material name="gold">
+    <color rgba="0.81 0.72 0.48 1"/>
+  </material>
+
+  <xacro:macro name="swerve" params="id w l g">
+      <link name="${id}_swerve">
+        <visual>
+         <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+           <cylinder radius="${w*0.25}" length="0.05"/>
+         </geometry>
+         <material name="black"/>
+       </visual>
+
+       <collision>
+         <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+           <cylinder radius="${w*0.25}" length="0.05"/>
+         </geometry>
+       </collision>
+      </link>
+
+      <joint name="base_to_${id}_swerve" type="continuous">
+        <parent link="base_link"/>
+        <child link="${id}_swerve"/>
+        <origin xyz="${l} ${w} ${g - 0.025}"/>
+        <axis xyz="0 0 1"/>
+      </joint> 
+
+      <link name="${id}_wheel">
+        <visual>
+         <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+           <cylinder radius="${w*0.15}" length="0.025"/>
+         </geometry>
+         <material name="light-gray"/>
+       </visual>
+
+       <collision>
+         <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+           <cylinder radius="${w*0.15}" length="0.025"/>
+         </geometry>
+       </collision>
+      </link>
+
+      <joint name="${id}_swerve_to_wheel" type="continuous">
+        <parent link="${id}_swerve"/>
+        <child link="${id}_wheel"/>
+        <origin xyz="0 0 ${g - 0.075}" rpy="1.57 0 0"/>
+        <axis xyz="0 0 1"/>
+      </joint>      
+  </xacro:macro>
+
+  <xacro:macro name="swerve_chassis" params="w l g">
+    <link name="base_link">
+      <inertial>
+       <origin xyz="0 0 ${g}" rpy="0 0 0"/>
+       <mass value="1"/>
+       <inertia ixx="100"  ixy="0"  ixz="0" iyy="100" iyz="0" izz="100" />
+     </inertial>
+
+     <visual>
+       <origin xyz="0 0 ${g}" rpy="0 0 0" />
+       <geometry>
+         <box size="${l * 2} ${w * 2} 0.025"/>
+       </geometry>
+       <material name="black"/>
+     </visual>
+
+     <collision>
+       <origin xyz="0 0 0.05" rpy="0 0 0"/>
+       <geometry>
+         <box size="${l * 2} ${w * 2} 0.025"/>
+       </geometry>
+     </collision>
+    </link>
+
+    <xacro:swerve id="fl" w="${w}" l="${l}" g="${g}"/>
+    <xacro:swerve id="fr" w="-${w}" l="${l}" g="${g}"/>
+    <xacro:swerve id="rr" w="-${w}" l="-${l}" g="${g}"/>
+    <xacro:swerve id="rl" w="${w}" l="-${l}" g="${g}"/>
+
+  </xacro:macro>
+
+  <xacro:swerve_chassis w="0.17" l="0.17" g="0.045"/>
+
+
+</robot>

@@ -154,16 +154,9 @@ impl Device {
     }
 }
 
-pub struct MotorTable {
-    pub fl_drive: Option<Arc<RwLock<Vec<u8>>>>,
-    pub fr_drive: Option<Arc<RwLock<Vec<u8>>>>,
-    pub rr_drive: Option<Arc<RwLock<Vec<u8>>>>,
-    pub rl_drive: Option<Arc<RwLock<Vec<u8>>>>,
-
-    pub fl_steer: Option<Arc<RwLock<Vec<u8>>>>,
-    pub fr_steer: Option<Arc<RwLock<Vec<u8>>>>,
-    pub rr_steer: Option<Arc<RwLock<Vec<u8>>>>,
-    pub rl_steer: Option<Arc<RwLock<Vec<u8>>>>,
+pub struct MotorTable<T> {
+    pub data: Vec<Arc<RwLock<Vec<T>>>>,
+    pub names: Vec<String>,
 }
 
 pub struct DeviceTable {
@@ -300,33 +293,34 @@ impl DeviceTable {
         }
     }
 
-    pub fn get_motors(&self) -> MotorTable {
-        let mut mtable = MotorTable {
-            fl_drive: None,
-            fr_drive: None,
-            rr_drive: None,
-            rl_drive: None,
-
-            fl_steer: None,
-            fr_steer: None,
-            rr_steer: None,
-            rl_steer: None,
+    pub fn get_motor_outputs(&self) -> MotorTable<u8> {
+        let mut mtable = MotorTable::<u8> {
+            data: vec![],
+            names: vec![],
         };
 
-        self.devices
-            .iter()
-            .for_each(|device| match device.name.as_str() {
-                "FL_DRIVE" => mtable.fl_drive = Some(Arc::clone(&device.output)),
-                "FR_DRIVE" => mtable.fr_drive = Some(Arc::clone(&device.output)),
-                "RR_DRIVE" => mtable.rr_drive = Some(Arc::clone(&device.output)),
-                "RL_DRIVE" => mtable.rl_drive = Some(Arc::clone(&device.output)),
+        self.devices.iter().for_each(|device| {
+            if "motor" == device.group.as_str() {
+                mtable.data.push(Arc::clone(&device.output));
+                mtable.names.push(device.name.clone());
+            }
+        });
 
-                "FL_STEER" => mtable.fr_steer = Some(Arc::clone(&device.output)),
-                "FR_STEER" => mtable.fl_steer = Some(Arc::clone(&device.output)),
-                "RR_STEER" => mtable.rr_steer = Some(Arc::clone(&device.output)),
-                "RL_STEER" => mtable.rl_steer = Some(Arc::clone(&device.output)),
-                _ => {}
-            });
+        mtable
+    }
+
+    pub fn get_motor_inputs(&self) -> MotorTable<f64> {
+        let mut mtable = MotorTable::<f64> {
+            data: vec![],
+            names: vec![],
+        };
+
+        self.devices.iter().for_each(|device| {
+            if "motor" == device.group.as_str() {
+                mtable.data.push(Arc::clone(&device.input));
+                mtable.names.push(device.name.clone());
+            }
+        });
 
         mtable
     }
