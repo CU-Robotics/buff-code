@@ -20,6 +20,12 @@ if [[ -f /proc/1/cgroup ]]; then
 	fi
 fi
 
+if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+	export ROS_DISTRO=noetic				# ROS for Ubuntu18
+elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
+	export ROS_DISTRO=melodic
+fi
+
 
 if [[ "${DOCKER}" == "False" ]]; then
 	alias spinup="cd ${PROJECT_ROOT}/containers && \
@@ -39,23 +45,9 @@ PYTHONPATH=
 
 # If ROS is installed source the setup file
 
-if [[ -f /opt/ros/melodic/setup.bash ]]; then
-	source /opt/ros/melodic/setup.bash
+if [[ -f /opt/ros/${ROS_DISTRO}/setup.bash ]]; then
+	source /opt/ros/${ROS_DISTRO}/setup.bash
 fi
-
-
-#	DEPRECATED
-# if [[ "${DOCKER}" == "False" ]]; then
-# 	export PYTHONPATH="${HOME}/.local/lib/python3.6/dist-packages:${PYTHONPATH}" 
-# # else
-# # 	export PYTHONPATH="/usr/local/lib/python3.6/dist-packages:${PYTHONPATH}" 
-# fi
-
-# DEPRECATED
-# Only needed if we are using ros packages
-# if [[ -d ${PROJECT_ROOT}/install ]]; then
-# 	source {PROJECT_ROOT}/install/setup.bash
-# fi
 
 #		setup Cargo tools
 

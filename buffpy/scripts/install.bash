@@ -87,6 +87,9 @@ if [[ "${HOSTNAME}" == "edge"* ]]; then
 
 	$SUDO cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
 
+else 
+	curl -sSL http://get.gazebosim.org | sh
+
 fi
 
 

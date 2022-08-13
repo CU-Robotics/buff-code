@@ -17,7 +17,7 @@ devices:
     group: motor
     key: M
     options: [2, 0, 0]
-    with_ros: true
+    with_ros: false
     input_size: 3
     output_size: 4
   FR_STEER:

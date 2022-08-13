@@ -7,29 +7,16 @@ use std::{
 };
 
 pub struct SwerveController {
-    pub motors: MotorTable,
+    pub motors: MotorTable<u8>,
 }
 
 impl SwerveController {
-    pub fn new(motortable: MotorTable) -> SwerveController {
+    pub fn new(motortable: MotorTable<u8>) -> SwerveController {
         SwerveController { motors: motortable }
     }
 
-    pub fn set_motor(&mut self, idx: u8, power: f32) {
-        let motor;
-        match idx {
-            0 => motor = self.motors.fl_drive.as_ref().unwrap(),
-            1 => motor = self.motors.fr_drive.as_ref().unwrap(),
-            2 => motor = self.motors.rr_drive.as_ref().unwrap(),
-            3 => motor = self.motors.rl_drive.as_ref().unwrap(),
-
-            4 => motor = self.motors.fl_steer.as_ref().unwrap(),
-            5 => motor = self.motors.fr_steer.as_ref().unwrap(),
-            6 => motor = self.motors.rr_steer.as_ref().unwrap(),
-            7 => motor = self.motors.rl_steer.as_ref().unwrap(),
-
-            _ => return,
-        }
+    pub fn set_motor(&mut self, idx: usize, power: f32) {
+        let motor = &self.motors.data[idx];
         let mut output = motor.write().unwrap();
         *output = f32::to_le_bytes(power).to_vec();
     }
