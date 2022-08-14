@@ -87,6 +87,8 @@ impl Device {
         };
 
         *self.input.write().unwrap() = data;
+        // println!("elapsed time: {}", self.timestamp.elapsed().as_micros());
+
         self.timestamp = Instant::now();
     }
 
@@ -131,6 +133,7 @@ impl Device {
             }
             _ => {}
         };
+
         self.timestamp = Instant::now();
     }
 
@@ -150,6 +153,7 @@ impl Device {
         };
 
         *self.input.write().unwrap() = data;
+        // println!("elapsed time: {}", self.timestamp.elapsed().as_micros());
         self.timestamp = Instant::now();
     }
 }
@@ -286,8 +290,8 @@ impl DeviceTable {
             }
 
             match self.devices[id as usize].name.as_str() {
-                "MPU6050" => self.devices[id as usize].parse_mpu(input),
-                "DR16" => self.devices[id as usize].parse_dr16(input),
+                "mpu6050" => self.devices[id as usize].parse_mpu(input),
+                "dr16" => self.devices[id as usize].parse_dr16(input),
                 _ => {}
             }
         }

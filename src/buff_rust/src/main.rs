@@ -32,15 +32,15 @@ fn main() {
         rstate.spin();
     });
 
-    // let hid_handle = thread::spawn(move || {
-    //     layer.spin();
-    // });
+    let hid_handle = thread::spawn(move || {
+        layer.spin();
+    });
 
     // let ctrl_handle = thread::spawn(move || {
     //     swrv_ctrl.spin();
     // });
 
     rs_handle.join().unwrap();
-    // hid_handle.join().unwrap();
+    hid_handle.join().unwrap();
     // ctrl_handle.join().unwrap();
 }

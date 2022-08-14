@@ -37,7 +37,7 @@ void MPU6050::read(HIDBuffer* buffer){
         return;
     }
 
-    if (millis() - d_t < 5){
+    if (millis() - d_t < 1){
         return;
     }
 

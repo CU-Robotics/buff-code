@@ -176,7 +176,7 @@ impl HidLayer {
     pub fn dump_config(&mut self) {
         self.reset();
 
-        while self.dtable.dev_seek < self.dtable.devices.len() - 1 {
+        while self.dtable.dev_seek < self.dtable.devices.len() {
             let input_length = &self.dtable.devices[self.dtable.dev_seek]
                 .input
                 .read()
@@ -197,7 +197,7 @@ impl HidLayer {
         }
 
         self.dtable.dev_seek = 0;
-        // self.output_queue.write().unwrap().print_buffer();
+        self.output_queue.write().unwrap().print_buffer();
     }
 
     pub fn dump_state(&mut self) {
@@ -340,11 +340,18 @@ impl HidLayer {
                 5000 - self.output.timestamp.elapsed().as_millis() as u64,
             ));
         }
+
         self.init_comms();
     }
 
     pub fn spin(&mut self) {
         self.init_comms();
+
+        let dbg = format!("/buffbot/buff_rust/debug");
+        let debug = rosrust::param(&dbg).unwrap().get::<bool>().unwrap();
+        if debug {
+            return;
+        }
 
         let mut timestamp;
         let mut micros;

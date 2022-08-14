@@ -25,18 +25,52 @@ impl PartialOrd for geometry_msgs::TransformStamped {
     }
 }
 
-pub fn to_transform_stamped(joint: &urdf_rs::Joint) -> geometry_msgs::TransformStamped {
-    let q = UnitQuaternion::from_euler_angles(
-        joint.origin.rpy[0],
-        joint.origin.rpy[1],
-        joint.origin.rpy[2],
-    );
+pub fn to_transform_stamped(
+    joint: &urdf_rs::Joint,
+    motors: &MotorTable<f64>,
+    timestamp: &Instant,
+) -> geometry_msgs::TransformStamped {
+    let chid = joint.child.link.clone();
+    let pid = joint.parent.link.clone();
+
+    let q;
+
+    if joint.name == "swerve_xy" {
+        q = UnitQuaternion::from_euler_angles(
+            joint.origin.rpy[0],
+            joint.origin.rpy[1],
+            joint.origin.rpy[2],
+        );
+    } else {
+        let motor_index = motors.names.iter().position(|r| *r == joint.name).unwrap();
+        let data = motors.data[motor_index].read().unwrap();
+
+        if pid == "base_link" {
+            q = UnitQuaternion::from_euler_angles(
+                joint.origin.rpy[0],
+                joint.origin.rpy[1],
+                joint.origin.rpy[2] + (data[0] / 20000.0),
+            );
+        } else {
+            if motor_index == 7 {
+                println!("{}", data[0] / 20000.0);
+            }
+            q = UnitQuaternion::from_euler_angles(
+                joint.origin.rpy[0],
+                joint.origin.rpy[1] + (data[0] / 20000.0),
+                joint.origin.rpy[2],
+            );
+        }
+        // if motor_index == 0 {
+        //     println!("{}", data[0]);
+        // }
+    }
 
     geometry_msgs::TransformStamped {
-        child_frame_id: joint.child.link.clone(),
+        child_frame_id: chid,
         header: std_msgs::Header {
-            frame_id: joint.parent.link.clone(),
-            stamp: rosrust::Time::new(),
+            frame_id: pid,
+            stamp: rosrust::Time::from_seconds(timestamp.elapsed().as_micros() as u32 / 1000),
             seq: 0,
         },
         transform: geometry_msgs::Transform {
@@ -62,6 +96,7 @@ pub fn to_transform_stamped(joint: &urdf_rs::Joint) -> geometry_msgs::TransformS
 // }
 
 pub struct RobotState {
+    timestamp: Instant,
     robot: urdf_rs::Robot,
     motors: MotorTable<f64>,
     js_pub: Option<rosrust::Publisher<JointState>>,
@@ -75,7 +110,7 @@ impl RobotState {
         let robot_urdf = urdf_rs::read_from_string(&urdf_text).unwrap();
 
         let dbg = format!("/buffbot/buff_rust/debug");
-        let debug = rosrust::param(&dbg).unwrap().get::<bool>().unwrap();
+        let debug = true; //rosrust::param(&dbg).unwrap().get::<bool>().unwrap();
 
         let mut js_publisher = None;
         let mut tf_publisher = None;
@@ -86,11 +121,12 @@ impl RobotState {
                 .set::<String>(&urdf_text)
                 .unwrap();
 
-            js_publisher = Some(rosrust::publish("joint_states", 1).unwrap());
+            // js_publisher = Some(rosrust::publish("joint_states", 1).unwrap());
             tf_publisher = Some(rosrust::publish("tf", 1).unwrap());
         }
 
         RobotState {
+            timestamp: Instant::now(),
             robot: robot_urdf,
             motors: motortable,
             js_pub: js_publisher,
@@ -104,7 +140,7 @@ impl RobotState {
                 .robot
                 .joints
                 .iter()
-                .map(|x| to_transform_stamped(x))
+                .map(|x| to_transform_stamped(x, &self.motors, &self.timestamp))
                 .collect(),
         };
 
@@ -147,8 +183,8 @@ impl RobotState {
         while rosrust::is_ok() {
             timestamp = Instant::now();
 
-            if let Some(_) = &self.js_pub {
-                self.broadcast_state();
+            if let Some(_) = &self.tf_pub {
+                // self.broadcast_state();
                 self.broadcast_tfs()
             }
 

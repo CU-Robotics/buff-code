@@ -35,16 +35,19 @@ void RMMotor::setPower(float power) {
 }
 
 int RMMotor::read(HIDBuffer* buffer) {
-
+    static int val = 0.0;
     if (motor_id != -1){
         // add buffer3 to filter these values
+
+        uint16_t test = (31415 * sin(val / 1000)) + 31415;
+        val += 1;
 
         if (!buffer->check_of(11)) {
             buffer->put('T');
             buffer->put('T');
             buffer->put(6);
             buffer->put(id);
-            buffer->put_u16(map((recMsgPtr->buf[0] << 8) | recMsgPtr->buf[1], 0, 8191, 0, 36000));
+            buffer->put_u16(test); //map((recMsgPtr->buf[0] << 8) | recMsgPtr->buf[1], 0, 8191, 0, 36000));
             buffer->put_u16((recMsgPtr->buf[2] << 8) | recMsgPtr->buf[3]);
             buffer->put_u16((recMsgPtr->buf[4] << 8) | recMsgPtr->buf[5]);
             return 1;
@@ -87,23 +90,20 @@ void read_motors(Motor_LUT* minfo, HIDBuffer* buffer) {
     static int seek_id = 0;
     unsigned long timeout = micros();
 
-    while (seek_id < 24) {
+    while (micros() - timeout < 100) {
         if (minfo->motors[seek_id].id != -1) {
             if (minfo->motors[seek_id].read(buffer) == 0){
                 break;
             }
         }
-        
         seek_id++;
 
-        if (micros() - timeout > 100){
-            break;
+        if (seek_id >= 24){
+            seek_id = 0;
         }
     }
 
-    if (seek_id >= 24){
-        seek_id = 0;
-    }
+    
 }
 
 void initCAN(Motor_LUT* minfo){
