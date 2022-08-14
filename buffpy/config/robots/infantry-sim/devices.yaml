@@ -1,68 +1,68 @@
 devices:
-  DR16:
+  dr16:
     group: receiver
     key: D
     options: [0]
     with_ros: false
     input_size: 6
     output_size: 0
-  MPU6050:
+  mpu6050:
     group: imu
     key: I
     options: [1]
     with_ros: false
     input_size: 6
     output_size: 0
-  FL_STEER:
+  fl_steer:
     group: motor
     key: M
     options: [2, 0, 0]
     with_ros: false
     input_size: 3
     output_size: 4
-  FR_STEER:
+  fr_steer:
     group: motor
     key: M
     options: [2, 1, 0]
     with_ros: false
     input_size: 3
     output_size: 4
-  RR_STEER:
+  rr_steer:
     group: motor
     key: M
     options: [2, 2, 0]
     with_ros: false
     input_size: 3
     output_size: 4
-  RL_STEER:
+  rl_steer:
     group: motor
     key: M
     options: [2, 3, 0]
     with_ros: false
     input_size: 3
     output_size: 4
-  FL_DRIVE:
+  fl_drive:
     group: motor
     key: M
     options: [2, 4, 1]
     with_ros: false
     input_size: 3
     output_size: 4
-  FR_DRIVE:
+  fr_drive:
     group: motor
     key: M
     options: [2, 5, 1]
     with_ros: false
     input_size: 3
     output_size: 4
-  RR_DRIVE:
+  rr_drive:
     group: motor
     key: M
     options: [2, 6, 1]
     with_ros: false
     input_size: 3
     output_size: 4
-  RL_DRIVE:
+  rl_drive:
     group: motor
     key: M
     options: [2, 7, 1]
