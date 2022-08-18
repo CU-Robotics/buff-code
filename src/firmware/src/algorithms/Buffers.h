@@ -75,7 +75,9 @@ public:
 
 	byte seek();
 	byte seek(int);
+	void seekn(int, uint8_t*);
 	uint16_t seek_u16();
+	uint32_t seek_u32();
 	float seek_f32();
 
 

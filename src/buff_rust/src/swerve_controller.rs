@@ -1,24 +1,31 @@
-use crate::device::MotorTable;
+use crate::hid::device::MotorTable;
 // use rosrust::ros_info;
 // use rosrust_msg::{std_msgs, std_msgs::Float64MultiArray};
 use std::{
+    sync::{Arc, RwLock},
     thread::sleep,
     time::{Duration, Instant},
 };
 
+// use crate::localization::estimator::*;
+// use crate::localization::swerve::*;
+
 pub struct SwerveController {
-    pub motors: MotorTable<u8>,
+    pub motors: Arc<RwLock<MotorTable>>,
+    // pub robot_state: Arc<RwLock<SwerveState>>,
 }
 
 impl SwerveController {
-    pub fn new(motortable: MotorTable<u8>) -> SwerveController {
-        SwerveController { motors: motortable }
+    pub fn new(motortable: Arc<RwLock<MotorTable>>) -> SwerveController {
+        SwerveController {
+            motors: motortable,
+            // robot_state: state,
+        }
     }
 
-    pub fn set_motor(&mut self, idx: usize, power: f32) {
-        let motor = &self.motors.data[idx];
-        let mut output = motor.write().unwrap();
-        *output = f32::to_le_bytes(power).to_vec();
+    pub fn set_motor(&mut self, idx: usize, power: f64) {
+        let mut motors = self.motors.write().unwrap();
+        motors.data[idx] = vec![power];
     }
 
     pub fn spin(&mut self) {
@@ -29,7 +36,7 @@ impl SwerveController {
         while rosrust::is_ok() {
             timestamp = Instant::now();
 
-            self.set_motor(ctr, f);
+            // self.set_motor(ctr, f);
             ctr += 1;
 
             if ctr >= 8 {

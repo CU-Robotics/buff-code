@@ -181,10 +181,10 @@
       <mu2>0.5</mu2>
     </gazebo>
 
-    <xacro:swerve id="fl" l="${l}" w="${w}" x="1" y="1" a="${3.14 / 4}"/>
-    <xacro:swerve id="fr" l="${l}" w="${w}" x="1" y="-1" a="${-3.14 / 4}"/>
-    <xacro:swerve id="rr" l="${l}" w="${w}" x="-1" y="-1" a="${-3.14 / 4 * 3}"/>
-    <xacro:swerve id="rl" l="${l}" w="${w}" x="-1" y="1" a="${3.14 / 4 * 3}"/>
+    <xacro:swerve id="fl" l="${l}" w="${w}" x="1" y="1" a="${3.1415926535 / 4}"/>
+    <xacro:swerve id="fr" l="${l}" w="${w}" x="1" y="-1" a="${-3.1415926535 / 4}"/>
+    <xacro:swerve id="rr" l="${l}" w="${w}" x="-1" y="-1" a="${-3.1415926535 / 4 * 3}"/>
+    <xacro:swerve id="rl" l="${l}" w="${w}" x="-1" y="1" a="${3.1415926535 / 4 * 3}"/>
 
     <xacro:swerve_indicator l="${l}" w="${w}" x="1" y="1"/>
 

@@ -7,20 +7,12 @@
 
 
 HID_Device hid;
-Motor_LUT motor_lut;
-
 
 //		Timing variables
 unsigned long top_time;
-unsigned long canRate = 5000;
-unsigned long hidRate = 1000;
-unsigned long cycle_time = 1000;
-
-IntervalTimer canDumpTmr;
-IntervalTimer hidtmr;
+unsigned long cycle_time = 2500;
 
 bool ENABLE_HID = false;
-
 
 CircularBuffer cycle_history;
 
@@ -34,9 +26,6 @@ void setup() {
  	// Hardware setup
 	pinMode(LED_BUILTIN, OUTPUT);
 	digitalWrite(LED_BUILTIN, HIGH);
-
-
-	initCAN(&motor_lut);
 
   	cycle_history.init(10);
 
@@ -59,22 +48,13 @@ void blink(){
 
 // Runs continuously
 void loop() {
-	static int canctr;
 	top_time = micros();
 
-	send_HID(&hid, &motor_lut);
-	int n = read_HID(&hid, &motor_lut);
+	send_HID(&hid);
+	int n = read_HID(&hid);
 	if (ENABLE_HID){	// This should enable/diable the robot if there are connection issues
 
 		blink();		
-
-		if (canctr > 5){
-			canctr = 0;
-			//writeCAN(&motor_lut);
-		}
-		else {
-			canctr ++;
-		}
 
 		cycle_history.push(micros() - top_time);
 
@@ -82,8 +62,6 @@ void loop() {
 			cycle_history.reset();
 			Serial.print("Disabling per Cycle Limit: ");
 			Serial.println(micros() - top_time);
-			hid.imu.id = -1;
-			hid.receiver.id = -1;
 			ENABLE_HID = false;
 			// should also disable the motors and sensors
 		}
@@ -92,6 +70,10 @@ void loop() {
 		ENABLE_HID = n > 0;
 	}
 
+	// if (micros() - top_time > cycle_time) {
+	// 	Serial.print("Overtime ");
+	// 	Serial.println(micros() - top_time);
+	// }
 	while (micros() - top_time < cycle_time){}
 }
 
