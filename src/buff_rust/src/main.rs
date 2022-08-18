@@ -1,10 +1,11 @@
-mod buff_hid;
-mod device;
-mod localization;
-mod swerve_controller;
-
+use buff_rust::hid::buff_hid;
+use buff_rust::localization::estimator::*;
+use buff_rust::swerve_controller;
 use rosrust::ros_info;
 use std::thread;
+
+// use std::sync::mpsc;
+// use std::sync::mpsc::{Receiver, Sender};
 
 fn main() {
     // launch programs in threads here or as scripts in run
@@ -23,8 +24,13 @@ fn main() {
     let mut layer = buff_hid::HidLayer::new();
 
     let motor_inpipe = layer.dtable.get_motor_inputs();
+    let motor_outpipe = layer.dtable.get_motor_outputs();
+    let dr16_input = layer.dtable.get_remote_input();
+    let imu_input = layer.dtable.get_imu_input();
 
-    let mut rstate = localization::RobotState::new(filepath, motor_inpipe);
+    let mut rstate = RobotStateEstimator::new(filepath, motor_inpipe, dr16_input, imu_input);
+
+    // let robot_state = rstate.get_state_copy();
 
     // let mut swrv_ctrl = swerve_controller::SwerveController::new(motor_outpipe);
 

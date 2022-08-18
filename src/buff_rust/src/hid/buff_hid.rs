@@ -1,6 +1,6 @@
 extern crate hidapi;
 
-use crate::device;
+use crate::hid::device::*;
 use hidapi::{HidApi, HidDevice, HidError};
 use rosrust_msg::std_msgs;
 use std::thread::sleep;
@@ -39,33 +39,6 @@ impl HidBuffer {
 
         tmp
     }
-
-    // pub fn seek_u16(&mut self, set: Option<usize>) -> u16 {
-    //     self.seek_ptr = set.unwrap_or(self.seek_ptr);
-
-    //     u16::from_be_bytes([self.seek(None), self.seek(None)])
-    // }
-
-    // pub fn seek_f32(&mut self, set: Option<usize>) -> f32 {
-    //     self.seek_ptr = set.unwrap_or(self.seek_ptr);
-
-    //     f32::from_le_bytes([
-    //         self.seek(None),
-    //         self.seek(None),
-    //         self.seek(None),
-    //         self.seek(None),
-    //     ])
-    // }
-
-    // pub fn unseek(&mut self) -> u8 {
-    //     if self.seek_ptr <= 0 {
-    //         self.seek_ptr = 63;
-    //     } else {
-    //         self.seek_ptr -= 1;
-    //     }
-
-    //     self.data[self.seek_ptr]
-    // }
 
     pub fn put(&mut self, value: u8) {
         self.data[self.seek_ptr] = value;
@@ -120,7 +93,7 @@ pub struct HidLayer {
     pub pid: u16,
     pub input: HidBuffer,
     pub output: HidBuffer,
-    pub dtable: device::DeviceTable,
+    pub dtable: DeviceTable,
     pub teensy: Result<HidDevice, HidError>,
     pub output_queue: Arc<RwLock<HidBuffer>>,
     pub subscriber: rosrust::Subscriber,
@@ -149,7 +122,7 @@ impl HidLayer {
             .get::<String>()
             .unwrap();
 
-        let dt = device::DeviceTable::from_yaml(filepath);
+        let dt = DeviceTable::from_yaml(filepath);
 
         let api = HidApi::new().expect("Failed to create API instance");
         let teensy = api.open(0x0000, 0x0000);
@@ -176,52 +149,41 @@ impl HidLayer {
     pub fn dump_config(&mut self) {
         self.reset();
 
-        while self.dtable.dev_seek < self.dtable.devices.len() {
-            let input_length = &self.dtable.devices[self.dtable.dev_seek]
-                .input
-                .read()
-                .unwrap()
-                .len();
-
-            if self.output_queue.write().unwrap().check_of(*input_length) {
-                self.write();
-                self.read();
+        for msg in self.dtable.generate_inits() {
+            if self.output_queue.write().unwrap().check_of(msg.len()) {
+                self.write(); // possibly errors without the read
+                              // self.read();
             }
 
-            let dev = &self.dtable.devices[self.dtable.dev_seek];
-            self.output_queue
-                .write()
-                .unwrap()
-                .puts(dev.generate_init(self.dtable.dev_seek as u8));
-            self.dtable.dev_seek += 1;
+            self.output_queue.write().unwrap().puts(msg);
         }
 
-        self.dtable.dev_seek = 0;
-        self.output_queue.write().unwrap().print_buffer();
+        // self.output_queue.write().unwrap().print_buffer();
+        self.write();
     }
 
     pub fn dump_state(&mut self) {
         self.reset();
+        // Should not use the output_mtable
+        // while self.dtable.dev_seek < self.dtable.devices.len() - 1 {
+        //     let input_length = &self.dtable.devices[self.dtable.dev_seek]
+        //         .input
+        //         .read()
+        //         .unwrap()
+        //         .len();
 
-        while self.dtable.dev_seek < self.dtable.devices.len() - 1 {
-            let input_length = &self.dtable.devices[self.dtable.dev_seek]
-                .input
-                .read()
-                .unwrap()
-                .len();
+        //     if self.output_queue.write().unwrap().check_of(*input_length) {
+        //         self.write();
+        //         self.read();
+        //     }
 
-            if self.output_queue.write().unwrap().check_of(*input_length) {
-                self.write();
-                self.read();
-            }
-
-            let dev = &self.dtable.devices[self.dtable.dev_seek];
-            self.output_queue
-                .write()
-                .unwrap()
-                .puts(dev.generate_state(self.dtable.dev_seek as u8));
-            self.dtable.dev_seek += 1;
-        }
+        //     let dev = &self.dtable.devices[self.dtable.dev_seek];
+        //     self.output_queue
+        //         .write()
+        //         .unwrap()
+        //         .puts(dev.generate_state(self.dtable.dev_seek as u8));
+        //     self.dtable.dev_seek += 1;
+        // }
 
         self.dtable.dev_seek = 0;
         // self.output_queue.write().unwrap().print_buffer();
@@ -235,15 +197,20 @@ impl HidLayer {
             data.push(self.input.seek(None));
             j += 1;
         }
+
         data
     }
 
     pub fn parse_hid(&mut self, n: usize) {
-        self.input.seek_ptr = 0;
         if n == 0 {
             return;
         }
-        while self.input.seek_ptr < n - 1 {
+
+        self.input.seek_ptr = 0;
+        let mut i = 0;
+
+        while self.input.seek_ptr >= i {
+            i = self.input.seek_ptr;
             match self.input.seek(None) as char {
                 'T' => {
                     match self.input.seek(None) as char {
@@ -261,6 +228,7 @@ impl HidLayer {
                 _ => continue,
             }
         }
+        // println!("Safety check!");
         self.input.reset();
     }
 
@@ -334,11 +302,20 @@ impl HidLayer {
         if self.output.timestamp.elapsed().as_millis() < 5000 {
             println!(
                 "Sleeping for {}",
-                5000 - self.output.timestamp.elapsed().as_millis() as u64
+                5000 - self.input.timestamp.elapsed().as_millis() as u64
             );
             sleep(Duration::from_millis(
-                5000 - self.output.timestamp.elapsed().as_millis() as u64,
+                5000 - self.input.timestamp.elapsed().as_millis() as u64,
             ));
+
+            let dbg = format!("/buffbot/buff_rust/debug");
+            let debug = rosrust::param(&dbg).unwrap().get::<bool>().unwrap();
+            if debug {
+                sleep(Duration::from_millis(
+                    10000 - self.input.timestamp.elapsed().as_millis() as u64,
+                ));
+            }
+            self.input.timestamp = Instant::now();
         }
 
         self.init_comms();
@@ -346,12 +323,6 @@ impl HidLayer {
 
     pub fn spin(&mut self) {
         self.init_comms();
-
-        let dbg = format!("/buffbot/buff_rust/debug");
-        let debug = rosrust::param(&dbg).unwrap().get::<bool>().unwrap();
-        if debug {
-            return;
-        }
 
         let mut timestamp;
         let mut micros;
@@ -365,15 +336,15 @@ impl HidLayer {
             self.write();
             // println!("Write time {}", timestamp.elapsed().as_micros() - micros);
 
-            self.dump_state();
+            // self.dump_state();
 
             micros = timestamp.elapsed().as_micros();
 
-            if micros < 1000 {
-                sleep(Duration::from_micros(1000 - micros as u64));
-            } // else {
-              //     println!("overtime {}", micros);
-              // }
+            if micros < 2500 {
+                sleep(Duration::from_micros(2500 - micros as u64));
+            } else {
+                println!("overtime {}", micros);
+            }
         }
     }
 }

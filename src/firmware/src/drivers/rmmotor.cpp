@@ -38,8 +38,8 @@ int RMMotor::read(HIDBuffer* buffer) {
     static int val = 0.0;
     if (motor_id != -1){
         // add buffer3 to filter these values
-
-        uint16_t test = (31415 * sin(val / 1000)) + 31415;
+        // Serial.println("Sending motor value");
+        uint16_t test = map((sin(val / 100)), -1, 1, 0, 62800);
         val += 1;
 
         if (!buffer->check_of(11)) {
@@ -68,7 +68,7 @@ void new_motor(Motor_LUT* minfo, int idx, int can_id, int motor_id, int motor_ty
     int tmp_can = can_id;
     int tmp_mot = motor_id;
 
-    // Serial.print("New motor "); Serial.print(tmp_can); Serial.print(" "); Serial.println(tmp_mot);
+    // Serial.print("New motor "); Serial.print(tmp_can); Serial.print(" "); Serial.print(tmp_mot); Serial.print(" "); Serial.println(idx);
 
     switch (motor_type) {
         case 0:
@@ -90,9 +90,10 @@ void read_motors(Motor_LUT* minfo, HIDBuffer* buffer) {
     static int seek_id = 0;
     unsigned long timeout = micros();
 
-    while (micros() - timeout < 100) {
+    while (micros() - timeout < 50) {
         if (minfo->motors[seek_id].id != -1) {
             if (minfo->motors[seek_id].read(buffer) == 0){
+                // Serial.println("Read motor");
                 break;
             }
         }
@@ -100,6 +101,7 @@ void read_motors(Motor_LUT* minfo, HIDBuffer* buffer) {
 
         if (seek_id >= 24){
             seek_id = 0;
+            break;
         }
     }
 

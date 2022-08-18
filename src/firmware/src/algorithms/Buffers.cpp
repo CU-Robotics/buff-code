@@ -274,8 +274,20 @@ Vector3 Buffer3::mean(){
 		return data[idx];
 	}
 
+	void HIDBuffer::seekn(int n, uint8_t* data) {
+
+		for (int i = 0; i < n; i++) {
+			data[i] = uint8_t(seek());
+		}
+
+	}
+
 	uint16_t HIDBuffer::seek_u16(){
 		return uint16_t(seek()) << 8 | uint16_t(seek());
+	}
+
+	uint32_t HIDBuffer::seek_u32(){
+		return (uint32_t(seek()) << 24) | (uint32_t(seek()) << 16) | (uint32_t(seek()) << 8) | uint32_t(seek());
 	}
 
 	float HIDBuffer::seek_f32(){
