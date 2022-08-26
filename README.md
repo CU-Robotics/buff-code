@@ -1,56 +1,23 @@
 ![alt text](https://github.com/CU-Robotics/buff-code/blob/master/buffcode-card.png?raw=true)
 
+### CU Robotics' Code Repository
 
-### TODO
-
-Omega
-- Wrote camera/video publisher
-- ROS package will be deprecated soon (Luxonis through Crosshair)
-
-Crosshair
-- Write a program to detect armor plates in an image
-    - developed YOLOv5 in demo notebook (trained with NYU's dataset)
-    - integrated model download and execution script
-    - setup debug topic (image_annotated)
-- Convert detection script to the input output handler of the Luxonis camera (temporary, Hunter's ros package will take over) 
-
-Hunter
-- Write a program that tracks and computes a control signal for the turret.
-    - developed 2d tracking demo notebook (dead reckoning)
-    - integrated tracker with repo
-    - setup generic equations for trajectory updating (on detections) and yaw pitch control signals
-- Needs to be tuned for our robots
-- Need to write a diagnostic program
-- Move detections and tracking onto Luxonis hardware (requires debug/diagnostic modifications)
-
-Echo
-- Wrote a serial to ROS script
-    - publishes data from the serial port to a topic defined by the serial message
-    - subscribes to a set of topics and writes the message to the serial device
-- Needs hardware testing
-- Will integrate with the firmware once it's functional
-
-
-### CU Robotics' Development Repository
-
-Buff-Code is Multi-Agent build, deployment and management system. Buff-Code is supported in Ubuntu18 or on a Jetson device (Also we support docker). 
-
-This repo provides a few tools that users should become familiar with. The tools are in the python3 package BuffPy in the project's root. The two most useful tools are BuffPy and Run. BuffPy is used to build/clean, install to a robot, ssh to a robot and hopefully soon flash a microcontroller. It's really just a collection of ros and linux tools in a python CLI. The novel part of Buff-Code is the ability to debug and manage multiple robots. 
+Buff-Code is used to build, install and debug code across a team of robots. Each robot will have a buffpy package that contains all the programs and data the system requires. The package is installed to the robot from another machine connected over ethernet. The platforms Buff-Code supports installing from are Ubuntu and sometimes other Unix/Linux will also work. If you don't have one of these platforms or have issues using buff-code natively we also offer a Docker image that can install to the robots. Buff-Code's source contains rust, cpp, python3 and bash, buffpy provides a python commandline tool to help you build the various systems.
 
 ## Quick start
 checkout the [Getting started wiki](https://github.com/CU-Robotics/buff-code/wiki/Getting-Started) for more details.
 
 ### Ubuntu
 
-Clone this repo into your home directory (/home/$USER/buff-code).
+Clone this repo into your home directory (/home/$USER).
 
     git clone git@github.com:CU-Robotics/buff-code.git
     
-Now run the install from the root of the project
+Now run the install from the root of the project (/home/$USER/buff-code)
 
 	source buffpy/scripts/install.bash 
 
-First always load the environment variables, if you're not sure if you did, just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo (usually /home/$USER/buff-code).
+First always load the environment variables, if you're not sure you did, just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo (usually /home/$USER/buff-code).
 
 	source buffpy/buff.bash
 	
@@ -73,13 +40,9 @@ The majority of functionality is based in the buffpy package. This package is se
 	
 To launch a system use the run command:
 
-    run <name_of_config>.yaml
+    run <name_of_robot>
   
-run will spawn all of the nodes defined in the config as well as uploading any config files to the rosparam server.
-
-run can also be used to spawn a python script (the script must be in buffpy/lib):
-
-    run <python_script>.py
+run will spawn all of the nodes defined in the config as well as uploading any config files to the rosparam server. The robots are all defined in buffpy/config/robots
 
 ## Architecture
 buff-code
@@ -88,7 +51,7 @@ buff-code
     - lib: installed files (only python3 atm)
     - config: A place for any and all setup/configuration/secret files
       - install: Files containing install info
-      - system: Folder of system yamls
+      - robots: Folder of node configurations
       - data: Folder containing misc info for programs
       - sensitive: shhh... it's a secret
     - scripts: arbitrary scripts (installs & entrypoints)
@@ -97,24 +60,18 @@ buff-code
   - docs: Removing soon, I swear ...
   - container
     - Base image dockerfile, the dev image needs a base
+    - Dev image dockerfile
   - src: The source code for our controllers
-    - buff_ros
-      - Our misc ros package
-    - omega
-      - Camera node src
+    - buff_rust
+      - Our rust nodes, the cognition center of the robot
+    - firware
+      - firware for teensy configured with PlatformIO
     - crosshair
       - Detector node src
     - hunter
       - Tracker node src
-    - wrecker
-      - Controls src
-    - echo
-      - Serial node src (python)
-    - tech
-      - N/A
   - README.md: you're reading it
   - .gitignore: keeps the secrets safe
-  - Dockerfile: The dev file for our docker image (requires base image)
 
 ## Dev Notes
 
@@ -123,7 +80,6 @@ When working on this project
   - Test changes and document the tests and changes
   - Make sure to push when you finish working, otherwise no one else sees your code
   - Do not push broken changes, this will break things for everyone
-  - The more documentation the better 
 
 Version info
   - Major number: increments when large dependency changes occur (eg python3.6 -> python3.9, or Melodic -> Noetic)
@@ -131,6 +87,16 @@ Version info
 
 ## CHANGES
 *Changes include all PRs that modify the directory structure, the installed binaries and any changes that will effect workspace usage*
+ - Version 1.00
+   - Date: August 26, 2022
+   - Editor: Mitchell D Scott
+   - Status: Seems stable
+   - Description: 
+      - We are rustaceans now
+      - firmware was gutted and now is mostly just IO
+      - controls are migrating to rust (and ros)
+      - run no longer supports scripts and now uses better definitions of robots to start systems
+      - buffpy got the usual adjustments aside from dig/clean not much is new
  - Version 0.07
    - Date: June 30, 2022
    - Editor: Mitchell D Scott
