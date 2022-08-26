@@ -6,17 +6,16 @@
 
 class BuffCan {
 	private:
-        FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
-        FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+        FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can;
 
-        CAN_message_t input[2][3];
+        CAN_message_t input[3];
 
         unsigned long d_t;
 
     public:
         int id = -1;
         BuffCan();
-        void set(int, int, int, byte, byte);
+        void set(int, byte*);
         void write();
         void read();
 };

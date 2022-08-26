@@ -5,9 +5,11 @@
 
 //		Timing variables
 unsigned long top_time;
-unsigned long cycle_time = 1000;
+unsigned long cycle_time = 500;
 
-BuffCan can;
+
+BuffCan can1;
+BuffCan can2;
 
 // Runs once
 void setup() {
@@ -39,21 +41,17 @@ void blink(){
 void loop() {
 	top_time = micros();
 
+	can2.read();
+	can2.write();
 
-	can.read();
+	// int16_t newPower = (int16_t)(sin(millis() / 1000.0) * 32767);
+ //  	byte byteOne = highByte(newPower);
+ //  	byte byteTwo = lowByte(newPower);
 
-
-	int16_t newPower = (int16_t)(1.0 * 16384);
-  	byte byteOne = highByte(newPower);
-  	byte byteTwo = lowByte(newPower);
-
-	// can.set(1, 0, 1, byteOne, byteTwo);
-	// can.set(1, 0, 1, byteOne, byteTwo);
-	can.set(1, 2, 1, byteOne, byteTwo);
-
+ //  	byte msg[8] = {0, 0, byteOne, byteTwo, 0, 0, 0, 0};
+	// can.set(0, msg);
 
 	blink();		
-	can.write();
 
 	while (micros() - top_time < cycle_time){}
 }

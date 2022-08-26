@@ -1,4 +1,3 @@
-pub mod hid;
 pub mod localization;
-pub mod swerve_controller;
-pub mod tests;
+pub mod locomotion;
+pub mod teensy_comms;

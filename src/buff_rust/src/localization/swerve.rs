@@ -1,4 +1,4 @@
-use nalgebra::{Isometry3, Quaternion, Translation3, UnitQuaternion, Vector3, Vector4};
+use nalgebra::{Isometry3, Translation3, UnitQuaternion, Vector3};
 use std::cmp::Ordering;
 use std::time::Instant;
 
@@ -126,7 +126,7 @@ impl Body3D {
         }
     }
 
-    pub fn from_urdf(filepath: String, debug: bool) -> Body3D {
+    pub fn from_urdf(filepath: String) -> Body3D {
         let urdf_text =
             urdf_rs::utils::convert_xacro_to_urdf(filepath.to_string() + "/buffbot.xacro").unwrap();
         let robot_urdf = urdf_rs::read_from_string(&urdf_text).unwrap();
@@ -143,37 +143,32 @@ impl Body3D {
             state.names.push(j.name.clone());
         });
 
-        if debug {
-            rosrust::param("robot_description")
-                .unwrap()
-                .set::<String>(&urdf_text)
-                .unwrap();
-        }
+        rosrust::param("robot_description")
+            .unwrap()
+            .set::<String>(&urdf_text)
+            .unwrap();
+
         state
     }
 
-    pub fn get_parent_isos(&self, name: String) {}
+    // pub fn get_parent_isos(&self, name: String) {}
 
-    pub fn update_frame_omega(&mut self, name: String, data: Vector3<f64>) {
-        match self.names.iter().position(|n| *n == name) {
-            Some(idx) => {
-                self.frames[idx].omega = data;
-            }
-            _ => {}
-        }
-    }
+    // pub fn update_frame_omega(&mut self, name: String, data: Vector3<f64>) {
+    //     match self.names.iter().position(|n| *n == name) {
+    //         Some(idx) => {
+    //             self.frames[idx].omega = data;
+    //         }
+    //         _ => {}
+    //     }
+    // }
 
-    pub fn set_motors(&mut self, names: Vec<String>, data: Vec<Vec<f64>>, timestamp: Vec<Instant>) {
-        names.iter().zip(data.iter()).for_each(|(name, data)| {
-            self.update_frame_omega(name.to_string().clone(), Vector3::new(0.0, 0.0, data[1]));
-        });
-    }
+    // pub fn set_motors(&mut self, names: Vec<String>, data: Vec<Vec<f64>>, timestamp: Vec<Instant>) {
+    //     names.iter().zip(data.iter()).for_each(|(name, data)| {
+    //         self.update_frame_omega(name.to_string().clone(), Vector3::new(0.0, 0.0, data[1]));
+    //     });
+    // }
 
-    pub fn set_control_input(&self, data: Vec<f64>, timestamp: Instant) {
-        // println!("{:?} {}", data, timestamp.elapsed().as_micros());
-    }
-
-    pub fn set_reference_input(&self, data: Vec<f64>, timestamp: Instant) {}
+    // pub fn set_reference_input(&self, data: Vec<f64>, timestamp: Instant) {}
 
     pub fn integrate_step(&mut self) {
         for i in 0..self.frames.len() {
