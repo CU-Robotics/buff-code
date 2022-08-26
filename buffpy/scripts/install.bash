@@ -5,12 +5,16 @@
 #  Export some variables
 #
 
-export ROS_PKG=ros-base					# Basic ROS (haha only communication and services)
-export ROS_DISTRO=melodic				# ROS for Ubuntu18
-
-export PROJECT_ROOT=$PWD				# Path to buff-code
+export UBUNTU_VERSION=$(cut -f2 <<< $(lsb_release -r))
 export DEBIAN_FRONTEND=noninteractive	# prevent prompts in docker and everywhere else
 
+export ROS_PKG=ros-base
+
+if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+	export ROS_DISTRO=noetic				# ROS for Ubuntu18
+elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
+	export ROS_DISTRO=melodic
+fi
 
 #
 #	Source buff.bash
@@ -25,14 +29,14 @@ source ${PROJECT_ROOT}/buffpy/buff.bash
 
 echo -e "\n\tapt updating...\n"
 
-sudo apt update
+$SUDO apt update
 
 # Make some space if on Jetson
 if [[ "${HOSTNAME}" == "edge"* ]]; then
-	sudo apt purge -y thunderbird libreoffice-*
+	$SUDO apt purge -y thunderbird libreoffice-*
 fi
 
-sudo apt upgrade -y
+$SUDO apt upgrade -y
 
 
 #
@@ -41,9 +45,9 @@ sudo apt upgrade -y
 
 source ${PROJECT_ROOT}/buffpy/scripts/install_buffpy.bash
 
-sudo apt autoremove -y	
-sudo apt clean
-sudo apt update
+$SUDO apt autoremove -y	
+$SUDO apt clean
+$SUDO apt update
 
 
 #
@@ -51,12 +55,12 @@ sudo apt update
 #
 
 if [[ ! -d /opt/ros/${ROS_DISTRO} ]]; then
-	source "${PROJECT_ROOT}/buffpy/scripts/install_ros.bash"
+	source ${PROJECT_ROOT}/buffpy/scripts/install_ros.bash
 fi
 
-sudo apt autoremove -y
-sudo apt clean
-sudo apt update
+$SUDO apt autoremove -y
+$SUDO apt clean
+$SUDO apt update
 
 
 #
@@ -69,11 +73,22 @@ sudo apt update
 #	Install Utilities
 #
 
-source "${PROJECT_ROOT}/buffpy/scripts/install_tytools.bash"
+source ${PROJECT_ROOT}/buffpy/scripts/install_tytools.bash
+
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
+
+echo "source ${HOME}/.cargo/env" >> ~/.bashrc
+
+if [[ "${DOCKER}" == "False" ]]; then
+	source ${PROJECT_ROOT}/buffpy/scripts/install_docker.bash
+fi
 
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 
-	sudo cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
+	$SUDO cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
+
+else 
+	curl -sSL http://get.gazebosim.org | sh
 
 fi
 

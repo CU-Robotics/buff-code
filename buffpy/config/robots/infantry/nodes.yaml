@@ -1,0 +1,23 @@
+buff_rust:
+  debug: False
+  files: ['comms_node', controller_node]
+
+
+robot: 'infantry'
+
+can:
+  - ["fl_drive", "1", "0", "0"]
+  - ["fl_steer", "1", "0", "1"]
+  - ["gimbal_pan", "1", "2", "1"]
+
+fl_steer_gains:
+  - [0.05, 0.0, 1.0]
+  - [0.5, 0.0, 0.0]
+
+fl_drive_gains:
+  - [0.0, 0.0, 0.0]
+  - [0.5, 0.0, 1.0]
+
+gimbal_pan_gains:
+  - [0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0]

@@ -1,0 +1,39 @@
+DEBUG: False
+  
+TOPICS:
+  IMAGE: 'image_raw'
+  GIMBAL_STATE: 'gimbal_state'
+  SERIAL_OUT: 'serial_write'
+  DETECTION_RED: 'red_detection'
+  DETECTION_BLUE: 'blue_detection'
+  DETECTION_PIXEL: 'image_detection'
+  DETECTION_WORLD: 'world_detection'
+
+NODES:
+  MODEL:
+    CONFIG: 'model_settings.yaml'
+  CAMERA:
+    CONFIG: 'camera_settings.yaml'
+  LUXONIS: # spawns our detector node
+    FILES: ['luxnet.py']
+    REQUIRED: True
+    PACKAGE: 'crosshair'
+  RED_TRACKER:     # spawns our tracker node
+    FILES: ['deadreckon_tracer.py']
+    CONFIG: None
+    DETECTION_TOPIC: 'DETECTION_RED'
+    PACKAGE: 'hunter'
+  BLUE_TRACKER:     # spawns our tracker node
+    FILES: ['deadreckon_tracer.py']
+    CONFIG: None
+    DETECTION_TOPIC: 'DETECTION_BLUE'
+    PACKAGE: 'hunter'
+  TRACKER:
+    FILES: []
+    CONFIG: 'tracker_settings.yaml'
+    PACKAGE: 'hunter'
+  # ROSBAGGER:    # This will record all system runs and allow us to play them back
+  #   FILES: ['record']
+  #   PACKAGE: 'rosbag'
+  #   ARGS:       # -a record all  -x ignore -o output prefix
+  #     ['-a', '-x /rosout', '-o ${PROJECT_ROOT}/data/']
