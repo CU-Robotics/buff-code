@@ -1,7 +1,7 @@
 extern crate hidapi;
 
-use crate::hid::device::*;
 use hidapi::{HidApi, HidDevice, HidError};
+// use rosrust::ros_info;
 use rosrust_msg::std_msgs;
 use std::thread::sleep;
 use std::time::Duration;
@@ -93,10 +93,10 @@ pub struct HidLayer {
     pub pid: u16,
     pub input: HidBuffer,
     pub output: HidBuffer,
-    pub dtable: DeviceTable,
     pub teensy: Result<HidDevice, HidError>,
     pub output_queue: Arc<RwLock<HidBuffer>>,
     pub subscriber: rosrust::Subscriber,
+    pub publishers: Vec<rosrust::Publisher<std_msgs::UInt8MultiArray>>,
 }
 
 impl HidLayer {
@@ -104,25 +104,22 @@ impl HidLayer {
         let output_buffer = Arc::new(RwLock::new(HidBuffer::new()));
 
         let buffer = Arc::clone(&output_buffer);
-        let writer_topic = "teensy_commands";
+        let can_topic = "can_output";
 
-        let sub = rosrust::subscribe(&writer_topic, 5, move |msg: std_msgs::String| {
+        let can_sub = rosrust::subscribe(&can_topic, 1, move |msg: std_msgs::UInt8MultiArray| {
             let mut w = buffer.write().unwrap();
-            if w.data.len() - w.seek_ptr < msg.data.bytes().len() {
-                for c in msg.data.bytes() {
-                    w.put(c as u8);
-                }
-            }
+            w.seek_ptr = 0;
+            msg.data.iter().for_each(|c| {
+                w.put(*c);
+            });
         })
         .unwrap();
 
-        let robot_desc = format!("/buffbot/self");
-        let filepath = rosrust::param(&robot_desc)
-            .unwrap()
-            .get::<String>()
-            .unwrap();
-
-        let dt = DeviceTable::from_yaml(filepath);
+        let pubs = vec![
+            rosrust::publish("can_raw", 1).unwrap(),
+            rosrust::publish("imu_raw", 1).unwrap(),
+            rosrust::publish("receiver_raw", 1).unwrap(),
+        ];
 
         let api = HidApi::new().expect("Failed to create API instance");
         let teensy = api.open(0x0000, 0x0000);
@@ -132,11 +129,11 @@ impl HidLayer {
             vid: 0x16C0,
             pid: 0x0486,
             teensy: teensy,
-            dtable: dt,
             input: HidBuffer::new(),
             output: HidBuffer::new(),
             output_queue: output_buffer,
-            subscriber: sub,
+            subscriber: can_sub,
+            publishers: pubs,
         }
     }
 
@@ -146,59 +143,11 @@ impl HidLayer {
         self.output_queue.write().unwrap().reset();
     }
 
-    pub fn dump_config(&mut self) {
-        self.reset();
-
-        for msg in self.dtable.generate_inits() {
-            if self.output_queue.write().unwrap().check_of(msg.len()) {
-                self.write(); // possibly errors without the read
-                              // self.read();
-            }
-
-            self.output_queue.write().unwrap().puts(msg);
-        }
-
-        // self.output_queue.write().unwrap().print_buffer();
-        self.write();
-    }
-
-    pub fn dump_state(&mut self) {
-        self.reset();
-        // Should not use the output_mtable
-        // while self.dtable.dev_seek < self.dtable.devices.len() - 1 {
-        //     let input_length = &self.dtable.devices[self.dtable.dev_seek]
-        //         .input
-        //         .read()
-        //         .unwrap()
-        //         .len();
-
-        //     if self.output_queue.write().unwrap().check_of(*input_length) {
-        //         self.write();
-        //         self.read();
-        //     }
-
-        //     let dev = &self.dtable.devices[self.dtable.dev_seek];
-        //     self.output_queue
-        //         .write()
-        //         .unwrap()
-        //         .puts(dev.generate_state(self.dtable.dev_seek as u8));
-        //     self.dtable.dev_seek += 1;
-        // }
-
-        self.dtable.dev_seek = 0;
-        // self.output_queue.write().unwrap().print_buffer();
-    }
-
     pub fn read_bytes(&mut self, n_bytes: u8) -> Vec<u8> {
-        let mut j = 0;
-        let mut data = Vec::<u8>::new();
-
-        while j < n_bytes {
-            data.push(self.input.seek(None));
-            j += 1;
-        }
-
-        data
+        vec![0u8; n_bytes as usize]
+            .iter()
+            .map(|_| self.input.seek(None))
+            .collect()
     }
 
     pub fn parse_hid(&mut self, n: usize) {
@@ -207,28 +156,20 @@ impl HidLayer {
         }
 
         self.input.seek_ptr = 0;
-        let mut i = 0;
 
-        while self.input.seek_ptr >= i {
-            i = self.input.seek_ptr;
-            match self.input.seek(None) as char {
-                'T' => {
-                    match self.input.seek(None) as char {
-                        'T' => {
-                            // self.publish_msg();
-                            let num_bytes = self.input.seek(None);
-                            let dev_id = self.input.seek(None);
-                            let data = self.read_bytes(num_bytes);
-                            self.dtable.set_input(num_bytes, dev_id, data);
-                        }
-                        _ => continue,
-                    }
-                }
-
-                _ => continue,
-            }
+        {
+            let mut msg = std_msgs::UInt8MultiArray::default();
+            msg.data = self.read_bytes(30);
+            self.publishers[0].send(msg).unwrap();
         }
-        // println!("Safety check!");
+
+        {
+            let mut msg = std_msgs::UInt8MultiArray::default();
+            self.input.seek_ptr = 30;
+            msg.data = self.read_bytes(24);
+            self.publishers[msg.data[0] as usize].send(msg).unwrap();
+        }
+
         self.input.reset();
     }
 
@@ -261,15 +202,10 @@ impl HidLayer {
         drop(queue);
 
         match &self.teensy {
-            Ok(dev) => {
-                // let t = Instant::now();
-
-                match dev.write(&self.output.data) {
-                    Ok(_) => self.output.timestamp = Instant::now(),
-                    Err(_) => self.connection_repair(),
-                }
-                // println!("write time {}", t.elapsed().as_micros());
-            }
+            Ok(dev) => match dev.write(&self.output.data) {
+                Ok(_) => self.output.timestamp = Instant::now(),
+                Err(_) => self.connection_repair(),
+            },
             _ => {
                 self.connection_repair();
                 return;
@@ -282,10 +218,12 @@ impl HidLayer {
 
     pub fn init_comms(&mut self) {
         self.teensy = self.hidapi.open(self.vid, self.pid);
+        self.input.timestamp = Instant::now();
 
         match &self.teensy {
             Ok(_) => {
-                self.dump_config();
+                self.write();
+                println!("Teensy connected");
 
                 let param_id = format!("/buffbot/HID_ACTIVE");
                 rosrust::param(&param_id).unwrap().set::<i32>(&1).unwrap();
@@ -293,29 +231,17 @@ impl HidLayer {
             _ => {
                 let param_id = format!("/buffbot/HID_ACTIVE");
                 rosrust::param(&param_id).unwrap().set::<i32>(&0).unwrap();
+                self.connection_repair();
             }
         }
     }
 
     pub fn connection_repair(&mut self) {
-        println!("Can't find teensy ...");
-        if self.output.timestamp.elapsed().as_millis() < 5000 {
-            println!(
-                "Sleeping for {}",
-                5000 - self.input.timestamp.elapsed().as_millis() as u64
-            );
+        if self.input.timestamp.elapsed().as_millis() < 5000 {
+            println!("Can't find teensy!");
             sleep(Duration::from_millis(
                 5000 - self.input.timestamp.elapsed().as_millis() as u64,
             ));
-
-            let dbg = format!("/buffbot/buff_rust/debug");
-            let debug = rosrust::param(&dbg).unwrap().get::<bool>().unwrap();
-            if debug {
-                sleep(Duration::from_millis(
-                    10000 - self.input.timestamp.elapsed().as_millis() as u64,
-                ));
-            }
-            self.input.timestamp = Instant::now();
         }
 
         self.init_comms();
@@ -324,27 +250,17 @@ impl HidLayer {
     pub fn spin(&mut self) {
         self.init_comms();
 
-        let mut timestamp;
-        let mut micros;
-
         while rosrust::is_ok() {
-            timestamp = Instant::now();
+            // timestamp = Instant::now();
 
             self.read();
-            // micros = timestamp.elapsed().as_micros();
-            // println!("Read time {}", micros);
             self.write();
-            // println!("Write time {}", timestamp.elapsed().as_micros() - micros);
 
-            // self.dump_state();
-
-            micros = timestamp.elapsed().as_micros();
-
-            if micros < 2500 {
-                sleep(Duration::from_micros(2500 - micros as u64));
-            } else {
-                println!("overtime {}", micros);
-            }
+            // if micros < 500 {
+            //     sleep(Duration::from_micros(500 - micros as u64));
+            // } else {
+            //     println!("overtime {}", micros);
+            // }
         }
     }
 }

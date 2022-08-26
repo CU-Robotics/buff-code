@@ -17,3 +17,11 @@ serde_yaml = "0.9.4"
 env_logger = "0.9.0"
 serde_derive = "1.0.127"
 serde = {version = "1.0.127", features = ["derive", "rc"]}
+
+[[bin]]
+name = "comms_node"
+path = "src/teensy_comms/node.rs"
+
+[[bin]]
+name = "controller_node"
+path = "src/locomotion/node.rs"

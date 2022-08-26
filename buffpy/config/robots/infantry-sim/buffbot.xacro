@@ -149,7 +149,7 @@
     <joint name="${id}_drive" type="continuous">
       <parent link="${id}_swerve"/>
       <child link="${id}_wheel"/>
-      <origin xyz="0 0 ${w*-0.16}" rpy="1.57 0 0"/>
+      <origin xyz="0 0 ${w*-0.16}" rpy="${pi / 2.0} 0 0"/>
       <axis xyz="0 0 1"/>
     </joint>   
 
@@ -181,10 +181,10 @@
       <mu2>0.5</mu2>
     </gazebo>
 
-    <xacro:swerve id="fl" l="${l}" w="${w}" x="1" y="1" a="${3.14 / 4}"/>
-    <xacro:swerve id="fr" l="${l}" w="${w}" x="1" y="-1" a="${-3.14 / 4}"/>
-    <xacro:swerve id="rr" l="${l}" w="${w}" x="-1" y="-1" a="${-3.14 / 4 * 3}"/>
-    <xacro:swerve id="rl" l="${l}" w="${w}" x="-1" y="1" a="${3.14 / 4 * 3}"/>
+    <xacro:swerve id="fl" l="${l}" w="${w}" x="1" y="1" a="${pi / 4}"/>
+    <xacro:swerve id="fr" l="${l}" w="${w}" x="1" y="-1" a="${-pi / 4}"/>
+    <xacro:swerve id="rr" l="${l}" w="${w}" x="-1" y="-1" a="${-pi / 4 * 3}"/>
+    <xacro:swerve id="rl" l="${l}" w="${w}" x="-1" y="1" a="${pi / 4 * 3}"/>
 
     <xacro:swerve_indicator l="${l}" w="${w}" x="1" y="1"/>
 

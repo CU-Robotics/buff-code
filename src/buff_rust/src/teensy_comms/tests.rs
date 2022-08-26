@@ -1,12 +1,8 @@
-// use crate::hid::buff_hid::HidLayer;
+#![allow(unused_imports)]
+use crate::teensy_comms::device::*;
 
 #[cfg(test)]
 pub mod hid_tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-
-    #[test]
-    fn basic_hid() {
-        let mut layer = HidLayer::new();
-    }
 }

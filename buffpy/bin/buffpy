@@ -100,7 +100,8 @@ def clean_buffpy():
 
 		for firmware_pkg in data['FIRMWARE_INI']:
 			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
-			result = subprocess.run(f'cd /{firmware_path} && pio run -t clean', shell=True)
+			result = subprocess.run(f'cd /{firmware_path} && \
+				pio run -t clean && pio system prune', shell=True)
 
 
 	clear_directory(data_path)
@@ -157,7 +158,7 @@ def build_buffpy(build):
 			cargo_path = os.path.join(project_root, 'src', cargo_toml)
 			install_path = os.path.join(project_root, 'buffpy', 'lib')
 			result = subprocess.run(f'cd {cargo_path} && cargo fmt && \
-				cargo build && cp target/debug/{cargo_toml} {install_path}', shell=True)
+				cargo build && cp target/debug/*_node {install_path}', shell=True)
 
 
 	# Build the Firmware with pio 
