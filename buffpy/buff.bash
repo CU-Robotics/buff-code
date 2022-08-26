@@ -1,63 +1,57 @@
-#! /usr/bin/bash
+#! /bin/bash
 
-
-if [[ "${PWD}" != */buff-code ]]; then
-	echo -e "running from ${PWD}, is this your project root?"
-	return
-fi
 
 #		Setup robot params
 export DOCKER=False
 export PROJECT_ROOT=${PWD}
 export HOSTNAME=$HOSTNAME 
+export SUDO='sudo'
 
 if [[ -f /proc/1/cgroup ]]; then
 	if grep -q docker /proc/1/cgroup; then 
-	   DOCKER=True
-	elif [[ "${HOSTNAME}" == "docker-desktop" ]]; then
+		SUDO=''
 		DOCKER=True
+		PROJECT_ROOT=/home/cu-robotics/buff-code
+	elif [[ "${HOSTNAME}" == "docker-desktop" ]]; then
+		SUDO=''
+		DOCKER=True
+		PROJECT_ROOT=/home/cu-robotics/buff-code
+
 	fi
+fi
+
+if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+	export ROS_DISTRO=noetic				# ROS for Ubuntu18
+elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
+	export ROS_DISTRO=melodic
 fi
 
 
 if [[ "${DOCKER}" == "False" ]]; then
-	if [[ "$(uname)" == "MINGW"* ]]; then
-		alias spinup="winpty docker run -it \
-		-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
-		-e DISPLAY=host.docker.internal:0 \
-		--net=host "
-	else
-		alias spinup="docker run -it \
-		-e DISPLAY=host.docker.internal:0 \
-		-v ${PROJECT_ROOT}:/home/cu-robotics/buff-code \
-		--net=host "
-	fi
+	alias spinup="cd ${PROJECT_ROOT}/containers && \
+		docker  compose run "
+	
 else
 	export LC_ALL=C.UTF-8
     export LANG=C.UTF-8
+fi
+
+if [[ "${PROJECT_ROOT}" != */buff-code ]]; then
+	echo -e "running from ${PWD}, is this your project root?"
+	return
 fi
 
 PYTHONPATH=
 
 # If ROS is installed source the setup file
 
-if [[ -f /opt/ros/melodic/setup.bash ]]; then
-	source /opt/ros/melodic/setup.bash
+if [[ -f /opt/ros/${ROS_DISTRO}/setup.bash ]]; then
+	source /opt/ros/${ROS_DISTRO}/setup.bash
 fi
 
+#		setup Cargo tools
 
-#	DEPRECATED
-# if [[ "${DOCKER}" == "False" ]]; then
-# 	export PYTHONPATH="${HOME}/.local/lib/python3.6/dist-packages:${PYTHONPATH}" 
-# # else
-# # 	export PYTHONPATH="/usr/local/lib/python3.6/dist-packages:${PYTHONPATH}" 
-# fi
-
-# DEPRECATED
-# Only needed if we are using ros packages
-# if [[ -d ${PROJECT_ROOT}/install ]]; then
-# 	source {PROJECT_ROOT}/install/setup.bash
-# fi
+CARGO_TARGET_DIR="${PROJECT_ROOT}/buffpy/lib"
 
 #		Setup python tools
 
