@@ -10,5 +10,6 @@ data/*
 buffpy/lib/*
 buffpy/build/*
 buffpy/models/*
+buffpy/bin/tycmd
 buffpy/bin/fimware.hex
 buffpy/config/sensitive/*
