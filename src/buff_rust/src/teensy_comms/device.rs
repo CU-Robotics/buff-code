@@ -72,15 +72,10 @@ impl CANPipeline {
                     let input = msg.data[(i * 9) + 2..=((i + 1) * 9)].to_vec();
                     let mut data: Vec<f64> = input
                         .chunks_exact(2)
-                        .map(|chunk| u16::from_be_bytes(chunk.try_into().unwrap_or([0, 0])) as f64)
+                        .map(|chunk| i16::from_be_bytes(chunk.try_into().unwrap_or([0, 0])) as f64)
                         .collect();
 
-                    data[0] = (data[0] / 8190.0) * 2.0 * std::f64::consts::PI;
-                    data[1] = (data[1] / 60.0) * 2.0 * std::f64::consts::PI;
-
-                    if data[1] > 4000.0 {
-                        data[1] -= 6500.0;
-                    }
+                    data[0] = (data[0] / 8190.0) * 360;
 
                     let midx = opts
                         .iter()

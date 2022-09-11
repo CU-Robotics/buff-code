@@ -5,11 +5,18 @@
 
 //		Timing variables
 unsigned long top_time;
-unsigned long cycle_time = 500;
+unsigned long cycle_time = 1000;
 
 
-BuffCan can1;
-BuffCan can2;
+BuffCan buffcan;
+
+byte buff[64];
+byte msg[8];
+
+// FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+// FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
+
+// CAN_message_t can_input[6];
 
 // Runs once
 void setup() {
@@ -21,7 +28,6 @@ void setup() {
  	// Hardware setup
 	pinMode(LED_BUILTIN, OUTPUT);
 	digitalWrite(LED_BUILTIN, HIGH);
-
 }
 
 void blink(){
@@ -41,15 +47,23 @@ void blink(){
 void loop() {
 	top_time = micros();
 
-	can2.read();
-	can2.write();
+	buffcan.read_can2(buff);
 
-	// int16_t newPower = (int16_t)(sin(millis() / 1000.0) * 32767);
- //  	byte byteOne = highByte(newPower);
- //  	byte byteTwo = lowByte(newPower);
+	int16_t power = (int16_t)(0.25 * sin(millis() / 1000) * 16384);
+	msg[0] = highByte(power);
+	msg[1] = lowByte(power);
 
- //  	byte msg[8] = {0, 0, byteOne, byteTwo, 0, 0, 0, 0};
-	// can.set(0, msg);
+	buffcan.set_input(2, 0, msg);
+
+	// for (int i = 0; i < 4; i++) {
+	// 	for (int j = 0; j < 16; j++){
+	// 		Serial.print(buff[(i * 16) + j]);
+	// 		Serial.print("\t");
+	// 	}
+	// 	Serial.println();
+	// }
+	// Serial.println();
+	buffcan.write();
 
 	blink();		
 
