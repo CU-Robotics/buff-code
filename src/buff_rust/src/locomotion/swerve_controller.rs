@@ -123,31 +123,34 @@ impl SwerveController {
 
     pub fn set_motor_pos(&mut self, name: String, setpoint: f64) {
         let mut error = setpoint - self.get_motor_angle(name.clone());
+
         if error > std::f64::consts::PI {
             error = (2.0 * std::f64::consts::PI) - error;
         } else if error < -std::f64::consts::PI {
             error += 2.0 * std::f64::consts::PI;
         }
-        ros_info!("error {}", error);
 
         let midx = self.get_motor_idx(name.clone());
-        let derr = (error - self.motor_error[midx][0]) / std::f64::consts::PI;
+        let derr = error - self.motor_error[midx][0];
+
         self.motor_error[midx][0] = error;
-        self.motor_error[midx][1] += error;
+        self.motor_error[midx][1] += (error + self.motor_error[midx][1]).clamp(-1.0, 1.0);
+
         let p = self.motor_gains[midx][0][0];
         let i = self.motor_gains[midx][0][1];
         let d = self.motor_gains[midx][0][2];
 
-        let speed =
-            (p * error / std::f64::consts::PI) + (i * self.motor_error[midx][1]) + (d * derr);
+        let speed = (p * error) + (i * self.motor_error[midx][1]) + (d * derr);
 
+        ros_info!("speed {}", speed);
         self.set_motor_speed(name, speed);
     }
 
     pub fn set_motor_speed(&mut self, name: String, setpoint: f64) {
         let mut error = setpoint - self.get_motor_speed(name.clone());
         let midx = self.get_motor_idx(name.clone());
-        let derr = error - self.motor_error[midx][0] / 3500.0;
+        let derr = error - self.motor_error[midx][0];
+
         self.motor_error[midx][0] = error;
         self.motor_error[midx][1] = (error + self.motor_error[midx][1]).clamp(-1.0, 1.0);
 
@@ -155,8 +158,9 @@ impl SwerveController {
         let i = self.motor_gains[midx][1][1];
         let d = self.motor_gains[midx][1][2];
 
-        let power = (p * error / 3500.0) + (i * self.motor_error[midx][1]) + (d * derr);
+        let power = (p * error) + (i * self.motor_error[midx][1]) + (d * derr);
 
+        ros_info!("power {}", power);
         self.set_motor_power(name, power);
     }
 
@@ -168,8 +172,8 @@ impl SwerveController {
         while rosrust::is_ok() {
             timestamp = Instant::now();
 
-            self.set_motor_pos("fl_steer".to_string(), 0.0);
-            // self.set_motor_speed("fl_drive".to_string(), -500.0);
+            self.set_motor_pos("fl_drive".to_string(), 0.0);
+            // self.set_motor_speed("fl_drive".to_string(), 10000.0);
             // self.set_motor_power("fl_drive".to_string(), f.cos());
             // f += 0.005;
             // if f > 2.0 * std::f64::consts::PI {

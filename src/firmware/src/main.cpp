@@ -52,24 +52,21 @@ void blink(){
 void handle1(){ // double readig messages makes for better syncing ???
 
 	buffcan.read_can1(output.data);
-  	
+
+  	output.data[33] = 1;
   	// if (imu.read(buff)) {
   	// 	parse_mpu6050_output(&output, buff);
   	// }
-
-	write_HID(&output);
 }
 
 void handle2(){
 
 	buffcan.read_can2(output.data);
-  	
-  	byte buff[24];
-  	if (receiver.read(buff)) {
-   		// parse_dr16_output(&output, buff);
-  	}
 
-	write_HID(&output);
+  	output.data[33] = 2;
+  	// if (receiver.read(buff)) {
+    // 	parse_dr16_output(&output, buff);
+  	// }
 }
 
 // Runs continuously
@@ -95,9 +92,11 @@ void loop() {
 				break;
 		}
 
-		clear(&output);
-		clear(&input);
+		write_HID(&output);
 		blink();
+		clear(&input);
+		clear(&output);
+
 	}
 	else{
 		buffcan.zero_can();

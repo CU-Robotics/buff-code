@@ -19,9 +19,6 @@ int8_t read_HID(HID_Packet* hid){
 
 	if (usb_rawhid_available()) {
 		n = usb_rawhid_recv(&hid->data, 0);
-		Serial.print(n);
-		Serial.print(" ");
-		Serial.println(hid->data[0]);
 	}
 	return n;
 }
