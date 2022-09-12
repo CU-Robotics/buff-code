@@ -78,16 +78,11 @@ void BuffCan::set_input(int can, int mid, byte* msg){
 int BuffCan::set_output(int msg_ctr, CAN_message_t* msg, byte* buff){
     int msg_id = msg->id - 0x200;
 
-    if (msg_id == 255){
-        return 0;
-    }
-    uint16_t angle = map((uint16_t(msg->buf[0]) << 8) | uint16_t(msg->buf[1]), 0, 8191, 0, 36000);
-
     buff[(msg_ctr * 8) + 1] = msg_id / 4;
-    buff[(msg_ctr * 8) + 2] = ((msg_id % 4) * 6) + 1;
+    buff[(msg_ctr * 8) + 2] = (msg_id % 4) - 1;
 
-    buff[(msg_ctr * 8) + 3] = byte((angle && 0xFF00) >> 8);
-    buff[(msg_ctr * 8) + 4] = byte(angle && 0xFF);
+    buff[(msg_ctr * 8) + 3] = msg->buf[0];
+    buff[(msg_ctr * 8) + 4] = msg->buf[1];
 
     buff[(msg_ctr * 8) + 5] = msg->buf[2];
     buff[(msg_ctr * 8) + 6] = msg->buf[3];
@@ -116,7 +111,7 @@ void BuffCan::read_can2(byte* buff){
 
     while (msg_ctr < 4) {
         can2.read(tmp);
-        prettyprint_can_message(&tmp);
+        // prettyprint_can_message(&tmp);
         msg_ctr += set_output(msg_ctr, &tmp, buff);
     }  
 }

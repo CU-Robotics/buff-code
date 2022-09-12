@@ -159,13 +159,13 @@ impl HidLayer {
 
         {
             let mut msg = std_msgs::UInt8MultiArray::default();
-            msg.data = self.read_bytes(30);
+            msg.data = self.read_bytes(33);
             self.publishers[0].send(msg).unwrap();
         }
 
         {
             let mut msg = std_msgs::UInt8MultiArray::default();
-            self.input.seek_ptr = 30;
+            self.input.seek_ptr = 33;
             msg.data = self.read_bytes(24);
             self.publishers[msg.data[0] as usize].send(msg).unwrap();
         }

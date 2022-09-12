@@ -68,19 +68,23 @@ impl CANPipeline {
                     return;
                 }
 
-                for i in 0..3 {
-                    let input = msg.data[(i * 9) + 2..=((i + 1) * 9)].to_vec();
+                for i in 0..4 {
+                    let input = msg.data[(i * 8) + 3..=((i + 1) * 8)].to_vec();
                     let mut data: Vec<f64> = input
                         .chunks_exact(2)
                         .map(|chunk| i16::from_be_bytes(chunk.try_into().unwrap_or([0, 0])) as f64)
                         .collect();
 
-                    data[0] = (data[0] / 8190.0) * 360;
+                    data[0] = (data[0] / 8191.0) * 360.0;
 
                     let midx = opts
                         .iter()
                         .position(|opt| {
-                            *opt == vec![msg.data[0] - 1, i as u8, msg.data[(i * 9) + 1] as u8]
+                            *opt == vec![
+                                msg.data[0] - 1,
+                                msg.data[(i * 8) + 1],
+                                msg.data[(i * 8) + 2],
+                            ]
                         })
                         .unwrap_or(usize::MAX);
 
