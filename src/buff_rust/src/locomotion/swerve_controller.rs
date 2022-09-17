@@ -142,7 +142,7 @@ impl SwerveController {
 
         let speed = (p * error) + (i * self.motor_error[midx][1]) + (d * derr);
 
-        ros_info!("speed {}", speed);
+        // ros_info!("speed {}", speed);
         self.set_motor_speed(name, speed);
     }
 
@@ -160,7 +160,7 @@ impl SwerveController {
 
         let power = (p * error) + (i * self.motor_error[midx][1]) + (d * derr);
 
-        ros_info!("power {}", power);
+        // ros_info!("power {}", power);
         self.set_motor_power(name, power);
     }
 
