@@ -12,11 +12,11 @@ fn main() {
         CANPipeline::spin();
     });
 
-    let recv_handle = thread::spawn(move || {
-        dr16_spin();
-    });
+    // let recv_handle = thread::spawn(move || {
+    //     dr16_spin();
+    // });
 
     layer.spin();
     can_handle.join().unwrap();
-    recv_handle.join().unwrap();
+    // recv_handle.join().unwrap();
 }

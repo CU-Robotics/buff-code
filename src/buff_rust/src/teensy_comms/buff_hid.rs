@@ -96,7 +96,8 @@ pub struct HidLayer {
     pub teensy: Result<HidDevice, HidError>,
     pub output_queue: Arc<RwLock<HidBuffer>>,
     pub subscriber: rosrust::Subscriber,
-    pub publishers: Vec<rosrust::Publisher<std_msgs::UInt8MultiArray>>,
+    pub can_pub: rosrust::Publisher<std_msgs::UInt8MultiArray>,
+    pub sensor_pubs: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
 }
 
 impl HidLayer {
@@ -116,7 +117,6 @@ impl HidLayer {
         .unwrap();
 
         let pubs = vec![
-            rosrust::publish("can_raw", 1).unwrap(),
             rosrust::publish("imu_raw", 1).unwrap(),
             rosrust::publish("receiver_raw", 1).unwrap(),
         ];
@@ -133,7 +133,8 @@ impl HidLayer {
             output: HidBuffer::new(),
             output_queue: output_buffer,
             subscriber: can_sub,
-            publishers: pubs,
+            can_pub: rosrust::publish("can_raw", 1).unwrap(),
+            sensor_pubs: pubs,
         }
     }
 
@@ -160,14 +161,29 @@ impl HidLayer {
         {
             let mut msg = std_msgs::UInt8MultiArray::default();
             msg.data = self.read_bytes(33);
-            self.publishers[0].send(msg).unwrap();
+            self.can_pub.send(msg).unwrap();
         }
 
         {
-            let mut msg = std_msgs::UInt8MultiArray::default();
             self.input.seek_ptr = 34;
-            msg.data = self.read_bytes(24);
-            self.publishers[msg.data[0] as usize].send(msg).unwrap();
+
+            let sensor_id = self.input.seek(None);
+
+            if sensor_id == 0 {
+                self.input.reset();
+                return;
+            }
+
+            let mut msg = std_msgs::Float64MultiArray::default();
+            msg.data = self
+                .read_bytes(24)
+                .chunks_exact(4)
+                .map(|chunk| f32::from_be_bytes(chunk.try_into().unwrap_or([0, 0, 0, 0])) as f64)
+                .collect();
+
+            self.sensor_pubs[(sensor_id - 1) as usize]
+                .send(msg)
+                .unwrap();
         }
 
         self.input.reset();
