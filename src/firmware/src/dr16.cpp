@@ -17,6 +17,7 @@ void print_receiver_input(byte* buffer){
     Serial.println();
 }
 
+
 DR16::DR16()
 {
     d_t = micros();

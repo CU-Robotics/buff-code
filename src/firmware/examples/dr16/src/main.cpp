@@ -8,6 +8,7 @@ DR16 receiver;
 unsigned long top_time;
 unsigned long cycle_time = 10000;
 
+
 // Runs once
 void setup() {
 	Serial.begin(1000000);
@@ -36,13 +37,14 @@ void blink(){
 // Runs continuously
 void loop() {
 
-	byte buffer[7];
+	byte buffer[24];
 
 	top_time = micros();
 
 	blink();		
 
 	receiver.read(buffer, 0);	// Read from the dr16 rx
+
 
 	if (micros() - top_time > cycle_time){
 		Serial.print("Over the Cycle Limit: ");
