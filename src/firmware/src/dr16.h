@@ -9,7 +9,7 @@
 class DR16 {
     public:
         DR16();
-        bool read(byte*);
+        void read(byte*, int);
         
     private:
         unsigned long d_t;

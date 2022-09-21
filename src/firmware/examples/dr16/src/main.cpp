@@ -6,7 +6,7 @@ DR16 receiver;
 
 //		Timing variables
 unsigned long top_time;
-unsigned long cycle_time = 1000;
+unsigned long cycle_time = 10000;
 
 // Runs once
 void setup() {
@@ -14,9 +14,7 @@ void setup() {
 
 	if (Serial)
 		Serial.println("-- TEENSY SERIAL START --");
-
-	receiver.init(0);
-
+    
  	// Hardware setup
 	pinMode(LED_BUILTIN, OUTPUT);
 	digitalWrite(LED_BUILTIN, HIGH);
@@ -37,17 +35,19 @@ void blink(){
 
 // Runs continuously
 void loop() {
+	byte buffer[24];
+
 	top_time = micros();
 
 	blink();		
 
-	receiver.read();	// Read from the dr16 rx
+	receiver.read(buffer, 0);	// Read from the dr16 rx
+
 
 	if (micros() - top_time > cycle_time){
 		Serial.print("Over the Cycle Limit: ");
 		Serial.println(micros() - top_time);
 	}
-
 	while (micros() - top_time < cycle_time){}
 }
 
