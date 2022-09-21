@@ -36,10 +36,6 @@ impl CANPipeline {
             .collect();
 
         let opt_clone = opts.clone();
-
-        // let motor_states = Arc::new(RwLock::new(vec![vec![0f64; 3]; opts.len()]));
-        // let state_clone = motor_states.clone();
-
         let motor_commands = Arc::new(RwLock::new(vec![0f64; opts.len()]));
 
         let mut subs = vec![];
@@ -131,18 +127,6 @@ impl CANPipeline {
 
         while rosrust::is_ok() {
             timestamp = Instant::now();
-
-            // let mut msg = std_msgs::Float64MultiArray::default();
-            // msg.data = pipeline
-            //     .motor_states
-            //     .read()
-            //     .unwrap()
-            //     .clone()
-            //     .into_iter()
-            //     .flatten()
-            //     .collect::<Vec<f64>>();
-            // state_publisher.send(msg).unwrap();
-
             let mut msg = std_msgs::UInt8MultiArray::default();
             msg.data = pipeline.generate_can_packet();
             can_publisher.send(msg).unwrap();
@@ -155,66 +139,4 @@ impl CANPipeline {
             }
         }
     }
-}
-
-pub fn mpu_spin() {
-    let publisher = rosrust::publish("imu_processed", 5).unwrap();
-
-    let _sub = rosrust::subscribe("imu_raw", 1, move |msg: std_msgs::UInt8MultiArray| {
-        let mut proc_msg = std_msgs::Float64MultiArray::default();
-        proc_msg.data = msg
-            .data
-            .chunks_exact(4)
-            .map(|chunk| f32::from_be_bytes(chunk.try_into().unwrap_or([0, 0, 0, 0])) as f64)
-            .collect();
-
-        publisher.send(proc_msg).unwrap();
-    })
-    .unwrap();
-
-    rosrust::spin();
-}
-
-pub fn dr16_spin() {
-    let publisher = rosrust::publish("receiver_processed", 5).unwrap();
-
-    let _sub = rosrust::subscribe("receiver_raw", 1, move |msg: std_msgs::UInt8MultiArray| {
-        let mut channels = vec![0, 0, 0, 0];
-
-        channels[0] = ((msg.data[2] as u16 & 0x07) << 8) | msg.data[1] as u16;
-        channels[1] = ((msg.data[3] as u16 & 0xFC) << 5) | ((msg.data[2] as u16 & 0xF8) >> 3);
-        channels[2] = (((msg.data[5] as u16 & 0x01) << 10) | ((msg.data[4] as u16) << 2))
-            | (msg.data[3] as u16 & 0x03);
-        channels[3] = ((msg.data[6] as u16 & 0x0F) << 7) | (msg.data[5] as u16 & 0xFE);
-
-        let s1 = (msg.data[6] & 0x30) >> 4;
-        let s2 = (msg.data[6] & 0xC0) >> 6;
-
-        let xvel: f64 = (channels[3] as f64 - 1024.0) / ((1704.0 - 476.0) / 2.0);
-        let yvel: f64 = (channels[2] as f64 - 1024.0) / ((1684.0 - 364.0) / 2.0);
-
-        let rotv: f64 = match s1 {
-            1 => 1.0,
-            2 => -1.0,
-            3 => 0.0,
-            _ => 0.0,
-        };
-
-        let shoot: f64 = match s2 {
-            1 => 1.0,
-            2 => -1.0,
-            3 => 0.0,
-            _ => 0.0,
-        };
-
-        let gphi: f64 = (channels[1] as f64 - 1024.0) / ((1684.0 - 268.0) / 2.0);
-        let gpsi: f64 = (channels[0] as f64 - 1024.0) / ((1684.0 - 364.0) / 2.0);
-
-        let mut proc_msg = std_msgs::Float64MultiArray::default();
-        proc_msg.data = vec![xvel, yvel, 0.0, 0.0, 0.0, rotv, 0.0, gphi, gpsi, shoot];
-        publisher.send(proc_msg).unwrap();
-    })
-    .unwrap();
-
-    rosrust::spin();
 }

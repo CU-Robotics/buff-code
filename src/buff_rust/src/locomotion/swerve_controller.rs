@@ -68,6 +68,19 @@ impl SwerveController {
             );
         });
 
+        let rmt = rmt_ctrl.clone();
+
+        subs.push(
+            rosrust::subscribe(
+                "receiver_raw",
+                1,
+                move |msg: std_msgs::Float64MultiArray| {
+                    *rmt.write().unwrap() = msg.data;
+                },
+            )
+            .unwrap(),
+        );
+
         SwerveController {
             motor_names: names,
             remote_control: rmt_ctrl,
@@ -171,6 +184,11 @@ impl SwerveController {
 
         while rosrust::is_ok() {
             timestamp = Instant::now();
+            let rmt = self.remote_control.read().unwrap();
+            if rmt.len() > 0 {
+                println!("switch values {} {}", rmt[4], rmt[5]);
+            }
+            drop(rmt);
 
             self.set_motor_pos("fl_drive".to_string(), 0.0);
             // self.set_motor_speed("fl_drive".to_string(), 10000.0);
