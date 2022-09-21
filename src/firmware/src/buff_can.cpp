@@ -108,7 +108,8 @@ void BuffCan::set_input(int can, int mid, byte* msg){
  * @return int always == 1?
  */
 int BuffCan::set_output(int msg_ctr, CAN_message_t* msg, byte* buff){
-    int msg_id = msg->id - 0x200;   //does this work with gm6020s that start at 0x204
+    int msg_id = msg->id - 0x200;   //does this work with gm6020s that start at 0x204 ??
+
 
     buff[(msg_ctr * 8) + 1] = msg_id / 4;
     buff[(msg_ctr * 8) + 2] = (msg_id % 4) - 1;
