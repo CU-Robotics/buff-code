@@ -81,6 +81,7 @@ impl SwerveController {
             .unwrap(),
         );
 
+
         SwerveController {
             motor_names: names,
             remote_control: rmt_ctrl,
@@ -189,6 +190,7 @@ impl SwerveController {
                 println!("switch values {} {}", rmt[4], rmt[5]);
             }
             drop(rmt);
+
 
             self.set_motor_pos("fl_drive".to_string(), 0.0);
             // self.set_motor_speed("fl_drive".to_string(), 10000.0);
