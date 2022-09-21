@@ -1,4 +1,3 @@
-extern crate yaml_rust;
 use rosrust::ros_info;
 use rosrust_msg::std_msgs;
 use std::{

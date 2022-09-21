@@ -12,5 +12,5 @@ buffpy/build/*
 buffpy/models/*
 buffpy/bin/tycmd
 src/buff_rust/target
-buffpy/bin/fimware.hex
+buffpy/bin/firmware.hex
 buffpy/config/sensitive/*
