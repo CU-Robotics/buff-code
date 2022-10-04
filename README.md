@@ -12,15 +12,15 @@ checkout the [Getting started wiki](https://github.com/CU-Robotics/buff-code/wik
 Clone this repo into your home directory (/home/$USER).
 
     git clone git@github.com:CU-Robotics/buff-code.git
-    
-Now run the install from the root of the project (/home/$USER/buff-code)
-
-	source buffpy/scripts/install.bash 
 
 First always load the environment variables, if you're not sure you did, just do it again. Also this script loads the path variables relative to where it was run. Make sure to run it from the root of this repo (usually /home/$USER/buff-code).
 
 	source buffpy/buff.bash
-	
+
+Now run the install from the root of the project (/home/$USER/buff-code)
+
+	source buffpy/scripts/install.bash 
+
 The majority of functionality is based in the buffpy package. This package is setup as a command line tool in buff.bash. All you need to utilize this package is call 'buffpy' from the command line.
 
 	usage: /home/m_dyse/buff-code/buffpy/bin/buffpy [-h] [--installKeys] [--launch LOCATION] [--botPull] [--build PROFILE] [--install] [--diagnostic] [--initialize] [--clean]
