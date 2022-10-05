@@ -109,8 +109,8 @@ impl CANPipeline {
         self.motor_options.iter().enumerate().for_each(|(i, opts)| {
             let power = commands[i];
             let bytes = i16::to_be_bytes((power.clamp(-1.0, 1.0) * 32767.0) as i16).to_vec();
-            packet[((opts[0] * 24) + (opts[1] * 8) + (opts[2] * 2) + 1) as usize] = bytes[0];
-            packet[((opts[0] * 24) + (opts[1] * 8) + (opts[2] * 2) + 2) as usize] = bytes[1];
+            packet[(((opts[0] - 1) * 24) + (opts[1] * 8) + (opts[2] * 2) + 1) as usize] = bytes[0];
+            packet[(((opts[0] - 1) * 24) + (opts[1] * 8) + (opts[2] * 2) + 2) as usize] = bytes[1];
         });
 
         packet

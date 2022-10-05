@@ -81,7 +81,6 @@ impl SwerveController {
             .unwrap(),
         );
 
-
         SwerveController {
             motor_names: names,
             remote_control: rmt_ctrl,
@@ -185,14 +184,13 @@ impl SwerveController {
 
         while rosrust::is_ok() {
             timestamp = Instant::now();
-            let rmt = self.remote_control.read().unwrap();
-            if rmt.len() > 0 {
-                println!("switch values {} {}", rmt[4], rmt[5]);
-            }
-            drop(rmt);
+            // let rmt = self.remote_control.read().unwrap();
+            // if rmt.len() > 0 {
+            //     println!("switch values {} {}", rmt[4], rmt[5]);
+            // }
+            // drop(rmt);
 
-
-            self.set_motor_pos("fl_drive".to_string(), 0.0);
+            self.set_motor_speed("peepeepoopoo".to_string(), 100.0 * 34.0);
             // self.set_motor_speed("fl_drive".to_string(), 10000.0);
             // self.set_motor_power("fl_drive".to_string(), f.cos());
             // f += 0.005;
