@@ -14,7 +14,7 @@ void Shooter::setup(C_Shooter17 *config, S_Robot *state) {
     this->config = config;
     this->state = state;
 
-    this->feedMotor.init(1, 2);
+    this->feedMotor.init(2, 2);
 
     this->config->feedPID.K[0] = 0.0005;
 }
@@ -31,7 +31,7 @@ void Shooter::update(unsigned long deltaTime) {
         shooterOn = state->refSystem.gimbal_on;
     }
 
-    if ((calibrated && state->driverInput.s1 != 1) || ((state->robot == 7 && state->driverInput.s2 == 2) || (state->robot == 7 && state->driverInput.s1 == 2))) {
+    if (true) {//(calibrated && state->driverInput.s1 != 1) || ((state->robot == 7 && state->driverInput.s2 == 2) || (state->robot == 7 && state->driverInput.s1 == 2))) {
         if (state->robot != 7 && state->driverInput.s1 == 1) {
             fw_1.reset();
             fw_2.reset();
@@ -94,7 +94,7 @@ void Shooter::update(unsigned long deltaTime) {
                 state->shooter17.feedPID.R = 0;
             }
         } else {
-            if (state->driverInput.mouseLeft) {
+            if (true) {//state->driverInput.mouseLeft) {
                 switch(this->state->shooter17.mode) {
                     case 0:
                         state->shooter17.feedPID.R = -config->feedRPMLow * 36;
@@ -115,6 +115,7 @@ void Shooter::update(unsigned long deltaTime) {
         }
 
         // Feed PID
+        state->shooter17.feedPID.R = -450 * 36;
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
         this->feedMotor.setPower(state->shooter17.feedPID.Y);
 

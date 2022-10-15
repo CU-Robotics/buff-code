@@ -54,7 +54,13 @@ void dr16::update() {
         // Serial.println();
         
         input->leftStickX = ((buf[1] & 0b00000111) << 8) | buf[0];
-        input->leftStickY = ((buf[2] & 0b11111100) << 5) | ((buf[1] & 0b11111000) >> 3);
+        input->leftStickY = ((buf[2] & 0b11111100) << 5);
+        // Serial.print(((buf[1] & 0b11111000) >> 3), BIN);
+        // Serial.print(" ");
+        // //Serial.print(((buf[2] & 0b11111100) << 5), BIN);
+        // Serial.print(" - ");
+        // Serial.print(input->leftStickY);
+        // Serial.println();
         input->rightStickX = (((buf[4] & 0b00000001) << 10) | (buf[3] << 2)) | (buf[2] & 0b00000011);
         input->rightStickY = ((buf[5] & 0b00001111) << 7) | (buf[4] & 0b11111110);
 

@@ -17,7 +17,7 @@ void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state, S_SwerveModule 
   moduleState = modState;
 
   this->steerMotor.init(config->steerMotorID, 1, config->steerEncoderID);
-  this->driveMotor.init(config->driveMotorID, 1);
+  this->driveMotor.init(config->driveMotorID, 2);
 }
 
 void SwerveModule::calibrate() {
@@ -29,6 +29,7 @@ void SwerveModule::calibrate() {
 }
 
 void SwerveModule::update(float speed, float angle, float deltaTime) {
+  calibrated = true;
   // Convert sensor and input units
   float inputAngle = angle + config->absolute_offset;
   if (speed == 0) {
@@ -129,19 +130,21 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  moduleState->driveVel.R = rampedSpeed * state->chassis.maxRpm;
+  moduleState->driveVel.R = -9000;//rampedSpeed * state->chassis.maxRpm;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
 
   // Set motor power
   if (calibrated) {
-    steerMotor.setPower(tmp_steerVel.Y);
+    //steerMotor.setPower(tmp_steerVel.Y);
+
+    //Serial.println("fortnite");
 
     // Only drive if sufficiently close to target angle
-    if (abs(inputAngle - steerAngle) < 20.0)
-      driveMotor.setPower(moduleState->driveVel.Y);
-    else
-      driveMotor.setPower(0.0);
+    //if (abs(inputAngle - steerAngle) < 20.0)
+    driveMotor.setPower(moduleState->driveVel.Y);
+    //else
+      //driveMotor.setPower(0.0);
   }
 }
 

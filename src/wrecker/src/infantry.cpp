@@ -11,7 +11,7 @@
 #include "subsystems/gimbal.h"
 #include "subsystems/shooter.h"
 #include "subsystems/swerveChassis.h"
-
+#include "subsystems/xDrive.h"
 
 // CAN
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
@@ -39,6 +39,7 @@ Ref_System refSys;
 Gimbal gimbal;
 Shooter shooter;
 SwerveChassis swerveChassis;
+XDrive xDrive(&robot_config, &robot_state);
 
 flywheel fw_1;
 flywheel fw_2;
@@ -95,7 +96,7 @@ void setup() {
   robot_config.swerveChassis.FR.cornerID = 0;
   robot_config.swerveChassis.FR.steerMotorID = 4;
   robot_config.swerveChassis.FR.steerEncoderID = 1 + 1;
-  robot_config.swerveChassis.FR.driveMotorID = 5;
+  robot_config.swerveChassis.FR.driveMotorID = 6;
   robot_config.swerveChassis.FR.absolute_offset = 45;
   int fr_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
   for (int i = 0; i < 9; i++)
@@ -105,7 +106,7 @@ void setup() {
   robot_config.swerveChassis.FL.cornerID = 1;
   robot_config.swerveChassis.FL.steerMotorID = 3;
   robot_config.swerveChassis.FL.steerEncoderID = 1 + 2;
-  robot_config.swerveChassis.FL.driveMotorID = 6;
+  robot_config.swerveChassis.FL.driveMotorID = 1;
   robot_config.swerveChassis.FL.absolute_offset = -45;
   int fl_alignment[9] = {2, 42, 85, 125, 166, 206, 246, 288, 327};
   for (int i = 0; i < 9; i++)
@@ -153,7 +154,7 @@ void loop() {
     canRecieveMessages[0][tempMessage.id - 0x201] = tempMessage;
   while (can2.read(tempMessage))
     canRecieveMessages[1][tempMessage.id - 0x201] = tempMessage;
-  
+
   refSys.read_serial();
 
   // if (Serial.available() > 0)
@@ -163,9 +164,10 @@ void loop() {
   reciever.update();
 
   // Update subsystems
-  swerveChassis.update(deltaT);
-  gimbal.update(deltaT);
-  shooter.update(deltaT);
+  //gimbal.update(deltaT);
+  //swerveChassis.update(deltaT);
+  //shooter.update(deltaT);
+  xDrive.update(deltaT);
 
 
 //58% power gave a high velocity of of 14.9 and a low of 12.9.

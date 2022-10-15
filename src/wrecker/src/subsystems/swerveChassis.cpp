@@ -62,6 +62,7 @@ void SwerveChassis::setup(C_SwerveChassis* data, S_Robot* r_state) {
 }
 
 void SwerveChassis::update(unsigned long deltaTime) {
+  calibrated = true;
   if (state->driverInput.b && !calibrated) {
     calibrated = true;
     calibrate();
@@ -174,9 +175,9 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long 
 
   // Update each module
   moduleFR.update(speedFR, angleFR, deltaTime);
-  moduleFL.update(speedFL, angleFL, deltaTime);
-  moduleBL.update(speedBL, angleBL, deltaTime);
-  moduleBR.update(speedBR, angleBR, deltaTime);
+  //moduleFL.update(speedFL, angleFL, deltaTime);
+  //moduleBL.update(speedBL, angleBL, deltaTime);
+  //moduleBR.update(speedBR, angleBR, deltaTime);
 }
 
 float SwerveChassis::radiansToDegrees(float radians) {
