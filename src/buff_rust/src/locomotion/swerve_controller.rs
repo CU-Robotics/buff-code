@@ -3,6 +3,7 @@ use nalgebra::abs;
 use rosrust::ros_info;
 use rosrust_msg::std_msgs;
 use std::{
+    fs::OpenOptions,
     sync::{Arc, RwLock},
     thread::sleep,
     time::{Duration, Instant},
@@ -177,31 +178,78 @@ impl SwerveController {
         self.set_motor_power(name, power);
     }
 
+    pub fn write_sample(&mut self, fname: String) {
+        // pub fn write_sample(&mut self, fname: String, motor_name: String) {
+        // write the data sample to a file
+
+        //let midx = self.get_motor_idx(name.clone());
+        //let rmt = self.remote_control.read().unwrap();
+        //let motor_states = self.motor_feedback[midx].read().unwrap();
+
+        // let mut file = File::open(fname).unwrap();
+
+        // println!("We should be printing in file");
+
+        let mut file = OpenOptions::new()
+            .append(true)
+            .open(fname)
+            .expect("cannot open file");
+
+        file.write_all("We did it Joe!".as_bytes())
+            .expect("write failed");
+
+        // let data = "we did it joe!";
+
+        // fs::write(fname, data).expect("Unable to write file");
+
+        // file.write(rmt).unwrap();
+        // file.write(motor_states).unwrap();
+    }
+
     pub fn spin(&mut self) {
         // let mut ctr = 0;
         let mut f: f64 = 0.0;
         let mut timestamp;
 
+        let mut switch_value = 3.0;
+
+        let max_rpm = 6.28;
+        let left_joystick_vpos_max = 680.0;
+        let left_joystick_vpos_min = -552.0;
+        let right_joystick_vpos_max = 660.0;
+        let right_joystick_vpos_min = -756.0;
+
+        let mut record = false;
+
         while rosrust::is_ok() {
             timestamp = Instant::now();
-            // let rmt = self.remote_control.read().unwrap();
-            // if rmt.len() > 0 {
-            //     println!("switch values {} {}", rmt[4], rmt[5]);
-            // }
-            // drop(rmt);
+            let rmt = self.remote_control.read().unwrap();
+            switch_value = rmt[5];
+            drop(rmt);
 
-            self.set_motor_speed("peepeepoopoo".to_string(), 100.0 * 34.0);
-            // self.set_motor_speed("fl_drive".to_string(), 10000.0);
-            // self.set_motor_power("fl_drive".to_string(), f.cos());
-            // f += 0.005;
-            // if f > 2.0 * std::f64::consts::PI {
-            //     f -= 2.0 * std::f64::consts::PI;
-            // }
+            println!("switch position: {}", switch_value);
 
-            let micros = timestamp.elapsed().as_micros();
-            if micros < 4000 {
-                sleep(Duration::from_micros(4000 - micros as u64));
+            // up: 1.0, middle: 3.0, down: 2.0
+            if switch_value == 3.0 {
+                record = true;
+            } else if switch_value == 2.0 {
+                record = false;
+                println!("switch position");
+                self.write_sample("/home/mdyse/buff-code/data/control_log.txt".to_string());
+            } else {
+                // erase file
             }
+
+            // let mut left_joystick_vpos =
+            //     rmt[3].clamp(left_joystick_vpos_min, left_joystick_vpos_max);
+            // let mut right_joystick_vpos =
+            //     rmt[1].clamp(right_joystick_vpos_min, right_joystick_vpos_max);
+
+            // let mut motor1_rpm = max_rpm * (left_joystick_vpos / left_joystick_vpos_max);
+
+            // println!("{}", motor1_rpm);
+
+            // self.set_motor_speed("feeder".to_string(), -120.0 * 36.0);
         }
     }
 }

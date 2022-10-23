@@ -75,14 +75,11 @@ impl CANPipeline {
                     let midx = opts
                         .iter()
                         .position(|opt| {
-                            *opt == vec![
-                                msg.data[0] - 1,
-                                msg.data[(i * 8) + 1],
-                                msg.data[(i * 8) + 2],
-                            ]
+                            *opt == vec![msg.data[0], msg.data[(i * 8) + 1], msg.data[(i * 8) + 2]]
                         })
                         .unwrap_or(usize::MAX);
 
+                    // println!("msg recieved {:?}", msg.data[(i * 8) + 1])
                     if midx != usize::MAX {
                         let mut tmp_msg = std_msgs::Float64MultiArray::default();
                         tmp_msg.data = data[..3].to_vec();
