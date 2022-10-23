@@ -58,7 +58,7 @@ impl CANPipeline {
         });
 
         subs.push(
-            rosrust::subscribe("can_raw", 5, move |msg: std_msgs::UInt8MultiArray| {
+            rosrust::subscribe("can_raw", 10, move |msg: std_msgs::UInt8MultiArray| {
                 if msg.data[0] == 0 {
                     return;
                 }
@@ -75,7 +75,12 @@ impl CANPipeline {
                     let midx = opts
                         .iter()
                         .position(|opt| {
-                            *opt == vec![msg.data[0], msg.data[(i * 8) + 1], msg.data[(i * 8) + 2]]
+
+                            *opt == vec![
+                                msg.data[0],
+                                msg.data[(i * 8) + 1],
+                                msg.data[(i * 8) + 2]
+                            ]
                         })
                         .unwrap_or(usize::MAX);
 

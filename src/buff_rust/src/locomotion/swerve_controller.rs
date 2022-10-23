@@ -138,10 +138,10 @@ impl SwerveController {
     pub fn set_motor_pos(&mut self, name: String, setpoint: f64) {
         let mut error = setpoint - self.get_motor_angle(name.clone());
 
-        if error > std::f64::consts::PI {
-            error = (2.0 * std::f64::consts::PI) - error;
-        } else if error < -std::f64::consts::PI {
-            error += 2.0 * std::f64::consts::PI;
+        if error > 180.0 {
+            error -= 360.0;
+        } else if error < -180.0 {
+            error += 360.0;
         }
 
         let midx = self.get_motor_idx(name.clone());

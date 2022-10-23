@@ -3,6 +3,10 @@ buff_rust:
   files: ['comms_node', controller_node]
 
 
+rqt_plot:
+  files: ['rqt_plot']
+  package: 'rqt_plot'
+
 robot: 'infantry'
 
 can:
@@ -24,6 +28,7 @@ gimbal_pan_gains:
   - [0.0, 0.0, 0.0]
   - [0.00003, 0.0, 0.0]
 
+
 feeder_gains:
   - [0.0, 0.0, 0.0]
   - [0.003, 0.0, 0.0]
@@ -31,4 +36,3 @@ feeder_gains:
 GM6020_gains:
   - [0.0, 0.0, 0.0]
   - [0.0000025, 0.01, 0.0004]
-
