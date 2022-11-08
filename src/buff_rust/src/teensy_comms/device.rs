@@ -75,12 +75,7 @@ impl CANPipeline {
                     let midx = opts
                         .iter()
                         .position(|opt| {
-
-                            *opt == vec![
-                                msg.data[0],
-                                msg.data[(i * 8) + 1],
-                                msg.data[(i * 8) + 2]
-                            ]
+                            *opt == vec![msg.data[0], msg.data[(i * 8) + 1], msg.data[(i * 8) + 2]]
                         })
                         .unwrap_or(usize::MAX);
 

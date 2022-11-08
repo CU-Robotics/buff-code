@@ -157,6 +157,7 @@ impl SwerveController {
         let speed = (p * error) + (i * self.motor_error[midx][1]) + (d * derr);
 
         // ros_info!("speed {}", speed);
+        // println!("setting {} to speed {}", name, speed);
         self.set_motor_speed(name, speed);
     }
 
@@ -190,13 +191,13 @@ impl SwerveController {
 
         // println!("We should be printing in file");
 
-        let mut file = OpenOptions::new()
-            .append(true)
-            .open(fname)
-            .expect("cannot open file");
+        // let mut file = OpenOptions::new()
+        //     .append(true)
+        //     .open(fname)
+        //     .expect("cannot open file");
 
-        file.write_all("We did it Joe!".as_bytes())
-            .expect("write failed");
+        // file.write_all("We did it Joe!".as_bytes())
+        //     .expect("write failed");
 
         // let data = "we did it joe!";
 
@@ -213,7 +214,7 @@ impl SwerveController {
 
         let mut switch_value = 3.0;
 
-        let max_rpm = 6.28;
+        let max_pos = 80.0 * 36.0;
         let left_joystick_vpos_max = 680.0;
         let left_joystick_vpos_min = -552.0;
         let right_joystick_vpos_max = 660.0;
@@ -225,31 +226,37 @@ impl SwerveController {
             timestamp = Instant::now();
             let rmt = self.remote_control.read().unwrap();
             switch_value = rmt[5];
-            drop(rmt);
 
-            println!("switch position: {}", switch_value);
+            // println!("switch position: {}", switch_value);
 
             // up: 1.0, middle: 3.0, down: 2.0
-            if switch_value == 3.0 {
-                record = true;
-            } else if switch_value == 2.0 {
-                record = false;
-                println!("switch position");
-                self.write_sample("/home/mdyse/buff-code/data/control_log.txt".to_string());
-            } else {
-                // erase file
-            }
+            // if switch_value == 3.0 {
+            //     record = true;
+            // } else if switch_value == 2.0 {
+            //     record = false;
+            //     println!("switch position");
+            //     self.write_sample("/home/mdyse/buff-code/data/control_log.txt".to_string());
+            // } else {
+            //     // erase file
+            // }
 
-            // let mut left_joystick_vpos =
-            //     rmt[3].clamp(left_joystick_vpos_min, left_joystick_vpos_max);
-            // let mut right_joystick_vpos =
-            //     rmt[1].clamp(right_joystick_vpos_min, right_joystick_vpos_max);
+            let mut left_joystick_vpos =
+                rmt[3].clamp(left_joystick_vpos_min, left_joystick_vpos_max);
+            let mut right_joystick_vpos =
+                rmt[1].clamp(right_joystick_vpos_min, right_joystick_vpos_max);
 
-            // let mut motor1_rpm = max_rpm * (left_joystick_vpos / left_joystick_vpos_max);
+            drop(rmt);
 
-            // println!("{}", motor1_rpm);
+            let gm6020_left_pos = max_pos * (left_joystick_vpos / left_joystick_vpos_max);
+            let gm6020_right_pos = max_pos * (right_joystick_vpos / right_joystick_vpos_max);
 
-            // self.set_motor_speed("feeder".to_string(), -120.0 * 36.0);
+            // println!(
+            //     "setting left pos: {}, setting right pos: {}",
+            //     gm6020_left_pos, gm6020_right_pos
+            // );
+
+            self.set_motor_speed("gm6020_left".to_string(), gm6020_left_pos);
+            // self.set_motor_speed("gm6020_right".to_string(), gm6020_right_pos);
         }
     }
 }
