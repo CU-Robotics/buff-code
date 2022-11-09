@@ -1,39 +1,75 @@
+# The buff stuff
 buff_rust:
   debug: True
-  files: ['comms_node', controller_node]
+  files: [comms_node, device_node]
 
+# Maybe some kind of option to shut this down via cmdline
+# rqt_plot:
+#   files: [rqt_plot]
+#   package: rqt_plot
 
-rqt_plot:
-  files: ['rqt_plot']
-  package: 'rqt_plot'
-
-robot: 'infantry'
+# Unused atm (should be just isnt)
+robot: infantry
+keyboard_select: [False]
 
 can:
-  - ["fl_drive", "1", "0", "0"]
-  - ["fl_steer", "1", "0", "1"]
-  - ["gm6020_left", "2", "2", "2"]
-  - ["gm6020_right", "2", "2", "1"]
-  - ["feeder", "2", "0", "1"]
+  # - [motor_name, can bus, message type, motor offset]
+  - [xn_drive, '1', '0', '0']
+  - [xp_drive, '1', '0', '1']
+  - [yn_drive, '1', '0', '2']
+  - [yp_drive, '1', '0', '3']
+  - [yaw, '2', '2', '2']
+  - [pitch, '2', '2', '1']
+  - [feeder, '2', '0', '1']
+  
+# output corresponds directly to the row of the same index
+# each signal is assumed to be a linear combo of the target
+# state. Ax = b and A'b = x solved from least squares A'=(AA^T)^-1A^T
+state_controller:
+  input: reference_input # b
+  output: [xn_drive, xp_drive, yn_drive, yp_drive, yaw, pitch, feeder] # x
+  control_law: # A'
+    - [0.0, 0.0, 0.5, 0.0, -0.25, 0.0, 0.0]
+    - [0.0, 0.0, 0.0, 0.5,  0.25, 0.0, 0.0]
+    - [0.0, 0.0, 0.5, 0.0,  0.25, 0.0, 0.0]
+    - [0.0, 0.0, 0.0, 0.5, -0.25, 0.0, 0.0]
+    - [0.0, 0.0, 0.0, 0.0,  -0.1, 1.0, 0.0]
+    - [0.0, 0.0, 0.0, 0.0,   0.0, 0.0, 1.0]
+    - [1.0, 0.0, 0.0, 0.0,   0.0, 0.0, 0.0]
 
-fl_steer_gains:
-  - [0.0, 0.0, 0.0]
-  - [0.0, 0.0, 0.0]
+position_controllers:
+  - yaw
+  - pitch
+  - feeder
 
-fl_drive_gains:
-  - [100.0, 0.0, 0.0]
+velocity_controllers:
+  - xn_drive
+  - xp_drive
+  - yn_drive
+  - yp_drive
+
+xn_drive_gains:
   - [0.000025, 0.01, 0.0004]
+
+xp_drive_gains:
+  - [0.000025, 0.01, 0.0004]
+
+yn_drive_gains:
+  - [0.000025, 0.01, 0.0004]
+
+yp_drive_gains:
+  - [0.000025, 0.01, 0.0004]
+
+yaw_gains:
+  - [100.0, 0.0, 0.0]
+  - [0.0003, 0.0, 0.005]
+
+pitch_gains:
+  - [100.0, 0.0, 0.0]
+  - [0.0003, 0.0, 0.0]
 
 feeder_gains:
   - [0.0, 0.0, 0.0]
   - [0.003, 0.0, 0.0]
-
-gm6020_left_gains:
-  - [100.0, 0.0, 0.0]
-  - [0.0003, 0.0, 0.005]
-
-gm6020_right_gains:
-  - [100.0, 0.0, 0.0]
-  - [0.0003, 0.0, 0.0]
 
 

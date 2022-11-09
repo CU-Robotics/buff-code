@@ -20,3 +20,7 @@ path = "src/teensy_comms/node.rs"
 [[bin]]
 name = "controller_node"
 path = "src/locomotion/node.rs"
+
+[[bin]]
+name = "device_node"
+path = "src/device_manager/node.rs"

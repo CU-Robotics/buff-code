@@ -96,7 +96,7 @@ void loop() {
 	
 	
 	if (micros() - top_time > cycle_time) {
-		Serial.print("Overtime ");
+		Serial.print("Teensy Overtime ");
 		Serial.println(micros() - top_time);
 	}
 	while (micros() - top_time < cycle_time){}

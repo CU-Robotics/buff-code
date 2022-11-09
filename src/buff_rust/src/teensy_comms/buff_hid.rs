@@ -97,7 +97,7 @@ pub struct HidLayer {
     pub output_queue: Arc<RwLock<HidBuffer>>,
     pub subscriber: rosrust::Subscriber,
     pub can_pub: rosrust::Publisher<std_msgs::UInt8MultiArray>,
-    pub sensor_pubs: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub sensor_pubs: Vec<rosrust::Publisher<std_msgs::UInt8MultiArray>>,
 }
 
 impl HidLayer {
@@ -174,12 +174,8 @@ impl HidLayer {
                 return;
             }
 
-            let mut msg = std_msgs::Float64MultiArray::default();
-            msg.data = self
-                .read_bytes(24)
-                .chunks_exact(4)
-                .map(|chunk| f32::from_be_bytes(chunk.try_into().unwrap_or([0, 0, 0, 0])) as f64)
-                .collect();
+            let mut msg = std_msgs::UInt8MultiArray::default();
+            msg.data = self.read_bytes(24);
 
             self.sensor_pubs[(sensor_id - 1) as usize]
                 .send(msg)
@@ -211,11 +207,12 @@ impl HidLayer {
     }
 
     pub fn write(&mut self) {
-        let mut queue = self.output_queue.write().unwrap();
         self.output.reset();
-        self.output.data = queue.data;
-        queue.reset();
-        drop(queue);
+        {
+            let mut queue = self.output_queue.write().unwrap();
+            self.output.data = queue.data;
+            queue.reset();
+        }
 
         match &self.teensy {
             Ok(dev) => match dev.write(&self.output.data) {
