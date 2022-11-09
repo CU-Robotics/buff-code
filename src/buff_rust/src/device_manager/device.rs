@@ -236,8 +236,7 @@ impl DR16Pipeline {
             data[0] = input_data[0] as f64; // set lmb
             data[1] = input_data[1] as f64; // set rmb
 
-            // not implemented
-            
+        // not implemented
         } else {
             data[0] = (input_data[0] & 0x03) as f64; // set switch 1
             data[1] = (input_data[0] & 0x0C) as f64; // set switch 2
@@ -247,8 +246,8 @@ impl DR16Pipeline {
                 .chunks_exact(2)
                 .enumerate()
                 .for_each(|(i, chunk)| {
-                    data[i + 2] =
-                        (i16::from_be_bytes(chunk.try_into().unwrap_or([0, 0])) / i16::MAX) as f64;
+                    data[i + 2] = i16::from_be_bytes(chunk.try_into().unwrap_or([0, 0])) as f64
+                        / i16::MAX as f64;
                 });
 
             // handle pan tilt accumulation

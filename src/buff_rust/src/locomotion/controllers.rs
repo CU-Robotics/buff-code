@@ -1,5 +1,3 @@
-// use crate::hid::device::MotorTable;
-use nalgebra::{abs, Matrix4x3};
 use rosrust::ros_info;
 use rosrust_msg::std_msgs;
 use std::{
@@ -112,47 +110,69 @@ pub struct BuffLocomotion {
 }
 
 impl BuffLocomotion {
+    /*
+        The main Locomotive node in buff-code.
+        This struct handles all the ros subscribing/publishing
+        as well as the config for state controllers and
+        motor controllers.
+
+        BuffLocomotion uses a state description to determine
+        approximate references for individual motors to track.
+        There are state controllers and motor controllers, the
+        motor controllers are SISO implementations, the state
+        controllers currently do not support feedback but will 
+        ultimately implement state space control.
+    */
     pub fn new() -> BuffLocomotion {
+        // motor config info (only needed for name indexing)
         let motor_info = rosrust::param("/buffbot/can")
             .unwrap()
             .get::<Vec<Vec<String>>>()
             .unwrap();
 
+        let names: Vec<String> = motor_info.iter().map(|motor| motor[0].clone()).collect();
+
+        // velocity controller indexer
         let vc_ind = rosrust::param("/buffbot/velocity_controllers")
             .unwrap()
             .get::<Vec<String>>()
             .unwrap();
 
+        // position controller indexer
         let pc_ind = rosrust::param("/buffbot/position_controllers")
             .unwrap()
             .get::<Vec<String>>()
             .unwrap();
 
+        // state controller transform matrix
         let state_tf = rosrust::param("/buffbot/state_controller/control_law")
             .unwrap()
             .get::<Vec<Vec<f64>>>()
             .unwrap();
 
+        // state control input id
         let state_ref = rosrust::param("/buffbot/state_controller/input")
             .unwrap()
             .get::<String>()
             .unwrap();
 
+        // state controller output indexer
         let cntrl_index = rosrust::param("/buffbot/state_controller/output")
             .unwrap()
             .get::<Vec<String>>()
             .unwrap();
 
-        let names: Vec<String> = motor_info.iter().map(|motor| motor[0].clone()).collect();
-
+        // remote control/ IMU feedback ros topic buffer
         let rmt_ctrl = Arc::new(RwLock::new(vec![0f64; 10]));
         let inr_ref = Arc::new(RwLock::new(vec![0f64; 6]));
-        let mut motor_ref = vec![];
 
         let mut pubs = vec![];
         let mut subs = vec![];
         let mut gains = vec![];
+        let mut motor_ref = vec![];
 
+        // Use the list of motors to create the publishers and subscribers
+        // Also save the gains for each motor
         names.iter().enumerate().for_each(|(i, x)| {
             pubs.push(rosrust::publish(format!("{}_command", x).as_str(), 1).unwrap());
 
@@ -179,6 +199,7 @@ impl BuffLocomotion {
 
         let rmt = rmt_ctrl.clone();
 
+        // Create the remote control subscriber (will also need IMU)
         subs.push(
             rosrust::subscribe(&state_ref, 1, move |msg: std_msgs::Float64MultiArray| {
                 *rmt.write().unwrap() = msg.data;
@@ -186,6 +207,7 @@ impl BuffLocomotion {
             .unwrap(),
         );
 
+        // Init Velocity controllers
         let vc = vc_ind
             .iter()
             .map(|x| {
@@ -193,6 +215,7 @@ impl BuffLocomotion {
             })
             .collect();
 
+        // init state controller
         let sc = StateController::new(state_tf);
 
         BuffLocomotion {
@@ -208,7 +231,6 @@ impl BuffLocomotion {
             state_reference: state_ref,
             control_index: cntrl_index,
             timestamp: Instant::now(),
-            // robot_state: state,
         }
     }
 

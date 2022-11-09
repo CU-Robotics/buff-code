@@ -1,7 +1,7 @@
 #include "dr16.h"
 
 int16_t normalize_channel(int16_t value){
-    return int16_t((float(value) - 1024.0) / 675.0 * pow(2, 15));
+    return int16_t((float(value) - 1024.0) / 700.0 * pow(2, 15));
 }
 
 void print_receiver_input(byte* buffer){
@@ -110,22 +110,23 @@ void DR16::read(byte *buffer, int offset)
         buffer[offset+1] = ((tmp[5] & 0b11110000) >> 4);   // switches
         buffer[offset+2] = tmp[12];                        // lmb
         buffer[offset+3] = tmp[13];                        // rmb
-        buffer[offset+4] = r_stick_x && 0xff;              // ch 0 low
-        buffer[offset+5] = (r_stick_x >> 8) & 0xff;       // ch 0 high
-        buffer[offset+6] = r_stick_y && 0xff;              // ch 1 low
-        buffer[offset+7] = (r_stick_y >> 8) & 0xff;       // ch 1 high
-        buffer[offset+8] = l_stick_x && 0xff;              // ch 2 low
-        buffer[offset+9] = (l_stick_x >> 8) & 0xff;       // ch 2 high
-        buffer[offset+10] = l_stick_y && 0xff;             // ch 3 low
-        buffer[offset+11] = (l_stick_y >> 8) & 0xff;      // ch 3 high
-        buffer[offset+12] = tmp[6];                        // mouse_x low
-        buffer[offset+13] = tmp[7];                        // mouse_x high
-        buffer[offset+14] = tmp[8];                        // mouse_y low
-        buffer[offset+15] = tmp[9];                        // mouse_y high
-        buffer[offset+16] = tmp[10];                       // mouse_z low
-        buffer[offset+17] = tmp[11];                       // mouse_z high
-        buffer[offset+18] = tmp[14];                       // keyboard low
-        buffer[offset+19] = tmp[15];                       // keyboard high
+        buffer[offset+4] = (r_stick_x >> 8) & 0xff;       // ch 0 high
+        buffer[offset+5] = r_stick_x && 0xff;              // ch 0 low
+        buffer[offset+6] = (r_stick_y >> 8) & 0xff;       // ch 1 high
+        buffer[offset+7] = r_stick_y && 0xff;              // ch 1 low
+        buffer[offset+8] = (l_stick_x >> 8) & 0xff;       // ch 2 high
+        buffer[offset+9] = l_stick_x && 0xff;              // ch 2 low
+        buffer[offset+10] = (l_stick_y >> 8) & 0xff;      // ch 3 high
+        buffer[offset+11] = l_stick_y && 0xff;             // ch 3 low
+        buffer[offset+12] = tmp[7];                        // mouse_x high
+        buffer[offset+13] = tmp[6];                        // mouse_x low
+        buffer[offset+14] = tmp[9];                        // mouse_y high
+        buffer[offset+15] = tmp[8];                        // mouse_y low
+        buffer[offset+16] = tmp[11];                       // mouse_z high
+        buffer[offset+17] = tmp[10];                       // mouse_z low
+        buffer[offset+18] = tmp[15];                       // keyboard high
+        buffer[offset+19] = tmp[14];                       // keyboard low
+        
         // print_receiver_input(&buffer[offset]);
     }
 }
