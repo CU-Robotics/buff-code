@@ -30,6 +30,9 @@ class Shooter {
     bool shooterClear = false;
     bool armed = false;
 
+    int timer = 0;
+    bool jammed = false;
+
     void fire(float speed);
 };
 

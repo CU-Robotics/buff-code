@@ -130,7 +130,7 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  moduleState->driveVel.R = -9000;//rampedSpeed * state->chassis.maxRpm;
+  moduleState->driveVel.R = -9500;//rampedSpeed * state->chassis.maxRpm;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
 

@@ -96,7 +96,7 @@ void setup() {
   robot_config.swerveChassis.FR.cornerID = 0;
   robot_config.swerveChassis.FR.steerMotorID = 4;
   robot_config.swerveChassis.FR.steerEncoderID = 1 + 1;
-  robot_config.swerveChassis.FR.driveMotorID = 6;
+  robot_config.swerveChassis.FR.driveMotorID = 4;
   robot_config.swerveChassis.FR.absolute_offset = 45;
   int fr_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
   for (int i = 0; i < 9; i++)
@@ -165,8 +165,8 @@ void loop() {
 
   // Update subsystems
   //gimbal.update(deltaT);
-  //swerveChassis.update(deltaT);
-  //shooter.update(deltaT);
+  swerveChassis.update(deltaT);
+  shooter.update(deltaT);
   xDrive.update(deltaT);
 
 

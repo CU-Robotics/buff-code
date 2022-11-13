@@ -114,14 +114,32 @@ void Shooter::update(unsigned long deltaTime) {
                 state->shooter17.feedPID.R = 0;
         }
 
+        timer += deltaTime;
+
+
         // Feed PID
-        state->shooter17.feedPID.R = -450 * 36;
+        // if ((feedMotor.getRpm() > -50) && !jammed) {
+        //     jammed = true;
+        //     timer = 0;
+        // } else if (jammed && timer < 250000) {
+        //     state->shooter17.feedPID.R = 0 * 36;
+        //     timer = 0;
+        //     jammed = false;
+        // } else {
+            //Serial.println(feedMotor.getRpm());
+            if (state->driverInput.s1 == 2) {
+                state->shooter17.feedPID.R = -200 * 36;
+            } else {
+                state->shooter17.feedPID.R = 0;
+            }
+        //     timer = 0;
+        // }
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
         this->feedMotor.setPower(state->shooter17.feedPID.Y);
 
     } else if (state->robot == 7 && state->driverInput.s2 != 2) {
         this->feedMotor.setPower(0.0);     
     } else {
-        this->feedMotor.setPower(0.0);       
+        this->feedMotor.setPower(0.0); 
     }
 }
