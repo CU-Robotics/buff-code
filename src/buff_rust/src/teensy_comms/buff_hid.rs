@@ -2,6 +2,7 @@ extern crate hidapi;
 
 use hidapi::{HidApi, HidDevice, HidError};
 // use rosrust::ros_info;
+use crate::buff_rust::buff_utils::*;
 use rosrust_msg::std_msgs;
 use std::thread::sleep;
 use std::time::Duration;
@@ -91,13 +92,14 @@ pub struct HidLayer {
     pub hidapi: HidApi,
     pub vid: u16,
     pub pid: u16,
+    pub nc_timeout: u128,
     pub input: HidBuffer,
     pub output: HidBuffer,
     pub teensy: Result<HidDevice, HidError>,
     pub output_queue: Arc<RwLock<HidBuffer>>,
     pub subscriber: rosrust::Subscriber,
-    pub can_pub: rosrust::Publisher<std_msgs::UInt8MultiArray>,
-    pub sensor_pubs: Vec<rosrust::Publisher<std_msgs::UInt8MultiArray>>,
+    pub publishers: Vec<rosrust::Publisher<std_msgs::UInt8MultiArray>>,
+    pub timestamp: Instant,
 }
 
 impl HidLayer {
@@ -116,16 +118,24 @@ impl HidLayer {
         })
         .unwrap();
 
-        let pubs = vec![
-            rosrust::publish("imu_raw", 1).unwrap(),
-            rosrust::publish("receiver_raw", 1).unwrap(),
-        ];
+        let byu = BuffYamlUtil::default();
+        let sensors = byu.load_string_list("sensor_index");
+
+        println!("{:?}", sensors);
+
+        let mut pubs: Vec<rosrust::Publisher<std_msgs::UInt8MultiArray>> = sensors
+            .iter()
+            .map(|s| rosrust::publish(format!("{}_raw", s).as_str(), 1).unwrap())
+            .collect();
+
+        pubs.splice(0..0, rosrust::publish("can_raw", 1));
 
         let api = HidApi::new().expect("Failed to create API instance");
         let teensy = api.open(0x0000, 0x0000);
 
         HidLayer {
             hidapi: api,
+            nc_timeout: 8000,
             vid: 0x16C0,
             pid: 0x0486,
             teensy: teensy,
@@ -133,8 +143,8 @@ impl HidLayer {
             output: HidBuffer::new(),
             output_queue: output_buffer,
             subscriber: can_sub,
-            can_pub: rosrust::publish("can_raw", 1).unwrap(),
-            sensor_pubs: pubs,
+            publishers: pubs,
+            timestamp: Instant::now(),
         }
     }
 
@@ -161,7 +171,7 @@ impl HidLayer {
         {
             let mut msg = std_msgs::UInt8MultiArray::default();
             msg.data = self.read_bytes(33);
-            self.can_pub.send(msg).unwrap();
+            self.publishers[0].send(msg).unwrap();
         }
 
         {
@@ -177,9 +187,7 @@ impl HidLayer {
             let mut msg = std_msgs::UInt8MultiArray::default();
             msg.data = self.read_bytes(24);
 
-            self.sensor_pubs[(sensor_id - 1) as usize]
-                .send(msg)
-                .unwrap();
+            self.publishers[sensor_id as usize].send(msg).unwrap();
         }
 
         self.input.reset();
@@ -231,12 +239,12 @@ impl HidLayer {
 
     pub fn init_comms(&mut self) {
         self.teensy = self.hidapi.open(self.vid, self.pid);
-        self.input.timestamp = Instant::now();
 
         match &self.teensy {
             Ok(_) => {
                 self.write();
                 println!("Teensy connected");
+                self.timestamp = Instant::now();
 
                 let param_id = format!("/buffbot/HID_ACTIVE");
                 rosrust::param(&param_id).unwrap().set::<i32>(&1).unwrap();
@@ -250,30 +258,26 @@ impl HidLayer {
     }
 
     pub fn connection_repair(&mut self) {
-        if self.input.timestamp.elapsed().as_millis() < 5000 {
+        drop(&self.teensy);
+        // if prgram counter is more than timeout, don't try to
+        // reconnect
+        if self.timestamp.elapsed().as_millis() < self.nc_timeout {
             println!("Can't find teensy!");
-            sleep(Duration::from_millis(
-                5000 - self.input.timestamp.elapsed().as_millis() as u64,
-            ));
+            sleep(Duration::from_millis((self.nc_timeout / 5) as u64));
+            self.init_comms();
         }
-
-        self.init_comms();
     }
 
     pub fn spin(&mut self) {
         self.init_comms();
 
         while rosrust::is_ok() {
-            // timestamp = Instant::now();
-
             self.read();
             self.write();
 
-            // if micros < 500 {
-            //     sleep(Duration::from_micros(500 - micros as u64));
-            // } else {
-            //     println!("overtime {}", micros);
-            // }
+            // Reset this timer to continue searching for a device instead
+            // of exiting. For tests, don't reset this and the program will time out.
+            self.timestamp = Instant::now();
         }
     }
 }

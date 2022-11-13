@@ -1,6 +1,5 @@
 # The buff stuff
 buff_rust:
-  debug: True
   files: [comms_node, device_node, controller_node]
 
 # Maybe some kind of option to shut this down via cmdline
@@ -8,68 +7,79 @@ buff_rust:
 #   files: [rqt_plot]
 #   package: rqt_plot
 
-# Unused atm (should be just isnt)
-robot: infantry
-keyboard_select: [False]
+# Unused atm (should be just isn't)
+robot_name: penguin
+robot_type: infantry
+inertial_feedback: empty_topic
+state_control_input: joystick_input
 
-can:
-  # - [motor_name, can bus, message type, motor offset]
-  - [xn_drive, '1', '0', '0']
-  - [xp_drive, '1', '0', '1']
-  - [yn_drive, '1', '0', '2']
-  - [yp_drive, '1', '0', '3']
-  - [yaw, '2', '2', '2']
-  - [pitch, '2', '2', '1']
-  - [feeder, '2', '0', '1']
-  
-# output corresponds directly to the row of the same index
-# each signal is assumed to be a linear combo of the target
-# state. Ax = b and A'b = x solved from least squares A'=(AA^T)^-1A^T
-state_controller:
-  input: reference_input # b
-  output: [xn_drive, xp_drive, yn_drive, yp_drive, yaw, pitch, feeder] # x
-  control_law: # A'
-    - [0.0, 0.0, 0.5, 0.0,  0.25, 0.0, 0.0]
-    - [0.0, 0.0, 0.5, 0.0, -0.25, 0.0, 0.0]
-    - [0.0, 0.0, 0.0, 0.5,  0.25, 0.0, 0.0]
-    - [0.0, 0.0, 0.0, 0.5, -0.25, 0.0, 0.0]
-    - [0.0, 0.0, 0.0, 0.0,  -1.0, 1.0, 0.0]
-    - [0.0, 0.0, 0.0, 0.0,   0.0, 0.0, 1.0]
-    - [1.0, 0.0, 0.0, 0.0,   0.0, 0.0, 0.0]
+# Defines the sensor index for
+# HID packets. String is the topic
+sensor_index:
+  - mpu6050
+  - dr16
 
-position_controllers:
+# This defines the indices of all the motors
+motor_index:
+  - xn_drive
+  - xp_drive
+  - yn_drive
+  - yp_drive
   - yaw
   - pitch
   - feeder
 
-velocity_controllers:
+# Uses the motor indices to determine a can
+# packet index
+motor_can_index:
+  # [can bus, message type, motor offset]
+  - [2, 1, 2]
+  - [2, 1, 1]
+  - [1, 0, 2]
+  - [1, 0, 3]
+  - [2, 2, 2]
+  - [2, 2, 1]
+  - [2, 0, 1]
+  
+# Motor controls are a linear combo
+# of the state. U = -Kx
+state_control_law: # K
+  - [0.0,   0.0,   -1.0,    0.0,    1.0,    0.0,    0.0]
+  - [0.0,   0.0,    1.0,    0.0,    1.0,    0.0,    0.0]
+  - [0.0,   0.0,    0.0,   -1.0,    1.0,    0.0,    0.0]
+  - [0.0,   0.0,    0.0,    1.0,    1.0,    0.0,    0.0]
+  - [0.0,   0.0,    0.0,    0.0,   -6.0,    1.0,    0.0]
+  - [0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    1.0]
+  - [1.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0]
+
+# Will create some controllers
+# using the specified index
+position_control_index:
+  - yaw
+  - pitch
+  - feeder
+
+# Gains for the motor at
+# the same index in the
+# control index
+position_control_gains:
+  - [100.0, 0.0, 0.0]
+  - [0.0003, 0.0, 0.005]
+  - [100.0, 0.0, 0.0]
+  - [0.0003, 0.0, 0.0]
+  - [0.0, 0.0, 0.0]
+  - [0.003, 0.0, 0.0]
+
+velocity_control_index:
   - xn_drive
   - xp_drive
   - yn_drive
   - yp_drive
 
-xn_drive_gains:
+velocity_control_gains:
   - [0.000025, 0.01, 0.0004]
-
-xp_drive_gains:
   - [0.000025, 0.01, 0.0004]
-
-yn_drive_gains:
   - [0.000025, 0.01, 0.0004]
-
-yp_drive_gains:
   - [0.000025, 0.01, 0.0004]
-
-yaw_gains:
-  - [100.0, 0.0, 0.0]
-  - [0.0003, 0.0, 0.005]
-
-pitch_gains:
-  - [100.0, 0.0, 0.0]
-  - [0.0003, 0.0, 0.0]
-
-feeder_gains:
-  - [0.0, 0.0, 0.0]
-  - [0.003, 0.0, 0.0]
 
 

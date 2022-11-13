@@ -1,3 +1,4 @@
+pub mod buff_rust;
 pub mod device_manager;
 pub mod localization;
 pub mod locomotion;
