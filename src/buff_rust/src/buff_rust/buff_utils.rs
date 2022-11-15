@@ -1,9 +1,6 @@
 extern crate yaml_rust;
-
-use rosrust::ros_info;
-use rosrust_msg::std_msgs;
 use std::{env, fs};
-use yaml_rust::{yaml::Yaml, YamlEmitter, YamlLoader};
+use yaml_rust::{yaml::Yaml, YamlLoader};
 
 // Define a struct that can clean up the way we load things
 // from ros param server

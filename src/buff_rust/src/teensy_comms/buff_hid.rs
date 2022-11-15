@@ -4,11 +4,10 @@ use hidapi::{HidApi, HidDevice, HidError};
 // use rosrust::ros_info;
 use crate::buff_rust::buff_utils::*;
 use rosrust_msg::std_msgs;
-use std::thread::sleep;
-use std::time::Duration;
 use std::{
     sync::{Arc, RwLock},
-    time::Instant,
+    thread::sleep,
+    time::{Duration, Instant},
 };
 
 pub struct HidBuffer {
@@ -120,8 +119,6 @@ impl HidLayer {
 
         let byu = BuffYamlUtil::default();
         let sensors = byu.load_string_list("sensor_index");
-
-        println!("{:?}", sensors);
 
         let mut pubs: Vec<rosrust::Publisher<std_msgs::UInt8MultiArray>> = sensors
             .iter()

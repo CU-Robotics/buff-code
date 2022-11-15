@@ -13,14 +13,6 @@ pub mod hid_tests {
     use super::*;
 
     #[test]
-    pub fn hid_buffer_test() {
-        /*
-            test the hid buffer object
-        */
-        let _new_buffer = HidBuffer::new();
-    }
-
-    #[test]
     pub fn hid_connection() {
         /*
             test the hidlayers ability to connect to a teensy

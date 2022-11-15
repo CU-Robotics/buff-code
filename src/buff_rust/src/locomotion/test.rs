@@ -1,12 +1,6 @@
 #![allow(unused_imports)]
-use buff_rust::buff_rust::buff_utils::*;
-use buff_rust::locomotion::controllers::*;
-use rosrust_msg::std_msgs;
-use std::{
-    env,
-    sync::{Arc, RwLock},
-    time::Instant,
-};
+use crate::buff_rust::buff_utils::*;
+use crate::locomotion::controllers::*;
 
 #[cfg(test)]
 pub mod dead_control_tests {
@@ -24,15 +18,16 @@ pub mod dead_control_tests {
 
         // D controller unit response
         pid.gain = vec![0.0, 1.0, 0.0];
-        assert_eq!(pid.update(0.0), -1.0, "Failed basic D with step input");
-        assert_eq!(pid.acc_error, 1.0, "Failed to accumulate error (D)");
-        assert_eq!(pid.prev_error, 0.0, "Failed to store previous error (D)");
-
-        // I controller unit response
-        pid.gain = vec![0.0, 0.0, 1.0];
         assert_eq!(pid.update(9.0), 10.0, "Failed basic I with step input");
         assert_eq!(pid.acc_error, 10.0, "Failed to accumulate error (I)");
         assert_eq!(pid.prev_error, 9.0, "Failed to store previous error (I)");
+
+        // I controller unit response
+        pid.gain = vec![0.0, 0.0, 1.0];
+        assert_eq!(pid.update(10.0), 1.0, "Failed basic D with step input");
+        assert_eq!(pid.acc_error, 20.0, "Failed to accumulate error (D)");
+        assert_eq!(pid.prev_error, 10.0, "Failed to store previous error (D)");
+        
     }
 
     #[test]

@@ -1,5 +1,4 @@
-use buff_rust::locomotion::controllers::*;
-use std::thread;
+use buff_rust::locomotion::locomotion::*;
 
 fn main() {
     env_logger::init();

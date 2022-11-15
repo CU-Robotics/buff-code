@@ -1,14 +1,8 @@
 #![allow(unused_imports)]
-use buff_rust::buff_rust::buff_utils::*;
-use rosrust_msg::std_msgs;
-use std::{
-    env,
-    sync::{Arc, RwLock},
-    time::Instant,
-};
+use crate::buff_rust::buff_utils::*;
 
 #[cfg(test)]
-pub mod bu_tests {
+pub mod byu_tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
@@ -18,20 +12,21 @@ pub mod bu_tests {
             Use the penguin yaml file to test some loading functions
         */
 
-        let byu = BuffYamlUtil::new("penguin".to_string());
+        let byu = BuffYamlUtil::new("penguin");
 
-        assert_eq!(byu.load_string("robot".to_string()), "infantry");
+
+        assert_eq!(byu.load_string("robot_type"), "infantry");
 
         assert_eq!(
-            byu.load_string_list("motor_index".to_string()),
+            byu.load_string_list("motor_index"),
             vec!["xn_drive", "xp_drive", "yn_drive", "yp_drive", "yaw", "pitch", "feeder"]
         );
 
         assert_eq!(
-            byu.load_integer_matrix("motor_can_index".to_string()),
+            byu.load_integer_matrix("motor_can_index"),
             vec![
-                vec![1, 0, 0],
-                vec![1, 0, 1],
+                vec![2, 1, 2],
+                vec![2, 1, 1],
                 vec![1, 0, 2],
                 vec![1, 0, 3],
                 vec![2, 2, 2],

@@ -16,12 +16,12 @@ env_logger = "0.9.0"
 
 [[bin]]
 name = "comms_node"
-path = "src/teensy_comms/node.rs"
+path = "src/teensy_comms/comms_node.rs"
 
 [[bin]]
-name = "controller_node"
-path = "src/locomotion/node.rs"
+name = "locomotion_node"
+path = "src/locomotion/locomotion_node.rs"
 
 [[bin]]
 name = "device_node"
-path = "src/device_manager/node.rs"
+path = "src/device_manager/device_node.rs"

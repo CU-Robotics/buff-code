@@ -65,7 +65,7 @@ def clear_directory(path):
 	os.mkdir(path)
 
 
-def clean_buffpy():
+def clean_buffpy(clean):
 	"""
 		Removes the data folder, and when it becomes necesary
 		will also remove any generated binaries and configs.
@@ -82,8 +82,9 @@ def clean_buffpy():
 		print('No build specified exiting:...')
 		return
 
-	subprocess.run(f'sudo apt clean && sudo apt autoremove && sudo apt update', shell=True)
-	subprocess.run(f'docker system prune -a -f', shell=True)
+	if clean == 'full':
+		subprocess.run(f'sudo apt clean && sudo apt autoremove && sudo apt update', shell=True)
+		subprocess.run(f'docker system prune -a -f', shell=True)
 
 	with open(firmware_config, 'r') as f:
 		data = yaml.safe_load(f)
@@ -101,7 +102,7 @@ def clean_buffpy():
 		for firmware_pkg in data['FIRMWARE_INI']:
 			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
 			result = subprocess.run(f'cd /{firmware_path} && \
-				pio run -t clean && pio system prune', shell=True)
+				pio run -t clean', shell=True)
 
 
 	clear_directory(data_path)
@@ -408,11 +409,6 @@ def parse_arguments():
 	parser.add_argument('--installKeys',
 		action='store_true',
 		help='Push local sshkeys to the robots')
-	parser.add_argument('--launch', 
-		nargs=1,
-		metavar='LOCATION',
-		default=False,
-		help='Launch the robots software on robots')
 	parser.add_argument('--botPull', 
 		action='store_true',
 		help='Pull data from the robot at ROBOT_IP')
@@ -441,7 +437,8 @@ def parse_arguments():
 		action='store_true',
 		help='Builds the docker images')
 	parser.add_argument('--clean',
-		action='store_true',
+		metavar='MODE',
+		default='',
 		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
 
 	return parser.parse_args(sys.argv[1:])
@@ -449,7 +446,7 @@ def parse_arguments():
 def main(ap):
 
 	if ap.clean:
-		clean_buffpy()
+		clean_buffpy(ap.clean)
 
 	if ap.diagnostic:
 		diagnostic()
@@ -477,11 +474,6 @@ def main(ap):
 	if ap.upload:
 		path = os.path.join(os.getenv('PROJECT_ROOT'), 'src', 'firmware')
 		result = subprocess.run(f'cd {path} && pio run -t upload', shell=True)
-
-	# May be Deprecated
-	# Consider moving to buff.bash as an alias
-	if ap.launch == 'bot':
-		result = subprocess.run(['ssh', os.getenv("ROBOT_ADDRESS"), 'cd buff-code && source buff.bash && launch'])
 
 	if ap.botPull:
 		result = subprocess.run(['scp', f'{os.getenv("ROBOT_ADDRESS")}:{os.getenv("ROBOT_ROOT")}/data', f'{os.getenv("PROJECT_ROOT")}/data'])

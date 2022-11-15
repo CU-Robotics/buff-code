@@ -1,6 +1,6 @@
 # The buff stuff
 buff_rust:
-  files: [comms_node, device_node, controller_node]
+  files: [comms_node, device_node, locomotion_node]
 
 # Maybe some kind of option to shut this down via cmdline
 # rqt_plot:
@@ -11,7 +11,7 @@ buff_rust:
 robot_name: penguin
 robot_type: infantry
 inertial_feedback: empty_topic
-state_control_input: joystick_input
+state_feedback: joystick_input
 
 # Defines the sensor index for
 # HID packets. String is the topic
@@ -52,8 +52,7 @@ state_control_law: # K
   - [0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    1.0]
   - [1.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0]
 
-# Will create some controllers
-# using the specified index
+
 position_control_index:
   - yaw
   - pitch
@@ -63,12 +62,9 @@ position_control_index:
 # the same index in the
 # control index
 position_control_gains:
-  - [100.0, 0.0, 0.0]
-  - [0.0003, 0.0, 0.005]
-  - [100.0, 0.0, 0.0]
-  - [0.0003, 0.0, 0.0]
-  - [0.0, 0.0, 0.0]
-  - [0.003, 0.0, 0.0]
+  - [  0.0003,    0.0,    0.0,  0.000025,    0.01,  0.0004]
+  - [     0.0,    0.0,    0.0,  0.000025,    0.01,  0.0004]
+  - [   0.003,    0.0,    0.0,  0.000025,    0.01,  0.0004]
 
 velocity_control_index:
   - xn_drive

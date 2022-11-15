@@ -1,5 +1,4 @@
 use crate::buff_rust::buff_utils::*;
-use rosrust::ros_info;
 use rosrust_msg::std_msgs;
 use std::{
     sync::{Arc, RwLock},
@@ -39,7 +38,6 @@ impl CANPipeline {
         let mut pubs = vec![];
 
         names.iter().enumerate().for_each(|(i, motor_name)| {
-            let cmd_clone = motor_commands.clone();
             // Publisher for motor feedback
             pubs.push(rosrust::publish(format!("{}_feedback", motor_name).as_str(), 1).unwrap());
 
