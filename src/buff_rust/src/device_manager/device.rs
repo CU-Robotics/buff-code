@@ -142,8 +142,8 @@ impl CANPipeline {
             self.publish_can_packet();
 
             micros = timestamp.elapsed().as_micros();
-            if micros < 2000 {
-                sleep(Duration::from_micros(2000 - micros as u64));
+            if micros < 1000 {
+                sleep(Duration::from_micros(1000 - micros as u64));
             } else {
                 println!("can manager overtime {}", micros);
             }
@@ -174,25 +174,25 @@ impl DR16Pipeline {
         ];
 
         let sub = rosrust::subscribe("dr16_raw", 10, move |msg: std_msgs::UInt8MultiArray| {
-            let input_data = msg.data;
-            // msg.data
-            //     .iter()
-            //     .enumerate()
-            //     .for_each(|(i, x)| input_data[i] = *x);
-            
+            let mut input_data = input.write().unwrap();
+            msg.data
+                .iter()
+                .enumerate()
+                .for_each(|(i, x)| input_data[i] = *x);
         })
         .unwrap();
 
         DR16Pipeline {
             subscriber: sub,
             publishers: publ,
+            input_data: input_clone,
             pitch_acc: 0.0,
             yaw_acc: 0.0,
             mouse_sensitivity: 0.1,
         }
     }
 
-    pub fn generate_joystick_message(&mut self, input_data: Vec<u8>) -> Vec<f64> {
+    pub fn generate_joystick_message(&mut self) -> Vec<f64> {
         let mut data = vec![0f64; 7];
 
         /*
@@ -206,7 +206,7 @@ impl DR16Pipeline {
             6: yaw global normalized
         */
 
-        // let input_data = self.input_data.read().unwrap().clone();
+        let input_data = self.input_data.read().unwrap().clone();
 
         if input_data.len() < 20 {
             return data;
@@ -235,7 +235,7 @@ impl DR16Pipeline {
         data
     }
 
-    pub fn generate_keyboard_message(&mut self, input_data: Vec<u8>) -> Vec<f64> {
+    pub fn generate_keyboard_message(&mut self) -> Vec<f64> {
         let mut data = vec![0f64; 7];
 
         /*
@@ -249,7 +249,7 @@ impl DR16Pipeline {
             6: yaw global normalized
         */
 
-        // let input_data = self.input_data.read().unwrap().clone();
+        let input_data = self.input_data.read().unwrap().clone();
 
         if input_data.len() < 20 {
             return data;
@@ -263,7 +263,7 @@ impl DR16Pipeline {
         data
     }
 
-    pub fn publish_messages(&mut self, input_data: Vec<u8>) {
+    pub fn publish_messages(&mut self) {
         let mut msg = std_msgs::Float64MultiArray::default();
         msg.data = self.generate_joystick_message();
         self.publishers[0].send(msg).unwrap();
@@ -273,21 +273,21 @@ impl DR16Pipeline {
         self.publishers[1].send(msg).unwrap();
     }
 
-    // pub fn spin(&mut self) {
-    //     let mut micros;
-    //     let mut timestamp;
+    pub fn spin(&mut self) {
+        let mut micros;
+        let mut timestamp;
 
-    //     while rosrust::is_ok() {
-    //         timestamp = Instant::now();
+        while rosrust::is_ok() {
+            timestamp = Instant::now();
 
-    //         self.publish_messages();
+            self.publish_messages();
 
-    //         micros = timestamp.elapsed().as_micros();
-    //         if micros < 14000 {
-    //             sleep(Duration::from_micros(14000 - micros as u64));
-    //         } else {
-    //             println!("dr16 manager overtime {}", micros);
-    //         }
-    //     }
-    // }
+            micros = timestamp.elapsed().as_micros();
+            if micros < 14000 {
+                sleep(Duration::from_micros(14000 - micros as u64));
+            } else {
+                println!("dr16 manager overtime {}", micros);
+            }
+        }
+    }
 }
