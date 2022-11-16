@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-use crate::buff_rust::buff_utils::*;
+use crate::buff_util::buff_utils::*;
 
 #[cfg(test)]
 pub mod byu_tests {
@@ -13,7 +13,6 @@ pub mod byu_tests {
         */
 
         let byu = BuffYamlUtil::new("penguin");
-
 
         assert_eq!(byu.load_string("robot_type"), "infantry");
 

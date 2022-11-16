@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-use crate::buff_rust::buff_utils::*;
+use crate::buff_util::buff_utils::*;
 use crate::locomotion::controllers::*;
 
 #[cfg(test)]
@@ -27,7 +27,6 @@ pub mod dead_control_tests {
         assert_eq!(pid.update(10.0), 1.0, "Failed basic D with step input");
         assert_eq!(pid.acc_error, 20.0, "Failed to accumulate error (D)");
         assert_eq!(pid.prev_error, 10.0, "Failed to store previous error (D)");
-        
     }
 
     #[test]

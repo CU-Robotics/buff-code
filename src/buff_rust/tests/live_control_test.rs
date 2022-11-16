@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-use buff_rust::buff_rust::buff_utils::*;
+use buff_rust::buff_util::buff_utils::*;
 use buff_rust::device_manager::device::*;
 use buff_rust::locomotion::controllers::*;
 use buff_rust::teensy_comms::buff_hid::*;
@@ -18,7 +18,7 @@ pub mod live_control_tests {
 
     #[test]
     pub fn test_pid() {
-        let motor_id = 1;
+        let motor_id = 2;
 
         let timestamp = Instant::now();
         env_logger::init();
@@ -52,7 +52,7 @@ pub mod live_control_tests {
 
         layer.init_comms();
 
-        let speed = 8000.0;
+        let speed = 5000.0;
 
         while rosrust::is_ok() {
             can_pipeline.publish_can_packet();
@@ -65,8 +65,7 @@ pub mod live_control_tests {
             msg.data = pid.update(speed - fb_vec.read().unwrap()[1]);
             command_pub.send(msg).unwrap();
 
-            if timestamp.elapsed().as_millis() > 5000 {
-                println!("HID Connection test timeout");
+            if timestamp.elapsed().as_millis() > 1000 {
                 break;
             }
         }

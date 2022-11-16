@@ -4,7 +4,7 @@ use std::{
     time::Instant,
 };
 
-use crate::buff_rust::buff_utils::*;
+use crate::buff_util::buff_utils::*;
 use crate::locomotion::controllers::*;
 
 pub struct BuffLocomotion {
@@ -123,7 +123,7 @@ impl BuffLocomotion {
 
         BuffLocomotion {
             orate: 10,
-            irate: 1000,
+            irate: 100,
             vc_index: vc_ind,
             pc_index: pc_ind,
             motor_index: motor_ind,

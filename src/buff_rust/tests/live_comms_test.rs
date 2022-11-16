@@ -29,12 +29,6 @@ pub mod hid_tests {
 
         rosrust::init("buff_comms_functional_test");
 
-        let param_id = format!("/buffbot/robot_name");
-        rosrust::param(&param_id)
-            .unwrap()
-            .set::<String>(&"penguin".to_string())
-            .unwrap();
-
         let can_msg_cnt = can_message_count.clone();
         let can_sub = rosrust::subscribe("can_raw", 1, move |_msg: std_msgs::UInt8MultiArray| {
             *can_msg_cnt.write().unwrap() += 1.0;
@@ -43,17 +37,16 @@ pub mod hid_tests {
 
         let s1_msg_cnt = s1_message_count.clone();
         let s1_sub =
-            rosrust::subscribe("sensor1_raw", 1, move |_msg: std_msgs::UInt8MultiArray| {
+            rosrust::subscribe("mpu6050_raw", 1, move |_msg: std_msgs::UInt8MultiArray| {
                 *s1_msg_cnt.write().unwrap() += 1.0;
             })
             .unwrap();
 
         let s2_msg_cnt = s1_message_count.clone();
-        let s2_sub =
-            rosrust::subscribe("sensor2_raw", 1, move |_msg: std_msgs::UInt8MultiArray| {
-                *s2_msg_cnt.write().unwrap() += 1.0;
-            })
-            .unwrap();
+        let s2_sub = rosrust::subscribe("dr16_raw", 1, move |_msg: std_msgs::UInt8MultiArray| {
+            *s2_msg_cnt.write().unwrap() += 1.0;
+        })
+        .unwrap();
 
         let mut layer = HidLayer::new();
 
