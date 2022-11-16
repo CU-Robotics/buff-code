@@ -56,7 +56,7 @@ impl HidBuffer {
     }
 
     pub fn check_of(&self, n: usize) -> bool {
-        if 64 - self.seek_ptr > n {
+        if 64 - self.seek_ptr >= n {
             return false;
         }
         true
