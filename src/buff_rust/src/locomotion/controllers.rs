@@ -93,7 +93,7 @@ impl StateController {
             Use the inertial feedback to improve the tracking and estimate.
             @param
                 reference_control: could be the remote input or autonomous descision making
-                inertial_feedback: measured chassis motion
+                inertial_feedback: measured chassis motion (psych!)
             @return
                 control law applied to the the state reference
         */

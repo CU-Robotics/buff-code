@@ -30,6 +30,28 @@ pub mod dead_control_tests {
     }
 
     #[test]
+    pub fn test_simple_cascaded_pid() {
+        let mut pid = PidController::new(vec![1.0, 0.0, 0.0]);
+
+        // P controller initial unit response
+        assert_eq!(pid.update(1.0), 1.0, "Failed basic P with step input");
+        assert_eq!(pid.acc_error, 1.0, "Failed to accumulate error (P)");
+        assert_eq!(pid.prev_error, 1.0, "Failed to store previous error (P)");
+
+        // D controller unit response
+        pid.gain = vec![0.0, 1.0, 0.0];
+        assert_eq!(pid.update(9.0), 10.0, "Failed basic I with step input");
+        assert_eq!(pid.acc_error, 10.0, "Failed to accumulate error (I)");
+        assert_eq!(pid.prev_error, 9.0, "Failed to store previous error (I)");
+
+        // I controller unit response
+        pid.gain = vec![0.0, 0.0, 1.0];
+        assert_eq!(pid.update(10.0), 1.0, "Failed basic D with step input");
+        assert_eq!(pid.acc_error, 20.0, "Failed to accumulate error (D)");
+        assert_eq!(pid.prev_error, 10.0, "Failed to store previous error (D)");
+    }
+
+    #[test]
     pub fn test_state_space() {
         let byu = BuffYamlUtil::new("penguin");
         let k = byu.load_float_matrix("state_control_law");
