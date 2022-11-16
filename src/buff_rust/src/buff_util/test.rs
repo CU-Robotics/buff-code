@@ -26,7 +26,7 @@ pub mod byu_tests {
             vec![
                 vec![2, 1, 2],
                 vec![2, 1, 1],
-                vec![1, 0, 2],
+                vec![2, 0, 2],
                 vec![1, 0, 3],
                 vec![2, 2, 2],
                 vec![2, 2, 1],
