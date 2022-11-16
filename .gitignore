@@ -1,6 +1,7 @@
 **/.pio
 **/.piopm
 **/.vscode
+**/.idea
 **/.DS_store
 **/Cargo.lock
 **/__pycache__
