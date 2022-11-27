@@ -1,0 +1,93 @@
+# The buff stuff
+buff_rust:
+  files: [comms_node, device_node, locomotion_node, estimator_node]
+
+# Maybe some kind of option to shut this down via cmdline
+# rqt_plot:
+#   files: [rqt_plot]
+#   package: rqt_plot
+
+# Unused atm (should be just isn't)
+robot_name: penguin
+robot_type: infantry
+inertial_feedback: empty_topic
+velocity_state_feedback: kee_state
+velocity_state_reference: joystick_input
+
+# Set the rates of the controllers
+pid_control_rate: 500
+state_control_rate: 50
+
+# Defines the sensor index for
+# HID packets. String is the topic
+sensor_index:
+  - mpu6050
+  - dr16
+
+# This defines the indices of all the motors
+motor_index:
+  - xn_drive
+  - xp_drive
+  - yn_drive
+  - yp_drive
+  - yaw
+  - pitch
+  - feeder
+
+# Uses the motor indices to determine a can
+# packet index
+motor_can_index:
+  # [can bus, message type, motor offset]
+  - [2, 1, 2]
+  - [2, 0, 2]
+  - [2, 1, 1]
+  - [2, 0, 0]
+  - [2, 2, 2]
+  - [2, 2, 1]
+  - [2, 0, 1]
+  
+
+# Used by encoder estimator (kee)
+# [V1, V2, V3, V4, dP, dY, dG] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma]
+kinematic_matrix: # K
+  - [    0.0,    0.5,    0.0,   -0.5,    0.0,    0.0,    0.0]
+  - [    0.5,    0.0,   -0.5,    0.0,    0.0,    0.0,    0.0]
+  - [   0.25,   0.25,   0.25,   0.25,    0.0,    0.0,    0.0]
+  - [    0.0,    0.0,    0.0,    0.0,    1.0,    0.0,    0.0]
+  - [  0.025,  0.025,  0.025,  0.025,    0.0,    1.0,    0.0]
+  - [    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0]
+
+
+# Motor controls are a linear combo
+# of the state and reference. U = Nr - Kx
+# states are defined by the estimator
+# [Vx, Vy, Omega, dPhi, dPsi, dGamma] -> [V1, V2, V3, V4, dP, dY, dG] (kee)
+velocity_control_law: # K
+#  least squares kinematic gains
+  - [ 0.0,    0.5,    0.5,    0.0,     0.0,    0.0]
+  - [ 0.5,    0.0,    0.5,    0.0,     0.0,    0.0]
+  - [ 0.0,   -0.5,    0.5,    0.0,     0.0,    0.0]
+  - [-0.5,    0.0,    0.5,    0.0,     0.0,    0.0]
+  - [ 0.0,    0.0,    0.0,    1.0,     0.0,    0.0]
+  - [ 0.0,    0.0,   -0.1,    0.0,     1.0,    0.0]
+  - [ 0.0,    0.0,    0.0,    0.0,     0.0,    1.0]
+
+  # lqr gains (possibly corrupted)
+  # - [ 0.0,    1.7913,    0.6344,    0.0000,    13.8756,    0.0000,    0.0000,    1.9644,    0.0000]
+  # - [ 1.7913,    0.0000,    0.6344,    0.0000,    13.8756,    0.0000,    0.0000,    1.9644,    0.0000]
+  # - [ 0.0000,   -1.7913,    0.6344,    0.0000,    13.8756,    0.0000,    0.0000,    1.9644,    0.0000]
+  # - [-1.7913,    0.0000,    0.6344,    0.0000,    13.8756,    0.0000,    0.0000,    1.9644,    0.0000]
+  # - [ 0.0000,    0.0000,    0.0000,   49.1896,     0.0000,    0.0000,   10.0399,    0.0000,    0.0000]
+  # - [ 0.0000,    0.0000,   -2.4317,    0.0000,    19.6056,    0.0000,    0.0000,    4.6826,    0.0000]
+  # - [ 0.0000,    0.0000,    0.0000,    0.0000,     0.0000,   49.1896,    0.0000,    0.0000,   10.0399]
+
+
+motor_control_gains:
+  - [ 0.0003,    0.0,  0.001]
+  - [ 0.0003,    0.0,  0.001]
+  - [ 0.0003,    0.0,  0.001]
+  - [ 0.0003,    0.0,  0.001]
+  - [    0.0,    0.0,    0.0]
+  - [    0.0,    0.0,    0.0]
+  - [    0.0,    0.0,    0.0]
+

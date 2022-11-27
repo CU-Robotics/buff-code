@@ -235,21 +235,23 @@ impl HidLayer {
     }
 
     pub fn init_comms(&mut self) {
-        self.teensy = self.hidapi.open(self.vid, self.pid);
+        if rosrust::is_ok() {
+            self.teensy = self.hidapi.open(self.vid, self.pid);
 
-        match &self.teensy {
-            Ok(_) => {
-                self.write();
-                println!("Teensy connected");
-                self.timestamp = Instant::now();
+            match &self.teensy {
+                Ok(_) => {
+                    self.write();
+                    println!("Teensy connected");
+                    self.timestamp = Instant::now();
 
-                let param_id = format!("/buffbot/HID_ACTIVE");
-                rosrust::param(&param_id).unwrap().set::<i32>(&1).unwrap();
-            }
-            _ => {
-                let param_id = format!("/buffbot/HID_ACTIVE");
-                rosrust::param(&param_id).unwrap().set::<i32>(&0).unwrap();
-                self.connection_repair();
+                    let param_id = format!("/buffbot/HID_ACTIVE");
+                    rosrust::param(&param_id).unwrap().set::<i32>(&1).unwrap();
+                }
+                _ => {
+                    let param_id = format!("/buffbot/HID_ACTIVE");
+                    rosrust::param(&param_id).unwrap().set::<i32>(&0).unwrap();
+                    self.connection_repair();
+                }
             }
         }
     }

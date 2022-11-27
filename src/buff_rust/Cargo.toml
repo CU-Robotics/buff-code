@@ -25,3 +25,7 @@ path = "src/locomotion/locomotion_node.rs"
 [[bin]]
 name = "device_node"
 path = "src/device_manager/device_node.rs"
+
+[[bin]]
+name = "estimator_node"
+path = "src/localization/estimator_node.rs"

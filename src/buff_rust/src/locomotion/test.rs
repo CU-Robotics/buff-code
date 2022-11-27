@@ -54,7 +54,7 @@ pub mod dead_control_tests {
     #[test]
     pub fn test_state_space() {
         let byu = BuffYamlUtil::new("penguin");
-        let k = byu.load_float_matrix("state_control_law");
+        let k = byu.load_float_matrix("velocity_control_law");
         let sc = StateController::new(k);
 
         // input
@@ -65,49 +65,49 @@ pub mod dead_control_tests {
 
         // Test Null
         assert_eq!(
-            sc.update(vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+            sc.update(vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
             vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             "Failed null test"
         );
 
         // Test x direction of chassis
         assert_eq!(
-            sc.update(vec![0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]),
-            vec![-1.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            sc.update(vec![1.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+            vec![0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0],
             "Failed X direction test"
         );
 
         // Test y direction of chassis
         assert_eq!(
-            sc.update(vec![0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]),
-            vec![0.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0],
+            sc.update(vec![0.0, 1.0, 0.0, 0.0, 0.0, 0.0]),
+            vec![1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0],
             "Failed Y direction test"
         );
 
         // Test rotation of chassis
         assert_eq!(
-            sc.update(vec![0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]),
-            vec![1.0, 1.0, 1.0, 1.0, -6.0, 0.0, 0.0],
+            sc.update(vec![0.0, 0.0, 1.0, 0.0, 0.0, 0.0]),
+            vec![1.0, 1.0, 1.0, 1.0, 0.0, -0.1, 0.0],
             "Failed Omega direction test"
         );
 
         // Test gimbal yaw
         assert_eq!(
-            sc.update(vec![0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]),
+            sc.update(vec![0.0, 0.0, 0.0, 1.0, 0.0, 0.0]),
             vec![0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
             "Failed yaw test"
         );
 
         // Test gimbal pitch
         assert_eq!(
-            sc.update(vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]),
+            sc.update(vec![0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]),
             vec![0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
             "Failed pitch test"
         );
 
         // Test shooter flag
         assert_eq!(
-            sc.update(vec![1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
+            sc.update(vec![0.0, 0.0, 0.0, 0.0, 0.0, 1.0]),
             vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
             "Failed gamma test"
         );

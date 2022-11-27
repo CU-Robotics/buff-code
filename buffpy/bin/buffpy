@@ -75,8 +75,8 @@ def clean_buffpy(clean):
 	project_root = os.getenv('PROJECT_ROOT')
 	data_path = os.path.join(project_root, 'data')
 	lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	cargo_config = os.path.join(project_root, 'buffpy', 'config', 'build', 'rust.yaml')
-	firmware_config = os.path.join(project_root, 'buffpy', 'config', 'build', 'firmware.yaml')
+	cargo_config = os.path.join(project_root, 'buffpy', 'data', 'build', 'rust.yaml')
+	firmware_config = os.path.join(project_root, 'buffpy', 'data', 'build', 'firmware.yaml')
 	
 	if not os.path.exists(firmware_config) and not os.path.exists(cargo_config):
 		print('No build specified exiting:...')
@@ -111,7 +111,7 @@ def load_build_config(build):
 
 	project_root = os.getenv('PROJECT_ROOT')
 	lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	config_path = os.path.join(project_root, 'buffpy', 'config')
+	config_path = os.path.join(project_root, 'buffpy', 'data')
 	base_config = os.path.join(config_path, 'build', f'{build}.yaml')
 	
 	if not os.path.exists(base_config):
@@ -176,7 +176,7 @@ def get_devices():
 		Load all registered devices from
 		robots.yaml
 	"""
-	robots = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'robots', 'robots.yaml')
+	robots = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'data', 'robots', 'robots.yaml')
 	if os.path.exists(robots):
 		with open(robots, 'r') as f:
 			return yaml.safe_load(f)
@@ -255,7 +255,7 @@ def load_install_params():
 	project_root = os.getenv('PROJECT_ROOT')
 	source = os.path.join(project_root, 'buffpy')
 	target = os.path.join('/home', 'cu-robotics', 'buff-code')
-	ID = os.path.join(project_root, 'buffpy', 'config', 'robots', 'self.yaml')
+	ID = os.path.join(project_root, 'buffpy', 'data', 'robots', 'self.yaml')
 
 	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
 		print("Workspace not built, run:\n\t \'buffpy --build <profile>\'")

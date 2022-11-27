@@ -25,9 +25,9 @@ pub mod byu_tests {
             byu.load_integer_matrix("motor_can_index"),
             vec![
                 vec![2, 1, 2],
-                vec![2, 1, 1],
                 vec![2, 0, 2],
-                vec![1, 0, 3],
+                vec![2, 1, 1],
+                vec![2, 0, 0],
                 vec![2, 2, 2],
                 vec![2, 2, 1],
                 vec![2, 0, 1]

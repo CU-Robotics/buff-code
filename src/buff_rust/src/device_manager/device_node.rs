@@ -1,4 +1,4 @@
-use buff_rust::device_manager::device::*;
+use buff_rust::device_manager::devices::*;
 use std::thread;
 
 fn main() {

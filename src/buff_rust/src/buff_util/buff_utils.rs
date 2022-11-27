@@ -20,7 +20,7 @@ impl BuffYamlUtil {
         let project_root = env::var("PROJECT_ROOT").expect("Project root not set");
 
         let yaml_path = format!(
-            "{}/buffpy/config/robots/{}/nodes.yaml",
+            "{}/buffpy/data/robots/{}/nodes.yaml",
             project_root, robot_name
         );
         let yaml_string = BuffYamlUtil::read_yaml_as_string(yaml_path.clone());
@@ -37,22 +37,15 @@ impl BuffYamlUtil {
             .get::<String>()
             .unwrap();
 
-        let project_root = env::var("PROJECT_ROOT").expect("Project root not set");
-
-        let yaml_path = format!(
-            "{}/buffpy/config/robots/{}/nodes.yaml",
-            project_root, robot_name
-        );
-        let yaml_string = BuffYamlUtil::read_yaml_as_string(yaml_path.clone());
-
-        BuffYamlUtil {
-            yaml_path: yaml_path,
-            yaml_data: YamlLoader::load_from_str(yaml_string.as_str()).unwrap()[0].clone(),
-        }
+        BuffYamlUtil::new(&robot_name.as_str())
     }
 
     pub fn load_string(&self, item: &str) -> String {
         self.yaml_data[item].as_str().unwrap().to_string()
+    }
+
+    pub fn load_u128(&self, item: &str) -> u128 {
+        self.yaml_data[item].as_i64().unwrap() as u128
     }
 
     pub fn load_string_list(&self, item: &str) -> Vec<String> {
@@ -94,5 +87,3 @@ impl BuffYamlUtil {
             .collect()
     }
 }
-
-

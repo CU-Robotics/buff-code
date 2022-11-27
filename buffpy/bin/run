@@ -1,32 +1,4 @@
 #! /usr/bin/env python3
-"""
-	Project: Odyssey Launch Platform
-	Author: Mitchell D Scott
-	Description:
-	  This is a python3 command line tool from CU Robotics.
-	Use this script to spawn systems. Systems are defined as
-	yaml files in buffpy/config/lib. A system consists of a 
-	setof ROS nodes and the topics that link them. A system may
-	also include data files (yaml) to configure nodes. Nodes
-	do not accept arguments, everything needs to be passed 
-	through the ROS-param server.
-
-	  The goal is to eliminate the overhead of using launch files.
-	This script is also designed to make the migration to ROS2 and
-	python3 as easy as possible (hope this happens soon). Another
-	benefit of this method is the ability to deploy the same source
-	to a variety of robots. All robots launch code the same way but
-	by importing different system yamls or data yamls the overall
-	systems can vary dramatically.
-
-	TODO:
-	  - Wait until the migration for major developments
-	  - Don't loop after starting processes, just wait for 
-	  	them to finish.
-
-	NOTES:
-		It's been awhile, I'll get back to you
-"""
 
 import os 
 import sys
@@ -36,42 +8,6 @@ import rospy
 import signal
 import roslaunch
 import subprocess as sb
-
-
-def overwrite_conf(a, b):
-	"""
-		Overwrite a parent yamls data
-		with the data of it's child
-		PARAMS:
-			a: dict (from pyyaml), the child
-			b: dict (from pyyaml), the parent
-		RETURNS:
-			b: dict, overwrite result
-	"""
-	for item in a:
-		# Handle lists
-		if type(a[item]) is list:
-			if not item in b:
-				b[item] = [] # initialize
-
-			if len(a[item]) == 0:
-				b[item] = []
-
-			else:
-				for n in a[item]:
-					b[item].append(n) # add item
-
-		elif type(a[item]) is dict: # recurse on dictionary
-			if item in b:
-				b[item] = overwrite_conf(a[item], b[item])
-
-			else:
-				b[item] = a[item]
-
-		else:	# insert string or number
-			b[item] = a[item]
-
-	return b
 
 def load_config(target_path):
 	"""
@@ -85,7 +21,7 @@ def load_config(target_path):
 			case 2: the parent updated with the child (dict)
 	"""
 	if not os.path.exists(target_path):
-		print('Could not find config: ...')
+		print(f'Could not find data dir {target_path}: ...')
 		return {}
 
 	with open(os.path.join(target_path, 'nodes.yaml'), 'r') as f:
@@ -100,11 +36,12 @@ def load_config(target_path):
 
 	# 	data = overwrite_conf(data, parentData)
 
-	data['self'] = target_path
+	if not data is None:
+		data['self'] = target_path
 
 	return data
 
-def parse_target(args, projectRoot):
+def parse_target(robot):
 	""" 
 		Get target_path and config if they exist, all
 		input checking debugging gets done here before launch
@@ -116,40 +53,25 @@ def parse_target(args, projectRoot):
 			target_args: args for a python script
 			config: config data (dict), config for a system
 	"""
+	projectRoot = os.getenv('PROJECT_ROOT')	# path to project root
+
 	config = None 
 	target_args = []
 	target_path = None
 
-	if len(args) > 1: 	# make sure theres at least 2 args
-		target = args[1]
+	target_path = os.path.join(projectRoot, 'buffpy', 'data', 'robots', robot)
 
-		# if target[-3:] == '.py':	# if arg1 is a python script set the target path
-		# 	print('Loading Python3 Script:...')
-		# 	config = 'python'		# so we know its python
-		# 	target_path = os.path.join(projectRoot, 'buffpy', 'lib', target)
-			
-		# 	if len(args) > 2:
-		# 		target_args = args[2:]
-		# 		print(f'Found args {target_args}')
+	config = load_config(target_path)	# None if no config
 
-		# if target[-5:] == '.yaml':	# if target is a yaml file set config
-			# print('Loading ROS System:...')
-		target_path = os.path.join(projectRoot, 'buffpy', 'config', 'robots', target)
+	if config is None:
+		print(f'No data in {target_path}')
 
-		config = load_config(target_path)	# None if no config
-
-		if config is None:
-			print(f'No config data in {target_path}')
-
-	if not os.path.exists(target_path):
-		print(f'Target path not found {target_path}')
-		return None, [], None
-
-	print(f'Targeting: {target_path}, {target_args}')
+	else:
+		print(f'Targeting: {target_path}')
 
 	return target_path, target_args, config
 
-def launch_system(target_path, nodes):
+def launch_system(robot, target_path, nodes):
 	"""
 		This wil launch all nodes and roscore. 
 		launches core process with subprocess.Popen 
@@ -165,13 +87,13 @@ def launch_system(target_path, nodes):
 	
 	args = []
 	pool = []
+	params = {}
 	respawn = []
-	commands = []	
+	commands = []
 	cmd = 'roscore'
 	core_process = None
 
 	project_root = os.getenv('PROJECT_ROOT')
-	data_path = os.path.join(project_root, 'buffpy', 'config', 'data')
 		
 	# Set nodes and package
 
@@ -183,6 +105,11 @@ def launch_system(target_path, nodes):
 
 	else:
 		namespace = '/buffbot'
+		params['robot_name'] = robot
+
+		command_string = f"rosrun xacro xacro {os.path.join(project_root, f'buffpy/data/robots/{robot}/buffbot.xacro')}"
+		robot_description = sb.check_output(command_string, shell=True, stderr=sb.STDOUT)
+		params['robot_description'] = robot_description.decode()
 
 		# launch core
 		core_process = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
@@ -190,67 +117,40 @@ def launch_system(target_path, nodes):
 		launch = roslaunch.scriptapi.ROSLaunch()
 		launch.start()
 
-		rospy.set_param(f'{namespace}', nodes)
+		rospy.set_param(f'{namespace}', params)
 
 		# load and launch each node in the config
 		for name in nodes:
 			node = nodes[name]
+			if isinstance(node, str) or isinstance(node, int):
+				continue
 
 			if 'package' in node:
 				package = node['package']
 			else:
 				package = 'buffpy'
 
-			# Not all packages handle our launch params
-			# if 'config' in node:
-			# 	if not node['config'] == 'None':
-			# 		config_path = os.path.join(data_path, node['config'])
-
-			# 		with open(config_path, 'r') as f:
-			# 			config_data = yaml.safe_load(f)
-
-			# 		if not config_data is None:
-			# 			node.update(config_data) # Add the yaml data to the roslaunch node
-						
-			# 	rospy.set_param(f'{namespace}/{name}', node)
-
 			if 'args' in node:
-				# can use args tag to send args to non-buffpy packages
-				is_opened = False
+				# can use args tag to send args to nodes
 				args = []
 				for arg in node['args']:
 
-					if '${' in arg:		# Need to pass env vars sometimes
-						s = ''
-						items = arg.split()
-						args.append(items[0])
+					# find any env vars
+					split1 = arg.split('{')
 
-						substr = ''
-						if '$' != items[1][0]:
-							substr += items[1][0]
+					n = len(split1) // 2
 
-						for i,c in enumerate(items[1][1:]):
-							if c == '{' and items[1][i] == '$':
-								is_opened = True
-								s += substr
-								substr = ''
+					if n == 0:
+						args.append(arg)
+						continue
 
-							elif c == '}' and is_opened:
-								s += os.getenv(substr)
-								substr = ''
-								is_opened = False
+					split = ''
 
-							elif is_opened:
-								substr += c
+					for i in range(n):
+						split2 = split1[(i * 2) + 1].split('}')
+						split += split1[2 * i][:-1] + os.getenv(split2[0]) + split2[1]
 
-							else:
-								s += c
-
-						args.append(s)
-
-					else:
-						args += arg.split()
-
+					args.append(split)
 
 			if 'required' in node:
 				required = node['required']
@@ -269,27 +169,7 @@ def launch_system(target_path, nodes):
 
 	return core_process, pool, respawn, commands
 
-def launch_python(target_path, target_args):
-	"""
-		Runs a python script It starts by building a 
-		cmd for the core process and then runs the 
-		command with subprocess.Popen 
-		PARAMS:
-			target_path: filepath, to python script
-			target_args: list of strings, args for the command (can be empty)
-		RETURNS:
-			core_process: subprocess obj, the core process
-			pool: empty list
-	"""
-
-	# run a single script without a config
-	cmd = ['python3', target_path] + target_args
-	print(f'Targeting:\n\t{cmd}')
-	core_process = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
-
-	return core_process
-
-def spin(config, target_path, target_args):
+def spin(robot, config, target_path, target_args):
 	"""
 		initialize the run and launch
 		loop and wait for user kill or core to finish
@@ -301,20 +181,16 @@ def spin(config, target_path, target_args):
 
 	# target path is essential for launching. If it is empty
 	# there was an error and the program should exit
-	if target_path is None:
+	if target_path is None or config is None:
 		print(f'Failed to load target: {target_path}')
 		exit(0)
 
+	pool = None
 	launch = None
 	core_process = None
 	# Try to catch user kill and other errors
 	try: 
-		print(f"config {config}")
-		if not config is None:
-			core_process, pool, respawn, commands = launch_system(target_path, config)
-		else:
-			print('Config Empty: Exiting...')
-			exit(0)
+		core_process, pool, respawn, commands = launch_system(robot, target_path, config)
 		# core_process is the core process we are trying to spawn (python script or roscore)
 		# if it fails there is no point in spinning
 		if core_process is None: 
@@ -333,7 +209,7 @@ def spin(config, target_path, target_args):
 
 			# restart processes with the respawn flag
 			if not pool is None:
-				for i,proc in enumerate(pool):
+				for i, proc in enumerate(pool):
 					if not proc.poll() is None and proc.returncode != 0 and respawn[i]:
 						print(f'{commands[i]} died: {proc.returncode}')
 						print(f'restarting {commands[i]}')
@@ -359,20 +235,16 @@ def main(args):
 		Launch all relevant pool.
 		See wiki for input usage
 	"""
-
-	# list of roslaunch pool, empty when running python
-	pool = []
-	config = None # Initialize config as None
-	launch = None
-	fileName = args[0]	# program file name is always the first arg
-	binPath = os.path.dirname(fileName) # path to buffpy/bin
-	projectRoot = os.getenv('PROJECT_ROOT')	# path to project root
+	if len(args) < 2:
+		robot = 'penguin'
+	else:
+		robot = args[1]
 
 	# parse the input 
-	target_path, target_args, config = parse_target(args, projectRoot)
+	target_path, target_args, config = parse_target(robot)
 
 	# spin till finished
-	spin(config, target_path, target_args) 
+	spin(robot, config, target_path, target_args) 
 
 	print('RUN finished')
 		

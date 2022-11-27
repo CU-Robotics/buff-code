@@ -25,26 +25,35 @@ pub mod hid_tests {
         let s1_message_count = Arc::new(RwLock::new(0.0f64));
         let s2_message_count = Arc::new(RwLock::new(0.0f64));
 
+        let can_message_sum = Arc::new(RwLock::new(0.0f64));
+        let s1_message_sum = Arc::new(RwLock::new(0.0f64));
+        let s2_message_sum = Arc::new(RwLock::new(0.0f64));
+
         env_logger::init();
 
         rosrust::init("buff_comms_functional_test");
 
         let can_msg_cnt = can_message_count.clone();
-        let can_sub = rosrust::subscribe("can_raw", 1, move |_msg: std_msgs::UInt8MultiArray| {
+        let can_msg_sum = can_message_sum.clone();
+        let can_sub = rosrust::subscribe("can_raw", 1, move |msg: std_msgs::UInt8MultiArray| {
             *can_msg_cnt.write().unwrap() += 1.0;
+            *can_msg_sum.write().unwrap() += msg.data.iter().map(|x| *x as f64).sum::<f64>();
         })
         .unwrap();
 
         let s1_msg_cnt = s1_message_count.clone();
-        let s1_sub =
-            rosrust::subscribe("mpu6050_raw", 1, move |_msg: std_msgs::UInt8MultiArray| {
-                *s1_msg_cnt.write().unwrap() += 1.0;
-            })
-            .unwrap();
+        let s1_msg_sum = s2_message_sum.clone();
+        let s1_sub = rosrust::subscribe("mpu6050_raw", 1, move |msg: std_msgs::UInt8MultiArray| {
+            *s1_msg_cnt.write().unwrap() += 1.0;
+            *s1_msg_sum.write().unwrap() += msg.data.iter().map(|x| *x as f64).sum::<f64>();
+        })
+        .unwrap();
 
-        let s2_msg_cnt = s1_message_count.clone();
-        let s2_sub = rosrust::subscribe("dr16_raw", 1, move |_msg: std_msgs::UInt8MultiArray| {
+        let s2_msg_cnt = s2_message_count.clone();
+        let s2_msg_sum = s2_message_sum.clone();
+        let s2_sub = rosrust::subscribe("dr16_raw", 1, move |msg: std_msgs::UInt8MultiArray| {
             *s2_msg_cnt.write().unwrap() += 1.0;
+            *s2_msg_sum.write().unwrap() += msg.data.iter().map(|x| *x as f64).sum::<f64>();
         })
         .unwrap();
 
@@ -67,29 +76,22 @@ pub mod hid_tests {
         drop(s2_sub);
 
         println!(
-            "Received {} can messages",
-            *can_message_count.read().unwrap()
-        );
-        println!(
-            "Received {} sensor1 messages",
-            *s1_message_count.read().unwrap()
-        );
-        println!(
-            "Received {} sensor2 messages",
-            *s2_message_count.read().unwrap()
-        );
-        println!("Topics:\ncan_raw\nsensor1\nsensor2");
-        println!(
             "Topic counts: {} {} {}",
-            *can_message_count.read().unwrap() / 10.0,
-            *s1_message_count.read().unwrap() / 10.0,
-            *s1_message_count.read().unwrap() / 10.0
+            *can_message_count.read().unwrap(),
+            *s1_message_count.read().unwrap(),
+            *s2_message_count.read().unwrap()
         );
         println!(
             "Topic rates (Hz): {} {} {}",
             *can_message_count.read().unwrap() / 10.0,
             *s1_message_count.read().unwrap() / 10.0,
-            *s1_message_count.read().unwrap() / 10.0
+            *s2_message_count.read().unwrap() / 10.0
         );
+        println!(
+            "Average value/message {} {} {}",
+            *can_message_sum.read().unwrap() / *can_message_count.read().unwrap(),
+            *s1_message_sum.read().unwrap() / *s1_message_count.read().unwrap(),
+            *s2_message_sum.read().unwrap() / *s2_message_count.read().unwrap()
+        )
     }
 }

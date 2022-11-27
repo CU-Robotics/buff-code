@@ -7,16 +7,14 @@ pub struct PidController {
         an update funtion that returns the lastest output.
     */
     pub gain: Vec<f64>,
-    pub acc_error: f64,
-    pub prev_error: f64,
+    pub err_hist: Vec<f64>,
 }
 
 impl PidController {
     pub fn new(gain: Vec<f64>) -> PidController {
         PidController {
             gain: gain,
-            acc_error: 0.0,
-            prev_error: 0.0,
+            err_hist: vec![],
         }
     }
 
@@ -29,11 +27,23 @@ impl PidController {
                 the dot product of [P, I, D] (gains) and [e, sum(e), de] (current derivitive and integral of error)
         */
 
-        self.acc_error += error;
+        let error_vec;
 
-        let error_vec = vec![error, self.acc_error, error - self.prev_error];
+        if self.err_hist.len() == 0 {
+            error_vec = vec![error, 0.0, 0.0];
+        } else {
+            error_vec = vec![
+                error,
+                self.err_hist.iter().sum::<f64>(),
+                error - self.err_hist.last().unwrap(),
+            ];
+        }
 
-        self.prev_error = error;
+        if self.err_hist.len() > 5 {
+            self.err_hist = self.err_hist[1..].to_vec();
+        }
+
+        self.err_hist.push(error);
 
         error_vec
             .iter()
@@ -46,19 +56,19 @@ impl PidController {
 pub struct CascadedPidController {
     pub rate: u128,
     pub timestamp: Instant,
-    pub v_reference: f64,
-    pub position_controller: PidController,
-    pub velocity_controller: PidController,
+    pub i_reference: f64,
+    pub outer_controller: PidController,
+    pub inner_controller: PidController,
 }
 
 impl CascadedPidController {
-    pub fn new(gains: Vec<f64>) -> CascadedPidController {
+    pub fn new(gains: Vec<f64>, rate: u128) -> CascadedPidController {
         CascadedPidController {
-            rate: 100,
+            rate: rate,
             timestamp: Instant::now(),
-            v_reference: 0.0,
-            position_controller: PidController::new(gains[..3].to_vec()),
-            velocity_controller: PidController::new(gains[3..].to_vec()),
+            i_reference: 0.0,
+            outer_controller: PidController::new(gains[..3].to_vec()),
+            inner_controller: PidController::new(gains[3..].to_vec()),
         }
     }
 
@@ -67,10 +77,10 @@ impl CascadedPidController {
         let micros = self.timestamp.elapsed().as_micros();
         if micros > 1e6 as u128 / self.rate {
             self.timestamp = Instant::now();
-            self.v_reference = self.position_controller.update(error);
+            self.i_reference = self.outer_controller.update(error);
         }
 
-        self.velocity_controller.update(self.v_reference - feedback)
+        self.inner_controller.update(self.i_reference - feedback)
     }
 }
 

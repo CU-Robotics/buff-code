@@ -20,9 +20,9 @@ pub mod dead_comms_test {
         hid_buf.put(123);
         hid_buf.put(234);
         // does put increment seek_ptr?
-        assert_eq!(hid_buf.seek_ptr, 2); 
+        assert_eq!(hid_buf.seek_ptr, 2);
         // does put actually put the data?
-        assert_eq!(hid_buf.data[0], 123); 
+        assert_eq!(hid_buf.data[0], 123);
         assert_eq!(hid_buf.data[1], 234);
 
         for _ in 0..62 {
@@ -64,7 +64,5 @@ pub mod dead_comms_test {
         assert_eq!(hid_buf.data, new_hid_buf.data);
         assert_eq!(hid_buf.update_flag, new_hid_buf.update_flag);
         assert_eq!(hid_buf.seek_ptr, new_hid_buf.seek_ptr);
-
-
     }
 }

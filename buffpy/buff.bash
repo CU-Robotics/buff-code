@@ -82,9 +82,19 @@ fi
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
 	export USER_IP= # Should find a way to get the users IP from the robot, ssh env variable?
-# else
+else
 	# if not on jetson set the user IP
 	# should figure out how to set it if it is on the jetson
 	# export USER_IP=$(/sbin/ip -o -4 addr list wlp3s0 | awk '{print $4}' | cut -d/ -f1) # Needs testing
 
+	alias bc="cd ${PROJECT_ROOT}"
+	alias br="cd ${PROJECT_ROOT}/src/buff_rust"
+	alias fw="cd ${PROJECT_ROOT}/src/firmware"
+	alias buildr="buffpy --build rust"
+	alias buildf="buffpy --build firmware"
+	alias builda="buffpy --build all"
+	alias tnsy-upload="buffpy --upload"
+	alias setup-live-tests="roscore & sleep 2 && rosparam set /buffbot/robot_name penguin"
+	alias buff-test="br && cargo test"
 fi
+
