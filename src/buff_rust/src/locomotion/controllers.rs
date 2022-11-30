@@ -34,7 +34,7 @@ impl PidController {
         } else {
             error_vec = vec![
                 error,
-                self.err_hist.iter().sum::<f64>(),
+                error + self.err_hist.iter().sum::<f64>(),
                 error - self.err_hist.last().unwrap(),
             ];
         }
