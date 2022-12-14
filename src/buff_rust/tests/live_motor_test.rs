@@ -19,7 +19,7 @@ pub mod live_step_tests {
 
     #[test]
     pub fn test_pid() {
-        let motor_id = 3;
+        let motor_id = 4;
 
         let timestamp = Instant::now();
         env_logger::init();
@@ -58,7 +58,7 @@ pub mod live_step_tests {
 
             ctr += 1;
             if ctr >= 200 {
-                speed[motor_id] = 7000.0; // += 5000.0 * (timestamp.elapsed().as_millis() as f64).sin(); //
+                speed[motor_id] = 2000.0; // += 5000.0 * (timestamp.elapsed().as_millis() as f64).sin(); //
                                           // speed[motor_id] %= 8000.0;
                 ctr = 0;
             }
