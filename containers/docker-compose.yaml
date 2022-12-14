@@ -5,7 +5,7 @@ services:
       context: ../
       dockerfile: containers/base/Dockerfile
       args:
-        IMAGE_NAME: nvcr.io/nvidia/l4t-base:r32.6.1
+        IMAGE_NAME: arm64v8/ubuntu
     network_mode: host
     volumes: 
       - ../:/home/cu-robotics/buff-code

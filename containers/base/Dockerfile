@@ -41,7 +41,7 @@ COPY . /home/cu-robotics/buff-code
 RUN cd /home/cu-robotics/buff-code && \
 	apt update && \
 	apt upgrade -y && \
-	xargs apt install -y --no-install-recommends <buffpy/config/install/dependencies.txt
+	xargs apt install -y --no-install-recommends <buffpy/data/install/dependencies.txt
 # #		htop=2.1.0-3 \
 # #		tmux=2.6-3ubuntu0.2 \
 # #		wget=1.19.4-1ubuntu2.2 \
@@ -57,11 +57,8 @@ RUN cd /home/cu-robotics/buff-code && \
 # #		openssh-client=1:7.6p1-4ubuntu0.7 \
 # #		openssh-server=1:7.6p1-4ubuntu0.7
 
-RUN curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py && \
-	python3 get-pip.py && \
-	rm get-pip.py && \
-	cd /home/cu-robotics/buff-code && \
-	pip3 install -r buffpy/config/install/python3_requirements.txt
+RUN cd /home/cu-robotics/buff-code && \
+	pip3 install -r buffpy/data/install/python3_requirements.txt
 
 
 # #
@@ -85,7 +82,7 @@ RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main"
 	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} python-rosdep \
 	ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins  ros-${ROS_DISTRO}-rqt-robot-plugins
 
-RUN cd /home/cu-robotics/buff-code && pip3 install -r buffpy/config/install/ros_python_requirements.txt
+RUN cd /home/cu-robotics/buff-code && pip3 install -r buffpy/data/install/ros_python_requirements.txt
 # #RUN pip3 install \
 # #		pyyaml==6.0 \
 # #		torch==1.9.0 \
