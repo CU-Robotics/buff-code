@@ -5,21 +5,27 @@ services:
       context: ../
       dockerfile: containers/base/Dockerfile
       args:
-        IMAGE_NAME: arm64v8/ubuntu
+        IMAGE_NAME: arm64v8/ubuntu:20.04
     network_mode: host
     volumes: 
       - ../:/home/cu-robotics/buff-code
     image: curobotics/buffbox:aarch64-base
+    user: cu-robotics
+
+    
   x86_64-base:
     build: 
       context: ../
       dockerfile: containers/base/Dockerfile
       args:
-        IMAGE_NAME: ubuntu:18.04
+        IMAGE_NAME: ubuntu:20.04
     network_mode: host
     volumes: 
       - ../:/home/cu-robotics/buff-code
     image: curobotics/buffbox:x86_64-base
+    user: cu-robotics
+
+
   aarch64-dev:
     build: 
       context: ../
@@ -33,6 +39,9 @@ services:
     environment: 
       - DISPLAY
     image: curobotics/buffbox:aarch64-dev
+    user: cu-robotics
+
+
   x86_64-dev:
     build:
       context: ../
@@ -46,15 +55,5 @@ services:
     environment: 
       - DISPLAY
     image: curobotics/buffbox:x86_64-dev
-  cross-build:
-    build:
-      context: ../
-      dockerfile: containers/dev/Dockerfile
-      args:
-        IMAGE_NAME: curobotics/buffbox:aarch64-dev
-    volumes: 
-      - ../:/home/cu-robotics/buff-code
-      - /tmp/.X11-unix
-    image: curobotics/buffbox:aarch64-dev
-    command: /home/cu-robotics/buff-code/buffpy/bin/buffpy --build rust
+    user: cu-robotics
 

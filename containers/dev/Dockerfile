@@ -9,6 +9,7 @@ ARG IMAGE_NAME
 FROM ${IMAGE_NAME}
 
 ENV PROJECT_ROOT=/home/cu-robotics/buff-code
+ENV DEBIAN_FRONTEND=noninteractive
 
 #
 # Add your code
@@ -17,17 +18,12 @@ ADD . /home/cu-robotics/buff-code
 
 
 #
-#	Clean APT/Cache
+# Build Buff-Code
 #
-RUN apt-get update && \
-	apt-get autoremove --purge -y && \
-	apt-get clean -y
 
-RUN python3 /home/cu-robotics/buff-code/buffpy/bin/buffpy --build all
-RUN chmod +x /home/cu-robotics/buff-code/buffpy/scripts/yolov5_setup.bash 
-RUN chmod +x /home/cu-robotics/buff-code/buffpy/scripts/openvino_setup.bash
-RUN /home/cu-robotics/buff-code/buffpy/scripts/yolov5_setup.bash 
-RUN /home/cu-robotics/buff-code/buffpy/scripts/openvino_setup.bash
+USER cu-robotics
+RUN /home/cu-robotics/buff-code/buffpy/buff.bash && \
+	python3 /home/cu-robotics/buff-code/buffpy/bin/buffpy --build all
 
 
 #
@@ -35,7 +31,6 @@ RUN /home/cu-robotics/buff-code/buffpy/scripts/openvino_setup.bash
 # not sure how to utilize the project_root variable
 # hard coding = bad, doesn't really matter tho
 
-RUN echo "source /home/cu-robotics/buff-code/buffpy/buff.bash" >> /root/.bashrc
 CMD ["bash"]
 ENTRYPOINT ["/home/cu-robotics/buff-code/buffpy/scripts/buff_entrypoint.sh"]
 WORKDIR /home/cu-robotics/buff-code
