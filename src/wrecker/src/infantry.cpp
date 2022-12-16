@@ -44,6 +44,8 @@ XDrive xDrive(&robot_config, &robot_state);
 flywheel fw_1;
 flywheel fw_2;
 
+int t0;
+
 void dump(){
   dump_Robot(&robot_config, &robot_state);
 }
@@ -57,6 +59,10 @@ void setup() {
   // Hardware setup
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
+
+  t0 = micros();
+  pinMode(29, OUTPUT);
+  digitalWrite(29, HIGH);
 
   can1.begin();
   can2.begin();
@@ -94,9 +100,9 @@ void setup() {
 
   // FR
   robot_config.swerveChassis.FR.cornerID = 0;
-  robot_config.swerveChassis.FR.steerMotorID = 4;
+  robot_config.swerveChassis.FR.steerMotorID = 0;
   robot_config.swerveChassis.FR.steerEncoderID = 1 + 1;
-  robot_config.swerveChassis.FR.driveMotorID = 4;
+  robot_config.swerveChassis.FR.driveMotorID = 6;
   robot_config.swerveChassis.FR.absolute_offset = 45;
   int fr_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
   for (int i = 0; i < 9; i++)
@@ -104,9 +110,9 @@ void setup() {
 
   // FL
   robot_config.swerveChassis.FL.cornerID = 1;
-  robot_config.swerveChassis.FL.steerMotorID = 3;
+  robot_config.swerveChassis.FL.steerMotorID = 0;
   robot_config.swerveChassis.FL.steerEncoderID = 1 + 2;
-  robot_config.swerveChassis.FL.driveMotorID = 1;
+  robot_config.swerveChassis.FL.driveMotorID = 4;
   robot_config.swerveChassis.FL.absolute_offset = -45;
   int fl_alignment[9] = {2, 42, 85, 125, 166, 206, 246, 288, 327};
   for (int i = 0; i < 9; i++)
@@ -142,8 +148,8 @@ void setup() {
   swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
   shooter.setup(&robot_config.shooter17, &robot_state);
 
-  fw_1.init(28);
-  fw_2.init(29);
+  //fw_1.init(28);
+  //fw_2.init(29);
 }
 
 
@@ -165,9 +171,12 @@ void loop() {
 
   // Update subsystems
   //gimbal.update(deltaT);
+  Serial.println();
+  Serial.print(t0);
+  Serial.print(", ");
   swerveChassis.update(deltaT);
-  shooter.update(deltaT);
-  xDrive.update(deltaT);
+  //shooter.update(deltaT);
+  //xDrive.update(deltaT);
 
 
 //58% power gave a high velocity of of 14.9 and a low of 12.9.
@@ -192,4 +201,3 @@ void loop() {
   
   lastTime = micros();
 }
-

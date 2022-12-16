@@ -116,6 +116,8 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
   }
 
   // Steer Velocity PID
+  //Serial.println(driveMotor.getRpm());
+
   config->steerPos.continuous = true;
   tmp_steerPos.R = inputAngle;
   PID_Filter(&config->steerPos, &tmp_steerPos, steerAngle, deltaTime); 
@@ -130,9 +132,31 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  moduleState->driveVel.R = -9500;//rampedSpeed * state->chassis.maxRpm;
+  float jsi = ((state->driverInput.rightStickX - 364) / 1320.0);
+  float stupid_ahh_angle = driveMotor.getAngle();
+  float new_angle;
+  stupid_ahh_angle > 168 ? new_angle = stupid_ahh_angle-160 : new_angle = stupid_ahh_angle+200;
+
+  tmp_steerPos.R = jsi*290+50;
+  config->steerPos.K[0] = 5;//30; // P = 5
+  config->steerPos.K[2] = 10;//1800; // D = 10
+  PID_Filter(&config->steerPos, &tmp_steerPos, new_angle, deltaTime);
+
+  moduleState->driveVel.R = 931.7;//((jsi * 2) - 1) * 9000;//tmp_steerPos.Y;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
+  Serial.print(micros());
+  Serial.print(", ");
+  Serial.print(driveMotor.getAngle());
+  Serial.print(", ");
+  Serial.print(driveMotor.getRpm());
+  Serial.print(", ");
+  Serial.print(moduleState->driveVel.Y);
+  Serial.print(", ");
+  //Serial.println(tmp_steerPos.R);
+  //driveMotor.updateMotor();
+
+  // 339    177-160
 
   // Set motor power
   if (calibrated) {

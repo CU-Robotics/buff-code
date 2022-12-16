@@ -127,12 +127,21 @@ void Shooter::update(unsigned long deltaTime) {
         //     jammed = false;
         // } else {
             //Serial.println(feedMotor.getRpm());
-            if (state->driverInput.s1 == 2) {
-                state->shooter17.feedPID.R = -200 * 36;
-            } else {
-                state->shooter17.feedPID.R = 0;
+            int rpm = 0;
+            if (state->driverInput.s1 == 1) {
+                rpm = 150;
+            } else if (state->driverInput.s1 == 3) {
+                rpm = 100;
             }
-        //     timer = 0;
+            if (state->driverInput.s2 == 3) {
+                if (rpm == 0) rpm = 50;
+                rpm += 17;
+            } else if (state->driverInput.s2 == 1) {
+                if (rpm == 0) rpm = 50;
+                rpm += 33;
+            }
+            state->shooter17.feedPID.R = -rpm * 36;
+            // state->shooter17.feedPID.R = -100 * 36;        //     timer = 0;
         // }
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
         this->feedMotor.setPower(state->shooter17.feedPID.Y);
@@ -140,6 +149,6 @@ void Shooter::update(unsigned long deltaTime) {
     } else if (state->robot == 7 && state->driverInput.s2 != 2) {
         this->feedMotor.setPower(0.0);     
     } else {
-        this->feedMotor.setPower(0.0); 
+        this->feedMotor.setPower(0.0);
     }
 }

@@ -13,10 +13,10 @@ XDrive::XDrive(C_Robot *r_config, S_Robot *r_state) {
   config = r_config;
   state = r_state;
   
-  this->driveMotors[0].init(3, 2);
-  this->driveMotors[1].init(7, 2);
-  this->driveMotors[2].init(1, 2);
-  this->driveMotors[3].init(6, 2);
+  this->driveMotors[0].init(6, 2); // FR
+  this->driveMotors[1].init(1, 2); // FL
+  this->driveMotors[2].init(7, 2); // BL
+  this->driveMotors[3].init(5, 2); // BR
 }
 
 void XDrive::update(float deltaTime) {
