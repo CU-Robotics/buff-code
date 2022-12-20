@@ -29,7 +29,7 @@ fi
 
 if [[ "${DOCKER}" == "False" ]]; then
 	alias spinup="cd ${PROJECT_ROOT}/containers && \
-		docker  compose run "
+		docker compose run "
 	
 else
 	export LC_ALL=C.UTF-8
