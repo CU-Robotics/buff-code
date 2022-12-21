@@ -48,7 +48,7 @@ CARGO_TARGET_DIR="${PROJECT_ROOT}/buffpy/lib"
 
 #		Setup python tools
 
-if [[ "${PATH}" != *"${PROJECT_ROOT}/buffpy/bin"* ]]; then
+if [[ "${PATH}" != *"${PROJECT_ROOT}/buffpy/scripts"* ]]; then
 	export PATH="${PROJECT_ROOT}/buffpy/scripts:${PATH}"
 fi 
 

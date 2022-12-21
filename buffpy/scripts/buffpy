@@ -368,10 +368,10 @@ def train_model(model):
 	build_buffpy('python3')
 	subprocess.run(['python3', 'buffpy/lib/trainer.py', model])
 
-def docker_build_and_push(image):
+def docker_build_and_push(path, image):
 	subprocess.run(f'cd {path} && \
-				docker compose build {build} && \
-				docker compose push {build}', shell=True)
+				docker compose build {image} && \
+				docker compose push {image}', shell=True)
 
 def dig(path):
 	compose_file = os.path.join(path, 'docker-compose.yaml')
@@ -380,11 +380,11 @@ def dig(path):
 
 	for build in compose_data['services']:
 		if 'base' in build:
-			docker_build_and_push(build)
+			docker_build_and_push(path, build)
 
 	for build in compose_data['services']:
 		if 'dev' in build:
-			docker_build_and_push(build)
+			docker_build_and_push(path, build)
 
 		
 			
