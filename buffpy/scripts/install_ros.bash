@@ -25,22 +25,9 @@ $SUDO apt update
 
 echo -e "\n\tInstalling ros-${ROS_DISTRO}-${ROS_PKG}\n"
 
-$SUDO apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin python-catkin-tools
-
-if [[ "${HOSTNAME}" != "edge"* ]]; then
-	$SUDO apt install -y --no-install-recommends ros-${ROS_DISTRO}-rqt-robot-plugins
-fi
+$SUDO apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin ros-${ROS_DISTRO}-xacro ros-${ROS_DISTRO}-rqt-robot-plugins python3-catkin-tools
 
 $SUDO apt update
-
-
-#
-# Install ROS dependencies
-#
-
-echo -e "\n\tInstalling ros dependencies\n"
-
-pip3 install -r ${PROJECT_ROOT}/buffpy/config/install/ros_python_requirements.txt
 
 
 #
@@ -51,7 +38,7 @@ if [[ "${HOSTNAME}" != "edge"* ]]; then
 	echo -e "\n\tSetting up rosdep\n"
 
 	$SUDO apt update
-	$SUDO apt install python-rosdep
+	$SUDO apt install python3-rosdep2
 	
 	cd /opt/ros/${ROS_DISTRO}
 
@@ -59,38 +46,7 @@ if [[ "${HOSTNAME}" != "edge"* ]]; then
 	rosdep update
 fi
 
-
-#
-#	Source buff.bash
-#
-
 $SUDO apt update 
-
-cd ${PROJECT_ROOT}
-
-echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
-
-source ${PROJECT_ROOT}/buffpy/buff.bash
-
-#
-# Install cv2 bridge for python3
-#
-
-# echo -e "\n\tCloning vision_opencv to ${HOME}/opencv_ws\n"
-
-# cd $HOME && mkdir opencv_ws && cd opencv_ws && \
-
-# git clone -b noetic https://github.com/ros-perception/vision_opencv.git src/vision_opencv && \
-
-# cd src/vision_opencv  && sed -i 's/python37/python3/g' cv_bridge/CMakeLists.txt && cd ../.. && catkin init && \
-
-# catkin config -DPYTHON_EXECUTABLE=/usr/bin/python3 -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m -DPYTHON_LIBRARY=/usr/lib/$(uname -m)-linux-gnu/libpython3.6m.so --install --extend /opt/ros/melodic && \
-
-# catkin build cv_bridge && $SUDO cp -r install/lib/python3/dist-packages/* /opt/ros/melodic/lib/python2.7/dist-packages/ && cd $HOME
-
-# if [[ -d ${HOME}/opencv_ws ]]; then
-# 	rm -rf ${HOME}/opencv_ws
-# fi
 
 #
 #	Return to project

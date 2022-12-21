@@ -7,17 +7,10 @@ export PROJECT_ROOT=${PWD}
 export HOSTNAME=$HOSTNAME 
 export SUDO='sudo'
 
-if [[ -f /proc/1/cgroup ]]; then
-	if grep -q docker /proc/1/cgroup; then 
-		SUDO=''
-		DOCKER=True
-		PROJECT_ROOT=/home/cu-robotics/buff-code
-	elif [[ "${HOSTNAME}" == "docker-desktop" ]]; then
-		SUDO=''
-		DOCKER=True
-		PROJECT_ROOT=/home/cu-robotics/buff-code
-
-	fi
+if [[ -f /.dockerenv ]]; then
+	SUDO=''
+	DOCKER=True
+	PROJECT_ROOT=/home/cu-robotics/buff-code
 fi
 
 if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
@@ -56,7 +49,7 @@ CARGO_TARGET_DIR="${PROJECT_ROOT}/buffpy/lib"
 #		Setup python tools
 
 if [[ "${PATH}" != *"${PROJECT_ROOT}/buffpy/bin"* ]]; then
-	export PATH="${PROJECT_ROOT}/buffpy/bin:${PATH}"
+	export PATH="${PROJECT_ROOT}/buffpy/scripts:${PATH}"
 fi 
 
 # if [[ "${PATH}" != *"/.local/bin:"* ]]; then

@@ -25,16 +25,22 @@ RUN useradd -ms /bin/bash cu-robotics
 # Install Dependencies
 #
 
+USER cu-robotics
+
 COPY . /home/cu-robotics/buff-code
-RUN chown -hR cu-robotics ${PROJECT_ROOT}
+# RUN chown -hR cu-robotics ${PROJECT_ROOT}
 
 #
 # Install Buffpy
 #
 
-RUN apt update && apt upgrade && \
+USER root
+
+RUN apt update && apt upgrade -y && \
 	xargs apt install -y --no-install-recommends <${PROJECT_ROOT}/buffpy/data/install/dependencies.txt && \
-	pip3 install -r ${PROJECT_ROOT}/buffpy/data/install/python3_requirements.txt
+	curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+	python3 get-pip.py && rm -rf get-pip.py && \
+	pip install -r ${PROJECT_ROOT}/buffpy/data/install/python3_requirements.txt
 
 #
 # Install ROS Noetic
@@ -43,10 +49,9 @@ RUN apt update && apt upgrade && \
 RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
 	curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
 	apt update && \
-	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin ros-${ROS_DISTRO}-xacro && \
-	apt update && xargs apt install -y --no-install-recommends <${PROJECT_ROOT}/buffpy/data/install/ros_dependencies.txt && \
-	apt update && apt install python3-rosdep && cd /opt/ros/${ROS_DISTRO} && rosdep init && \
-	rosdep update
+	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin ros-${ROS_DISTRO}-xacro ros-${ROS_DISTRO}-rqt-robot-plugins && \
+	apt update # && apt install -y python3-rosdep2 && cd /opt/ros/${ROS_DISTRO} && rosdep init && \
+#	rosdep update
 
 #
 # Install Rust
@@ -55,7 +60,7 @@ RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main"
 USER cu-robotics
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
 
-#
+# 
 # #	Clean apt
 #
 

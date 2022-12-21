@@ -49,7 +49,6 @@ $SUDO apt autoremove -y
 $SUDO apt clean
 $SUDO apt update
 
-
 #
 #	Check for ROS install (installs if none)
 #
@@ -64,12 +63,6 @@ $SUDO apt update
 
 
 #
-#	Also install Sublime Text-editor
-# Deprecated, IDE on edge devices/containers is slow
-# source "${PROJECT_ROOT}/buffpy/scripts/install_sublime.bash"
-
-
-#
 #	Install Utilities
 #
 
@@ -77,19 +70,11 @@ source ${PROJECT_ROOT}/buffpy/scripts/install_tytools.bash
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
 
-echo "source ${HOME}/.cargo/env" >> ~/.bashrc
-
-if [[ "${DOCKER}" == "False" ]]; then
-	source ${PROJECT_ROOT}/buffpy/scripts/install_docker.bash
-fi
-
 if [[ "${HOSTNAME}" == "edge"* ]]; then
-
 	$SUDO cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
-
-else 
+elif [[ "${DOCKER}" == "False" ]]; then
+	source ${PROJECT_ROOT}/buffpy/scripts/install_docker.bash
 	curl -sSL http://get.gazebosim.org | sh
-
 fi
 
 
