@@ -26,16 +26,13 @@ RUN useradd -ms /bin/bash cu-robotics
 #
 
 USER cu-robotics
-
 COPY . /home/cu-robotics/buff-code
-# RUN chown -hR cu-robotics ${PROJECT_ROOT}
 
 #
 # Install Buffpy
 #
 
 USER root
-
 RUN apt update && apt upgrade -y && \
 	xargs apt install -y --no-install-recommends <${PROJECT_ROOT}/buffpy/data/install/dependencies.txt && \
 	curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \

@@ -368,6 +368,11 @@ def train_model(model):
 	build_buffpy('python3')
 	subprocess.run(['python3', 'buffpy/lib/trainer.py', model])
 
+def docker_build_and_push(image):
+	subprocess.run(f'cd {path} && \
+				docker compose build {build} && \
+				docker compose push {build}', shell=True)
+
 def dig(path):
 	compose_file = os.path.join(path, 'docker-compose.yaml')
 	with open(compose_file, 'r')  as f:
@@ -375,15 +380,12 @@ def dig(path):
 
 	for build in compose_data['services']:
 		if 'base' in build:
-			subprocess.run(f'cd {path} && \
-				docker compose build {build}', shell=True)
-			subprocess.run(f"docker push {build}", shell=True)
+			docker_build_and_push(build)
 
 	for build in compose_data['services']:
 		if 'dev' in build:
-			subprocess.run(f'cd {path} && \
-				docker compose build {build}', shell=True)
-			subprocess.run(f"docker push {build}", shell=True)
+			docker_build_and_push(build)
+
 		
 			
 def parse_arguments():
@@ -411,9 +413,9 @@ def parse_arguments():
 		metavar='MODEL',
 		default='',
 		help='Trains a Yolov5 model locally')
-	parser.add_argument('--install', 
+	parser.add_argument('--deploy', 
 		action='store_true',
-		help='Installs build to the registered robots')
+		help='Deploys build to the registered robots')
 	parser.add_argument('--diagnostic', 
 		action='store_true',
 		help='Tests a workspace installation and tools')
@@ -453,8 +455,7 @@ def main(ap):
 	if ap.train:
 		train_model(ap.train)
 
-	if ap.install:
-		#build_buffpy('deploy')
+	if ap.deploy:
 		deploy_all_devices()
 
 	if ap.dig:
