@@ -142,6 +142,9 @@ def build_buffpy(build):
 	"""
 	project_root = os.getenv('PROJECT_ROOT')
 	lib_path = os.path.join(project_root, 'buffpy', 'lib')
+
+	if not os.path.exists(lib_path):
+		os.mkdir(lib_path)
 	
 	data = load_build_config(build)
 	

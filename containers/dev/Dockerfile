@@ -14,6 +14,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 #
 # Add your code
 #
+
 ADD . /home/cu-robotics/buff-code
 
 
@@ -21,15 +22,14 @@ ADD . /home/cu-robotics/buff-code
 # Build Buff-Code
 #
 
-USER cu-robotics
 RUN /home/cu-robotics/buff-code/buffpy/buff.bash && \
-	python3 /home/cu-robotics/buff-code/buffpy/bin/buffpy --build all
+	python3 /home/cu-robotics/buff-code/buffpy/scripts/buffpy --build all
 
 
 #
 # Set up the environment
-# not sure how to utilize the project_root variable
-# hard coding = bad, doesn't really matter tho
+# 
+
 
 CMD ["bash"]
 ENTRYPOINT ["/home/cu-robotics/buff-code/buffpy/scripts/buff_entrypoint.sh"]
