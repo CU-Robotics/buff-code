@@ -44,6 +44,10 @@ impl BuffYamlUtil {
         self.yaml_data[item].as_str().unwrap().to_string()
     }
 
+    pub fn load_u16(&self, item: &str) -> u16 {
+        self.yaml_data[item].as_i64().unwrap() as u16
+    }
+
     pub fn load_u128(&self, item: &str) -> u128 {
         self.yaml_data[item].as_i64().unwrap() as u128
     }

@@ -4,8 +4,8 @@ use std::{
     time::Instant,
 };
 
-use crate::buff_util::buff_utils::*;
 use crate::locomotion::controllers::*;
+use crate::utilities::loaders::*;
 
 pub struct BuffLocomotion {
     /*

@@ -10,8 +10,6 @@ services:
     volumes: 
       - ../:/home/cu-robotics/buff-code
     image: curobotics/buffbox:aarch64-base
-
-
     
   x86_64-base:
     build: 
@@ -23,8 +21,6 @@ services:
     volumes: 
       - ../:/home/cu-robotics/buff-code
     image: curobotics/buffbox:x86_64-base
-
-
 
   aarch64-dev:
     build: 
@@ -39,8 +35,6 @@ services:
     environment: 
       - DISPLAY
     image: curobotics/buffbox:aarch64-dev
-
-
 
   x86_64-dev:
     build:

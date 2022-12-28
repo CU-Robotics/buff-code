@@ -1,8 +1,8 @@
 extern crate hidapi;
 
-use hidapi::{HidApi, HidDevice, HidError};
 // use rosrust::ros_info;
-use crate::buff_util::buff_utils::*;
+use crate::utilities::{buffers::*, loaders::*};
+use hidapi::{HidApi, HidDevice, HidError};
 use rosrust_msg::std_msgs;
 use std::{
     sync::{Arc, RwLock},
@@ -10,134 +10,74 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub struct HidBuffer {
-    pub data: [u8; 64],
-    pub seek_ptr: usize,
-    pub update_flag: bool,
-    pub timestamp: Instant,
-}
-
-impl HidBuffer {
-    pub fn new() -> HidBuffer {
-        HidBuffer {
-            data: [0; 64],
-            seek_ptr: 0,
-            update_flag: false,
-            timestamp: Instant::now(),
-        }
-    }
-
-    pub fn seek(&mut self, set: Option<usize>) -> u8 {
-        self.seek_ptr = set.unwrap_or(self.seek_ptr);
-        let tmp = self.data[self.seek_ptr];
-
-        if self.seek_ptr >= 63 {
-            self.seek_ptr = 0;
-        } else {
-            self.seek_ptr += 1;
-        }
-
-        tmp
-    }
-
-    pub fn put(&mut self, value: u8) {
-        self.data[self.seek_ptr] = value;
-        if self.seek_ptr < 63 {
-            self.seek_ptr += 1;
-        } else {
-            self.seek_ptr = 0;
-        }
-    }
-
-    pub fn puts(&mut self, data: Vec<u8>) {
-        for d in data {
-            self.put(d);
-        }
-    }
-
-    pub fn check_of(&self, n: usize) -> bool {
-        if 64 - self.seek_ptr >= n {
-            return false;
-        }
-        true
-    }
-
-    pub fn reset(&mut self) {
-        self.data = [0u8; 64];
-        self.seek_ptr = 0;
-        self.update_flag = false;
-        self.timestamp = Instant::now();
-    }
-
-    pub fn print_buffer(&self) {
-        let mut data_string: String = String::new();
-
-        let mut i = 0;
-
-        for u in self.data {
-            data_string.push_str(&(u.to_string() + "\t"));
-
-            if (i + 1) % 16 == 0 && i != 0 {
-                data_string.push_str("\n");
-            }
-            i += 1;
-        }
-        data_string.push_str("\n==========\n");
-        println!("{}", data_string);
-    }
-}
-
+/// A Handler for HID teensys
+/// Usage:
+/// '''
+///     let layer = HidLayer::new();
+///     layer.spin();
+/// '''
 pub struct HidLayer {
     pub hidapi: HidApi,
     pub vid: u16,
     pub pid: u16,
     pub nc_timeout: u128,
-    pub input: HidBuffer,
-    pub output: HidBuffer,
+    pub input: ByteBuffer,
+    pub output: ByteBuffer,
     pub teensy: Result<HidDevice, HidError>,
-    pub output_queue: Arc<RwLock<HidBuffer>>,
+    pub output_queue: Arc<RwLock<ByteBuffer>>,
     pub subscriber: rosrust::Subscriber,
-    pub publishers: Vec<rosrust::Publisher<std_msgs::UInt8MultiArray>>,
+    pub publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub timestamp: Instant,
 }
 
 impl HidLayer {
+    /// Create a new HidLayer object
+    /// Usage:
+    /// '''
+    ///     use crate::teensy_comms::HidLayer;
+    ///     let layer = HidLayer::new();
+    /// '''
     pub fn new() -> HidLayer {
-        let output_buffer = Arc::new(RwLock::new(HidBuffer::new()));
+        // Create a buffer to catch outgoing data
+        let output_buffer = Arc::new(RwLock::new(ByteBuffer::new(64)));
 
-        let buffer = Arc::clone(&output_buffer);
-        let can_topic = "can_output";
+        // Clone the output buffer
+        let output_buffer_clone = Arc::clone(&output_buffer);
 
-        let can_sub = rosrust::subscribe(&can_topic, 1, move |msg: std_msgs::UInt8MultiArray| {
-            let mut w = buffer.write().unwrap();
-            w.seek_ptr = 0;
-            msg.data.iter().for_each(|c| {
-                w.put(*c);
-            });
-        })
+        // Create a subscriber to the motor_commands ROS topic.
+        let can_sub = rosrust::subscribe(
+            "motor_commands",
+            1,
+            move |mut msg: std_msgs::Float64MultiArray| {
+                let mut w = output_buffer_clone.write().unwrap();
+                msg.data
+                    .iter_mut()
+                    .enumerate()
+                    .for_each(|(i, x)| w.puts(1 + i, x.to_be_bytes().to_vec()));
+            },
+        )
         .unwrap();
 
         let byu = BuffYamlUtil::default();
         let sensors = byu.load_string_list("sensor_index");
 
-        let mut pubs: Vec<rosrust::Publisher<std_msgs::UInt8MultiArray>> = sensors
+        let mut pubs: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>> = sensors
             .iter()
-            .map(|s| rosrust::publish(format!("{}_raw", s).as_str(), 1).unwrap())
+            .map(|s| rosrust::publish(s, 1).unwrap())
             .collect();
 
-        pubs.splice(0..0, rosrust::publish("can_raw", 1));
+        pubs.splice(0..0, rosrust::publish("motor_feedback", 1));
 
         let api = HidApi::new().expect("Failed to create API instance");
-        let teensy = api.open(0x0000, 0x0000);
 
         HidLayer {
             hidapi: api,
             nc_timeout: 8000,
-            vid: 0x16C0,
-            pid: 0x0486,
-            teensy: teensy,
-            input: HidBuffer::new(),
-            output: HidBuffer::new(),
+            vid: byu.load_u16("teensy_vid"),
+            pid: byu.load_u16("teensy_pid"),
+            teensy: Err(hidapi::HidError::InitializationError),
+            input: ByteBuffer::new(64),
+            output: ByteBuffer::new(64),
             output_queue: output_buffer,
             subscriber: can_sub,
             publishers: pubs,
@@ -145,62 +85,54 @@ impl HidLayer {
         }
     }
 
+    /// Reset the HidLayer object
+    /// Usage:
+    /// '''
+    ///     hidlayer.reset(); // clears the current layers data
+    /// '''
     pub fn reset(&mut self) {
         self.input.reset();
         self.output.reset();
         self.output_queue.write().unwrap().reset();
     }
 
-    pub fn read_bytes(&mut self, n_bytes: u8) -> Vec<u8> {
-        vec![0u8; n_bytes as usize]
-            .iter()
-            .map(|_| self.input.seek(None))
-            .collect()
-    }
-
+    /// Parse the stored HID packet into ROS topics
+    /// Usage:
+    /// '''
+    ///     // HID packet waiting
+    ///     layer.dev.read(layer.input.data);
+    ///     layer.parse_hid(64);
+    /// '''
     pub fn parse_hid(&mut self, n: usize) {
         if n == 0 {
             return;
         }
 
-        self.input.seek_ptr = 0;
-
-        {
-            let mut msg = std_msgs::UInt8MultiArray::default();
-            msg.data = self.read_bytes(33);
-            self.publishers[0].send(msg).unwrap();
+        // match the report number to determine the structure
+        match self.input.get(0) {
+            0 => {}
+            1 => {}
+            2 => {}
+            3 => {}
+            u8::MAX => {}
+            _ => {}
         }
-
-        {
-            self.input.seek_ptr = 34;
-
-            let sensor_id = self.input.seek(None);
-
-            if sensor_id == 0 {
-                self.input.reset();
-                return;
-            }
-
-            let mut msg = std_msgs::UInt8MultiArray::default();
-            msg.data = self.read_bytes(24);
-
-            self.publishers[sensor_id as usize].send(msg).unwrap();
-        }
-
-        self.input.reset();
     }
 
+    /// Read an HID packet and handle the result
+    /// Usage:
+    /// '''
+    ///     // Devices sends a report
+    ///     layer.read();
+    /// '''
     pub fn read(&mut self) {
-        let mut n = 0;
-
         match &self.teensy {
             Ok(dev) => match dev.read(&mut self.input.data) {
                 Ok(value) => {
-                    n = value;
                     self.input.timestamp = Instant::now();
+                    self.parse_hid(value);
                 }
                 _ => {
-                    n = 0;
                     self.connection_repair();
                 }
             },
@@ -208,14 +140,19 @@ impl HidLayer {
         }
 
         // self.input.print_buffer();
-        self.parse_hid(n);
     }
 
+    /// Write an HID packet from the output queue and handle the result
+    /// Usage:
+    /// '''
+    ///     // output queue becomes ready
+    ///     layer.write();
+    /// '''
     pub fn write(&mut self) {
         self.output.reset();
         {
             let mut queue = self.output_queue.write().unwrap();
-            self.output.data = queue.data;
+            self.output.data.copy_from_slice(&queue.data);
             queue.reset();
         }
 
@@ -234,6 +171,11 @@ impl HidLayer {
         self.output.reset();
     }
 
+    /// Initialize the connection to a teensy
+    /// Usage:
+    /// '''
+    ///     layer.init_comms();
+    /// '''
     pub fn init_comms(&mut self) {
         if rosrust::is_ok() {
             self.teensy = self.hidapi.open(self.vid, self.pid);
@@ -256,6 +198,12 @@ impl HidLayer {
         }
     }
 
+    /// Attempt to repair connection to a teensy
+    /// Usage:
+    /// '''
+    ///     // teensy throws an HidError or HidApiError
+    ///     layer.connection_repair();
+    /// '''
     pub fn connection_repair(&mut self) {
         drop(&self.teensy);
         // if prgram counter is more than timeout, don't try to
@@ -267,6 +215,11 @@ impl HidLayer {
         }
     }
 
+    /// Main function to spin and connect the teensy to ROS
+    /// Usage:
+    /// '''
+    ///     layer.init_comms();
+    /// '''
     pub fn spin(&mut self) {
         self.init_comms();
 

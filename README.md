@@ -1,4 +1,4 @@
-![alt text](https://github.com/CU-Robotics/buff-code/blob/master/buffcode-card.png?raw=true)
+![alt text](https://github.com/CU-Robotics/buff-code/blob/master/title-card.png?raw=true)
 
 ### CU Robotics' Code Repository
 

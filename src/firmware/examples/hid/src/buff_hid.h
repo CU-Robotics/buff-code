@@ -4,25 +4,23 @@
 #ifndef BUFFHID_H
 #define BUFFHID_H
 
+#define HID_PACKET_SIZE_BYTES 64
 
 struct HID_Packet {
-  byte data[64];
+	byte data[HID_PACKET_SIZE_BYTES];
+
+	void clear();
+	void print_packet();
+
+	int8_t read();
+	int8_t write();
+
+	// Getters/Setters
+	byte get(int);
+	void put(int, byte);
+
+	void rgets(byte*, int, int);
+	void rputs(byte*, int, int);
 };
-
-int8_t write_HID(HID_Packet*); // writes HID packet
-int8_t read_HID(HID_Packet*); // read HID packet
-
-void set_report_id(HID_Packet*, uint8_t);
-int get_report_id(HID_Packet* hid);
-
-void set_device_output(HID_Packet*, byte*, int, int);
-void get_device_input(HID_Packet*, byte*, int, int);
-
-void set_can_output(HID_Packet*, CAN_message_t*);
-int get_can_input(HID_Packet*, CAN_message_t*);
-
-void parse_can1_output(HID_Packet*, CAN_message_t*);
-void parse_can2_output(HID_Packet*, CAN_message_t*);
-
 
 #endif

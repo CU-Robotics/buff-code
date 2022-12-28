@@ -18,7 +18,7 @@ cd "${PROJECT_ROOT}/.."
 
 $SUDO apt -y install build-essential cmake libudev-dev qtbase5-dev pkg-config
 
-wget https://github.com/Koromix/tytools/archive/refs/tags/v0.9.7.tar.gz
+wget https://github.com/Koromix/tytools/archive/refs/tags/v0.9.8.tar.gz
 
 tar -xf v0.9.7.tar.gz
 

@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rand = "0.8.5"
 rosrust = "0.9"
 hidapi = "2.0.2"
-urdf-rs = "0.6.5"
 yaml-rust = "0.4"
 nalgebra = "0.31.1"
 rosrust_msg = "0.1"

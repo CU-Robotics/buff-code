@@ -1,6 +1,6 @@
 #![allow(unused_imports)]
-use crate::buff_util::buff_utils::*;
 use crate::locomotion::controllers::*;
+use crate::utilities::loaders::*;
 
 #[cfg(test)]
 pub mod dead_control_tests {

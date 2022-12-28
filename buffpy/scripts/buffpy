@@ -426,7 +426,7 @@ def parse_arguments():
 		action='store_true',
 		help='Initializes registered devices')
 	parser.add_argument('--upload', 
-		action='store_true',
+		default='',
 		help='Uploads firmware with PIO')
 	parser.add_argument('--dig', 
 		action='store_true',
@@ -467,6 +467,11 @@ def main(ap):
 
 	if ap.upload:
 		path = os.path.join(os.getenv('PROJECT_ROOT'), 'src', 'firmware')
+		ext_path = os.path.join(path, 'examples', ap.upload)
+
+		if os.path.exists(ext_path):
+			path = ext_path
+
 		result = subprocess.run(f'cd {path} && pio run -t upload', shell=True)
 
 	if ap.botPull:

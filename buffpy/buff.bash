@@ -44,7 +44,9 @@ fi
 
 #		setup Cargo tools
 
-CARGO_TARGET_DIR="${PROJECT_ROOT}/buffpy/lib"
+if [[ "${PATH}" != *"/.cargo"*  && -f ${HOME}/.cargo/env ]]; then
+	source ${HOME}/.cargo/env
+fi
 
 #		Setup python tools
 
