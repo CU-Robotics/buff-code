@@ -7,8 +7,6 @@ services:
       args:
         IMAGE_NAME: arm64v8/ubuntu:20.04
     network_mode: host
-    volumes: 
-      - ../:/home/cu-robotics/buff-code
     image: curobotics/buffbox:aarch64-base
     
   x86_64-base:
@@ -18,8 +16,6 @@ services:
       args:
         IMAGE_NAME: ubuntu:20.04
     network_mode: host
-    volumes: 
-      - ../:/home/cu-robotics/buff-code
     image: curobotics/buffbox:x86_64-base
 
   aarch64-dev:

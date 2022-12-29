@@ -26,7 +26,7 @@ RUN useradd -ms /bin/bash cu-robotics
 #
 
 # USER cu-robotics
-COPY . /home/cu-robotics/buff-code
+COPY buffpy/ /home/cu-robotics/buff-code/buffpy
 
 #
 # Install Buffpy

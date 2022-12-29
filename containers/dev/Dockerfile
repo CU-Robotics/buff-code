@@ -15,7 +15,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Add your code
 #
 
-ADD . /home/cu-robotics/buff-code
+COPY src /home/cu-robotics/buff-code/src
 
 
 #
@@ -23,7 +23,8 @@ ADD . /home/cu-robotics/buff-code
 #
 
 RUN /home/cu-robotics/buff-code/buffpy/buff.bash && \
-	python3 /home/cu-robotics/buff-code/buffpy/scripts/buffpy --build all
+	python3 /home/cu-robotics/buff-code/buffpy/scripts/buffpy --build all && \
+	rm -rf /home/cu-robotics/buff-code/src
 
 
 #

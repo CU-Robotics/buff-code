@@ -100,11 +100,7 @@ impl ByteBuffer {
 
     pub fn validate_index(&self, idx: usize) {
         if idx >= self.data.len() {
-            panic!(
-                "Invalid index for operation {} < {}",
-                idx,
-                self.data.len()
-            );
+            panic!("Invalid index for operation {} < {}", idx, self.data.len());
         }
     }
 
@@ -158,7 +154,7 @@ impl ByteBuffer {
         */
         let mut data_string: String = String::new();
 
-        self.data.iter().enumerate().for_each(|(i,u)| {
+        self.data.iter().enumerate().for_each(|(i, u)| {
             data_string.push_str(&(u.to_string() + "\t"));
 
             if (i + 1) % 16 == 0 && i != 0 {
@@ -166,7 +162,7 @@ impl ByteBuffer {
             }
         });
 
-        data_string.push_str("\n==========\n");
+        data_string.push_str("\n==========\n\n");
         println!("{}", data_string);
     }
 }
