@@ -11,8 +11,8 @@ pub struct BuffYamlUtil {
 }
 
 impl BuffYamlUtil {
-    pub fn read_yaml_as_string(yaml_path: String) -> String {
-        fs::read_to_string(yaml_path.clone()).expect(format!("No config in {}", yaml_path).as_str())
+    pub fn read_yaml_as_string(yaml_path: &str) -> String {
+        fs::read_to_string(yaml_path).expect(format!("No config in {}", yaml_path).as_str())
     }
 
     pub fn new(bot_name: &str) -> BuffYamlUtil {
@@ -23,7 +23,25 @@ impl BuffYamlUtil {
             "{}/buffpy/data/robots/{}/nodes.yaml",
             project_root, robot_name
         );
-        let yaml_string = BuffYamlUtil::read_yaml_as_string(yaml_path.clone());
+        let yaml_string = BuffYamlUtil::read_yaml_as_string(yaml_path.as_str());
+
+        BuffYamlUtil {
+            yaml_path: yaml_path,
+            yaml_data: YamlLoader::load_from_str(yaml_string.as_str()).unwrap()[0].clone(),
+        }
+    }
+
+    pub fn from_self() -> BuffYamlUtil {
+        let project_root = env::var("PROJECT_ROOT").expect("Project root not set");
+        let self_path = format!("{}/buffpy/data/robots/self", project_root);
+        let robot_name = fs::read_to_string(self_path).unwrap();
+
+        let yaml_path = format!(
+            "{}/buffpy/data/robots/{}/nodes.yaml",
+            project_root, robot_name
+        );
+
+        let yaml_string = BuffYamlUtil::read_yaml_as_string(yaml_path.as_str());
 
         BuffYamlUtil {
             yaml_path: yaml_path,

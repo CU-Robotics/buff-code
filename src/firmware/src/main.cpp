@@ -1,103 +1,70 @@
 #include <Arduino.h>
-#include <FlexCAN_T4.h>
 
-#include "buff_hid.h"
-#include "buff_can.h"
-#include "mpu6050.h"
-#include "dr16.h"
+#include "buff_cpp/blink.h"
+#include "buff_cpp/timing.h"
 
-//		Timing variables
-unsigned long top_time;
-unsigned long cycle_time = 1000;
+#include "sensors/dr16.h"
+#include "sensors/lsm6dsox.h"
+#include "robot_comms/hid_report.h"
+#include "robot_comms/hid_parser.h"
+#include "motor_drivers/rm_can_interface.h"
 
+#define CYCLE_TIME_US 1000
+#define CYCLE_TIME_MS CYCLE_TIME_US / 1000
+#define DEVICE_READ_RATE 1000
 
-HID_Packet input;
-HID_Packet output;
+Device_Manager device_manager;
 
-MPU6050 imu;
-DR16 receiver;
+// void sensor_read() {
+//   if (DURATION_US(device_timer, ARM_DWT_CYCCNT) >= DEVICE_READ_RATE) {
+//     switch (device_switch) {
+//       case 0:
+//         imu.read_lsm6dsox_accel();
+//         device_switch += 1;
+//         break;
 
-BuffCan buffcan;
+//       case 1:
+//         imu.read_lsm6dsox_gyro();
+//         device_switch += 1;
+//         break;
 
-int bus_switch = 0;
+//       case 2:
+//         imu.read_lis3mdl();
+//         device_switch += 1;
+//         break;
+
+//       case 3:
+//         receiver.read();
+//         device_switch = 0;
+//         break;
+//     }
+//   }
+// }
 
 // Runs once
 void setup() {
-	Serial.begin(1000000);
 
-	if (Serial)
-		Serial.println("-- TEENSY SERIAL START --");
+  // #ifdef USB_RAWHID
 
- 	// Hardware setup
-	pinMode(LED_BUILTIN, OUTPUT);
-	digitalWrite(LED_BUILTIN, HIGH);
+  Serial.begin(1000000);
 
-    read_HID(&input);
-}
+  if (Serial)
+    Serial.println("-- TEENSY SERIAL START --");
 
-void blink(){
-	static bool status = false;
-	static unsigned long t = millis();
+  // #endif
 
-	if (millis() - t > 250){
-		status = !status;
-		t = millis();
-	}
-
-	digitalWrite(LED_BUILTIN, status);
-
-}
-
-
-void handle1(){ // double readig messages makes for better syncing ???
-
-	buffcan.read_can1(output.data);
-	// imu.read(output.data);
-}
-
-void handle2(){
-	buffcan.read_can2(output.data);
-  	receiver.read(output.data, 34);  	
+  setup_blink();  
 }
 
 // Runs continuously
 void loop() {
-	top_time = micros();
 
-	if (read_HID(&input) > 0) {
-		get_can_input(&input, buffcan.input[get_can_id(&input) - 1]);
-		buffcan.write();
+  timer_set(1);
 
-		switch (bus_switch){
-			case 0:
-				handle1();
-				bus_switch = 1;
-				break;
+  // handle any hid input output
+  // device_manager.read_sensor();
+  // device_manager.push_can();
+  // device_manager.check_hid();
 
-			case 1:
-				handle2();
-				bus_switch = 0;
-				break;
-
-			default:
-				break;
-		}
-
-		write_HID(&output);
-		blink();
-		clear(&input);
-		clear(&output);
-
-	}
-	else{
-		buffcan.zero_can();
-		buffcan.write();
-	}
-	
-	
-	if (micros() - top_time > cycle_time) {
-		Serial.print("Teensy Overtime ");
-		Serial.println(micros() - top_time);
-	}
-	while (micros() - top_time < cycle_time){}
+  timer_wait_us(1, CYCLE_TIME_US)
 }

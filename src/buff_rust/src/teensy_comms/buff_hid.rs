@@ -1,9 +1,8 @@
 extern crate hidapi;
 
 // use rosrust::ros_info;
-use crate::utilities::{buffers::*, loaders::*};
+use crate::utilities::{buffers::*, data_structures::*, loaders::*};
 use hidapi::{HidApi, HidDevice, HidError};
-use rosrust_msg::std_msgs;
 use std::{
     sync::{Arc, RwLock},
     thread::sleep,
@@ -25,8 +24,9 @@ pub struct HidLayer {
     pub output: ByteBuffer,
     pub teensy: Result<HidDevice, HidError>,
     pub output_queue: Arc<RwLock<ByteBuffer>>,
-    pub subscriber: rosrust::Subscriber,
-    pub publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub robot_report: BuffBotStatusReport,
+    // pub subscriber: rosrust::Subscriber,
+    // pub publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub timestamp: Instant,
 }
 
@@ -42,31 +42,31 @@ impl HidLayer {
         let output_buffer = Arc::new(RwLock::new(ByteBuffer::new(64)));
 
         // Clone the output buffer
-        let output_buffer_clone = Arc::clone(&output_buffer);
+        // let output_buffer_clone = Arc::clone(&output_buffer);
 
         // Create a subscriber to the motor_commands ROS topic.
-        let can_sub = rosrust::subscribe(
-            "motor_commands",
-            1,
-            move |mut msg: std_msgs::Float64MultiArray| {
-                let mut w = output_buffer_clone.write().unwrap();
-                msg.data
-                    .iter_mut()
-                    .enumerate()
-                    .for_each(|(i, x)| w.puts(1 + i, x.to_be_bytes().to_vec()));
-            },
-        )
-        .unwrap();
+        // let can_sub = rosrust::subscribe(
+        //     "motor_commands",
+        //     1,
+        //     move |mut msg: std_msgs::Float64MultiArray| {
+        //         let mut w = output_buffer_clone.write().unwrap();
+        //         msg.data
+        //             .iter_mut()
+        //             .enumerate()
+        //             .for_each(|(i, x)| w.puts(1 + i, x.to_be_bytes().to_vec()));
+        //     },
+        // )
+        // .unwrap();
 
-        let byu = BuffYamlUtil::default();
-        let sensors = byu.load_string_list("sensor_index");
+        let byu = BuffYamlUtil::new("penguin");
+        // let sensors = byu.load_string_list("sensor_index");
 
-        let mut pubs: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>> = sensors
-            .iter()
-            .map(|s| rosrust::publish(s, 1).unwrap())
-            .collect();
+        // let mut pubs: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>> = sensors
+        //     .iter()
+        //     .map(|s| rosrust::publish(s, 1).unwrap())
+        //     .collect();
 
-        pubs.splice(0..0, rosrust::publish("motor_feedback", 1));
+        // pubs.splice(0..0, rosrust::publish("motor_feedback", 1));
 
         let api = HidApi::new().expect("Failed to create API instance");
 
@@ -79,8 +79,9 @@ impl HidLayer {
             input: ByteBuffer::new(64),
             output: ByteBuffer::new(64),
             output_queue: output_buffer,
-            subscriber: can_sub,
-            publishers: pubs,
+            robot_report: BuffBotStatusReport::load_robot(),
+            // subscriber: can_sub,
+            // publishers: pubs,
             timestamp: Instant::now(),
         }
     }
@@ -94,23 +95,37 @@ impl HidLayer {
         self.input.reset();
         self.output.reset();
         self.output_queue.write().unwrap().reset();
+        self.robot_report = BuffBotStatusReport::load_robot();
     }
 
-    /// Parse the stored HID packet into ROS topics
+    /// Set bytes in the output queue, great for tests
+    /// Usage:
+    /// '''
+    ///     hidlayer.set_output_bytes(idx, bytes); // bytes will be sent next write
+    /// '''
+    pub fn set_output_bytes(&mut self, idx: usize, data: Vec<u8>) {
+        self.output_queue.write().unwrap().puts(idx, data);
+    }
+
+    /// Parse the stored HID packet into BuffBot Data Structures
     /// Usage:
     /// '''
     ///     // HID packet waiting
-    ///     layer.dev.read(layer.input.data);
-    ///     layer.parse_hid(64);
+    ///     if layer.read() > 0 { // layer.read returns the number of bytes read
+    ///         layer.parse_report();
+    ///     }
     /// '''
-    pub fn parse_hid(&mut self, n: usize) {
-        if n == 0 {
-            return;
-        }
-
+    pub fn parse_report(&mut self) {
         // match the report number to determine the structure
         match self.input.get(0) {
-            0 => {}
+            0 => {
+
+                // self.robot_report.load_initializers().iter().for_each(|init| {
+                //     self.output_queue.write().unwrap().puts(0, init);
+                //     self.write();
+                //     self.read();
+                // });
+            }
             1 => {}
             2 => {}
             3 => {}
@@ -125,21 +140,18 @@ impl HidLayer {
     ///     // Devices sends a report
     ///     layer.read();
     /// '''
-    pub fn read(&mut self) {
+    pub fn read(&mut self) -> usize {
         match &self.teensy {
             Ok(dev) => match dev.read(&mut self.input.data) {
                 Ok(value) => {
                     self.input.timestamp = Instant::now();
-                    self.parse_hid(value);
+                    return value;
                 }
-                _ => {
-                    self.connection_repair();
-                }
+                _ => {}
             },
-            _ => self.connection_repair(),
+            _ => {}
         }
-
-        // self.input.print_buffer();
+        return 0;
     }
 
     /// Write an HID packet from the output queue and handle the result
@@ -159,16 +171,10 @@ impl HidLayer {
         match &self.teensy {
             Ok(dev) => match dev.write(&self.output.data) {
                 Ok(_) => self.output.timestamp = Instant::now(),
-                Err(_) => self.connection_repair(),
+                _ => {}
             },
-            _ => {
-                self.connection_repair();
-                return;
-            }
+            _ => {}
         }
-
-        // self.output.print_buffer();
-        self.output.reset();
     }
 
     /// Initialize the connection to a teensy
@@ -185,16 +191,16 @@ impl HidLayer {
                 println!("Teensy connected");
                 self.timestamp = Instant::now();
 
-        		if rosrust::is_ok() {
-                	let param_id = format!("/buffbot/HID_ACTIVE");
-                	rosrust::param(&param_id).unwrap().set::<i32>(&1).unwrap();
-                }
+                // if rosrust::is_ok() {
+                //     let param_id = format!("/buffbot/HID_ACTIVE");
+                //     rosrust::param(&param_id).unwrap().set::<i32>(&1).unwrap();
+                // }
             }
             _ => {
-                if rosrust::is_ok() {
-                	let param_id = format!("/buffbot/HID_ACTIVE");
-                	rosrust::param(&param_id).unwrap().set::<i32>(&1).unwrap();
-                }
+                // if rosrust::is_ok() {
+                //     let param_id = format!("/buffbot/HID_ACTIVE");
+                //     rosrust::param(&param_id).unwrap().set::<i32>(&1).unwrap();
+                // }
             }
         }
     }
@@ -222,14 +228,36 @@ impl HidLayer {
     ///     layer.init_comms();
     /// '''
     pub fn spin(&mut self) {
+        match self.read() {
+            64 => {
+                self.parse_report();
 
-        while rosrust::is_ok() {
-            self.read();
-            self.write();
-
-            // Reset this timer to continue searching for a device instead
-            // of exiting. For tests, don't reset this and the program will time out.
-            self.timestamp = Instant::now();
+                if self.input.get_i32(60) == 0 {
+                    println!("\tTeensy does not recognize the connection!");
+                }
+            }
+            0 => {
+                println!("\tNo Packet available");
+            }
+            _ => {
+                println!("\tCorrupt packet!");
+            }
         }
+
+        self.write();
+
+        // Reset this timer to continue searching for a device instead
+        // of exiting. For tests, don't reset this and the program will time out.
+        self.timestamp = Instant::now();
+    }
+
+    /// Attempt to delete a teensy connection
+    /// Usage:
+    /// '''
+    ///     // teensy communication finished
+    ///     layer.close();
+    /// '''
+    pub fn close(&mut self) {
+        drop(&self.teensy);
     }
 }

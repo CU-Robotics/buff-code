@@ -120,13 +120,34 @@ impl ByteBuffer {
         self.data[idx] = value;
     }
 
+    pub fn get_i32(&mut self, idx: usize) -> i32 {
+        /*
+            Read an i32 from the buffer.
+        */
+        self.validate_index(idx);
+        self.validate_index(idx + 3);
+        i32::from_be_bytes([
+            self.data[idx],
+            self.data[idx + 1],
+            self.data[idx + 2],
+            self.data[idx + 3],
+        ])
+    }
+
+    pub fn put_i32(&mut self, idx: usize, value: i32) {
+        /*
+            Write an i32 to the buffer.
+        */
+        self.puts(idx, value.to_be_bytes().to_vec());
+    }
+
     pub fn gets(&mut self, idx: usize, n: usize) -> Vec<u8> {
         /*
             Read a vec of values from the buffer.
         */
 
         self.validate_index(idx);
-        self.validate_index(idx + n);
+        self.validate_index(idx + n - 1);
         self.data[idx..idx + n].to_vec()
     }
 
@@ -135,7 +156,7 @@ impl ByteBuffer {
             Write a vec of values to the buffer.
         */
         self.validate_index(idx);
-        self.validate_index(idx + data.len());
+        self.validate_index(idx + data.len() - 1);
         self.data[idx..idx + data.len()].copy_from_slice(&data);
     }
 
@@ -152,7 +173,7 @@ impl ByteBuffer {
         /*
             Print the buffer.
         */
-        let mut data_string: String = String::new();
+        let mut data_string: String = "\n\n==========\n".to_string();
 
         self.data.iter().enumerate().for_each(|(i, u)| {
             data_string.push_str(&(u.to_string() + "\t"));
@@ -162,7 +183,6 @@ impl ByteBuffer {
             }
         });
 
-        data_string.push_str("\n==========\n\n");
         println!("{}", data_string);
     }
 }

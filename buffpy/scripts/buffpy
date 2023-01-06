@@ -115,8 +115,8 @@ def load_build_config(build):
 	base_config = os.path.join(config_path, 'build', f'{build}.yaml')
 	
 	if not os.path.exists(base_config):
-		print(f'Could not find {base_config}')
-		return
+		print(f'Could not find {base_config}, using default')
+		base_config = os.path.join(config_path, 'build', 'deploy.yaml')
 
 	with open(base_config, 'r') as f:
 		data = yaml.safe_load(f)
@@ -134,7 +134,27 @@ def load_build_config(build):
 
 	return data
 
-def build_buffpy(build):
+def generate_pio_command(upload, v):
+	path = os.path.join(os.getenv('PROJECT_ROOT'), 'src', 'firmware')
+
+	pio_cmd = f'cd {path} && pio '
+
+	if len(upload) == 0 or upload == 'main':
+		pio_cmd += 'run -e release -t upload '
+
+	elif upload[:4] == 'test':
+		pio_cmd += f'test -e test -f {upload} '
+
+	else:
+		print(f'Invalid firmware path')
+		exit(0)
+		
+	if v:
+			pio_cmd += '-v '
+
+	return pio_cmd
+
+def build_buffpy(build, v):
 	"""
 		Builds the current workspace locally.
 		PARAMS:
@@ -171,7 +191,8 @@ def build_buffpy(build):
 			firmware_path = os.path.join(project_root, 'src', firmware_pkg)
 			target_path = os.path.join(project_root, 'src', firmware_pkg, '.pio', 'build', 'teensy41', 'firmware.hex')
 			bin_path = os.path.join(project_root, 'buffpy', 'bin')
-			result = subprocess.run(f'cd {firmware_path} && pio run && cp {target_path} {bin_path}', shell=True)
+			cmd = generate_pio_command(firmware_path, v)
+			result = subprocess.run(f'{cmd} && cp {target_path} {bin_path}', shell=True)
 
 
 def get_devices():
@@ -229,7 +250,7 @@ def deploy_buffpy(robot_address, robot_type, source, target, ID):
 			returncode: int, the return code of the install (failed = 13)
 	"""
 	with open(ID, 'w+') as f:
-		f.write(f"FROM:\n  '{robot_type}.yaml'\n")
+		f.write(f"{robot_type}")
 	# if root does exist remove it
 	try:	
 		clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target}/buffpy ]]; then rm -rf {target}/buffpy; fi; mkdir -p {target}'], timeout=10)
@@ -258,7 +279,7 @@ def load_install_params():
 	project_root = os.getenv('PROJECT_ROOT')
 	source = os.path.join(project_root, 'buffpy')
 	target = os.path.join('/home', 'cu-robotics', 'buff-code')
-	ID = os.path.join(project_root, 'buffpy', 'data', 'robots', 'self.yaml')
+	ID = os.path.join(project_root, 'buffpy', 'data', 'robots', 'self')
 
 	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
 		print("Workspace not built, run:\n\t \'buffpy --build <profile>\'")
@@ -388,7 +409,6 @@ def dig(path):
 	for build in compose_data['services']:
 		if 'dev' in build:
 			docker_build_and_push(path, build)
-
 		
 			
 def parse_arguments():
@@ -407,34 +427,40 @@ def parse_arguments():
 	parser.add_argument('--botPull', 
 		action='store_true',
 		help='Pull data from the robot at ROBOT_IP')
-	parser.add_argument('--build', 
-		nargs=1,
+	parser.add_argument('-b', '--build', 
+		nargs='?',
 		metavar='PROFILE',
-		default='',
+		const='',
 		help='Builds the workspace locally')
 	parser.add_argument('--train', 
 		metavar='MODEL',
 		default='',
 		help='Trains a Yolov5 model locally')
-	parser.add_argument('--deploy', 
+	parser.add_argument('-d', '--deploy', 
 		action='store_true',
 		help='Deploys build to the registered robots')
 	parser.add_argument('--diagnostic', 
 		action='store_true',
 		help='Tests a workspace installation and tools')
-	parser.add_argument('--initialize', 
+	parser.add_argument('-i', '--initialize', 
 		action='store_true',
 		help='Initializes registered devices')
-	parser.add_argument('--upload', 
-		default='',
+	parser.add_argument('-u', '--upload', 
+		nargs='?',
+		const='main',
 		help='Uploads firmware with PIO')
 	parser.add_argument('--dig', 
 		action='store_true',
 		help='Builds the docker images')
-	parser.add_argument('--clean',
+	parser.add_argument('-c', '--clean',
 		metavar='MODE',
 		default='',
 		help='Clean the current bin and data, NOT recoverable; only run this if you are sure you want to')
+	parser.add_argument('-v', '--verbose',
+		metavar='Verbosity',
+		nargs='?',
+		const='0',
+		help='kinda like a volume')
 
 	return parser.parse_args(sys.argv[1:])
 						
@@ -453,7 +479,7 @@ def main(ap):
 		initialize_devices()
 
 	if ap.build:
-		build_buffpy(ap.build[0])
+		build_buffpy(ap.build, ap.verbose)
 
 	if ap.train:
 		train_model(ap.train)
@@ -466,13 +492,9 @@ def main(ap):
 		dig(path)
 
 	if ap.upload:
-		path = os.path.join(os.getenv('PROJECT_ROOT'), 'src', 'firmware')
-		ext_path = os.path.join(path, 'examples', ap.upload)
-
-		if os.path.exists(ext_path):
-			path = ext_path
-
-		result = subprocess.run(f'cd {path} && pio run -t upload', shell=True)
+		cmd = generate_pio_command(ap.upload, ap.verbose)
+		result = subprocess.run(cmd, shell=True)
+		
 
 	if ap.botPull:
 		result = subprocess.run(['scp', f'{os.getenv("ROBOT_ADDRESS")}:{os.getenv("ROBOT_ROOT")}/data', f'{os.getenv("PROJECT_ROOT")}/data'])

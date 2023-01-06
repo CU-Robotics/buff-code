@@ -42,7 +42,6 @@ pub mod buffer_tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
-
     #[test]
     pub fn page_buffer_test() {
         /*
@@ -112,7 +111,10 @@ pub mod buffer_tests {
         assert_eq!(
             buffer.get(i),
             n1,
-            "[{}] Failed check {} != {}", i, n1, buffer.get(i)
+            "[{}] Failed check {} != {}",
+            i,
+            n1,
+            buffer.get(i)
         );
     }
 
@@ -129,22 +131,34 @@ pub mod buffer_tests {
         assert_eq!(
             buffer.get(i),
             n1[0],
-            "[{}] Failed check {} != {}", i, n1[0], buffer.get(i)
+            "[{}] Failed check {} != {}",
+            i,
+            n1[0],
+            buffer.get(i)
         );
         assert_eq!(
             buffer.get(i + 1),
             n1[1],
-            "[{}] Failed check {} != {}", i + 1, n1[1], buffer.get(i + 1)
+            "[{}] Failed check {} != {}",
+            i + 1,
+            n1[1],
+            buffer.get(i + 1)
         );
         assert_eq!(
             buffer.get(i + 2),
             n1[2],
-            "[{}] Failed check {} != {}", i + 2, n1[2], buffer.get(i + 2)
+            "[{}] Failed check {} != {}",
+            i + 2,
+            n1[2],
+            buffer.get(i + 2)
         );
         assert_eq!(
             buffer.get(i + 3),
             n1[3],
-            "[{}] Failed check {} != {}", i + 3, n1[3], buffer.get(i + 3)
+            "[{}] Failed check {} != {}",
+            i + 3,
+            n1[3],
+            buffer.get(i + 3)
         );
     }
 }

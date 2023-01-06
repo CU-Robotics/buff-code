@@ -1,8 +1,7 @@
-#include <Arduino.h>
-#include "buff_hid.h"
+#include "hid_report.h"
 
 
-void HID_Packet::print_packet(){
+void Hid_Report::print_packet(){
 	/*
 		  Display function for HID packets
 		@param:
@@ -11,17 +10,17 @@ void HID_Packet::print_packet(){
 			None
 	*/
 	Serial.println("\n\t=====");
-	for (int i = 0; i < HID_PACKET_SIZE_BYTES - 15; i += 16){
-		Serial.printf("\t[%d]\t\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X", i,
+	for (int i = 0; i < HID_REPORT_SIZE_BYTES - 15; i += 16){
+		Serial.printf("\t[%d]\t\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\n", 
+						i,
 						data[i], data[i+1], data[i+2], data[i+3],
-						data[i+4], data[i+5], data[i+6], data[i+7]);
-		Serial.printf("\t%d\t%X\t%X\t%X\t%X\t%X\t%X\t%X\n", 
+						data[i+4], data[i+5], data[i+6], data[i+7], 
 						data[i+8], data[i+9], data[i+10], data[i+11],
 						data[i+12], data[i+13], data[i+14], data[i+15]);
 	}
 }
 
-void HID_Packet::clear(){
+void Hid_Report::clear(){
 	/*
 		  Clear the HID packet (set all indices = 0)
 		@param:
@@ -29,34 +28,12 @@ void HID_Packet::clear(){
 		@return:
 			None
 	*/
-	for (int i = 0; i < HID_PACKET_SIZE_BYTES; i++){
+	for (int i = 0; i < HID_REPORT_SIZE_BYTES; i++){
 		data[i] = 0;
 	}
 }
 
-int8_t HID_Packet::write(){
-	/*
-		  Write the packet's bytes to usb
-		@param:
-			None
-		@return:
-			n: number of bytes written
-	*/
-	return usb_rawhid_send(&data, 0);
-}
-
-int8_t HID_Packet::read(){
-	/*
-		  Read the usb bytes to the packet.
-		@param:
-			None
-		@return:
-			n: number of bytes read
-	*/
-	return usb_rawhid_recv(&data, 0);
-}
-
-byte HID_Packet::get(int idx){
+byte Hid_Report::get(int idx){
 	/*
 		  Get the byte at packet[idx]
 		@param:
@@ -67,7 +44,7 @@ byte HID_Packet::get(int idx){
 	return data[idx];
 }
 
-void HID_Packet::put(int idx, byte value){
+void Hid_Report::put(int idx, byte value){
 	/*
 		  Set the byte at packet[idx]
 		@param:
@@ -79,7 +56,7 @@ void HID_Packet::put(int idx, byte value){
 	data[idx] = value;
 }
 
-int32_t HID_Packet::get_int32(int idx){
+int32_t Hid_Report::get_int32(int idx){
 	/*
 		  Get the int32_t at packet[idx]
 		@param:
@@ -93,7 +70,7 @@ int32_t HID_Packet::get_int32(int idx){
 				 int32_t(data[idx+3]);
 }
 
-void HID_Packet::put_int32(int idx, int32_t value){
+void Hid_Report::put_int32(int idx, int32_t value){
 	/*
 		  Set the int32_t at packet[idx]
 		@param:
@@ -108,7 +85,7 @@ void HID_Packet::put_int32(int idx, int32_t value){
 	data[idx+3] = byte(value);
 }
 
-float HID_Packet::get_float(int idx){
+float Hid_Report::get_float(int idx){
 	/*
 		  Get the float at packet[idx], floats are converted into
 		byte* arrays for compressed storage, atm we use unions
@@ -128,7 +105,7 @@ float HID_Packet::get_float(int idx){
 	return fb_union.number;
 }
 
-void HID_Packet::put_float(int idx, float value){
+void Hid_Report::put_float(int idx, float value){
 	/*
 		  Set float at packet[idx], use union to
 		turn float to byte* and insert at index 0.
@@ -147,7 +124,7 @@ void HID_Packet::put_float(int idx, float value){
 	data[idx+3] = fb_union.bytes[3];
 }
 
-char* HID_Packet::get_chars(int idx, int n){
+void Hid_Report::get_chars(int idx, int n, char* s){
 	/*
 		  Get the char* at packet[idx]
 		@param:
@@ -157,14 +134,12 @@ char* HID_Packet::get_chars(int idx, int n){
 			char*: requested data
 	*/
 
-	char* s;
 	for (int i = 0; i < n; i++) {
-		s += data[idx + i];
+		s[i] = data[idx + i];
 	}
-	return s;
 }
 
-void HID_Packet::put_chars(int idx, char* value){
+void Hid_Report::put_chars(int idx, char* value){
 	/*
 		Set the int32_t at packet[idx]
 		@param:
@@ -178,7 +153,7 @@ void HID_Packet::put_chars(int idx, char* value){
 	}
 }
 
-void HID_Packet::rgets(byte* out_data, int offset, int bytes){
+void Hid_Report::rgets(byte* out_data, int offset, int bytes){
 	/*
 		  Recursively Get the bytes at packet[offset:offset + bytes]
 		@param:
@@ -195,7 +170,7 @@ void HID_Packet::rgets(byte* out_data, int offset, int bytes){
 	}
 }
 
-void HID_Packet::rputs(byte* in_data, int offset, int bytes){
+void Hid_Report::rputs(byte* in_data, int offset, int bytes){
 	/*
 		Recursively Set the bytes at packet[offset:offset + bytes]
 		@param:
@@ -212,61 +187,52 @@ void HID_Packet::rputs(byte* in_data, int offset, int bytes){
 	}
 }
 
-void HID_Packet::check_hid_input(HID_Packet* outgoing_report){
-	switch (this.read()) {
-		case 64:
-			blink();
 
-			switch (this.get(0)) {
-				case 0:
-					outgoing_report.put(0, 0);
-					// Fill init device handlers
-					break;
 
-				case 1:
-					outgoing_report.put(0, 1);
-					// Fill with can bus 1 info
-					break;
-
-				case 2:
-					outgoing_report.put(0, 2);
-					// Fill with can bus 2 info
-					break;
-
-				case 3:
-					outgoing_report.put(0, 3);
-					// Fill with DR16/IMU info
-					for (int i = 0; i < 9; i++){
-						outgoing_report.put_float((i * 4) + 1, 3.1415926);
-					}
-					break;
-
-				default:
-					// On intial connection the HID packet is
-					// set to init_mode
-					outgoing_report.put(0, 255);
-					break;
-			}
-
-			// clock cycles since loop timer
-			delta_us = DURATION_US(loop_timer, ARM_DWT_CYCCNT);
-
-			// set the duration of the loop as the last 4 values
-			// in the packet and write the packet
-			outgoing_report.put_int32(60, delta_us);
-			outgoing_report.write();
-			break;
-
-		default:
-			delta_us = DURATION_US(loop_timer, ARM_DWT_CYCCNT);
-			break;
-	}
+#ifdef USB_RAWHID
+int8_t Hid_Report::write(){
+	/*
+		  Write the packet's bytes to usb
+		@param:
+			None
+		@return:
+			n: number of bytes written
+	*/
+	return usb_rawhid_send(&data, 0);
 }
 
+int8_t Hid_Report::read(){
+	/*
+		  Read the usb bytes to the packet.
+		@param:
+			None
+		@return:
+			n: number of bytes read
+	*/
+	return usb_rawhid_recv(&data, 0);
+}
+#endif
 
+#ifndef USB_RAWHID
+int8_t Hid_Report::write(){
+	/*
+		  Write the packet's bytes to usb
+		@param:
+			None
+		@return:
+			n: number of bytes written
+	*/
+	return Serial.write(data, 64);
+}
 
-
-
-
-
-
+int8_t Hid_Report::read(){
+	/*
+		  Read the usb bytes to the packet.
+		@param:
+			None
+		@return:
+			n: number of bytes read
+	*/
+	return Serial.readBytes((char *)data, HID_REPORT_SIZE_BYTES);
+}
+#endif

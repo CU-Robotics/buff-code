@@ -1,8 +1,8 @@
 #![allow(unused_imports)]
-use buff_rust::utilities::loaders::*;
 use buff_rust::device_manager::devices::*;
 use buff_rust::locomotion::locomotion::*;
 use buff_rust::teensy_comms::buff_hid::*;
+use buff_rust::utilities::loaders::*;
 
 use rosrust_msg::std_msgs;
 use std::{

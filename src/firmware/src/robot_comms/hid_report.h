@@ -1,10 +1,7 @@
-#include <Arduino.h>
-#include <FlexCAN_T4.h>
+#ifndef BUFFHID_REPORT_H
+#define BUFFHID_REPORT_H
 
-#ifndef BUFFHID_H
-#define BUFFHID_H
-
-#define HID_PACKET_SIZE_BYTES 64
+#define HID_REPORT_SIZE_BYTES 64
 
 typedef union
 {
@@ -33,22 +30,17 @@ typedef union
 
 		Teensy clock:	int32
 
-	HID_Packet also has quick functions to
+	HID_REPORT also has quick functions to
 	read and write its data.
 */
 
-struct HID_Packet {
-	byte data[HID_PACKET_SIZE_BYTES];
+struct Hid_Report {
+	byte data[HID_REPORT_SIZE_BYTES];
 
 	// for debug, print the packet with serial.print
 	void print_packet();
 	// clear all data in the packet
 	void clear();
-
-	// fill data with the available HID packet, (wait if none?)
-	int8_t read();
-	// send data as HID packet
-	int8_t write();
 
 	// Getters/Setters
 	byte get(int);
@@ -60,14 +52,17 @@ struct HID_Packet {
 	float get_float(int);
 	void put_float(int, float);
 
-	char* get_chars(int, int);
+	void get_chars(int, int, char*);
 	void put_chars(int, char*);
 
 	void rgets(byte*, int, int);
 	void rputs(byte*, int, int);
 
-	// state machine 
-	void check_hid_input(HID_Packet*);
+	// fill data with the available HID packet, (wait if none?)
+	int8_t read();
+	// send data as HID packet
+	int8_t write();
+
 };
 
 #endif
