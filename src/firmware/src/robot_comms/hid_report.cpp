@@ -215,10 +215,7 @@ int8_t Hid_Report::read(){
 }
 #endif
 
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
 #ifndef USB_RAWHID
 int8_t Hid_Report::write(){
 	/*
@@ -239,10 +236,6 @@ int8_t Hid_Report::read(){
 		@return:
 			n: number of bytes read
 	*/
-<<<<<<< Updated upstream
 	return usb_serial_read(&data, 64);
-=======
-	return usb_serial_read(&data);
->>>>>>> Stashed changes
 }
 #endif

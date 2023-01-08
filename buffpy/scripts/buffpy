@@ -148,9 +148,6 @@ def generate_pio_command(upload, v):
 	else:
 		print(f'Invalid firmware path')
 		exit(0)
-		
-	if v:
-			pio_cmd += '-v '
 
 	return pio_cmd
 
