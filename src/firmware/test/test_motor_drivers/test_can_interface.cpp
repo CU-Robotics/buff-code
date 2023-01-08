@@ -13,7 +13,6 @@ byte input_motor_index[16][3] = {{1,0,1}, {1,0,2}, {2,1,1}, {2,1,6},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}};
 
-
 void setUp() {
 	// set stuff up here
 }
@@ -229,7 +228,6 @@ void test_set_feedback() {
 	}
 }
 
-
 void test_get_feedback() {
 	/*
 			Helper to test the can things ability to read values.
@@ -266,24 +264,13 @@ void search_for_devices() {
 		int8_t rid = tmp.id - 0x200;
 		if (rid > 0) {
 			int8_t motor_id = rm_can_ux.can2_motor_index[rid];
-			int8_t motor_type = rm_can_ux.motor_index[motor_id].motor_type;
-			int8_t esc_id = rm_can_ux.motor_index[motor_id].esc_id;
 
 			TEST_ASSERT_GREATER_OR_EQUAL_INT8(0, motor_id);
 
-			Serial.printf("\tCan2 Device Detected:\t%i\t%i\t%i\n", 
-				motor_id,
-				motor_type,
-				esc_id);
-
-			float angle = ang_from_can_bytes(tmp.buf[0], tmp.buf[1]);
-			float rpm = bytes_to_int16_t(tmp.buf[2], tmp.buf[3]);
-			float torque = bytes_to_int16_t(tmp.buf[4], tmp.buf[5]);
-
-			Serial.printf("\tFeedback: \t%f %f %f\n", angle, rpm, torque);
+			print_rm_config_struct(&rm_can_ux.motor_index[motor_id]);
 		}
 		else {
-			Serial.println("CAN bus empty!");
+			Serial.println("\tCAN bus empty!");
 			break;
 		}
 

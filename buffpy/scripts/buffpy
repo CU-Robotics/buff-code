@@ -141,9 +141,11 @@ def generate_pio_command(upload, v):
 
 	if len(upload) == 0 or upload == 'main':
 		pio_cmd += 'run -e release -t upload '
+		if v:
+			pio_cmd += '-v '
 
 	elif upload[:4] == 'test':
-		pio_cmd += f'test -e test -f {upload} '
+		pio_cmd += f'test -e test -f {upload} -v '
 
 	else:
 		print(f'Invalid firmware path')
