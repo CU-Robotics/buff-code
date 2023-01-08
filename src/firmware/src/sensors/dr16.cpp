@@ -1,10 +1,31 @@
 #include "dr16.h"
 
-int16_t normalize_channel(int16_t value){
-	return int16_t((float(value) - 1024.0) / 700.0 * pow(2, 15));
+// 1 / 660.0 = 0.00151515 (avoids an unnecesarry division)
+float normalize_channel(int16_t value){
+	/*
+		DR16 has some issues so we fix the stick values
+		to the datasheets range [364:1684] then center
+		the values around 0 (value - 1024). Then scale
+		to  [-1:1].
+	*/
+	return (max(min(float(value), 1684.0), 364.0) - 1024.0) * 0.00151515;
+}
+
+float wrap_radians(float value) {
+	if (value > PI) {
+		return value - (2 * PI);
+	}
+	else if (value < -PI) {
+		return value + (2 * PI);
+	}
+
+	return value;
 }
 
 void print_receiver_input(byte* buffer){
+
+	Serial.println("\n\t===== DR16 Input");
+
 	for (int i = 0; i < 18; i++)
 	{
 		for (int j = 0; j < 8; j++)
@@ -17,14 +38,13 @@ void print_receiver_input(byte* buffer){
 			Serial.println();
 		}
 	}
-	Serial.println("\n===========");
 }
 
-void print_control_data(int16_t* buffer){
-	Serial.printf("\n\t%i\t%i\t%i\t%i\t%i\t%i\t%i\n", 
+void print_control_data(float* buffer){
+	Serial.println("\n\t===== DR16 Data");
+	Serial.printf("\n\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n\n", 
 		buffer[0], buffer[1], buffer[2], buffer[3], 
 		buffer[4], buffer[5], buffer[6]);
-	Serial.println("\n===========");
 }
 
 DR16::DR16()
@@ -77,26 +97,28 @@ void DR16::generate_control_from_joysticks() {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
 
-	// debugging
+	// debugging (bitwise view)
 	// print_receiver_input(tmp);
 
 
-	int16_t r_stick_x = normalize_channel(((tmp[1] & 0b00000111) << 8) | tmp[0]);
-	int16_t r_stick_y = normalize_channel(((tmp[2] & 0b11111100) << 5) | ((tmp[1] & 0b11111000) >> 3));
-	int16_t l_stick_x = normalize_channel((((tmp[4] & 0b00000001) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0b11000000) >> 6));
-	int16_t l_stick_y = normalize_channel(((tmp[5] & 0b00001111) << 7) | ((tmp[4] & 0b11111110) >> 1));
+	float r_stick_x = normalize_channel(((tmp[1] & 0x07) << 8) | tmp[0]);
+	float r_stick_y = normalize_channel(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3));
+	float l_stick_x = normalize_channel((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6));
+	float l_stick_y = normalize_channel(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1));
 
-	// Serial.println("norm vals");
-	// Serial.print(r_stick_x); Serial.print(" "); Serial.println(((tmp[1] & 0b00000111) << 8) | tmp[0]);
-	// Serial.print(r_stick_y); Serial.print(" "); Serial.println(((tmp[2] & 0b11111100) << 5) | ((tmp[1] & 0b11111000) >> 3));
-	// Serial.print(l_stick_x); Serial.print(" "); Serial.println((((tmp[4] & 0b00000001) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0b11000000) >> 6));
-	// Serial.print(l_stick_y); Serial.print(" "); Serial.println(((tmp[5] & 0b00001111) << 7) | ((tmp[4] & 0b11111110) >> 1));
+	// Serial.println("\n\t===== Normalize Sticks");
+	// Serial.printf("\t%i\t%i\t%i\t%i\n", 
+	// 	r_stick_x, r_stick_y, l_stick_x, l_stick_y);
+	// Serial.printf("\t%i\t%i\t%i\t%i\n",
+	// 	((tmp[1] & 0x07) << 8) | tmp[0],
+	// 	((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3),
+	// 	(((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6),
+	// 	((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1));
 
-
-	data[0] = ((tmp[5] & 0x30) >> 4);			// switch 1
-	data[1] = ((tmp[5] & 0xC0) >> 6);			// switch 2
-	data[2] = r_stick_x;						// X & Y velocity (read directly)
-	data[3] = r_stick_y;
+	data[0] = float((tmp[5] & 0x30) >> 4);			// switch 1
+	data[1] = float((tmp[5] & 0xC0) >> 6);			// switch 2
+	data[2] = l_stick_x;						// X & Y velocity (read directly)
+	data[3] = l_stick_y;
 
 	if (data[0] == 1.0) {						// angular velocity (theta)
 		data[4] = -4000.0;
@@ -108,26 +130,32 @@ void DR16::generate_control_from_joysticks() {
 		data[4] = 0.0;
 	}
 
-	data[5] += l_stick_y * JOYSTICK_PITCH_SCALE;// tilt accumulation 
-	data[6] += l_stick_x * JOYSTICK_PAN_SCALE;	// pan accumulation
+	// wrap the angles
+	// pan/tilt accumulation 
+	data[5] = wrap_radians(data[5] + (r_stick_y * JOYSTICK_PITCH_SENSITIVITY));
+	data[6] = wrap_radians(data[6] + (r_stick_x * JOYSTICK_PAN_SENSITIVITY));
 }
 
-void DR16::read()
+bool DR16::read()
 {
 
-	if (serial->available() < 18)
-	{
-		return;
-	}
+	// if (serial->available() < 18)
+	// {
+	// 	return false;
+	// }
 	
-	else if (serial->available() % 18 != 0)
-	{
-		serial->clear();
-		return;
-	}
+	// else if (serial->available() % 18 != 0)
+	// {
+	// 	serial->clear();
+	// }
 
-	if (serial->available() >= 18)
+	if (serial->available() == 18)
 	{
 		generate_control_from_joysticks();
+		return true;
 	}
+
+	serial->clear();
+	return false;
+
 }

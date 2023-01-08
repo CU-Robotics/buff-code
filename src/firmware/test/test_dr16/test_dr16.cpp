@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "unity.h"
-#include "buff_cpp/timing.h"
 #include "sensors/dr16.cpp"
+#include "buff_cpp/timing.cpp"
 
 DR16 receiver;
 
@@ -20,24 +20,31 @@ void test_dr16_serial_active() {
 }
 
 
-void test_dr16_null_read() {
-	// check
-	Serial.printf("\tTesting Null input, please don't touch the controls:...\n");
-	delay(2500);
-
-	int32_t byte_sum = 0;
+void loop_for(int32_t duration, bool debug) {
 	int32_t test_timout = ARM_DWT_CYCCNT;
 
-	while (DURATION_US(test_timout, ARM_DWT_CYCCNT) < 10000) {
+	while (DURATION_MS(test_timout, ARM_DWT_CYCCNT) < duration) {
+
 		timer_set(0);
 		receiver.read();
 		timer_mark(0);
 
-		for (int i = 0; i < 7; i++) {
-			byte_sum += receiver.data[i];
+		if (debug) {
+			print_control_data(receiver.data);			
 		}
 
-		timer_wait_us(0, 1000);
+		timer_wait_us(0, 15000);
+	}
+}
+
+void test_dr16_null_read() {
+	// check
+	Serial.printf("\tTesting Null input, please don't touch the controls:...\n");
+	loop_for(1000, false);
+
+	int32_t byte_sum = 0;
+	for (int i = 2; i < 7; i++) {
+		byte_sum += receiver.data[i];
 	}
 
 	TEST_ASSERT_EQUAL_INT32(0, abs(byte_sum));
@@ -46,23 +53,14 @@ void test_dr16_null_read() {
 
 void test_dr16_active_read() {
 	// check
-	Serial.printf("\tTesting active input, try to move the robot (use the contoller):...\n");
-	delay(2500);
+	Serial.printf("\tTesting active input, hold any button/joystick:...\n");
+	delay(1500);
+	
+	loop_for(1000, false);
 
 	int32_t byte_sum = 0;
-	int32_t test_timout = ARM_DWT_CYCCNT;
-	
-	while (DURATION_US(test_timout, ARM_DWT_CYCCNT) < 10000) {
-		timer_set(0);
-		receiver.read();
-		timer_mark(0);
-
-		for (int i = 0; i < 7; i++) {
-			byte_sum += receiver.data[i];
-		}
-		print_control_data(receiver.data);
-
-		timer_wait_us(0, 1000);
+	for (int i = 2; i < 7; i++) {
+		byte_sum += receiver.data[i];
 	}
 
 	TEST_ASSERT_GREATER_THAN_INT32(0, abs(byte_sum));
@@ -87,4 +85,6 @@ void setup() {
 }
 
 // Runs continuously
-void loop() {}
+void loop() {
+
+}

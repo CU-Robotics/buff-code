@@ -6,6 +6,7 @@
 #define NUM_CAN_BUSES			2
 #define MAX_NUM_RM_MOTORS		16
 #define MAX_CAN_RETURN_IDS		12
+#define MOTOR_FEEDBACK_TIMEOUT  100
 
 /*
 
@@ -35,9 +36,9 @@
 
 struct RM_Feedback_Packet {
 	RM_Feedback_Packet();
-	int16_t angle;
-	int16_t RPM;
-	int16_t torque;
+	float angle;
+	float RPM;
+	float torque;
 	uint32_t timestamp;
 };
 
@@ -59,7 +60,7 @@ struct RM_CAN_Device {
 };
 
 int16_t bytes_to_int16_t(byte, byte);
-int16_t ang_from_can_bytes(byte, byte);
+float ang_from_can_bytes(byte, byte);
 void print_rm_feedback_struct(RM_CAN_Device*);
 void print_rm_config_struct(RM_CAN_Device*);
 void print_can_message(CAN_message_t*);
@@ -85,6 +86,12 @@ struct RM_CAN_Interface {
 		// initializer
 		void set_index(int, byte[3]);
 
+		// motor getters and setters
+		float get_motor_angle(int);
+		float get_motor_RPM(int);
+		float get_motor_torque(int);
+		float get_motor_ts(int);
+
 		// Get the motors ID from a can msg return ID
 		int8_t motor_idx_from_return(int8_t, int);
 
@@ -94,6 +101,8 @@ struct RM_CAN_Interface {
 		// Pipeline
 		void set_output(int16_t[MAX_NUM_RM_MOTORS]);
 		void set_feedback(int, CAN_message_t*);
+		void get_motor_feedback(float*, int);
+		void get_block_feedback(float*, int);
 
 		// CAN I/O
 		void write_can();

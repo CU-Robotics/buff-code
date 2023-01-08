@@ -1,6 +1,5 @@
 #include "hid_report.h"
 
-
 void Hid_Report::print_packet(){
 	/*
 		  Display function for HID packets
@@ -18,6 +17,11 @@ void Hid_Report::print_packet(){
 						data[i+8], data[i+9], data[i+10], data[i+11],
 						data[i+12], data[i+13], data[i+14], data[i+15]);
 	}
+}
+
+Hid_Report::Hid_Report() {
+	clear();
+	put(0, 255);
 }
 
 void Hid_Report::clear(){
@@ -210,29 +214,5 @@ int8_t Hid_Report::read(){
 			n: number of bytes read
 	*/
 	return usb_rawhid_recv(&data, 0);
-}
-#endif
-
-#ifndef USB_RAWHID
-int8_t Hid_Report::write(){
-	/*
-		  Write the packet's bytes to usb
-		@param:
-			None
-		@return:
-			n: number of bytes written
-	*/
-	return Serial.write(data, 64);
-}
-
-int8_t Hid_Report::read(){
-	/*
-		  Read the usb bytes to the packet.
-		@param:
-			None
-		@return:
-			n: number of bytes read
-	*/
-	return Serial.readBytes((char *)data, HID_REPORT_SIZE_BYTES);
 }
 #endif

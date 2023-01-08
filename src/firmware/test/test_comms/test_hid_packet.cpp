@@ -1,5 +1,5 @@
 #include "unity.h"
-#include "buff_cpp/timing.h"
+#include "buff_cpp/timing.cpp"
 #include "robot_comms/hid_report.cpp"
 
 

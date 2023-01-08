@@ -1,5 +1,5 @@
 #include "unity.h"
-#include "buff_cpp/timing.h"
+#include "buff_cpp/timing.cpp"
 #include "sensors/lsm6dsox.cpp"
 
 
@@ -43,7 +43,7 @@ void test_imu_read(void) {
 
 void test_imu_bias(void) {
 	Serial.printf("\n\tTesting IMU bias, please leave it completely flat and still:...\n");
-	delay(5000);
+	delay(2500);
 	// check
 	size_t iters = 50;
 	float accel_sum[3] = {0.0, 0.0, 0.0};
@@ -64,13 +64,13 @@ void test_imu_bias(void) {
 
 		// Linear acceleration zero-g level offset accuracy +/- 0.02 g
 		if (abs(imu.data[0]) > 0.02) {
-			Serial.printf("\tHigh X Acceleration: %f (device is not flat)\n", imu.data[0]);
+			Serial.printf("\tHigh X Acceleration: %f\n", imu.data[0]);
 		}
 		if (abs(imu.data[1]) > 0.02) {
-			Serial.printf("\tHigh Y Acceleration: %f (device is not flat)\n", imu.data[1]);
+			Serial.printf("\tHigh Y Acceleration: %f\n", imu.data[1]);
 		}
 		if (abs(1 - (imu.data[2])) > 0.02) {
-			Serial.printf("\tHigh Z Acceleration: %f (device is not flat)\n", imu.data[2]);
+			Serial.printf("\tHigh Z Acceleration: %f\n", imu.data[2]);
 		}
 
 		imu.read_lsm6dsox_gyro();

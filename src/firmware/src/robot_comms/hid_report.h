@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #ifndef BUFFHID_REPORT_H
 #define BUFFHID_REPORT_H
 
@@ -6,7 +8,7 @@
 typedef union
 {
 	float number;
-	uint8_t bytes[4];
+	int8_t bytes[4];
 } FLOATBYTE_t;
 
 /*
@@ -36,6 +38,9 @@ typedef union
 
 struct Hid_Report {
 	byte data[HID_REPORT_SIZE_BYTES];
+
+	// constructor
+	Hid_Report();
 
 	// for debug, print the packet with serial.print
 	void print_packet();

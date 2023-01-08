@@ -1,5 +1,6 @@
 #include <FlexCAN_T4.h>
 
+#include "buff_cpp/timing.h"
 #include "rm_can_interface.h"
 
 int16_t bytes_to_int16_t(byte upper, byte lower) {
@@ -15,7 +16,7 @@ int16_t bytes_to_int16_t(byte upper, byte lower) {
 	return int16_t(upper << 8) | lower;
 }
 
-int16_t ang_from_can_bytes(byte b1, byte b2){
+float ang_from_can_bytes(byte b1, byte b2){
 	/*
 		  Getter for the angle in can bytes.
 		@param
@@ -24,7 +25,7 @@ int16_t ang_from_can_bytes(byte b1, byte b2){
 		@return
 			angle: the angle scaled to 0-36000
 	*/
-	return map(bytes_to_int16_t(b1, b2), 0, 8191, 0, 32000);
+	return (bytes_to_int16_t(b1, b2) / 8191.0) * 2.0 * PI;
 }
 
 void print_rm_feedback_struct(RM_Feedback_Packet* fb) {
@@ -208,6 +209,24 @@ void RM_CAN_Interface::set_index(int idx, byte config[3]){
 	}
 }
 
+// Some quick getters so you don't have to write
+// motor_index[motor_id].feedback->angle everytime
+float RM_CAN_Interface::get_motor_angle(int motor_id) {
+	return motor_index[motor_id].feedback->angle;
+}
+
+float RM_CAN_Interface::get_motor_RPM(int motor_id) {
+	return motor_index[motor_id].feedback->RPM;
+}
+
+float RM_CAN_Interface::get_motor_torque(int motor_id) {
+	return motor_index[motor_id].feedback->torque;
+}
+
+float RM_CAN_Interface::get_motor_ts(int motor_id) {
+	return motor_index[motor_id].feedback->timestamp;
+}
+
 int8_t RM_CAN_Interface::motor_idx_from_return(int8_t can_bus, int return_id){
 	/*
 		  Getter for the motor index.
@@ -307,6 +326,55 @@ void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
 			motor_index[motor_id].feedback->torque = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
 			motor_index[motor_id].feedback->timestamp = ARM_DWT_CYCCNT;
 		}
+	}
+}
+
+void RM_CAN_Interface::get_motor_feedback(float* data, int idx) {
+	/*
+		  Read the feedback values for a motor at idx.
+		@param
+			data: buffer for output data
+			idx: index of the motor in the motor_index
+		@return
+			None
+	*/
+	if (idx >= 0 && idx < num_motors) {
+		int32_t delta_ms = DURATION_MS(get_motor_ts(idx), ARM_DWT_CYCCNT);
+
+		if (delta_ms < MOTOR_FEEDBACK_TIMEOUT){
+			data[0] = get_motor_angle(idx);
+			data[1] = get_motor_RPM(idx);
+			data[2] = get_motor_torque(idx);
+		}
+		else {
+			data[0] = 0;
+			data[1] = 0;
+			data[2] = 0;
+		}
+	}
+	else {
+		data[0] = 0;
+		data[1] = 0;
+		data[2] = 0;
+	}
+}
+
+void RM_CAN_Interface::get_block_feedback(float* data, int id) {
+	/*
+		  Read the feedback values for a block of motors.
+		@param
+			data: buffer for output data
+			id: index of the motor in the motor_index
+		@return
+			None
+	*/
+	float tmp[3];
+
+	for (int j = 0; j < 4; j++) {
+		get_motor_feedback(tmp, (4 * id) + j);
+		data[3 * j] = tmp[0];
+		data[(3 * j) + 1] = tmp[1];
+		data[(3 * j) + 2] = tmp[2];
 	}
 }
 

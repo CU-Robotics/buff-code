@@ -4,23 +4,12 @@
 #define BUFF_BLINKER_H
 
 #define BLINK_RATE_US 250000
+#define BLINK_PIN LED_BUILTIN
 
-uint32_t blinker_timer_mark = ARM_DWT_CYCCNT;
-bool blinker_status = false;
+extern uint32_t blinker_timer_mark;
+extern bool blinker_status;
 
-void setup_blink() {
-	// Hardware setup
-	pinMode(LED_BUILTIN, OUTPUT);
-	digitalWrite(LED_BUILTIN, HIGH);
-}
-
-void blink(){
-
-	if ((ARM_DWT_CYCCNT - blinker_timer_mark)*1E6/F_CPU > BLINK_RATE_US){
-		blinker_status = !blinker_status;
-		blinker_timer_mark = ARM_DWT_CYCCNT;
-		digitalWrite(LED_BUILTIN, blinker_status);
-	}
-}
+void setup_blink();
+void blink();
 
 #endif

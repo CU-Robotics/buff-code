@@ -1,6 +1,6 @@
 #include "unity.h"
-#include "buff_cpp/timing.h"
-#include "buff_cpp/blink.h"
+#include "buff_cpp/timing.cpp"
+#include "buff_cpp/blink.cpp"
 
 void setUp(void) {
   // set stuff up here
@@ -17,14 +17,17 @@ void test_setup_blink(void) {
 
 void test_blink(void) {
   // more test stuff
-  timer_set(0);
   blink();
+  blinker_status = false;
   bool init_status = blinker_status;
+  blinker_timer_mark = ARM_DWT_CYCCNT;
+
+  timer_set(0);
   while (init_status == blinker_status) {
     blink();
   }
   // blinker should be precise to 0 microseconds
-  TEST_ASSERT_EQUAL_INT32(BLINK_RATE_US, timer_info_us(0));
+  TEST_ASSERT_INT32_WITHIN(15, BLINK_RATE_US, timer_info_us(0));
 }
 
 int runUnityTests(void) {

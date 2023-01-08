@@ -2,7 +2,7 @@
 
 #include "unity.h"
 
-#include "buff_cpp/timing.h"
+#include "buff_cpp/timing.cpp"
 #include "motor_drivers/rm_can_interface.cpp"
 
 RM_CAN_Interface rm_can_ux;
@@ -229,6 +229,79 @@ void test_set_feedback() {
 	}
 }
 
+
+void test_get_feedback() {
+	/*
+			Helper to test the can things ability to read values.
+		@param
+			None
+		@return
+			None
+	*/
+
+	Serial.printf("\tTesting get_feedback:...\n");
+		
+	rm_can_ux.motor_index[0].feedback->angle = PI;
+	rm_can_ux.motor_index[0].feedback->RPM = 10000;
+	rm_can_ux.motor_index[0].feedback->timestamp = ARM_DWT_CYCCNT;
+
+	float tmp[3];
+	timer_set(0);
+	rm_can_ux.get_motor_feedback(tmp, 0);
+	timer_mark(0);
+
+	TEST_ASSERT_EQUAL_FLOAT(PI, tmp[0]);
+	TEST_ASSERT_EQUAL_FLOAT(10000, tmp[1]);
+	TEST_ASSERT_EQUAL_FLOAT(0, tmp[2]);
+}
+
+
+void search_for_devices() {
+	Serial.printf("\tSearching for CAN devices:...\n");
+
+	timer_set(0);
+	while (timer_info_us(0) < 10000) {
+		CAN_message_t tmp;
+		rm_can_ux.can2.read(tmp);
+		int8_t rid = tmp.id - 0x200;
+		if (rid > 0) {
+			int8_t motor_id = rm_can_ux.can2_motor_index[rid];
+			int8_t motor_type = rm_can_ux.motor_index[motor_id].motor_type;
+			int8_t esc_id = rm_can_ux.motor_index[motor_id].esc_id;
+
+			TEST_ASSERT_GREATER_OR_EQUAL_INT8(0, motor_id);
+
+			Serial.printf("\tCan2 Device Detected:\t%i\t%i\t%i\n", 
+				motor_id,
+				motor_type,
+				esc_id);
+
+			float angle = ang_from_can_bytes(tmp.buf[0], tmp.buf[1]);
+			float rpm = bytes_to_int16_t(tmp.buf[2], tmp.buf[3]);
+			float torque = bytes_to_int16_t(tmp.buf[4], tmp.buf[5]);
+
+			Serial.printf("\tFeedback: \t%f %f %f\n", angle, rpm, torque);
+		}
+
+		// rm_can_ux.can1.read(tmp);
+		// rid = tmp.id - 0x200;
+		// if (rid > 0) {
+		// 	int8_t motor_id = rm_can_ux.can1_motor_index[rid];
+		// 	int8_t motor_type = rm_can_ux.motor_index[motor_id].motor_type;
+		// 	int8_t esc_id = rm_can_ux.motor_index[motor_id].esc_id;
+
+		// 	TEST_ASSERT_GREATER_OR_EQUAL_INT8(0, motor_id);
+
+		// 	Serial.printf("\tCan1 Device Detected:\t%i\t%i\t%i\n", 
+		// 		motor_id,
+		// 		motor_type,
+		// 		esc_id);
+		// }
+
+		timer_wait_us(0, 100);
+	}
+}
+
 int run_can_tests() {
 	UNITY_BEGIN();
 	RUN_TEST(index_check);
@@ -243,6 +316,9 @@ int run_can_tests() {
 
 	RUN_TEST(test_set_output);
 	RUN_TEST(test_set_feedback);
+	RUN_TEST(test_get_feedback);
+
+	RUN_TEST(search_for_devices);
 
 	return UNITY_END();
 }

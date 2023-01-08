@@ -3,9 +3,9 @@
 #ifndef BUFF_DR16_H
 #define BUFF_DR16_H
 
-#define JOYSTICK_PAN_SCALE 1 / pow(2, 15)
-#define JOYSTICK_PITCH_SCALE 1 / pow(2, 15)
-
+#define JOYSTICK_PAN_SENSITIVITY 0.1
+#define JOYSTICK_PITCH_SENSITIVITY 0.1
+#define REMOTE_CONTROL_LEN 7
 /*
 	 Driver software for the dr16 receiver.
 	Parses the serial input to a robot action.
@@ -23,9 +23,9 @@ struct DR16 {
 		DR16();
 		DR16(HardwareSerial*);
 		void generate_control_from_joysticks();
-		void read();
+		bool read();
 
-		int16_t data[7];
+		float data[7];
 		
 		HardwareSerial* serial;
 };

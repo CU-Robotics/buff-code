@@ -4,6 +4,8 @@
 #ifndef BUFF_LSM6DSOX_H
 #define BUFF_LSM6DSOX_H
 
+#define IMU_DOF 9
+
 /** The accelerometer data range 
 typedef enum accel_range {
 	LSM6DS_ACCEL_RANGE_2_G,
