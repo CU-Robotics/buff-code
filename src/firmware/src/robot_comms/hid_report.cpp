@@ -216,3 +216,27 @@ int8_t Hid_Report::read(){
 	return usb_rawhid_recv(&data, 0);
 }
 #endif
+
+#ifndef USB_RAWHID
+int8_t Hid_Report::write(){
+	/*
+		  Write the packet's bytes to usb
+		@param:
+			None
+		@return:
+			n: number of bytes written
+	*/
+	return usb_serial_write(&data, 64);
+}
+
+int8_t Hid_Report::read(){
+	/*
+		  Read the usb bytes to the packet.
+		@param:
+			None
+		@return:
+			n: number of bytes read
+	*/
+	return usb_serial_read(&data, 64);
+}
+#endif
