@@ -29,8 +29,8 @@ struct Device_Manager {
 	void push_can();
 	void read_sensor();
 
-	Hid_Report* input_report;
-	Hid_Report* output_report;
+	Hid_Report* input_report;	//message being read on teensy from computer (poll or command)
+	Hid_Report* output_report;	//data being sent from teensy to computer
 
 	LSM6DSOX* imu;
 	DR16* receiver;
