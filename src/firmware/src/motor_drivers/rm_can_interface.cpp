@@ -25,7 +25,7 @@ float ang_from_can_bytes(byte b1, byte b2){
 		@return
 			angle: the angle scaled to 0-36000
 	*/
-	return (bytes_to_int16_t(b1, b2) / 8191.0) * 2.0 * PI;
+	return ((bytes_to_int16_t(b1, b2) / 8191) - 0.5) * 2.0 * PI;
 }
 
 void print_rm_feedback_struct(RM_Feedback_Packet* fb) {

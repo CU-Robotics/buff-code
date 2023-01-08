@@ -282,6 +282,10 @@ void search_for_devices() {
 
 			Serial.printf("\tFeedback: \t%f %f %f\n", angle, rpm, torque);
 		}
+		else {
+			Serial.println("CAN bus empty!");
+			break;
+		}
 
 		// rm_can_ux.can1.read(tmp);
 		// rid = tmp.id - 0x200;
@@ -297,9 +301,9 @@ void search_for_devices() {
 		// 		motor_type,
 		// 		esc_id);
 		// }
-
-		timer_wait_us(0, 100);
+		// timer_wait_us(0, 100);
 	}
+	timer_mark(0);
 }
 
 int run_can_tests() {
