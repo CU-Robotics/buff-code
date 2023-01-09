@@ -79,7 +79,7 @@ struct RM_CAN_Interface {
 
 		CAN_message_t output[NUM_CAN_BUSES][3];                     // 2 can busses with 3 messages types, each message type has up to 4 motors.
 
-		int8_t num_motors;
+		int num_motors;
 
 		RM_CAN_Interface();
 
@@ -93,7 +93,7 @@ struct RM_CAN_Interface {
 		float get_motor_ts(int);
 
 		// Get the motors ID from a can msg return ID
-		int8_t motor_idx_from_return(int8_t, int);
+		int8_t motor_idx_from_return(int, int);
 
 		// Disabler
 		void zero_can();
@@ -101,8 +101,8 @@ struct RM_CAN_Interface {
 		// Pipeline
 		void set_output(int16_t[MAX_NUM_RM_MOTORS]);
 		void set_feedback(int, CAN_message_t*);
-		void get_motor_feedback(float*, int);
-		void get_block_feedback(float*, int);
+		void get_motor_feedback(int, float*);
+		void get_block_feedback(int, float*);
 
 		// CAN I/O
 		void write_can();

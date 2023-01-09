@@ -1,13 +1,13 @@
 # The buff stuff
 buff_rust:
-  files: [comms_node, device_node, locomotion_node, estimator_node]
+  files: [comms_node] #, locomotion_node, estimator_node]
 
 # Maybe some kind of option to shut this down via cmdline
 # rqt_plot:
 #   files: [rqt_plot]
 #   package: rqt_plot
 
-# Unused atm (should be just isn't)
+# Unused atm (should be, just isn't)
 teensy_vid: 0x16C0
 teensy_pid: 0x0486
 robot_name: penguin
@@ -40,13 +40,13 @@ motor_index:
 # packet index
 motor_can_index:
   # [can bus, message type, motor offset] see datasheets if you don't understand
-  - [2, 1, 2]
-  - [2, 0, 2]
-  - [2, 1, 1]
-  - [2, 0, 0]
-  - [2, 1, 6]
-  - [2, 2, 2]
   - [2, 0, 1]
+  - [2, 0, 2]
+  - [2, 0, 3]
+  - [2, 0, 4]
+  - [2, 1, 6]
+  - [2, 1, 7]
+  - [2, 0, 5]
 
 # Used by encoder estimator (kee)
 # [V1, V2, V3, V4, dP, dY, dG] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma]

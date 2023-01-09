@@ -10,7 +10,7 @@
 	 Driver software for the dr16 receiver.
 	Parses the serial input to a robot action.
 
-			Remote control format (int16_t)
+			Remote control format (float)
 			0: fire (shooter toogle)
 			1: toggle (mode select)
 			2: x speed

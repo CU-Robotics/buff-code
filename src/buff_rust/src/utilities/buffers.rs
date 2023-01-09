@@ -141,6 +141,40 @@ impl ByteBuffer {
         self.puts(idx, value.to_be_bytes().to_vec());
     }
 
+    pub fn get_float(&mut self, idx: usize) -> f64 {
+        /*
+            Read an f32 from the buffer.
+            return as f64 just because.
+        */
+        self.validate_index(idx);
+        self.validate_index(idx + 3);
+        f32::from_ne_bytes([
+            self.data[idx],
+            self.data[idx + 1],
+            self.data[idx + 2],
+            self.data[idx + 3],
+        ]) as f64
+    }
+
+    pub fn get_floats(&mut self, idx: usize, n: usize) -> Vec<f64> {
+        /*
+            Read an f32 from the buffer.
+            return as f64 just because.
+        */
+        self.data[idx..idx + (4 * n)]
+            .chunks_exact(4)
+            .map(|x| f32::from_ne_bytes(x.try_into().unwrap_or([0, 0, 0, 0])) as f64)
+            .collect()
+    }
+
+    pub fn put_float(&mut self, idx: usize, value: f64) {
+        /*
+            Write an f64 to the buffer.
+            actually writes as f32
+        */
+        self.puts(idx, value.to_ne_bytes().to_vec());
+    }
+
     pub fn gets(&mut self, idx: usize, n: usize) -> Vec<u8> {
         /*
             Read a vec of values from the buffer.

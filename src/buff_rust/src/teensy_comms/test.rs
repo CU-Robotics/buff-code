@@ -49,16 +49,14 @@ pub mod dead_teensy_comms_tests {
                 layer.input.get(0),
                 timer
             );
-        } 
-        else if mode == 0 {
+        } else if mode == 0 {
             println!(
                 "\t[{}] Idle Packet detected: <{}, {} us>",
                 sys_time.elapsed().as_millis(),
                 layer.input.get(0),
                 timer
             );
-        }
-        else {
+        } else {
             println!(
                 "\t[{}] Data Packet detected: <{}, {} us>",
                 sys_time.elapsed().as_millis(),
@@ -174,7 +172,7 @@ pub mod dead_teensy_comms_tests {
     }
 
     pub fn initializer_test(layer: &mut HidLayer) {
-        let initializers = layer.robot_report.load_initializers();
+        let initializers = layer.robot_status.load_initializers();
         println!("\nTesting initializers:...\n\t{:?}", initializers);
         layer.set_output_bytes(0, vec![255]);
         layer.set_output_bytes(1, initializers[0].clone());
@@ -192,9 +190,10 @@ pub mod dead_teensy_comms_tests {
 
     pub fn motor_feedback_test(layer: &mut HidLayer) {
         println!("\nTesting motor feedback:...\n");
-        layer.set_output_bytes(0, vec![1, 0]);
+        layer.set_output_bytes(0, vec![1, 1]);
         layer.write();
-        watch_for_packet_data(layer, 1, 10, 1, 24);
+        layer.output.print_data();
+        watch_for_packet_data(layer, 1, 10, 2, 49);
     }
 
     #[test]
@@ -215,6 +214,5 @@ pub mod dead_teensy_comms_tests {
         imu_connection_test(&mut layer);
 
         motor_feedback_test(&mut layer);
-
     }
 }

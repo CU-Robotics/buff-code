@@ -3,6 +3,7 @@
 #include "buff_cpp/timing.h"
 #include "rm_can_interface.h"
 
+
 int16_t bytes_to_int16_t(byte upper, byte lower) {
 	/*
 		  Helper to convert bytes to int16_t.
@@ -16,6 +17,7 @@ int16_t bytes_to_int16_t(byte upper, byte lower) {
 	return int16_t(upper << 8) | lower;
 }
 
+// value / 8191 * 2 * pi, (2 * pi) / 8191 = 0.00076708
 float ang_from_can_bytes(byte b1, byte b2){
 	/*
 		  Getter for the angle in can bytes.
@@ -25,7 +27,7 @@ float ang_from_can_bytes(byte b1, byte b2){
 		@return
 			angle: the angle scaled to 0-36000
 	*/
-	return ((bytes_to_int16_t(b1, b2) / 8191) - 0.5) * 2.0 * PI;
+	return bytes_to_int16_t(b1, b2) * 0.00076708;
 }
 
 void print_rm_feedback_struct(RM_Feedback_Packet* fb) {
@@ -40,7 +42,7 @@ void print_rm_feedback_struct(RM_Feedback_Packet* fb) {
 		fb->angle, 
 		fb->RPM, 
 		fb->torque, 
-		ARM_DWT_CYCCNT - fb->timestamp);
+		DURATION_US(fb->timestamp, ARM_DWT_CYCCNT));
 }
 
 void print_rm_config_struct(RM_CAN_Device* dev) {
@@ -134,7 +136,7 @@ RM_CAN_Device::RM_CAN_Device(int8_t id, byte* config) {
 
 	message_type = int(config[2] / 4) + config[1];			// message type = (esc ID / 4) + motor_type 
 	message_offset = (2 * ((config[2] - 1) % 4));			// message offset = (esc ID % 4) - 1
-	return_id = config[2] + (5 * config[1]) - 1;			// 0x200 + esc ID + motor_type_offset = rid (store as 8 bit though - 0x201)
+	return_id = (config[2] - 1) + (4 * config[1]);			// 0x200 + esc ID + motor_type_offset = rid (store as 8 bit, -0x201)
 
 	motor_id = id;
 
@@ -207,6 +209,8 @@ void RM_CAN_Interface::set_index(int idx, byte config[3]){
 		default:
 			break;
 	}
+	print_rm_config_struct(&motor_index[idx]);
+
 }
 
 // Some quick getters so you don't have to write
@@ -227,7 +231,7 @@ float RM_CAN_Interface::get_motor_ts(int motor_id) {
 	return motor_index[motor_id].feedback->timestamp;
 }
 
-int8_t RM_CAN_Interface::motor_idx_from_return(int8_t can_bus, int return_id){
+int8_t RM_CAN_Interface::motor_idx_from_return(int can_bus, int return_id){
 	/*
 		  Getter for the motor index.
 		@param
@@ -315,21 +319,18 @@ void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
 		@return
 			None
 	*/
-	int ret_id = msg->id;
 
-	if (ret_id > 0){
-		int motor_id = motor_idx_from_return(can_bus, ret_id);
+	int motor_id = motor_idx_from_return(can_bus, msg->id);
 
-		if (motor_id >= 0) {
-			motor_index[motor_id].feedback->angle = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
-			motor_index[motor_id].feedback->RPM = bytes_to_int16_t(msg->buf[2], msg->buf[3]);
-			motor_index[motor_id].feedback->torque = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
-			motor_index[motor_id].feedback->timestamp = ARM_DWT_CYCCNT;
-		}
+	if (motor_id >= 0) {
+		motor_index[motor_id].feedback->angle = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
+		motor_index[motor_id].feedback->RPM = bytes_to_int16_t(msg->buf[2], msg->buf[3]);
+		motor_index[motor_id].feedback->torque = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
+		motor_index[motor_id].feedback->timestamp = ARM_DWT_CYCCNT;
 	}
 }
 
-void RM_CAN_Interface::get_motor_feedback(float* data, int idx) {
+void RM_CAN_Interface::get_motor_feedback(int idx, float* data) {
 	/*
 		  Read the feedback values for a motor at idx.
 		@param
@@ -338,7 +339,7 @@ void RM_CAN_Interface::get_motor_feedback(float* data, int idx) {
 		@return
 			None
 	*/
-	if (idx >= 0 && idx < num_motors) {
+	if (idx >= 0 && idx < num_motors) {		
 		int32_t delta_ms = DURATION_MS(get_motor_ts(idx), ARM_DWT_CYCCNT);
 
 		if (delta_ms < MOTOR_FEEDBACK_TIMEOUT){
@@ -359,19 +360,18 @@ void RM_CAN_Interface::get_motor_feedback(float* data, int idx) {
 	}
 }
 
-void RM_CAN_Interface::get_block_feedback(float* data, int id) {
+void RM_CAN_Interface::get_block_feedback(int id, float* data) {
 	/*
 		  Read the feedback values for a block of motors.
 		@param
 			data: buffer for output data
-			id: index of the motor in the motor_index
+			id: block number of the motor block (4 blocks with 4 motors each)
 		@return
 			None
 	*/
 	float tmp[3];
-
 	for (int j = 0; j < 4; j++) {
-		get_motor_feedback(tmp, (4 * id) + j);
+		get_motor_feedback((4 * id) + j, tmp);
 		data[3 * j] = tmp[0];
 		data[(3 * j) + 1] = tmp[1];
 		data[(3 * j) + 2] = tmp[2];
@@ -387,8 +387,9 @@ void RM_CAN_Interface::read_can1(){
 			None
 	*/
 	CAN_message_t tmp;
-	can1.read(tmp);
-	set_feedback(1, &tmp);
+	while (can1.read(tmp)) {
+		set_feedback(1, &tmp);
+	}
 }
 
 void RM_CAN_Interface::read_can2(){
@@ -400,8 +401,9 @@ void RM_CAN_Interface::read_can2(){
 			None
 	*/
 	CAN_message_t tmp;
-	can2.read(tmp);
-	set_feedback(2, &tmp);
+	while (can2.read(tmp)) {
+		set_feedback(2, &tmp);
+	}
 }
 
 

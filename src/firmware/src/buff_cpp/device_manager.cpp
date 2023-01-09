@@ -38,9 +38,34 @@ void Device_Manager::feedback_request_handle() {
 	// 16 motors = 4 blocks, each block is 4 motors
 	// worth of feedback
 	float tmp[12];
-	rm_can_ux->get_block_feedback(tmp, int(input_report->get(1)));
+	output_report->put(1, input_report->get(1));
+	rm_can_ux->get_block_feedback(input_report->get(1), tmp);
 	for (int i = 0; i < 12; i++) {
-		input_report->put_float((4 * i) + 1, tmp[i]);
+		output_report->put_float((4 * i) + 2, tmp[i]);
+	}
+}
+
+void Device_Manager::sensor_request_handle() {
+	// use input_report.data[1] as the sensor to read
+	// imu = 0 (36 bytes = 9 floats), dr16 = 1 (28 bytes = 7 floats)
+	int sensor = input_report->get(1);
+	output_report->put(1, sensor);
+	switch (sensor) {
+		case 0:
+			for (int i = 0; i < IMU_DOF; i++){
+				output_report->put_float((4 * i) + 2, imu->data[i]);
+			}
+			break;
+
+		case 1:
+			// DR16 data is int16_t[7] (38:58)
+			for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+				output_report->put_float((2 * i) + 2, receiver->data[i]);
+			}
+			break;
+
+		default:
+			break;
 	}
 }
 
@@ -60,27 +85,13 @@ void Device_Manager::report_switch() {
 			break;
 
 		case 2:
-			output_report->put(0, 2);
 			// read something
 			// write something
 			break;
 
 		case 3:
-			output_report->put(0, 3);
-			// read imu/dr16 config
-			// write DR16/IMU data (1:36)
-			// floats take 32 bits (4 bytes), 
-			// first byte of packet is an identifier
-			// (4 * i) + 1 will offset accordingly
-			for (int i = 0; i < IMU_DOF; i++){
-				output_report->put_float((4 * i) + 1, imu->data[i]);
-			}
-
-			// DR16 data is int16_t[10] (38:58)
-			for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
-				output_report->put_float((2 * i) + 38, receiver->data[i]);
-			}
-
+			// sensor data request
+			sensor_request_handle();
 			break;
 
 		default:

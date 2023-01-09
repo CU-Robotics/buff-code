@@ -21,6 +21,7 @@ struct Device_Manager {
 	// handlers
 	void initializer_report_handle();
 	void feedback_request_handle();
+	void sensor_request_handle();
 
 	// Data pipelines
 	void report_switch();

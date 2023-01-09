@@ -16,15 +16,19 @@ use std::{
 ///     layer.spin();
 /// '''
 pub struct HidLayer {
-    pub hidapi: HidApi,
-    pub vid: u16,
-    pub pid: u16,
     pub nc_timeout: u128,
+    pub initialized: bool,
+    pub pid: u16,
+    pub vid: u16,
+
     pub input: ByteBuffer,
     pub output: ByteBuffer,
-    pub teensy: Result<HidDevice, HidError>,
     pub output_queue: Arc<RwLock<ByteBuffer>>,
-    pub robot_report: BuffBotStatusReport,
+    pub robot_status: BuffBotStatusReport,
+
+    pub hidapi: HidApi,
+    pub teensy: Result<HidDevice, HidError>,
+
     // pub subscriber: rosrust::Subscriber,
     // pub publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub timestamp: Instant,
@@ -71,17 +75,21 @@ impl HidLayer {
         let api = HidApi::new().expect("Failed to create API instance");
 
         HidLayer {
-            hidapi: api,
             nc_timeout: 8000,
+            initialized: false,
             vid: byu.load_u16("teensy_vid"),
             pid: byu.load_u16("teensy_pid"),
-            teensy: Err(hidapi::HidError::InitializationError),
+
             input: ByteBuffer::new(64),
             output: ByteBuffer::new(64),
             output_queue: output_buffer,
-            robot_report: BuffBotStatusReport::load_robot(),
-            // subscriber: can_sub,
-            // publishers: pubs,
+            robot_status: BuffBotStatusReport::load_robot(),
+
+            hidapi: api,
+            teensy: Err(hidapi::HidError::InitializationError),
+
+            // subscriber: rosrust::Subscriber,
+            // publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
             timestamp: Instant::now(),
         }
     }
@@ -95,7 +103,7 @@ impl HidLayer {
         self.input.reset();
         self.output.reset();
         self.output_queue.write().unwrap().reset();
-        self.robot_report = BuffBotStatusReport::load_robot();
+        self.robot_status = BuffBotStatusReport::load_robot();
     }
 
     /// Set bytes in the output queue, great for tests
@@ -105,33 +113,6 @@ impl HidLayer {
     /// '''
     pub fn set_output_bytes(&mut self, idx: usize, data: Vec<u8>) {
         self.output_queue.write().unwrap().puts(idx, data);
-    }
-
-    /// Parse the stored HID packet into BuffBot Data Structures
-    /// Usage:
-    /// '''
-    ///     // HID packet waiting
-    ///     if layer.read() > 0 { // layer.read returns the number of bytes read
-    ///         layer.parse_report();
-    ///     }
-    /// '''
-    pub fn parse_report(&mut self) {
-        // match the report number to determine the structure
-        match self.input.get(0) {
-            0 => {
-
-                // self.robot_report.load_initializers().iter().for_each(|init| {
-                //     self.output_queue.write().unwrap().puts(0, init);
-                //     self.write();
-                //     self.read();
-                // });
-            }
-            1 => {}
-            2 => {}
-            3 => {}
-            u8::MAX => {}
-            _ => {}
-        }
     }
 
     /// Read an HID packet and handle the result
@@ -177,9 +158,88 @@ impl HidLayer {
         }
     }
 
+    /// After requesting a report this can be used to wait for a reply
+    /// Usage:
+    /// '''
+    ///     // set layer.output.data[0] to an int [1-3]
+    ///     layer.write()
+    ///     layer.wait_for_packet(255, 10);
+    /// '''
+    pub fn validate_input_report(&mut self) -> u8 {
+        let mode = self.input.get(0);
+        let timer = self.input.get_i32(60);
+
+        if timer == 0 {
+            println!("\tTeensy does not recognize the connection!");
+        } else if timer > 1200 {
+            println!(
+                "\tTeensy request {} took longer than the cycle limit {}",
+                mode, timer
+            );
+        }
+
+        return mode;
+    }
+
+    /// After requesting a report this can be used to wait for a reply
+    /// Usage:
+    /// '''
+    ///     // set layer.output.data[0] to an int [1-3]
+    ///     layer.write()
+    ///     layer.wait_for_report_reply(255, 10);
+    /// '''
+    pub fn wait_for_report_reply(&mut self, packet_id: u8, timeout: u128) -> u8 {
+        let mut loopt;
+        let t = Instant::now();
+
+        while t.elapsed().as_millis() < timeout {
+            loopt = Instant::now();
+
+            match self.read() {
+                64 => {
+                    if self.validate_input_report() == packet_id {
+                        return packet_id;
+                    }
+                }
+                _ => {}
+            }
+
+            self.write();
+
+            // HID runs at 1 ms
+            while loopt.elapsed().as_micros() < 1000 {}
+        }
+
+        // If packet never arrives
+        panic!("\tTimed out waiting for reply from Teensy");
+    }
+
+    /// send initializers to a teensy
+    /// Usage:
+    /// '''
+    ///     layer.teensy = layer.hidapi.open(layer.vid, layer.pid);
+    ///     layer.initialize();
+    /// '''
+    pub fn initialize(&mut self) {
+        self.set_output_bytes(0, vec![255]);
+        self.robot_status
+            .load_initializers()
+            .into_iter()
+            .for_each(|initializer| self.set_output_bytes(1, initializer));
+        self.write();
+
+        if self.wait_for_report_reply(255, 10) == 255 {
+            self.initialized = true;
+            println!("\tTeensy Initialized!");
+        } else {
+            panic!("Teensy did not respond to initializers");
+        }
+    }
+
     /// Initialize the connection to a teensy
     /// Usage:
     /// '''
+    ///     let layer = HidLayer::new();
     ///     layer.init_comms();
     /// '''
     pub fn init_comms(&mut self) {
@@ -187,8 +247,8 @@ impl HidLayer {
 
         match &self.teensy {
             Ok(_) => {
-                self.write();
-                println!("Teensy connected");
+                println!("\tTeensy connected");
+                self.initialize();
                 self.timestamp = Instant::now();
 
                 // if rosrust::is_ok() {
@@ -213,12 +273,47 @@ impl HidLayer {
     /// '''
     pub fn connection_repair(&mut self) {
         drop(&self.teensy);
+
         // if prgram counter is more than timeout, don't try to
-        // reconnect
+        // reconnect (prevent infinite recursion while repairing connection)
         if self.timestamp.elapsed().as_millis() < self.nc_timeout {
-            println!("Can't find teensy!");
+            println!("\tCan't find teensy!");
             sleep(Duration::from_millis((self.nc_timeout / 5) as u64));
             self.init_comms();
+        }
+    }
+
+    /// Parse the stored HID packet into BuffBot Data Structures
+    /// Usage:
+    /// '''
+    ///     // HID packet waiting
+    ///     if layer.read() > 0 { // layer.read returns the number of bytes read
+    ///         layer.parse_report();
+    ///     }
+    /// '''
+    pub fn parse_report(&mut self) {
+        // match the report number to determine the structure
+        match self.validate_input_report() {
+            1 => {
+                let index_offset = (self.input.get(1) * 4) as usize;
+                self.robot_status
+                    .update_motor_encoder(index_offset, self.input.get_floats(2, 3));
+                self.robot_status
+                    .update_motor_encoder(index_offset + 1, self.input.get_floats(14, 3));
+                self.robot_status
+                    .update_motor_encoder(index_offset + 2, self.input.get_floats(26, 3));
+                self.robot_status
+                    .update_motor_encoder(index_offset + 3, self.input.get_floats(38, 3));
+            }
+            2 => {}
+            3 => {
+                self.robot_status
+                    .update_sensor(self.input.get(1) as usize, self.input.get_floats(2, 9));
+            }
+            u8::MAX => {
+                println!("\tTeensy requested new initializers... somethings wrong");
+            }
+            _ => {}
         }
     }
 
@@ -226,29 +321,34 @@ impl HidLayer {
     /// Usage:
     /// '''
     ///     layer.init_comms();
+    ///     layer.spin();       // runs until watchdog times out
     /// '''
     pub fn spin(&mut self) {
-        match self.read() {
-            64 => {
-                self.parse_report();
+        let mut report_request = 0;
+        let reports = self.robot_status.get_reports();
 
-                if self.input.get_i32(60) == 0 {
-                    println!("\tTeensy does not recognize the connection!");
+        loop {
+            let loopt = Instant::now();
+
+            match self.initialized {
+                false => {
+                    self.initialize();
+                }
+                true => {
+                    self.set_output_bytes(0, reports[report_request].clone());
+                    self.write();
+                    self.wait_for_report_reply(reports[report_request][0], 10);
+                    self.parse_report();
+                    report_request = (report_request + 1) % reports.len();
                 }
             }
-            0 => {
-                println!("\tNo Packet available");
-            }
-            _ => {
-                println!("\tCorrupt packet!");
-            }
+
+            // Reset watchdog timer.
+            self.timestamp = Instant::now();
+
+            while loopt.elapsed().as_micros() < 1000 {}
+            self.robot_status.motors[4].print();
         }
-
-        self.write();
-
-        // Reset this timer to continue searching for a device instead
-        // of exiting. For tests, don't reset this and the program will time out.
-        self.timestamp = Instant::now();
     }
 
     /// Attempt to delete a teensy connection

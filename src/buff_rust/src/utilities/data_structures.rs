@@ -24,32 +24,29 @@ impl BuffBotSensorReport {
         }
     }
 
-    pub fn device_id(self) -> u8 {
-        self.id
-    }
-
-    pub fn read(self) -> Vec<f64> {
-        self.data
-    }
-
     pub fn write(&mut self, data: Vec<f64>) {
-        self.data = data;
+        self.data = data[0..self.data.len()].to_vec();
         self.timestamp = Instant::now();
     }
 
-    pub fn ts(self) -> Instant {
-        self.timestamp
+    pub fn print(&mut self) {
+        println!(
+            "\t\tSensor {} Data:\t{}\n\t\t{:?}",
+            self.id,
+            self.timestamp.elapsed().as_micros(),
+            self.data
+        );
     }
 }
 
 pub struct BuffBotCANMotorReport {
-    name: String,
-    index: u8,
-    can_bus: u8,
-    motor_type: u8,
-    esc_id: u8,
-    feedback: Vec<f64>,
-    timestamp: Instant,
+    pub name: String,
+    pub index: u8,
+    pub can_bus: u8,
+    pub motor_type: u8,
+    pub esc_id: u8,
+    pub feedback: Vec<f64>,
+    pub timestamp: Instant,
 }
 
 impl BuffBotCANMotorReport {
@@ -83,64 +80,48 @@ impl BuffBotCANMotorReport {
         }
     }
 
-    pub fn name(self) -> String {
-        self.name
-    }
-
-    pub fn motor_type(self) -> u8 {
-        self.motor_type
-    }
-
-    pub fn can_bus(self) -> u8 {
-        self.can_bus
-    }
-
-    pub fn index(self) -> u8 {
-        self.index
-    }
-
-    pub fn esc_id(self) -> u8 {
-        self.esc_id
-    }
-
     pub fn write(&mut self, data: Vec<f64>) {
         self.feedback = data;
         self.timestamp = Instant::now();
     }
 
-    pub fn read(self) -> Vec<f64> {
-        self.feedback
-    }
-
-    pub fn ts(self) -> Instant {
-        self.timestamp
-    }
-
     pub fn init_bytes(&self) -> Vec<u8> {
         vec![self.can_bus, self.motor_type, self.esc_id]
+    }
+
+    pub fn print(&mut self) {
+        println!(
+            "\t\tMotor {} Data:\t{}\n\t\t{:?}",
+            self.index,
+            self.timestamp.elapsed().as_micros(),
+            self.feedback
+        );
     }
 }
 
 pub struct BuffBotStatusReport {
     pub motors: Vec<BuffBotCANMotorReport>,
-    pub remote_control: BuffBotSensorReport,
-    pub inertial_feedback: BuffBotSensorReport,
+    pub sensors: Vec<BuffBotSensorReport>,
 }
 
 impl BuffBotStatusReport {
     pub fn default() -> BuffBotStatusReport {
         BuffBotStatusReport {
             motors: vec![],
-            remote_control: BuffBotSensorReport::default(),
-            inertial_feedback: BuffBotSensorReport::default(),
+            sensors: vec![
+                BuffBotSensorReport::new(2, vec![0.0; 9]),
+                BuffBotSensorReport::new(1, vec![0.0; 7]),
+            ],
         }
     }
 
     pub fn new() -> BuffBotStatusReport {
         BuffBotStatusReport {
             motors: vec![],
-            remote_control: BuffBotSensorReport::default(),
-            inertial_feedback: BuffBotSensorReport::default(),
+            sensors: vec![
+                BuffBotSensorReport::new(2, vec![0.0; 9]),
+                BuffBotSensorReport::new(1, vec![0.0; 7]),
+            ],
         }
     }
 
@@ -160,8 +141,10 @@ impl BuffBotStatusReport {
 
         BuffBotStatusReport {
             motors: motors,
-            remote_control: BuffBotSensorReport::new(1, vec![0.0; 8]),
-            inertial_feedback: BuffBotSensorReport::new(2, vec![0.0; 9]),
+            sensors: vec![
+                BuffBotSensorReport::new(2, vec![0.0; 9]),
+                BuffBotSensorReport::new(1, vec![0.0; 7]),
+            ],
         }
     }
 
@@ -181,7 +164,27 @@ impl BuffBotStatusReport {
         vec![self.motor_init_packet()]
     }
 
+    pub fn get_reports(&mut self) -> Vec<Vec<u8>> {
+        let mut reports = vec![];
+        (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![1, i as u8]));
+        (0..self.sensors.len()).for_each(|i| reports.push(vec![3, i as u8]));
+        reports
+    }
+
     pub fn update_motor_encoder(&mut self, index: usize, feedback: Vec<f64>) {
-        self.motors[index].write(feedback);
+        if index < self.motors.len() {
+            self.motors[index].write(feedback);
+        }
+    }
+
+    pub fn update_sensor(&mut self, index: usize, feedback: Vec<f64>) {
+        self.sensors[index].write(feedback);
+    }
+
+    pub fn print(&mut self) {
+        println!("\n\tRobot Status Report:");
+        (0..self.motors.len()).for_each(|i| self.motors[i].print());
+        (0..self.sensors.len()).for_each(|i| self.sensors[i].print());
+        println!();
     }
 }

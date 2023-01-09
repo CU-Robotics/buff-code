@@ -5,6 +5,7 @@
 #include "buff_cpp/timing.cpp"
 #include "motor_drivers/rm_can_interface.cpp"
 
+
 RM_CAN_Interface rm_can_ux;
 
 int8_t num_motors = 4; 
@@ -49,7 +50,7 @@ void n_motor_check() {
 
 void test_int16_from_can_bytes() {
 	/*
-			Helper to test the can things ability to convert angles.
+			Helper to test the can things ability to convert bytes.
 		@param
 			iters: number of iteration to test
 		@return
@@ -70,6 +71,37 @@ void test_int16_from_can_bytes() {
 	for (int i = 0; i < iters; i++) {
 		TEST_ASSERT_EQUAL_INT16(ints[i], value);
 	}
+}
+
+float mapf(float x, float in_min, float in_max, float out_min, float out_max){
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+void test_angle_from_can_bytes() {
+	/*
+			Helper to test the can things ability to convert angles.
+		@param
+			iters: number of iteration to test
+		@return
+			None
+	*/
+
+	Serial.printf("\nTesting angle from bytes:...\n");
+
+	int16_t value = mapf(0, 0, 2 * PI, 0, 8191);
+	timer_set(0);
+	TEST_ASSERT_FLOAT_WITHIN(0.0001, 0, ang_from_can_bytes(highByte(value), lowByte(value)));
+	timer_mark(0);
+
+	value = mapf(PI, 0, 2 * PI, 0, 8191);
+	timer_set(0);
+	TEST_ASSERT_FLOAT_WITHIN(0.0005, PI, ang_from_can_bytes(highByte(value), lowByte(value)));
+	timer_mark(0);
+
+	value = mapf(2 * PI, 0, 2 * PI, 0, 8191);
+	timer_set(0);
+	TEST_ASSERT_FLOAT_WITHIN(0.0001, 2 * PI, ang_from_can_bytes(highByte(value), lowByte(value)));
+	timer_mark(0);
 }
 
 void test_can_bus_indices() {
@@ -165,16 +197,15 @@ void test_set_output() {
 		} 
 	}
 
-	Serial.println("CAN1");
+	Serial.println("\tCAN1");
 	print_can_message(&rm_can_ux.output[0][0]);
 	print_can_message(&rm_can_ux.output[0][1]);
 	print_can_message(&rm_can_ux.output[0][2]);
 
-	Serial.println("CAN2");
+	Serial.println("\tCAN2");
 	print_can_message(&rm_can_ux.output[1][0]);
 	print_can_message(&rm_can_ux.output[1][1]);
 	print_can_message(&rm_can_ux.output[1][2]);
-
 }
 
 void test_set_feedback() {
@@ -191,15 +222,15 @@ void test_set_feedback() {
 	Serial.printf("\tTesting set_feedback:...\n");
 
 	for (int can_bus = 1; can_bus < 3; can_bus++) {
-		int16_t value = 8000;
+		int16_t value = map(PI, 0, 2 * PI, 0, 8191);
 
 
 		// generate some can messages
 		CAN_message_t tmp[MAX_CAN_RETURN_IDS];
 		for (int i = 0; i < MAX_CAN_RETURN_IDS; i++){
 			tmp[i].id = 0x201 + i;
-			tmp[i].buf[0] = highByte(value / (i + 1));
-			tmp[i].buf[1] = lowByte(value / (i + 1));
+			tmp[i].buf[0] = highByte(value);
+			tmp[i].buf[1] = lowByte(value);
 		}
 
 		// process the messages
@@ -218,13 +249,8 @@ void test_set_feedback() {
 			}
 
 			// Confirm angle we passed through the CAN message is in the feedback struct
-			TEST_ASSERT_EQUAL_INT16(rm_can_ux.motor_index[motor_id].feedback->angle, ang_from_can_bytes(highByte(value / (i + 1)), lowByte(value / (i + 1))));
+			TEST_ASSERT_FLOAT_WITHIN(0.001, PI, rm_can_ux.motor_index[motor_id].feedback->angle);
 		}
-	}
-
-	Serial.println("\tMotor Config Dumb:");
-	for (int i = 0; i < num_motors; i++) {
-		print_rm_config_struct(&rm_can_ux.motor_index[i]);
 	}
 }
 
@@ -245,7 +271,7 @@ void test_get_feedback() {
 
 	float tmp[3];
 	timer_set(0);
-	rm_can_ux.get_motor_feedback(tmp, 0);
+	rm_can_ux.get_motor_feedback(0, tmp);
 	timer_mark(0);
 
 	TEST_ASSERT_EQUAL_FLOAT(PI, tmp[0]);
@@ -257,21 +283,19 @@ void test_get_feedback() {
 void search_for_devices() {
 	Serial.printf("\tSearching for CAN devices:...\n");
 
+	uint32_t duration = 2000;
 	timer_set(0);
-	while (timer_info_us(0) < 10000) {
+	while (timer_info_us(0) < duration) {
 		CAN_message_t tmp;
-		rm_can_ux.can2.read(tmp);
-		int8_t rid = tmp.id - 0x200;
-		if (rid > 0) {
-			int8_t motor_id = rm_can_ux.can2_motor_index[rid];
-
-			TEST_ASSERT_GREATER_OR_EQUAL_INT8(0, motor_id);
-
-			print_rm_config_struct(&rm_can_ux.motor_index[motor_id]);
-		}
-		else {
-			Serial.println("\tCAN bus empty!");
-			break;
+		
+		if (rm_can_ux.can2.read(tmp)) {
+			int8_t motor_id = rm_can_ux.motor_idx_from_return(2, tmp.id);
+			rm_can_ux.set_feedback(2, &tmp);
+			Serial.printf("\t[%i] Found Device: %X:%X (rid, motor_id)\n", timer_info_us(0), tmp.id, motor_id);
+			float angle = ang_from_can_bytes(tmp.buf[0], tmp.buf[1]);
+			float tmp[3];
+			rm_can_ux.get_motor_feedback(motor_id, tmp);
+			TEST_ASSERT_FLOAT_WITHIN(0, tmp[0], angle);
 		}
 
 		// rm_can_ux.can1.read(tmp);
@@ -288,9 +312,15 @@ void search_for_devices() {
 		// 		motor_type,
 		// 		esc_id);
 		// }
-		// timer_wait_us(0, 100);
+		timer_wait_us(0, duration / 10);
 	}
+
 	timer_mark(0);
+
+	Serial.println("\tMotor Config Dump:");
+	for (int i = 0; i < num_motors; i++) {
+		print_rm_config_struct(&rm_can_ux.motor_index[i]);
+	}
 }
 
 int run_can_tests() {
@@ -298,6 +328,7 @@ int run_can_tests() {
 	RUN_TEST(index_check);
 	RUN_TEST(n_motor_check);
 	RUN_TEST(test_int16_from_can_bytes);
+	RUN_TEST(test_angle_from_can_bytes);
 	RUN_TEST(test_can_bus_indices);
 
 	Serial.println("\tTesting can bus read:...");
