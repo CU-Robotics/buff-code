@@ -148,7 +148,7 @@ impl ByteBuffer {
         */
         self.validate_index(idx);
         self.validate_index(idx + 3);
-        f32::from_ne_bytes([
+        f32::from_be_bytes([
             self.data[idx],
             self.data[idx + 1],
             self.data[idx + 2],
@@ -163,7 +163,7 @@ impl ByteBuffer {
         */
         self.data[idx..idx + (4 * n)]
             .chunks_exact(4)
-            .map(|x| f32::from_ne_bytes(x.try_into().unwrap_or([0, 0, 0, 0])) as f64)
+            .map(|x| f32::from_be_bytes(x.try_into().unwrap()) as f64)
             .collect()
     }
 
@@ -172,14 +172,24 @@ impl ByteBuffer {
             Write an f64 to the buffer.
             actually writes as f32
         */
-        self.puts(idx, value.to_ne_bytes().to_vec());
+        self.puts(idx, (value as f32).to_be_bytes().to_vec());
+    }
+
+    pub fn put_floats(&mut self, idx: usize, values: Vec<f64>) {
+        /*
+            Write an f64 to the buffer.
+            actually writes as f32
+        */
+        values
+            .iter()
+            .enumerate()
+            .for_each(|(i, v)| self.put_float((4 * i as usize) + idx, *v));
     }
 
     pub fn gets(&mut self, idx: usize, n: usize) -> Vec<u8> {
         /*
             Read a vec of values from the buffer.
         */
-
         self.validate_index(idx);
         self.validate_index(idx + n - 1);
         self.data[idx..idx + n].to_vec()
@@ -210,7 +220,7 @@ impl ByteBuffer {
         let mut data_string: String = "\n\n==========\n".to_string();
 
         self.data.iter().enumerate().for_each(|(i, u)| {
-            data_string.push_str(&(u.to_string() + "\t"));
+            data_string.push_str(format!("{:#X}\t", u).as_str());
 
             if (i + 1) % 16 == 0 && i != 0 {
                 data_string.push_str("\n");

@@ -1,6 +1,6 @@
 # The buff stuff
 buff_rust:
-  files: [comms_node] #, locomotion_node, estimator_node]
+  files: [comms_node, motor_identification.py] #, locomotion_node, estimator_node]
 
 # Maybe some kind of option to shut this down via cmdline
 # rqt_plot:
@@ -44,7 +44,7 @@ motor_can_index:
   - [2, 0, 2]
   - [2, 0, 3]
   - [2, 0, 4]
-  - [2, 1, 6]
+  - [2, 2, 6]
   - [2, 1, 7]
   - [2, 0, 5]
 

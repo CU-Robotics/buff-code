@@ -25,7 +25,7 @@ float ang_from_can_bytes(byte b1, byte b2){
 			b1: the upper byte
 			b2: the lower byte 
 		@return
-			angle: the angle scaled to 0-36000
+			angle: the angle
 	*/
 	return bytes_to_int16_t(b1, b2) * 0.00076708;
 }
@@ -54,8 +54,8 @@ void print_rm_config_struct(RM_CAN_Device* dev) {
 			None
 	*/
 	Serial.println("\n\t====== RM Config");
-	Serial.printf("\tcan bus:\t\t%i\n\tmessage_type:\t\t%i\n\tmessage_offset:\t\t%i\n\tmotor_id:\t\t%u\n\tesc_id:\t\t\t%i\n\treturn_id:\t\t%X\n\tmotor_type:\t\t%i\n",
-		dev->can_bus, dev->message_type, dev->message_offset, dev->motor_id, dev->esc_id, dev->return_id, dev->motor_type);
+	Serial.printf("\tcan bus:\t\t%i\n\tmessage_type:\t\t%i\n\tmessage_offset:\t\t%i\n\tmotor_id:\t\t%u\n\tesc_id:\t\t\t%i\n\treturn_id:\t\t%X\n\tesc_type:\t\t%i\n",
+		dev->can_bus, dev->message_type, dev->message_offset, dev->motor_id, dev->esc_id, dev->return_id, dev->esc_type);
 	print_rm_feedback_struct(dev->feedback);
 }
 
@@ -122,21 +122,41 @@ RM_CAN_Device::RM_CAN_Device() {
 
 	esc_id = -1;				// 0-8 the blinking light
 	motor_id = -1;				// index of motor in the serialized motor structure
-	motor_type = 0;				// 0: C6XX, 1: GM6020
+	esc_type = 0;				// 0: C6XX, 1: GM6020
 
 	return_id = -1;				// actual return code
+	output_scale = 0;
 
 	feedback = new RM_Feedback_Packet();
 }
 
 RM_CAN_Device::RM_CAN_Device(int8_t id, byte* config) {
 	can_bus = config[0] - 1;
-	motor_type = config[1];
+	esc_type = config[1];
 	esc_id = config[2];
 
-	message_type = int(config[2] / 4) + config[1];			// message type = (esc ID / 4) + motor_type 
+	message_type = int(config[2] / 4);						// message type = (esc ID / 4) ( + 1, if gm6020), [0x200, 0x1FF, 0x2FF]
 	message_offset = (2 * ((config[2] - 1) % 4));			// message offset = (esc ID % 4) - 1
-	return_id = (config[2] - 1) + (4 * config[1]);			// 0x200 + esc ID + motor_type_offset = rid (store as 8 bit, -0x201)
+	return_id = (config[2] - 1);							// 0x200 + esc ID + esc_type_offset = rid (store as i8 bit, so subtract 0x201)
+
+	switch (esc_type) {										// different ESCs have different setup
+		case 0:
+			output_scale = ESC_0_OUTPUT_SCALE;
+			break;
+
+		case 1:
+			output_scale = ESC_1_OUTPUT_SCALE;
+			break;
+
+		case 2:
+			message_type += 1;								// return ID for GM6020 is 0x205:0x20B
+			return_id += 4;
+			output_scale = ESC_2_OUTPUT_SCALE;
+			break;
+
+		default:
+			break;
+	}
 
 	motor_id = id;
 
@@ -178,7 +198,7 @@ RM_CAN_Interface::RM_CAN_Interface(){
 //     int8_t motor_id;       // index of motor in the serialized motor structure
 //     int8_t return_id;      // id of can message returned from device (- 0x201 to store as int8_t)
 
-//     int8_t motor_type;     // 0: C6XX, 1: GM6020
+//     int8_t esc_type;     // 0: C6XX, 1: GM6020
 //     RM_Feedback_Packet* feedback;
 // };
 void RM_CAN_Interface::set_index(int idx, byte config[3]){
@@ -209,8 +229,6 @@ void RM_CAN_Interface::set_index(int idx, byte config[3]){
 		default:
 			break;
 	}
-	print_rm_config_struct(&motor_index[idx]);
-
 }
 
 // Some quick getters so you don't have to write
@@ -285,7 +303,7 @@ void RM_CAN_Interface::write_can(){
 	}
 }
 
-void RM_CAN_Interface::set_output(int16_t values[MAX_NUM_RM_MOTORS]){
+void RM_CAN_Interface::set_output(int index, float value){
 	/*
 		  Send the motor command from serial to the
 		can packets.
@@ -295,19 +313,14 @@ void RM_CAN_Interface::set_output(int16_t values[MAX_NUM_RM_MOTORS]){
 			None
 	*/
 
-	int can_bus;
-	int msg_type;
-	int msg_offset;
+	int can_bus = motor_index[index].can_bus;
+	int msg_type = motor_index[index].message_type;
+	int msg_offset = motor_index[index].message_offset;
+	int16_t control_in_esc_resolution = int16_t(value * motor_index[index].output_scale);
 
-	for (int i = 0; i < num_motors; i++) {
-		can_bus = motor_index[i].can_bus;
-		msg_type = motor_index[i].message_type;
-		msg_offset = motor_index[i].message_offset;
-
-		// The can busses are numbered 1-2 (indexed 0-1)
-		output[can_bus][msg_type].buf[msg_offset] = highByte(values[i]);
-		output[can_bus][msg_type].buf[msg_offset + 1] = lowByte(values[i]);
-	}
+	// The can busses are numbered 1-2 (indexed 0-1)
+	output[can_bus][msg_type].buf[msg_offset] = highByte(control_in_esc_resolution);
+	output[can_bus][msg_type].buf[msg_offset + 1] = lowByte(control_in_esc_resolution);
 }
 
 void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){

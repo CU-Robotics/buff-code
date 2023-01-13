@@ -21,12 +21,12 @@ void setup() {
 
 // Runs continuously
 void loop() {
-	timer_set(0);
+	timer_set(9);
 
 	// handle any hid input output
-	// device_manager.read_sensor();
+	device_manager.read_sensors();
 	device_manager.push_can();
 	device_manager.hid_input_switch();
 
-	timer_wait_us(0, CYCLE_TIME_US);
+	timer_wait_us(9, CYCLE_TIME_US);
 }

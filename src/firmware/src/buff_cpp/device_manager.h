@@ -15,20 +15,6 @@
 */
 
 struct Device_Manager {
-	Device_Manager();
-	Device_Manager(LSM6DSOX*, DR16*, RM_CAN_Interface*);
-
-	// handlers
-	void initializer_report_handle();
-	void feedback_request_handle();
-	void sensor_request_handle();
-
-	// Data pipelines
-	void report_switch();
-	bool hid_input_switch();
-
-	void push_can();
-	void read_sensor();
 
 	Hid_Report* input_report;	//message being read on teensy from computer (poll or command)
 	Hid_Report* output_report;	//data being sent from teensy to computer
@@ -36,6 +22,26 @@ struct Device_Manager {
 	LSM6DSOX* imu;
 	DR16* receiver;
 	RM_CAN_Interface* rm_can_ux;
+
+	int sensor_switch;
+	int controller_switch;
+
+	Device_Manager();
+	Device_Manager(LSM6DSOX*, DR16*, RM_CAN_Interface*);
+
+	// handlers
+	void initializer_report_handle();
+	void feedback_request_handle();
+	void control_input_handle();
+	void sensor_request_handle();
+
+	// Data pipelines
+	void report_switch();
+	bool hid_input_switch();
+
+	void push_can();
+	void read_sensors();
+	void step_controllers();
 };
 
 #endif

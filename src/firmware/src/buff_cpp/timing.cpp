@@ -36,6 +36,10 @@ uint32_t timer_info_us(int idx) {
 	return DURATION_US(timers[idx], ARM_DWT_CYCCNT);
 }
 
+uint32_t timer_info_ms(int idx) {
+	return DURATION_MS(timers[idx], ARM_DWT_CYCCNT);
+}
+
 void timer_wait_us(int idx, uint32_t duration){
 	/*
 	  Helper to pause for a duration. Duration starts
@@ -46,4 +50,16 @@ void timer_wait_us(int idx, uint32_t duration){
 		None
 	*/
 	while(DURATION_US(timers[idx], ARM_DWT_CYCCNT) < duration) {}
+}
+
+void timer_wait_ms(int idx, uint32_t duration){
+	/*
+	  Helper to pause for a duration. Duration starts
+	when timer_set() is called.
+	@param
+	  duration: (uint32_t) microseconds to wait (from when timer_set() was called)
+	@return
+		None
+	*/
+	while(DURATION_MS(timers[idx], ARM_DWT_CYCCNT) < duration) {}
 }

@@ -1,4 +1,5 @@
 use crate::utilities::loaders::*;
+use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
 pub struct BuffBotSensorReport {
@@ -29,7 +30,7 @@ impl BuffBotSensorReport {
         self.timestamp = Instant::now();
     }
 
-    pub fn print(&mut self) {
+    pub fn print(&self) {
         println!(
             "\t\tSensor {} Data:\t{}\n\t\t{:?}",
             self.id,
@@ -89,7 +90,7 @@ impl BuffBotCANMotorReport {
         vec![self.can_bus, self.motor_type, self.esc_id]
     }
 
-    pub fn print(&mut self) {
+    pub fn print(&self) {
         println!(
             "\t\tMotor {} Data:\t{}\n\t\t{:?}",
             self.index,
@@ -100,8 +101,8 @@ impl BuffBotCANMotorReport {
 }
 
 pub struct BuffBotStatusReport {
-    pub motors: Vec<BuffBotCANMotorReport>,
-    pub sensors: Vec<BuffBotSensorReport>,
+    pub motors: Vec<Arc<RwLock<BuffBotCANMotorReport>>>,
+    pub sensors: Vec<Arc<RwLock<BuffBotSensorReport>>>,
 }
 
 impl BuffBotStatusReport {
@@ -109,8 +110,8 @@ impl BuffBotStatusReport {
         BuffBotStatusReport {
             motors: vec![],
             sensors: vec![
-                BuffBotSensorReport::new(2, vec![0.0; 9]),
-                BuffBotSensorReport::new(1, vec![0.0; 7]),
+                Arc::new(RwLock::new(BuffBotSensorReport::new(2, vec![0.0; 9]))),
+                Arc::new(RwLock::new(BuffBotSensorReport::new(1, vec![0.0; 7]))),
             ],
         }
     }
@@ -119,8 +120,8 @@ impl BuffBotStatusReport {
         BuffBotStatusReport {
             motors: vec![],
             sensors: vec![
-                BuffBotSensorReport::new(2, vec![0.0; 9]),
-                BuffBotSensorReport::new(1, vec![0.0; 7]),
+                Arc::new(RwLock::new(BuffBotSensorReport::new(2, vec![0.0; 9]))),
+                Arc::new(RwLock::new(BuffBotSensorReport::new(1, vec![0.0; 7]))),
             ],
         }
     }
@@ -130,21 +131,30 @@ impl BuffBotStatusReport {
         let motor_index = byu.load_string_list("motor_index");
         let motor_can_index = byu.load_integer_matrix("motor_can_index");
 
-        let motors = motor_index
+        let motors: Vec<Arc<RwLock<BuffBotCANMotorReport>>> = motor_index
             .into_iter()
             .zip(motor_can_index.iter())
             .enumerate()
             .map(|(i, (name, index))| {
-                BuffBotCANMotorReport::new(name, i as u8, index[0], index[1], index[2])
+                Arc::new(RwLock::new(BuffBotCANMotorReport::new(
+                    name, i as u8, index[0], index[1], index[2],
+                )))
             })
             .collect();
 
         BuffBotStatusReport {
             motors: motors,
             sensors: vec![
-                BuffBotSensorReport::new(2, vec![0.0; 9]),
-                BuffBotSensorReport::new(1, vec![0.0; 7]),
+                Arc::new(RwLock::new(BuffBotSensorReport::new(2, vec![0.0; 9]))),
+                Arc::new(RwLock::new(BuffBotSensorReport::new(1, vec![0.0; 7]))),
             ],
+        }
+    }
+
+    pub fn clone(&self) -> BuffBotStatusReport {
+        BuffBotStatusReport {
+            motors: self.motors.iter().map(|motor| motor.clone()).collect(),
+            sensors: self.sensors.iter().map(|sensor| sensor.clone()).collect(),
         }
     }
 
@@ -153,10 +163,14 @@ impl BuffBotStatusReport {
             self.motors.len() <= 16,
             "Invalid number of motors, check config"
         );
-        self.motors
-            .iter()
-            .map(|motor| motor.init_bytes())
-            .flatten()
+        vec![255]
+            .into_iter()
+            .chain(
+                self.motors
+                    .iter()
+                    .map(|motor| motor.read().unwrap().init_bytes())
+                    .flatten(),
+            )
             .collect()
     }
 
@@ -172,19 +186,19 @@ impl BuffBotStatusReport {
     }
 
     pub fn update_motor_encoder(&mut self, index: usize, feedback: Vec<f64>) {
-        if index < self.motors.len() {
-            self.motors[index].write(feedback);
+        if index < self.motors.len() && feedback.iter().sum::<f64>() != 0.0 {
+            self.motors[index].write().unwrap().write(feedback);
         }
     }
 
     pub fn update_sensor(&mut self, index: usize, feedback: Vec<f64>) {
-        self.sensors[index].write(feedback);
+        self.sensors[index].write().unwrap().write(feedback);
     }
 
-    pub fn print(&mut self) {
+    pub fn print(&self) {
         println!("\n\tRobot Status Report:");
-        (0..self.motors.len()).for_each(|i| self.motors[i].print());
-        (0..self.sensors.len()).for_each(|i| self.sensors[i].print());
+        (0..self.motors.len()).for_each(|i| self.motors[i].read().unwrap().print());
+        (0..self.sensors.len()).for_each(|i| self.sensors[i].read().unwrap().print());
         println!();
     }
 }

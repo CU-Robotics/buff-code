@@ -1,6 +1,6 @@
 #include "hid_report.h"
 
-void Hid_Report::print_packet(){
+void Hid_Report::print(){
 	/*
 		  Display function for HID packets
 		@param:
@@ -10,7 +10,7 @@ void Hid_Report::print_packet(){
 	*/
 	Serial.println("\n\t=====");
 	for (int i = 0; i < HID_REPORT_SIZE_BYTES - 15; i += 16){
-		Serial.printf("\t[%d]\t\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\t%X\n", 
+		Serial.printf("\t[%d]\t\t%X, %X, %X, %X, %X, %X, %X, %X, %X, %X, %X, %X, %X, %X, %X, %X\n", 
 						i,
 						data[i], data[i+1], data[i+2], data[i+3],
 						data[i+4], data[i+5], data[i+6], data[i+7], 
@@ -101,10 +101,10 @@ float Hid_Report::get_float(int idx){
 			float: requested data
 	*/
 	FLOATBYTE_t fb_union;
-	fb_union.bytes[0] = data[idx];
-	fb_union.bytes[1] = data[idx+1];
-	fb_union.bytes[2] = data[idx+2];
-	fb_union.bytes[3] = data[idx+3];
+	fb_union.bytes[3] = data[idx];
+	fb_union.bytes[2] = data[idx+1];
+	fb_union.bytes[1] = data[idx+2];
+	fb_union.bytes[0] = data[idx+3];
 
 	return fb_union.number;
 }
@@ -122,10 +122,10 @@ void Hid_Report::put_float(int idx, float value){
 	*/
 	FLOATBYTE_t fb_union;
 	fb_union.number = value;
-	data[idx]   = fb_union.bytes[0];
-	data[idx+1] = fb_union.bytes[1];
-	data[idx+2] = fb_union.bytes[2];
-	data[idx+3] = fb_union.bytes[3];
+	data[idx]   = fb_union.bytes[3];
+	data[idx+1] = fb_union.bytes[2];
+	data[idx+2] = fb_union.bytes[1];
+	data[idx+3] = fb_union.bytes[0];
 }
 
 void Hid_Report::get_chars(int idx, int n, char* s){

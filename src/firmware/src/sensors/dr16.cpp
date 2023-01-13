@@ -1,14 +1,11 @@
 #include "dr16.h"
 
-// 1 / 660.0 = 0.00151515 (avoids an unnecesarry division)
-float normalize_channel(int16_t value){
+float bounded_map(int value, int in_low, int in_high, int out_low, int out_high){
 	/*
-		DR16 has some issues so we fix the stick values
-		to the datasheets range [364:1684] then center
-		the values around 0 (value - 1024). Then scale
-		to  [-1:1].
+		 This is derived from sthe arduino map() function.
 	*/
-	return (max(min(float(value), 1684.0), 364.0) - 1024.0) * 0.00151515;
+	value = max(min(value, in_high), in_low);
+	return (value - in_low) * (out_high - out_low) / (in_high - in_low) + out_low;
 }
 
 float wrap_radians(float value) {
@@ -22,7 +19,27 @@ float wrap_radians(float value) {
 	return value;
 }
 
-void print_receiver_input(byte* buffer){
+DR16::DR16()
+{
+	serial = &Serial5;
+	serial->clear();
+	serial->begin(100000, SERIAL_8E1_RXINV_TXINV);
+	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+		data[i] = 0;
+	}
+}
+
+DR16::DR16(HardwareSerial* serial_port)
+{
+	serial = serial_port;
+	serial->clear();
+	serial->begin(100000, SERIAL_8E1_RXINV_TXINV);
+	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+		data[i] = 0;
+	}
+}
+
+void DR16::print_receiver_input(byte* buffer){
 
 	Serial.println("\n\t===== DR16 Input");
 
@@ -40,25 +57,11 @@ void print_receiver_input(byte* buffer){
 	}
 }
 
-void print_control_data(float* buffer){
+void DR16::print_control_data(){
 	Serial.println("\n\t===== DR16 Data");
 	Serial.printf("\n\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n\n", 
-		buffer[0], buffer[1], buffer[2], buffer[3], 
-		buffer[4], buffer[5], buffer[6]);
-}
-
-DR16::DR16()
-{
-	serial = &Serial5;
-	serial->clear();
-	serial->begin(100000, SERIAL_8E1_RXINV_TXINV);
-}
-
-DR16::DR16(HardwareSerial* serial_port)
-{
-	serial = serial_port;
-	serial->clear();
-	serial->begin(100000, SERIAL_8E1_RXINV_TXINV);
+		data[0], data[1], data[2], data[3], 
+		data[4], data[5], data[6]);
 }
 
 /*
@@ -100,23 +103,20 @@ void DR16::generate_control_from_joysticks() {
 	// debugging (bitwise view)
 	// print_receiver_input(tmp);
 
+	// Normalizze the joystick values
+	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -660, 660);
+	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
+	// Set the left stick to [-1:1]
+	// 1 / 660.0 = 0.00151515 (avoids an unnecesarry division)
+	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -660, 660) * 0.00151515;
+	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -660, 660) * 0.00151515;
 
-	float r_stick_x = normalize_channel(((tmp[1] & 0x07) << 8) | tmp[0]);
-	float r_stick_y = normalize_channel(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3));
-	float l_stick_x = normalize_channel((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6));
-	float l_stick_y = normalize_channel(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1));
-
-	// Serial.println("\n\t===== Normalize Sticks");
-	// Serial.printf("\t%i\t%i\t%i\t%i\n", 
+	// Serial.println("\n\t===== Normalized Sticks");
+	// Serial.printf("\t%f\t%f\t%f\t%f\n", 
 	// 	r_stick_x, r_stick_y, l_stick_x, l_stick_y);
-	// Serial.printf("\t%i\t%i\t%i\t%i\n",
-	// 	((tmp[1] & 0x07) << 8) | tmp[0],
-	// 	((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3),
-	// 	(((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6),
-	// 	((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1));
 
-	data[0] = float((tmp[5] & 0x30) >> 4);			// switch 1
-	data[1] = float((tmp[5] & 0xC0) >> 6);			// switch 2
+	data[0] = (tmp[5] & 0x30) >> 4;				// switch 1
+	data[1] = (tmp[5] & 0xC0) >> 6;				// switch 2
 	data[2] = l_stick_x;						// X & Y velocity (read directly)
 	data[3] = l_stick_y;
 

@@ -24,6 +24,7 @@ void Device_Manager::initializer_report_handle() {
 	// Fill init device handlers
 	for (size_t i = 0; i < MAX_NUM_RM_MOTORS; i++) {
 		byte tmp[3];
+
 		input_report->rgets(tmp, (3 * i) + 1, 3);
 		rm_can_ux->set_index(i, tmp);
 
@@ -39,9 +40,35 @@ void Device_Manager::feedback_request_handle() {
 	// worth of feedback
 	float tmp[12];
 	output_report->put(1, input_report->get(1));
+
 	rm_can_ux->get_block_feedback(input_report->get(1), tmp);
+
 	for (int i = 0; i < 12; i++) {
 		output_report->put_float((4 * i) + 2, tmp[i]);
+	}
+}
+
+void Device_Manager::control_input_handle() {
+	int block_offset;
+
+	switch (input_report->get(1)) {
+		case 0:
+			block_offset = CAN_MOTOR_BLOCK_SIZE * input_report->get(2);			// 4 Motors per block, max block num = 3
+
+			for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
+				// set the control from the robot "robot control"
+				rm_can_ux->set_output(block_offset + i, input_report->get_float((4 * i) + 3));
+			}
+
+			controller_switch = 0;												// block "local control"
+			break;
+
+		case 255:
+			// controller.set_gains(); // or something
+			break;
+
+		default:
+			break;
 	}
 }
 
@@ -50,6 +77,7 @@ void Device_Manager::sensor_request_handle() {
 	// imu = 0 (36 bytes = 9 floats), dr16 = 1 (28 bytes = 7 floats)
 	int sensor = input_report->get(1);
 	output_report->put(1, sensor);
+
 	switch (sensor) {
 		case 0:
 			for (int i = 0; i < IMU_DOF; i++){
@@ -58,9 +86,9 @@ void Device_Manager::sensor_request_handle() {
 			break;
 
 		case 1:
-			// DR16 data is int16_t[7] (38:58)
+			// DR16 data is float[7]
 			for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
-				output_report->put_float((2 * i) + 2, receiver->data[i]);
+				output_report->put_float((4 * i) + 2, receiver->data[i]);
 			}
 			break;
 
@@ -70,7 +98,7 @@ void Device_Manager::sensor_request_handle() {
 }
 
 void Device_Manager::report_switch() {
-	// reply to the configuration
+	// reply to the report with the same id
 	output_report->put(0, input_report->get(0));
 
 	switch (input_report->get(0)) {
@@ -85,8 +113,8 @@ void Device_Manager::report_switch() {
 			break;
 
 		case 2:
-			// read something
-			// write something
+			// controls reports
+			control_input_handle();
 			break;
 
 		case 3:
@@ -116,18 +144,18 @@ bool Device_Manager::hid_input_switch(){
 		case 64:
 			blink();
 			report_switch();
-			output_report->put_int32(60, timer_info_us(2));
-			timer_set(2);
+			output_report->put_int32(60, timer_info_us(9));
 			break;
 
 		default:
 			output_report->put(0, 0);
 			output_report->put_int32(60, 0);
 			return false;
-  }
+	}
 
-  output_report->write();
-  return true;
+	output_report->write();
+	output_report->clear();
+	return true;
 }
 
 void Device_Manager::push_can(){
@@ -138,33 +166,35 @@ void Device_Manager::push_can(){
 		@return:
 			None
 	*/
-	rm_can_ux->read_can1();
+	// rm_can_ux->read_can1();
 	rm_can_ux->read_can2();
 	rm_can_ux->write_can();
 }
 
-// void sensor_read() {
-//   if (DURATION_US(device_timer, ARM_DWT_CYCCNT) >= DEVICE_READ_RATE) {
-//     switch (device_switch) {
-//       case 0:
-//         imu.read_lsm6dsox_accel();
-//         device_switch += 1;
-//         break;
+void Device_Manager::read_sensors() {
+	switch (sensor_switch) {
+		case 0:
+			imu->read_lsm6dsox_accel();
+			sensor_switch += 1;
+			break;
 
-//       case 1:
-//         imu.read_lsm6dsox_gyro();
-//         device_switch += 1;
-//         break;
+		case 1:
+			imu->read_lsm6dsox_gyro();
+			sensor_switch += 1;
+			break;
 
-//       case 2:
-//         imu.read_lis3mdl();
-//         device_switch += 1;
-//         break;
+		case 2:
+			imu->read_lis3mdl();
+			sensor_switch += 1;
+			break;
 
-//       case 3:
-//         receiver.read();
-//         device_switch = 0;
-//         break;
-//     }
-//   }
-// }
+		case 3:
+			receiver->read();
+			sensor_switch = 0;
+			break;
+	}
+}
+
+void Device_Manager::step_controllers() {
+
+}

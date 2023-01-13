@@ -101,12 +101,17 @@ void packet_float_test() {
 		outgoing_report.put_float(i, test_value);
 	}
 	timer_mark(0);
+	outgoing_report.print();
 
 	// check the values output from the function in question
 	float tmp[HID_REPORT_SIZE_BYTES / 4];
 	timer_set(0);
 	for (int i = 0; i < HID_REPORT_SIZE_BYTES / 4; i++) {
 		tmp[i] = outgoing_report.get_float(4 * i);
+		Serial.printf("%f\t", tmp[i]);
+		if ((i + 1) % 6 == 0 && i > 0) {
+			Serial.println();
+		} 
 	}
 	timer_mark(0);
 

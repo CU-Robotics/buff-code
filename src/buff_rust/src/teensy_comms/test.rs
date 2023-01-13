@@ -95,7 +95,6 @@ pub mod dead_teensy_comms_tests {
                 }
             }
 
-            layer.set_output_bytes(0, vec![0]);
             layer.write();
 
             while loopt.elapsed().as_micros() < 1000 {}
@@ -136,7 +135,8 @@ pub mod dead_teensy_comms_tests {
                             .into_iter()
                             .map(|x| x as f64)
                             .sum::<f64>();
-                        layer.input.print_data();
+                        // layer.input.print_data();
+                        // break;
                     }
                 }
                 0 => {
@@ -147,7 +147,6 @@ pub mod dead_teensy_comms_tests {
                 }
             }
 
-            layer.set_output_bytes(0, vec![0]);
             layer.write();
 
             while loopt.elapsed().as_micros() < 1000 {}
@@ -182,10 +181,19 @@ pub mod dead_teensy_comms_tests {
     }
 
     pub fn imu_connection_test(layer: &mut HidLayer) {
-        println!("\nTesting sensor access:...\n");
-        layer.set_output_bytes(0, vec![3]);
+        println!("\nTesting imu access:...\n");
+        layer.set_output_bytes(0, vec![3, 0]);
         layer.write();
-        watch_for_packet_data(layer, 3, 5, 1, 36);
+        watch_for_packet_data(layer, 3, 5, 2, 36);
+        println!("IMU data: {:?}", layer.input.get_floats(2, 9));
+    }
+
+    pub fn dr16_connection_test(layer: &mut HidLayer) {
+        println!("\nTesting dr16 access:...\n");
+        layer.set_output_bytes(0, vec![3, 1]);
+        layer.write();
+        watch_for_packet_data(layer, 3, 5, 2, 36);
+        println!("DR16 data {:?}", layer.input.get_floats(2, 7));
     }
 
     pub fn motor_feedback_test(layer: &mut HidLayer) {
@@ -194,6 +202,33 @@ pub mod dead_teensy_comms_tests {
         layer.write();
         layer.output.print_data();
         watch_for_packet_data(layer, 1, 10, 2, 49);
+        println!("Motor 4 data: {:?}", layer.input.get_floats(2, 3));
+    }
+
+    pub fn motor_control_test(layer: &mut HidLayer) {
+        println!("\nTesting motor control:...\n");
+        let bytes = f32::to_be_bytes(0.4).to_vec();
+        // set up control output for motor 3
+        layer.set_output_bytes(
+            0,
+            vec![
+                2, 0, 1, bytes[0], bytes[1], bytes[2], bytes[3], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            ],
+        );
+
+        let loopt = Instant::now();
+        layer.write();
+        layer.output.print_data();
+        watch_for_packet(layer, 2, 10);
+
+        while loopt.elapsed().as_millis() < 1000 {}
+
+        layer.set_output_bytes(
+            0,
+            vec![2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        );
+        layer.write();
+        layer.output.print_data();
     }
 
     #[test]
@@ -208,11 +243,14 @@ pub mod dead_teensy_comms_tests {
 
         initializer_test(&mut layer);
 
-        packet_request_test(&mut layer, 1);
-        packet_request_test(&mut layer, 2);
+        // packet_request_test(&mut layer, 1);
+        // packet_request_test(&mut layer, 2);
 
-        imu_connection_test(&mut layer);
+        // imu_connection_test(&mut layer);
+        // dr16_connection_test(&mut layer);
 
         motor_feedback_test(&mut layer);
+
+        motor_control_test(&mut layer);
     }
 }

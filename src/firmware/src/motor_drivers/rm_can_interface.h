@@ -3,10 +3,14 @@
 #ifndef BUFFCAN_H
 #define BUFFCAN_H
 
-#define NUM_CAN_BUSES			2
-#define MAX_NUM_RM_MOTORS		16
-#define MAX_CAN_RETURN_IDS		12
-#define MOTOR_FEEDBACK_TIMEOUT  100
+#define NUM_CAN_BUSES				2
+#define CAN_MOTOR_BLOCK_SIZE		4
+#define MAX_NUM_RM_MOTORS			16
+#define MAX_CAN_RETURN_IDS			12
+#define MOTOR_FEEDBACK_TIMEOUT  	100
+#define ESC_0_OUTPUT_SCALE			10000
+#define ESC_1_OUTPUT_SCALE			16384
+#define ESC_2_OUTPUT_SCALE			30000
 
 /*
 
@@ -52,9 +56,10 @@ struct RM_CAN_Device {
 
 	int8_t esc_id;         // 0-8 the blinking light
 	int8_t motor_id;       // index of motor in the serialized motor structure
-	int8_t motor_type;     // 0: C6XX, 1: GM6020
+	int8_t esc_type;       // 0: C610, 1: C620, 2: GM6020
 
 	int8_t return_id;    // actual return code
+	float output_scale;
 
 	RM_Feedback_Packet* feedback;
 };
@@ -99,7 +104,7 @@ struct RM_CAN_Interface {
 		void zero_can();
 
 		// Pipeline
-		void set_output(int16_t[MAX_NUM_RM_MOTORS]);
+		void set_output(int, float);
 		void set_feedback(int, CAN_message_t*);
 		void get_motor_feedback(int, float*);
 		void get_block_feedback(int, float*);

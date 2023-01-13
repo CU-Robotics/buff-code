@@ -3,8 +3,8 @@
 #ifndef BUFF_DR16_H
 #define BUFF_DR16_H
 
-#define JOYSTICK_PAN_SENSITIVITY 0.1
-#define JOYSTICK_PITCH_SENSITIVITY 0.1
+#define JOYSTICK_PAN_SENSITIVITY 0.001
+#define JOYSTICK_PITCH_SENSITIVITY 0.001
 #define REMOTE_CONTROL_LEN 7
 /*
 	 Driver software for the dr16 receiver.
@@ -19,9 +19,17 @@
 			5: pitch
 			6: yaw
 		*/
+
+float normalize_channel(int16_t);
+float wrap_radians(float);
+
+
+
 struct DR16 {
 		DR16();
 		DR16(HardwareSerial*);
+		void print_receiver_input(byte*);
+		void print_control_data();
 		void generate_control_from_joysticks();
 		bool read();
 

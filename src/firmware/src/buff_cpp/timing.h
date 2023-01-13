@@ -22,7 +22,7 @@
 #define DURATION_NS(cyccnt1, cyccnt2) (CYCLES_TO_NS(cyccnt2 - cyccnt1))
 
 
-#define NUM_BUFF_TIMERS 8
+#define NUM_BUFF_TIMERS 10
 // timer 1
 extern uint32_t timers[NUM_BUFF_TIMERS];
 
@@ -31,6 +31,8 @@ uint32_t duration_info(uint32_t, uint32_t);
 void timer_set(int);
 void timer_mark(int);
 uint32_t timer_info_us(int);
+uint32_t timer_info_ms(int);
 void timer_wait_us(int, uint32_t);
+void timer_wait_ms(int, uint32_t);
 
 #endif

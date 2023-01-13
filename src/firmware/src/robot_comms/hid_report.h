@@ -8,7 +8,7 @@
 typedef union
 {
 	float number;
-	int8_t bytes[4];
+	byte bytes[4];
 } FLOATBYTE_t;
 
 /*
@@ -43,7 +43,7 @@ struct Hid_Report {
 	Hid_Report();
 
 	// for debug, print the packet with serial.print
-	void print_packet();
+	void print();
 	// clear all data in the packet
 	void clear();
 

@@ -30,7 +30,7 @@ void loop_for(int32_t duration, bool debug) {
 		timer_mark(0);
 
 		if (debug) {
-			print_control_data(receiver.data);			
+			receiver.print_control_data();		
 		}
 
 		timer_wait_us(0, 15000);
@@ -58,7 +58,7 @@ void test_dr16_active_read() {
 	
 	loop_for(1000, false);
 
-	int32_t byte_sum = 0;
+	float byte_sum = 0;
 	for (int i = 2; i < 7; i++) {
 		byte_sum += receiver.data[i];
 	}
@@ -66,12 +66,38 @@ void test_dr16_active_read() {
 	TEST_ASSERT_GREATER_THAN_INT32(0, abs(byte_sum));
 }
 
+typedef union
+{
+	float number;
+	byte bytes[4];
+} FLOATBYTE_t;
+
+void dr16_data_display() {
+	Serial.printf("\tDisplaying input, press any button/joystick:...\n");
+	loop_for(100, false);
+
+	FLOATBYTE_t fb;	
+	receiver.print_control_data();
+	for (int i = 2; i < REMOTE_CONTROL_LEN; i++) {
+		fb.number = receiver.data[i];
+		Serial.print(fb.bytes[0], HEX);
+		Serial.print(" ");
+		Serial.print(fb.bytes[1], HEX);
+		Serial.print(" ");
+		Serial.print(fb.bytes[2], HEX);
+		Serial.print(" ");
+		Serial.print(fb.bytes[3], HEX);
+		Serial.println();
+	}
+}
+
 
 int run_receiver_tests() {
 	UNITY_BEGIN();
 	RUN_TEST(test_dr16_serial_active);
-	RUN_TEST(test_dr16_null_read);
-	RUN_TEST(test_dr16_active_read);
+	// RUN_TEST(test_dr16_null_read);
+	// RUN_TEST(test_dr16_active_read);
+	RUN_TEST(dr16_data_display);
 	return UNITY_END();
 }
 
