@@ -1,2 +1,3 @@
+INCLUDE: [rust.yaml]
 PYTHON3_SCRIPTS:
   'system_identification': ['motor_identification.py']
