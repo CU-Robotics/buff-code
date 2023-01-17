@@ -48,6 +48,7 @@ impl HidWriter {
             Ok(_) => {
                 // println!("Write time {}", t.elapsed().as_micros());
                 self.output.timestamp = Instant::now();
+                // self.output.print_data();
                 self.output.reset();
             }
             _ => {
@@ -89,6 +90,7 @@ impl HidWriter {
             }
             while loopt.elapsed().as_micros() < 1000 {}
         }
+        *self.shutdown.write().unwrap() = true;
     }
 
     pub fn pipeline(&mut self, shutdown: Arc<RwLock<bool>>, control_rx: Receiver<Vec<u8>>) {
@@ -101,16 +103,10 @@ impl HidWriter {
         println!("HID-writer Live");
 
         while !*self.shutdown.read().unwrap() {
-            let loopt = Instant::now();
-
             self.output.puts(0, control_rx.recv().unwrap_or(vec![0]));
             self.write();
-
-            // if loopt.elapsed().as_micros() > 1000 {
-            //     println!("HID writer over cycled {}", loopt.elapsed().as_micros());
-            // }
-            while loopt.elapsed().as_micros() < 1000 {}
         }
+        *self.shutdown.write().unwrap() = true;
     }
 }
 
@@ -158,7 +154,7 @@ impl HidReader {
     ///     layer.write()
     ///     layer.wait_for_report_reply(255, 10);
     /// '''
-    pub fn wait_for_report_reply(&mut self, packet_id: u8, timeout: u128) -> u8 {
+    pub fn wait_for_report_reply(&mut self, packet_id: u8, timeout: u128) {
         let mut loopt;
         let t = Instant::now();
 
@@ -167,8 +163,15 @@ impl HidReader {
 
             match self.read() {
                 64 => {
+                    if self.input.get(0) == 0 && self.input.get_i32(60) == 0 {
+                        continue;
+                    } else if self.input.get_i32(60) > 1000 {
+                        println!("Teensy cycle time is over the limit");
+                    }
+
                     if self.input.get(0) == packet_id {
-                        return packet_id;
+                        println!("Teenys report {} reply received", packet_id);
+                        return;
                     }
                 }
                 _ => {}
@@ -179,6 +182,7 @@ impl HidReader {
         }
 
         // If packet never arrives
+        *self.shutdown.write().unwrap() = true;
         panic!("\tTimed out waiting for reply from Teensy");
     }
 
@@ -191,6 +195,10 @@ impl HidReader {
     ///     }
     /// '''
     pub fn parse_report(&mut self) {
+        if self.input.get_i32(60) > 1000 {
+            println!("Teensy cycle time is over the limit");
+        }
+
         // match the report number to determine the structure
         match self.input.get(0) {
             1 => {
@@ -209,11 +217,10 @@ impl HidReader {
                 self.robot_status
                     .update_sensor(self.input.get(1) as usize, self.input.get_floats(2, 9));
             }
-            u8::MAX => {
-                println!("\tTeensy requested new initializers... somethings wrong");
-            }
+            u8::MAX => {}
             _ => {}
         }
+        // self.robot_status.motors[4].read().unwrap().print();
     }
 
     /// Main function to spin and connect the teensys
@@ -224,8 +231,6 @@ impl HidReader {
     ///     reader.spin();       // runs until watchdog times out
     /// '''
     pub fn spin(&mut self) {
-        println!("HID-reader Live");
-
         while !*self.shutdown.read().unwrap() {
             let loopt = Instant::now();
 
@@ -233,7 +238,6 @@ impl HidReader {
                 64 => self.parse_report(),
                 _ => {}
             }
-            // self.robot_status.print();
 
             if loopt.elapsed().as_micros() > 1000 {
                 println!("HID reader over cycled {}", loopt.elapsed().as_micros());
@@ -250,9 +254,10 @@ impl HidReader {
         self.shutdown = shutdown;
 
         feedback_tx.send(self.robot_status.clone()).unwrap();
+        println!("HID-reader Live");
 
         // wait for initializers reply
-        self.wait_for_report_reply(255, 25);
+        self.wait_for_report_reply(255, 50);
 
         self.spin();
     }
@@ -296,10 +301,10 @@ impl HidROS {
             move |msg: std_msgs::Float64MultiArray| {
                 assert!(
                     msg.data.len() == n_motors,
-                    "ROS msg had more values than there are motors",
+                    "ROS can output msg had a different number of values than there are motors",
                 );
-                *motor_can_output.write().unwrap() = msg.data;
                 *control_flag.write().unwrap() = 0;
+                *motor_can_output.write().unwrap() = msg.data;
             },
         )
         .unwrap()];
@@ -400,8 +405,12 @@ impl HidROS {
         self.robot_status = feedback_rx
             .recv()
             .unwrap_or(BuffBotStatusReport::load_robot());
+
         let initializers = self.robot_status.load_initializers();
-        control_tx.send(initializers[0].clone()).unwrap();
+
+        initializers.iter().for_each(|init| {
+            control_tx.send(init.clone()).unwrap();
+        });
 
         println!("HID-ROS Live");
 
@@ -421,7 +430,8 @@ impl HidROS {
             }
 
             // handle control inputs
-            match *self.control_flag.read().unwrap() {
+            let control_mode = *self.control_flag.read().unwrap();
+            match control_mode {
                 0 => {
                     let mut control_buffer = ByteBuffer::new(64);
 
@@ -435,6 +445,8 @@ impl HidROS {
                             control_buffer.put_floats(3, block.to_vec());
                             control_tx.send(control_buffer.data.clone()).unwrap();
                         });
+
+                    *self.control_flag.write().unwrap() = -1;
                 }
                 _ => {
                     // send a new report request every cycle
@@ -442,7 +454,6 @@ impl HidROS {
                     current_report = (current_report + 1) % reports.len();
                 }
             }
-            *self.control_flag.write().unwrap() = -1;
 
             // if loopt.elapsed().as_micros() > 1000 {
             //     println!("HID ROS over cycled {}", loopt.elapsed().as_micros());
@@ -475,19 +486,17 @@ impl HidLayer {
         let shdn1 = shutdown.clone();
         let shdn2 = shutdown.clone();
 
-        let (feedback_tx, feedback_rx): (
-            Sender<BuffBotStatusReport>,
-            Receiver<BuffBotStatusReport>,
-        ) = mpsc::channel();
-
         let mut hidapi = HidApi::new().expect("Failed to create API instance");
         let mut hidreader = HidReader::new(&mut hidapi, vid, pid);
         let mut hidwriter = HidWriter::new(&mut hidapi, vid, pid);
         let mut hidros = HidROS::new();
 
+        // create the rust channels
+        let (feedback_tx, feedback_rx): (
+            Sender<BuffBotStatusReport>,
+            Receiver<BuffBotStatusReport>,
+        ) = mpsc::channel();
         let (control_tx, control_rx): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = mpsc::channel();
-
-        // let mut hidros = HidROS::from_robot_status(shdn2, feedback_rx);
 
         let hidwriter_handle = spawn(move || {
             hidwriter.pipeline(shutdown, control_rx);
@@ -501,8 +510,8 @@ impl HidLayer {
             hidreader.pipeline(shdn1, feedback_tx);
         });
 
-        hidwriter_handle.join().unwrap();
-        hidreader_handle.join().unwrap();
-        hidros_handle.join().unwrap();
+        hidreader_handle.join().expect("HID Reader failed");
+        hidros_handle.join().expect("HID ROS failed");
+        hidwriter_handle.join().expect("HID Writer failed");
     }
 }

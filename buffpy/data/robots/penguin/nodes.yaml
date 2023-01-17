@@ -1,6 +1,6 @@
 # The buff stuff
 buff_rust:
-  files: [comms_node, motor_identification.py] #, locomotion_node, estimator_node]
+  files: [comms_node] #, locomotion_node, estimator_node]
 
 # Maybe some kind of option to shut this down via cmdline
 # rqt_plot:
@@ -40,13 +40,14 @@ motor_index:
 # packet index
 motor_can_index:
   # [can bus, message type, motor offset] see datasheets if you don't understand
-  - [2, 0, 1]
-  - [2, 0, 2]
-  - [2, 0, 3]
-  - [2, 0, 4]
+  - [0, 0, 0]
+  - [0, 0, 0]
+  - [0, 0, 0]
+  - [0, 0, 0]
   - [2, 2, 6]
-  - [2, 1, 7]
-  - [2, 0, 5]
+  - [0, 0, 0]
+  - [0, 0, 0]
+
 
 # Used by encoder estimator (kee)
 # [V1, V2, V3, V4, dP, dY, dG] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma]
@@ -62,15 +63,15 @@ kinematic_matrix: # K
 # of the state and reference. U = Nr - Kx
 # states are defined by the estimator
 # [Vx, Vy, Omega, dPhi, dPsi, dGamma] -> [V1, V2, V3, V4, dP, dY, dG] (kee)
-velocity_control_law: # K
+chassis_inverse_kinematics: 
 #  least squares kinematic gains
-  - [  1.0,    0.0,    1.0,    0.0,     0.0,    0.0]
-  - [  0.0,    1.0,    1.0,    0.0,     0.0,    0.0]
-  - [ -1.0,    0.0,    1.0,    0.0,     0.0,    0.0]
-  - [  0.0,   -1.0,    1.0,    0.0,     0.0,    0.0]
-  - [  0.0,    0.0,    0.0,    1.0,     0.0,    0.0]
-  - [  0.0,    0.0,   -1.0,    0.0,     1.0,    0.0]
-  - [  0.0,    0.0,    0.0,    0.0,     0.0,    1.0]
+  - [  1.0,    0.0,    1.0,    0.0,     0.0,    0.0]      # V1 = Vx + Omega
+  - [  0.0,    1.0,    1.0,    0.0,     0.0,    0.0]      # V2 = Vy + Omega
+  - [ -1.0,    0.0,    1.0,    0.0,     0.0,    0.0]      # V3 = -Vx + Omega
+  - [  0.0,   -1.0,    1.0,    0.0,     0.0,    0.0]      # V4 = -Vy + Omega
+  - [  0.0,    0.0,    0.0,    1.0,     0.0,    0.0]      # V5 = dPhi
+  - [  0.0,    0.0,   -1.0,    0.0,     1.0,    0.0]      # V6 = -Omega + dPsi
+  - [  0.0,    0.0,    0.0,    0.0,     0.0,    1.0]      # V7 = dGamma
 
   # lqr gains (probably corrupted)
   # - [ 0.0000,    1.7913,    0.6344,    0.0000,    13.8756,    0.0000,    0.0000,    1.9644,    0.0000]
@@ -81,12 +82,12 @@ velocity_control_law: # K
   # - [ 0.0000,    0.0000,   -2.4317,    0.0000,    19.6056,    0.0000,    0.0000,    4.6826,    0.0000]
   # - [ 0.0000,    0.0000,    0.0000,    0.0000,     0.0000,   49.1896,    0.0000,    0.0000,   10.0399]
 
-motor_control_gains:
-  - [ 0.0003,    0.0,  0.001]
-  - [ 0.0003,    0.0,  0.001]
-  - [ 0.0003,    0.0,  0.001]
-  - [ 0.0003,    0.0,  0.001]
-  - [ 0.03,    0.0,  0.001]
-  - [    0.0,    0.0,    0.0]
-  - [    0.0,    0.0,    0.0]
+motor_gains:
+  - [  0.00030,  0.00000,  0.00100]
+  - [  0.00030,  0.00000,  0.00100]
+  - [  0.00030,  0.00000,  0.00100]
+  - [  0.00030,  0.00000,  0.00100]
+  - [  0.00000, -0.00100,  0.00000]
+  - [  0.00000,  0.00000,  0.00000]
+  - [  0.00000,  0.00000,  0.00000]
 

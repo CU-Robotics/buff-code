@@ -103,37 +103,47 @@ void DR16::generate_control_from_joysticks() {
 	// debugging (bitwise view)
 	// print_receiver_input(tmp);
 
-	// Normalizze the joystick values
+	// Normalize the joystick values
 	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -660, 660);
 	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
 	// Set the left stick to [-1:1]
 	// 1 / 660.0 = 0.00151515 (avoids an unnecesarry division)
-	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -660, 660) * 0.00151515;
-	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -660, 660) * 0.00151515;
+	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -660, 660);
+	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -660, 660);
 
 	// Serial.println("\n\t===== Normalized Sticks");
 	// Serial.printf("\t%f\t%f\t%f\t%f\n", 
 	// 	r_stick_x, r_stick_y, l_stick_x, l_stick_y);
 
-	data[0] = (tmp[5] & 0x30) >> 4;				// switch 1
-	data[1] = (tmp[5] & 0xC0) >> 6;				// switch 2
-	data[2] = l_stick_x;						// X & Y velocity (read directly)
-	data[3] = l_stick_y;
+	// data[0] = (tmp[5] & 0x30) >> 4;				// switch 1
+	// data[1] = (tmp[5] & 0xC0) >> 6;				// switch 2
+	data[0] = l_stick_x * JOYSTICK_X_SENSITIVITY;						// X & Y velocity (read directly)
+	data[1] = l_stick_y * JOYSTICK_Y_SENSITIVITY;
 
-	if (data[0] == 1.0) {						// angular velocity (theta)
-		data[4] = -4000.0;
+	if ((tmp[5] & 0x30) >> 4 == 1.0) {						// angular velocity (theta)
+		data[2] = -4000.0;
 	} 
-	else if (data[0] == 2.0) {
-		data[4] = 4000.0;
+	else if ((tmp[5] & 0x30) >> 4 == 2.0) {
+		data[2] = 4000.0;
 	} 
 	else {
-		data[4] = 0.0;
+		data[2] = 0.0;
 	}
 
 	// wrap the angles
 	// pan/tilt accumulation 
-	data[5] = wrap_radians(data[5] + (r_stick_y * JOYSTICK_PITCH_SENSITIVITY));
-	data[6] = wrap_radians(data[6] + (r_stick_x * JOYSTICK_PAN_SENSITIVITY));
+	data[3] = r_stick_y * JOYSTICK_PITCH_SENSITIVITY;
+	data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
+
+	if ((tmp[5] & 0xC0) >> 6 == 1.0) {						// feeder speed
+		data[5] = -4000.0;
+	} 
+	else if ((tmp[5] & 0xC0) >> 6 == 2.0) {
+		data[5] = 4000.0;
+	} 
+	else {
+		data[5] = 0.0;
+	}
 }
 
 bool DR16::read()

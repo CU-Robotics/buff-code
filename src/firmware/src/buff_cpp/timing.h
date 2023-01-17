@@ -23,7 +23,7 @@
 
 
 #define NUM_BUFF_TIMERS 10
-// timer 1
+
 extern uint32_t timers[NUM_BUFF_TIMERS];
 
 void init_timers();

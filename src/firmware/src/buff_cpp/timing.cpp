@@ -57,7 +57,7 @@ void timer_wait_ms(int idx, uint32_t duration){
 	  Helper to pause for a duration. Duration starts
 	when timer_set() is called.
 	@param
-	  duration: (uint32_t) microseconds to wait (from when timer_set() was called)
+	  duration: (uint32_t) milliseconds to wait (from when timer_set() was called)
 	@return
 		None
 	*/

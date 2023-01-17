@@ -1,8 +1,7 @@
 #include "sensors/dr16.h"
 #include "sensors/lsm6dsox.h"
-
+#include "buff_cpp/controllers.h"
 #include "robot_comms/hid_report.h"
-
 #include "motor_drivers/rm_can_interface.h"
 
 #ifndef BUFF_DEVICE_MANAGER_H
@@ -15,19 +14,7 @@
 */
 
 struct Device_Manager {
-
-	Hid_Report* input_report;	//message being read on teensy from computer (poll or command)
-	Hid_Report* output_report;	//data being sent from teensy to computer
-
-	LSM6DSOX* imu;
-	DR16* receiver;
-	RM_CAN_Interface* rm_can_ux;
-
-	int sensor_switch;
-	int controller_switch;
-
 	Device_Manager();
-	Device_Manager(LSM6DSOX*, DR16*, RM_CAN_Interface*);
 
 	// handlers
 	void initializer_report_handle();
@@ -37,11 +24,22 @@ struct Device_Manager {
 
 	// Data pipelines
 	void report_switch();
-	bool hid_input_switch();
+	void hid_input_switch();
 
 	void push_can();
 	void read_sensors();
-	void step_controllers();
+	void step_controllers(float);
+
+	Hid_Report input_report;	// message being read on teensy from computer (request or command)
+	Hid_Report output_report;	// data being sent from teensy to computer
+
+	LSM6DSOX imu;
+	DR16 receiver;
+	RM_CAN_Interface rm_can_ux;
+	Controller_Manager controller_manager;
+
+	int sensor_switch;
+	int controller_switch;
 };
 
 #endif

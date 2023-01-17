@@ -3,21 +3,23 @@
 #ifndef BUFF_DR16_H
 #define BUFF_DR16_H
 
-#define JOYSTICK_PAN_SENSITIVITY 0.001
-#define JOYSTICK_PITCH_SENSITIVITY 0.001
-#define REMOTE_CONTROL_LEN 7
+#define REMOTE_CONTROL_LEN 6
+#define JOYSTICK_X_SENSITIVITY 0.0
+#define JOYSTICK_Y_SENSITIVITY 0.0
+#define JOYSTICK_PAN_SENSITIVITY 2.5
+#define JOYSTICK_PITCH_SENSITIVITY 2.5
+
 /*
 	 Driver software for the dr16 receiver.
 	Parses the serial input to a robot action.
 
 			Remote control format (float)
-			0: fire (shooter toogle)
-			1: toggle (mode select)
-			2: x speed
-			3: y speed
-			4: omega
-			5: pitch
-			6: yaw
+			1: x speed
+			2: y speed
+			3: omega
+			4: dpitch
+			5: dyaw
+			6: dfeeder
 		*/
 
 float normalize_channel(int16_t);

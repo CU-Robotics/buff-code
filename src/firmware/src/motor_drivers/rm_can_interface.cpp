@@ -27,22 +27,13 @@ float ang_from_can_bytes(byte b1, byte b2){
 		@return
 			angle: the angle
 	*/
-	return bytes_to_int16_t(b1, b2) * 0.00076708;
-}
+	float angle = bytes_to_int16_t(b1, b2) * 0.00076708;
+	
+	if (angle > PI) {
+		angle -= (2 * PI);
+	}
 
-void print_rm_feedback_struct(RM_Feedback_Packet* fb) {
-	/*
-		  print function for a feedback packet
-		@param
-			fb: feedback struct
-		@return
-			None
-	*/
-	Serial.printf("\tfeedback:\t\t[%f\t%f\t%f\t%i]\n", 
-		fb->angle, 
-		fb->RPM, 
-		fb->torque, 
-		DURATION_US(fb->timestamp, ARM_DWT_CYCCNT));
+	return angle;
 }
 
 void print_rm_config_struct(RM_CAN_Device* dev) {
@@ -54,9 +45,13 @@ void print_rm_config_struct(RM_CAN_Device* dev) {
 			None
 	*/
 	Serial.println("\n\t====== RM Config");
-	Serial.printf("\tcan bus:\t\t%i\n\tmessage_type:\t\t%i\n\tmessage_offset:\t\t%i\n\tmotor_id:\t\t%u\n\tesc_id:\t\t\t%i\n\treturn_id:\t\t%X\n\tesc_type:\t\t%i\n",
+	Serial.printf("\tcan bus:\t\t%i\n\tmessage_type:\t\t%i\n\tmessage_offset:\t\t%i\n\tmotor_id:\t\t%i\n\tesc_id:\t\t\t%i\n\treturn_id:\t\t%X\n\tesc_type:\t\t%i\n",
 		dev->can_bus, dev->message_type, dev->message_offset, dev->motor_id, dev->esc_id, dev->return_id, dev->esc_type);
-	print_rm_feedback_struct(dev->feedback);
+	Serial.printf("\tfeedback:\t\t[%f\t%f\t%f\t%i]\n", 
+		dev->data[0], 
+		dev->data[1], 
+		dev->data[2], 
+		DURATION_US(dev->timestamp, ARM_DWT_CYCCNT));
 }
 
 void print_can_message(CAN_message_t* msg) {
@@ -108,36 +103,36 @@ void prettyprint_can_message(CAN_message_t* msg) {
 	Serial.println((int16_t(msg->buf[4]) << 8) | int16_t(msg->buf[5]));
 }
 
-RM_Feedback_Packet::RM_Feedback_Packet() {
-	angle = 0;
-	RPM = 0;
-	torque = 0;
-	timestamp = ARM_DWT_CYCCNT;
-}
 
 RM_CAN_Device::RM_CAN_Device() {
 	can_bus = -1;				// index of the bus the device is connected to (0 = 1, 1 = 2)
-	message_type = 0;			// 0: 0x200, 1: 0x1FF, 2: 0x2FF
-	message_offset = 0;			// 0-6 (always even)
+	message_type = -1;			// 0: 0x200, 1: 0x1FF, 2: 0x2FF
+	message_offset = -1;		// 0-6 (always even)
 
 	esc_id = -1;				// 0-8 the blinking light
 	motor_id = -1;				// index of motor in the serialized motor structure
-	esc_type = 0;				// 0: C6XX, 1: GM6020
+	esc_type = -1;				// 0: C6XX, 1: GM6020
 
 	return_id = -1;				// actual return code
 	output_scale = 0;
 
-	feedback = new RM_Feedback_Packet();
+	motor_id = -1;				// index of device in motor_index
+
+	data[0] = 0;				// Feedback data (position, rpm, torque)
+	data[1] = 0;
+	data[2] = 0;
+
+	timestamp = ARM_DWT_CYCCNT;
 }
 
-RM_CAN_Device::RM_CAN_Device(int8_t id, byte* config) {
+RM_CAN_Device::RM_CAN_Device(int id, byte* config) {
 	can_bus = config[0] - 1;
 	esc_type = config[1];
 	esc_id = config[2];
 
-	message_type = int(config[2] / 4);						// message type = (esc ID / 4) ( + 1, if gm6020), [0x200, 0x1FF, 0x2FF]
-	message_offset = (2 * ((config[2] - 1) % 4));			// message offset = (esc ID % 4) - 1
-	return_id = (config[2] - 1);							// 0x200 + esc ID + esc_type_offset = rid (store as i8 bit, so subtract 0x201)
+	message_type = int(config[2] / 4);						// message type = (esc ID / 4) ( + 1, if GM6020), [0x200, 0x1FF, 0x2FF]
+	message_offset = (2 * ((config[2] - 1) % 4));			// message offset = ((esc ID - 1) % 4) * 2, (% 4 gets the message postion, * 2 because theres two bytes)
+	return_id = (config[2] - 1);							// 0x200 + esc ID + esc_type_offset = rid (store as -0x201 to be more readable)
 
 	switch (esc_type) {										// different ESCs have different setup
 		case 0:
@@ -160,7 +155,11 @@ RM_CAN_Device::RM_CAN_Device(int8_t id, byte* config) {
 
 	motor_id = id;
 
-	feedback = new RM_Feedback_Packet();
+	data[0] = 0;
+	data[1] = 0;
+	data[2] = 0;
+
+	timestamp = ARM_DWT_CYCCNT;
 }
 
 RM_CAN_Interface::RM_CAN_Interface(){
@@ -171,21 +170,24 @@ RM_CAN_Interface::RM_CAN_Interface(){
 		@return
 			RM_CAN_Interface: Can manager code
 	*/
-	// start can1 and can2
+	// start can
 	can1.begin();
 	can1.setBaudRate(1000000);
+
 	can2.begin();
 	can2.setBaudRate(1000000);
 
 	// set each message id for both can busses, not sure if it needs to be reset sometimes or what
-	for (int i = 0; i < 2; i++){
+	for (int i = 0; i < NUM_CAN_BUSES; i++) {
 		output[i][0].id = 0x200;
 		output[i][1].id = 0x1FF;
 		output[i][2].id = 0x2FF;
 	}
-	for (int j = 0; j < MAX_CAN_RETURN_IDS; j++) {
-		can1_motor_index[j] = -1;
-		can2_motor_index[j] = -1;
+
+	for (int i = 0; i < NUM_CAN_BUSES; i++) {
+		for (int j = 0; j < MAX_CAN_RETURN_IDS; j++) {
+			can_motor_index[i][j] = -1;
+		}
 	}
 }
 
@@ -213,62 +215,51 @@ void RM_CAN_Interface::set_index(int idx, byte config[3]){
 	*/
 	motor_index[idx] = RM_CAN_Device(idx, config);
 
-	int8_t rid = motor_index[idx].return_id;
+	int rid = motor_index[idx].return_id;
+	int can_bus = config[0] - 1;
 
-	switch(config[0] - 1) {
-		case 0:
-			can1_motor_index[rid] = idx;
-			num_motors += 1;
-			break;
-
-		case 1:
-			can2_motor_index[rid] = idx;
-			num_motors += 1;
-			break;
-
-		default:
-			break;
+	if(can_bus >= 0) {
+		// Serial.printf("New device (can bus, motor id, return id) %i %i %i\n", can_bus, idx, rid);
+		can_motor_index[can_bus][rid] = idx;
+		num_motors += 1;
 	}
 }
 
 // Some quick getters so you don't have to write
-// motor_index[motor_id].feedback->angle everytime
+// motor_index[motor_id].angle everytime
 float RM_CAN_Interface::get_motor_angle(int motor_id) {
-	return motor_index[motor_id].feedback->angle;
+	return motor_index[motor_id].data[0];
 }
 
 float RM_CAN_Interface::get_motor_RPM(int motor_id) {
-	return motor_index[motor_id].feedback->RPM;
+	return motor_index[motor_id].data[1];
 }
 
 float RM_CAN_Interface::get_motor_torque(int motor_id) {
-	return motor_index[motor_id].feedback->torque;
+	return motor_index[motor_id].data[2];
 }
 
 float RM_CAN_Interface::get_motor_ts(int motor_id) {
-	return motor_index[motor_id].feedback->timestamp;
+	return motor_index[motor_id].timestamp;
 }
 
 int8_t RM_CAN_Interface::motor_idx_from_return(int can_bus, int return_id){
 	/*
 		  Getter for the motor index.
 		@param
-			can_bus: can bus number (number not index)
+			can_bus: can bus index (index not number)
 			return_id: id of can message replied from motors
 		@return
 			idx: 0-MAX_NUM_MOTORS
 	*/
 	if (return_id - 0x201 >= 0 && return_id - 0x201 < MAX_CAN_RETURN_IDS) {
-		switch (can_bus) {
-			case 1: 
-				return can1_motor_index[return_id - 0x201];
-			case 2:
-				return can2_motor_index[return_id - 0x201];
-
-			default:
-				return -1;
+		if (can_bus >= 0 && can_bus < NUM_CAN_BUSES) {
+			return can_motor_index[can_bus][return_id - 0x201];
 		}
-	}    
+		// Serial.printf("Can bus invalid %i\n", can_bus);
+	}
+	// Serial.printf("Return id bus invalid %i\n", return_id);
+
 	return -1;
 }
 
@@ -281,10 +272,11 @@ void RM_CAN_Interface::zero_can() {
 		@return
 			None
 	*/
-	for (int i = 0; i < 3; i++){
-		for (int j = 0; j < 8; j++) {
-			output[0][i].buf[j] = 0;
-			output[1][i].buf[j] = 0;
+	for (int i = 0; i < NUM_CAN_BUSES; i++) {
+		for (int j = 0; j < 3; j++) {
+			for (int k = 0; k < 8; k++) {
+				output[i][j].buf[k] = 0;
+			}
 		}
 	}
 }
@@ -319,6 +311,10 @@ void RM_CAN_Interface::set_output(int index, float value){
 	int16_t control_in_esc_resolution = int16_t(value * motor_index[index].output_scale);
 
 	// The can busses are numbered 1-2 (indexed 0-1)
+
+	// if (msg_type == 2)
+	// 	Serial.printf("Setting output for %i %i %i %f\n", can_bus, msg_type, msg_offset, value);
+	
 	output[can_bus][msg_type].buf[msg_offset] = highByte(control_in_esc_resolution);
 	output[can_bus][msg_type].buf[msg_offset + 1] = lowByte(control_in_esc_resolution);
 }
@@ -336,10 +332,11 @@ void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
 	int motor_id = motor_idx_from_return(can_bus, msg->id);
 
 	if (motor_id >= 0) {
-		motor_index[motor_id].feedback->angle = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
-		motor_index[motor_id].feedback->RPM = bytes_to_int16_t(msg->buf[2], msg->buf[3]);
-		motor_index[motor_id].feedback->torque = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
-		motor_index[motor_id].feedback->timestamp = ARM_DWT_CYCCNT;
+		motor_index[motor_id].data[0] = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
+		motor_index[motor_id].data[1] = bytes_to_int16_t(msg->buf[2], msg->buf[3]);
+		motor_index[motor_id].data[2] = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
+		motor_index[motor_id].timestamp = ARM_DWT_CYCCNT;
+		// Serial.printf("Setting feedback %i, %f\n", motor_id, motor_index[motor_id].data[0]);
 	}
 }
 
@@ -352,24 +349,27 @@ void RM_CAN_Interface::get_motor_feedback(int idx, float* data) {
 		@return
 			None
 	*/
-	if (idx >= 0 && idx < num_motors) {		
-		int32_t delta_ms = DURATION_MS(get_motor_ts(idx), ARM_DWT_CYCCNT);
+	if (idx >= 0) {		
+		int delta_ms = DURATION_MS(get_motor_ts(idx), ARM_DWT_CYCCNT);
 
 		if (delta_ms < MOTOR_FEEDBACK_TIMEOUT){
 			data[0] = get_motor_angle(idx);
 			data[1] = get_motor_RPM(idx);
 			data[2] = get_motor_torque(idx);
+			// Serial.printf("Feedback read %i, %f\n", idx, data[0]);
 		}
 		else {
 			data[0] = 0;
 			data[1] = 0;
 			data[2] = 0;
+			// Serial.printf("data timeout %i, %i\n", idx, delta_ms);
 		}
 	}
 	else {
 		data[0] = 0;
 		data[1] = 0;
 		data[2] = 0;
+		// Serial.printf("invalid index %i\n", idx);
 	}
 }
 
@@ -391,32 +391,33 @@ void RM_CAN_Interface::get_block_feedback(int id, float* data) {
 	}
 }
 
-void RM_CAN_Interface::read_can1(){
+void RM_CAN_Interface::read_can(int bus_num){
 	/*
-		  read can bus 1
+		  read can bus, use timer 3 as timeout
 		@param
-			buff: buffer to save data too
+			bus_num: index of the can bus
 		@return
 			None
 	*/
+	timer_set(3);
 	CAN_message_t tmp;
-	while (can1.read(tmp)) {
-		set_feedback(1, &tmp);
-	}
-}
+	switch (bus_num) {
+		case 0:
+			while (can1.read(tmp) && timer_info_us(3) < 10) {
+				set_feedback(bus_num, &tmp);
+			}
+			break;
 
-void RM_CAN_Interface::read_can2(){
-	/*
-		  read can bus 2
-		@param
-			buff: buffer to save data too
-		@return
-			None
-	*/
-	CAN_message_t tmp;
-	while (can2.read(tmp)) {
-		set_feedback(2, &tmp);
+		case 1:
+			while (can2.read(tmp)) {
+				set_feedback(bus_num, &tmp);
+			}
+			break;
+
+		default:
+			break;
 	}
+	
 }
 
 
