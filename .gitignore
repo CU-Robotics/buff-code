@@ -10,6 +10,7 @@
 data/*
 buffpy/lib/*
 buffpy/build/*
+documentation
 buffpy/models/*
 buffpy/bin/tycmd
 src/buff_rust/target
