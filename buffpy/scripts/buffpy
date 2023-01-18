@@ -40,8 +40,6 @@ import shutil
 import argparse
 import subprocess
 
-from shutil import copyfile
-
 
 def clear_directory(path):
 	"""
@@ -154,13 +152,24 @@ def generate_pio_command(upload, v):
 
 	return pio_cmd
 
+def copy_files_from_profile(dictionary, item, src_path, target_path):
+	if item in dictionary:
+		for file_path in dictionary[item]:
+			target_file = file_path.split('/')[-1]
+			shutil.copyfile(os.path.join(src_path, file_path), os.path.join(target_path, target_file))
+
+def copy_dir_from_profile(dictionary, item, src_path, target_path):
+	if item in dictionary:
+		for dir_path in dictionary[item]:
+			src = os.path.join(src_path, dir_path)
+			shutil.copytree(src, target_path)
+
 def build_buffpy(build, v):
 	"""
 		Builds the current workspace locally.
 		PARAMS:
 			profile: string, the profile to build found in buffpy/data/build
 	"""
-	return
 	project_root = os.getenv('PROJECT_ROOT')
 	lib_path = os.path.join(project_root, 'buffpy', 'lib')
 	bin_path = os.path.join(project_root, 'buffpy', 'bin')
@@ -173,6 +182,8 @@ def build_buffpy(build, v):
 	for build in builds:
 		if 'project' in build:
 			src_path = os.path.join(project_root, 'src', build['project'])	
+			doc_path = os.path.join(project_root, 'documentation', build['project'])
+
 			build_cmd = f'cd {src_path}'
 
 			if 'build' in build:
@@ -180,15 +191,10 @@ def build_buffpy(build, v):
 
 			result = subprocess.run(build_cmd, shell=True)
 		
-		if 'install' in build:
-			for install in build['install']:
-				target_file = install.split('/')[-1]
-				copyfile(os.path.join(src_path, install), os.path.join(lib_path, target_file))
+			copy_files_from_profile(build, 'install', src_path, lib_path)
+			copy_files_from_profile(build, 'bin', src_path, bin_path)
+			copy_dir_from_profile(build, 'docs', src_path, doc_path)
 
-		if 'bin' in build:
-			for binary in build['bin']:
-				target_file = binary.split('/')[-1]
-				copyfile(os.path.join(src_path, binary), os.path.join(bin_path, target_file))
 
 def get_devices():
 	"""

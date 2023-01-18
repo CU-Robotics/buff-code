@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["ByteBuffer","buffer for byte packet storage stores the data, timestamp of the last access and a flag for updates."],["PageBuffer",""]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["init_hid_device",""]],"struct":[["HidLayer","An HID Comms layer for teensys Usage: ‘’’ HidLayer::spin(); ‘’’"],["HidROS",""],["HidReader",""],["HidWriter",""]]};
