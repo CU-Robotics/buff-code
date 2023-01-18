@@ -62,6 +62,29 @@ def send_inputs(hz, control):
 
 	print(f"Feedback packets received: {[len(x) for x in motor_positions]}")
 
+def least_squares_solver(motor, control_fn):
+	samples = len(motor_positions[motor][:-1])
+	if samples == 0:
+		print("No samples exiting")
+		exit(0)
+
+	control = control_fn(length=samples)
+	A = np.vstack([motor_positions[motor][:-1], motor_speeds[motor][:-1], motor_torques[motor][:-1], control]).T
+	B = np.vstack([motor_positions[motor][1:], motor_speeds[motor][1:], motor_torques[motor][1:]]).T
+
+	print(f"Solving {A.shape} @ {(A.shape[1], B.shape[0])} = {B.shape}")
+	X = la.inv(A.T @ A) @ A.T @ B
+
+	sys_A = X.T[:,:-1].T
+	sys_B = np.array([X.T[:,-1]]).T
+
+	print(f"Modeled system with delay:\n{sys_A}\n{sys_B}")
+	return sys_A, sys_B
+
+
+def lqr(Q, R, A, B):
+	return -np.linalg.pinv(R + B.T @ Q @ B) @ B.T @ Q @ A
+
 def find_edge(arr, threashold):
 	prev = arr[0]
 
@@ -115,29 +138,6 @@ def display_data(motor, hz, control):
 
 	axes[0][0].legend()
 	plt.show()
-
-def least_squares_solver(motor, control_fn):
-	samples = len(motor_positions[motor][:-1])
-	if samples == 0:
-		print("No samples exiting")
-		exit(0)
-
-	control = control_fn(length=samples)
-	A = np.vstack([motor_positions[motor][:-1], motor_speeds[motor][:-1], motor_torques[motor][:-1], control]).T
-	B = np.vstack([motor_positions[motor][1:], motor_speeds[motor][1:], motor_torques[motor][1:]]).T
-
-	print(f"Solving {A.shape} @ {(A.shape[1], B.shape[0])} = {B.shape}")
-	X = la.inv(A.T @ A) @ A.T @ B
-
-	sys_A = X.T[:,:-1].T
-	sys_B = np.array([X.T[:,-1]]).T
-
-	print(f"Modeled system with delay:\n{sys_A}\n{sys_B}")
-	return sys_A, sys_B
-
-
-def lqr(Q, R, A, B):
-	return -np.linalg.pinv(R + B.T @ Q @ B) @ B.T @ Q @ A
 
 
 if __name__ == '__main__':

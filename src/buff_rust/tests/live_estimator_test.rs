@@ -1,5 +1,4 @@
 #![allow(unused_imports)]
-use buff_rust::device_manager::devices::*;
 use buff_rust::localization::estimators::*;
 use buff_rust::locomotion::controllers::*;
 use buff_rust::teensy_comms::buff_hid::*;
@@ -17,36 +16,36 @@ pub mod live_estimator_tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
-    #[test]
-    pub fn test_ke_estimator() {
-        let timestamp = Instant::now();
-        env_logger::init();
+    // #[test]
+    // pub fn test_ke_estimator() {
+    //     let timestamp = Instant::now();
+    //     env_logger::init();
 
-        rosrust::init("buff_KEE_functional_test");
+    //     rosrust::init("buff_KEE_functional_test");
 
-        let mut layer = HidLayer::new();
-        let can_pipeline = CANPipeline::new();
-        let mut dr16_pipeline = DR16Pipeline::new();
-        let mut kee = KinematicEncoderEstimator::new();
+    //     let mut layer = HidLayer::new();
+    //     let can_pipeline = CANPipeline::new();
+    //     let mut dr16_pipeline = DR16Pipeline::new();
+    //     let mut kee = KinematicEncoderEstimator::new();
 
-        layer.init_comms();
+    //     layer.init_comms();
 
-        while rosrust::is_ok() {
-            can_pipeline.publish_feedback_packet();
-            can_pipeline.publish_can_packet();
-            dr16_pipeline.publish_messages();
+    //     while rosrust::is_ok() {
+    //         can_pipeline.publish_feedback_packet();
+    //         can_pipeline.publish_can_packet();
+    //         dr16_pipeline.publish_messages();
 
-            layer.read();
-            layer.write();
+    //         layer.read();
+    //         layer.write();
 
-            kee.update();
-            kee.publish_state();
+    //         kee.update();
+    //         kee.publish_state();
 
-            if timestamp.elapsed().as_millis() > 20000 {
-                break;
-            }
-        }
-    }
+    //         if timestamp.elapsed().as_millis() > 20000 {
+    //             break;
+    //         }
+    //     }
+    // }
 
     // #[test]
     // pub fn test_accel_pid() {

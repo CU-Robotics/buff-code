@@ -212,7 +212,19 @@ impl HidReader {
                 self.robot_status
                     .update_motor_encoder(index_offset + 3, self.input.get_floats(38, 3));
             }
-            2 => {}
+            2 => {
+                if self.input.get(1) == 1 {
+                    let index_offset = (self.input.get(2) * 4) as usize;
+                    self.robot_status
+                        .update_controller(index_offset, self.input.get_floats(2, 3));
+                    self.robot_status
+                        .update_controller(index_offset + 1, self.input.get_floats(14, 3));
+                    self.robot_status
+                        .update_controller(index_offset + 2, self.input.get_floats(26, 3));
+                    self.robot_status
+                        .update_controller(index_offset + 3, self.input.get_floats(38, 3));
+                }
+            }
             3 => {
                 self.robot_status
                     .update_sensor(self.input.get(1) as usize, self.input.get_floats(2, 9));
@@ -270,6 +282,7 @@ pub struct HidROS {
     pub motor_can_output: Arc<RwLock<Vec<f64>>>,
 
     pub motor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub controller_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub sensor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub motor_subscribers: Vec<rosrust::Subscriber>,
 }
@@ -283,6 +296,10 @@ impl HidROS {
 
         let motor_publishers = (0..robot_status.motors.len())
             .map(|i| rosrust::publish(format!("motor_{}_feedback", i).as_str(), 1).unwrap())
+            .collect();
+
+        let controller_publishers = (0..robot_status.controllers.len())
+            .map(|i| rosrust::publish(format!("controller_{}_report", i).as_str(), 1).unwrap())
             .collect();
 
         let sensor_publishers = (0..robot_status.sensors.len())
@@ -317,6 +334,7 @@ impl HidROS {
 
             motor_publishers: motor_publishers,
             sensor_publishers: sensor_publishers,
+            controller_publishers: controller_publishers,
             motor_subscribers: motor_subscribers,
         }
     }
@@ -352,6 +370,22 @@ impl HidROS {
                     msg.data = self.robot_status.motors[i].read().unwrap().feedback.clone();
                     motor_pub.send(msg).unwrap();
                 }
+            });
+    }
+
+    pub fn publish_controllers(&self) {
+        self.controller_publishers
+            .iter()
+            .enumerate()
+            .for_each(|(i, control_pub)| {
+                let mut msg = std_msgs::Float64MultiArray::default();
+                let controller = self.robot_status.controllers[i].read().unwrap();
+                msg.data = vec![
+                    controller.output.clone(),
+                    controller.reference[0].clone(),
+                    controller.reference[1].clone(),
+                ];
+                control_pub.send(msg).unwrap();
             });
     }
 
@@ -426,6 +460,7 @@ impl HidROS {
             if publish_timer.elapsed().as_millis() > 30 {
                 publish_timer = Instant::now();
                 self.publish_motors();
+                self.publish_controllers();
                 self.publish_sensors();
             }
 

@@ -41,8 +41,13 @@ void Controller_Manager::set_gain(int controller_id, int gain_id, float data){
 	controllers[controller_id].gains[gain_id] = data;
 }
 
-void Controller_Manager::get_control_report(int controller_id, float* data) {
-
+void Controller_Manager::get_control_report(int controller_block, float* data) {
+	int block_offset = controller_block * CAN_MOTOR_BLOCK_SIZE;
+	for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
+		data[i] = output[i + block_offset];
+		data[i+1] = references[i + block_offset][0];
+		data[i+2] = references[i + block_offset][1];
+	}
 }
 
 void Controller_Manager::step_motors(RM_CAN_Device* motor_index) {
@@ -60,7 +65,7 @@ void Controller_Manager::set_input(float* control_input, float dt) {
 			speed += chassis_inverse_kinematics[i][j] * control_input[j];
 		}
 
-		references[i][0] += speed * dt;				// cycle time is 1ms
+		references[i][0] += speed * dt;
 
 		if (references[i][0] > PI) {
 			references[i][0] -= 2 * PI;

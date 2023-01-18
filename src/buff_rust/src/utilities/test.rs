@@ -25,13 +25,13 @@ pub mod byu_tests {
         assert_eq!(
             byu.load_integer_matrix("motor_can_index"),
             vec![
-                vec![2, 0, 1],
-                vec![2, 0, 2],
-                vec![2, 0, 3],
-                vec![2, 0, 4],
-                vec![2, 1, 6],
-                vec![2, 1, 7],
-                vec![2, 0, 5]
+                vec![0, 0, 0],
+                vec![0, 0, 0],
+                vec![0, 0, 0],
+                vec![0, 0, 0],
+                vec![2, 2, 6],
+                vec![0, 0, 0],
+                vec![0, 0, 0]
             ]
         );
     }

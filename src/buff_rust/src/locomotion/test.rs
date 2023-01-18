@@ -59,7 +59,7 @@ pub mod dead_control_tests {
     #[test]
     pub fn test_state_space() {
         let byu = BuffYamlUtil::new("penguin");
-        let k = byu.load_float_matrix("velocity_control_law");
+        let k = byu.load_float_matrix("chassis_inverse_kinematics");
         let sc = StateController::new(k);
 
         // input

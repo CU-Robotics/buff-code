@@ -102,6 +102,8 @@ impl BuffBotCANMotorReport {
 
 pub struct BuffBotControllerReport {
     pub gains: Vec<f64>,
+    pub output: f64,
+    pub reference: Vec<f64>,
     pub timestamp: Instant,
 }
 
@@ -109,6 +111,8 @@ impl BuffBotControllerReport {
     pub fn default() -> BuffBotControllerReport {
         BuffBotControllerReport {
             gains: vec![0.0; 3],
+            output: 0.0,
+            reference: vec![0.0; 2],
             timestamp: Instant::now(),
         }
     }
@@ -116,6 +120,8 @@ impl BuffBotControllerReport {
     pub fn new(gains: Vec<f64>) -> BuffBotControllerReport {
         BuffBotControllerReport {
             gains: gains,
+            output: 0.0,
+            reference: vec![0.0; 2],
             timestamp: Instant::now(),
         }
     }
@@ -126,6 +132,11 @@ impl BuffBotControllerReport {
             .map(|k| (*k as f32).to_be_bytes())
             .flatten()
             .collect()
+    }
+
+    pub fn write(&mut self, feedback: Vec<f64>) {
+        self.output = feedback[0];
+        self.reference = feedback[1..].to_vec();
     }
 }
 
@@ -294,14 +305,21 @@ impl BuffBotStatusReport {
 
     pub fn get_reports(&mut self) -> Vec<Vec<u8>> {
         let mut reports = vec![];
-        (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![1, i as u8]));
         (0..self.sensors.len()).for_each(|i| reports.push(vec![3, i as u8]));
+        (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![1, i as u8]));
+        (0..(self.controllers.len() / 4) + 1).for_each(|i| reports.push(vec![2, 1, i as u8]));
         reports
     }
 
     pub fn update_motor_encoder(&mut self, index: usize, feedback: Vec<f64>) {
-        if index < self.motors.len() && feedback.iter().sum::<f64>() != 0.0 {
+        if index < self.motors.len() {
             self.motors[index].write().unwrap().write(feedback);
+        }
+    }
+
+    pub fn update_controller(&mut self, index: usize, feedback: Vec<f64>) {
+        if index < self.controllers.len() {
+            self.controllers[index].write().unwrap().write(feedback);
         }
     }
 

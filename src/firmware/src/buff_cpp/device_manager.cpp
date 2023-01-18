@@ -39,12 +39,14 @@ void Device_Manager::initializer_report_handle() {
 			break;
 
 		case 2:
+
+			chunk_size = 4 * REMOTE_CONTROL_LEN;
+			block_offset = 2 * input_report.get(2);							// kinematic matrix comes in rows of two
+
 			// set the local chassis model
 			for (int i = 0; i < 2; i++) {
-
-				block_offset = 2 * input_report.get(2);							// kinematic matrix comes in rows of two
-				chunk_offset = (chunk_size * i) + 3;
-				
+	
+				chunk_offset = (chunk_size * i) + 3;				
 				for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
 					controller_manager.chassis_inverse_kinematics[block_offset + i][j] = input_report.get_float(chunk_offset + (4 * j));					
 				}
@@ -73,6 +75,7 @@ void Device_Manager::feedback_request_handle() {
 
 void Device_Manager::control_input_handle() {
 	int block_offset = CAN_MOTOR_BLOCK_SIZE * input_report.get(2);
+	output_report.put(1, input_report.get(1));
 
 	switch (input_report.get(1)) {
 		case 0:
@@ -83,6 +86,14 @@ void Device_Manager::control_input_handle() {
 
 			controller_switch = 0;												// block "local control"
 			break;
+
+		case 1:
+			float tmp[12];
+			output_report.put(2, input_report.get(2));
+			controller_manager.get_control_report(input_report.get(2), tmp);
+			for (int i = 0; i < 12; i++) {
+				output_report.put_float((4 * i) + 3, tmp[i]);
+			}
 
 		default:
 			break;
@@ -214,7 +225,11 @@ void Device_Manager::read_sensors() {
 
 void Device_Manager::step_controllers(float dt) {
 	if (controller_switch == 1) {
-		controller_manager.set_input(receiver.data, dt);
+		if (timer_info_ms(2) > 10) {
+			controller_manager.set_input(receiver.data, 1E-5);
+			timer_set(2);
+		}
+
 		controller_manager.step_motors(rm_can_ux.motor_index);
 	}
 
