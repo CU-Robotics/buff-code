@@ -1,1 +1,3 @@
-INCLUDE:  ['firmware.yaml', 'rust.yaml']
+include:  ['fw-release.yaml', 'rust-release.yaml']
+
+

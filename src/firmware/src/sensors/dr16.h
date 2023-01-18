@@ -25,8 +25,6 @@
 float normalize_channel(int16_t);
 float wrap_radians(float);
 
-
-
 struct DR16 {
 		DR16();
 		DR16(HardwareSerial*);

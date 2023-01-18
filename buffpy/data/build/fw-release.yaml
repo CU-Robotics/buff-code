@@ -1,0 +1,7 @@
+project: 'firmware'
+build: 'pio run -e release'
+bin: ['.pio/build/release/firmware.hex']
+
+
+
+

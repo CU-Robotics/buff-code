@@ -1,2 +1,2 @@
-PYTHON3_SCRIPTS:
-  'crosshair': ['trainer.py', 'luxnet.py']
+project: 'crosshair'
+install: ['scripts/luxnet.py']

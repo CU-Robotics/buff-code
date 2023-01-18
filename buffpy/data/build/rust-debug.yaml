@@ -1,0 +1,3 @@
+project: 'buff_rust'
+build: 'cargo build'
+install: ['target/debug/comms_node', 'target/debug/estimator_node']

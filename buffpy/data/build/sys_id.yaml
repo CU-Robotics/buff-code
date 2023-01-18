@@ -1,3 +1,5 @@
-INCLUDE: [rust.yaml]
-PYTHON3_SCRIPTS:
-  'system_identification': ['motor_identification.py']
+include: ['rust-debug.yaml']
+project: 'system_identification'
+install: ['scripts/motor_identification.py']
+
+
