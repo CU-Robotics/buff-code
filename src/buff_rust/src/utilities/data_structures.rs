@@ -102,6 +102,8 @@ impl BuffBotCANMotorReport {
 
 pub struct BuffBotControllerReport {
     pub gains: Vec<f64>,
+    pub limits: Vec<f64>,
+
     pub output: f64,
     pub reference: Vec<f64>,
     pub timestamp: Instant,
@@ -111,15 +113,17 @@ impl BuffBotControllerReport {
     pub fn default() -> BuffBotControllerReport {
         BuffBotControllerReport {
             gains: vec![0.0; 3],
+            limits: vec![0.0; 4],
             output: 0.0,
             reference: vec![0.0; 2],
             timestamp: Instant::now(),
         }
     }
 
-    pub fn new(gains: Vec<f64>) -> BuffBotControllerReport {
+    pub fn new(gains: Vec<f64>, limits: Vec<f64>) -> BuffBotControllerReport {
         BuffBotControllerReport {
             gains: gains,
+            limits: limits,
             output: 0.0,
             reference: vec![0.0; 2],
             timestamp: Instant::now(),
@@ -131,6 +135,12 @@ impl BuffBotControllerReport {
             .iter()
             .map(|k| (*k as f32).to_be_bytes())
             .flatten()
+            .chain(
+                self.limits
+                    .iter()
+                    .map(|l| (*l as f32).to_be_bytes())
+                    .flatten(),
+            )
             .collect()
     }
 
@@ -177,12 +187,16 @@ impl BuffBotStatusReport {
         let motor_index = byu.load_string_list("motor_index");
         let motor_can_index = byu.load_integer_matrix("motor_can_index");
         let motor_gains = byu.load_float_matrix("motor_gains");
+        let motor_limits = byu.load_float_matrix("motor_limits");
 
         let chassis_inverse_kinematics = byu.load_float_matrix("chassis_inverse_kinematics");
 
         let controllers: Vec<Arc<RwLock<BuffBotControllerReport>>> = motor_gains
             .into_iter()
-            .map(|gains| Arc::new(RwLock::new(BuffBotControllerReport::new(gains))))
+            .zip(motor_limits.into_iter())
+            .map(|(gains, limits)| {
+                Arc::new(RwLock::new(BuffBotControllerReport::new(gains, limits)))
+            })
             .collect();
 
         let motors: Vec<Arc<RwLock<BuffBotCANMotorReport>>> = motor_index
@@ -251,17 +265,12 @@ impl BuffBotStatusReport {
             "Invalid number of controllers, check config"
         );
         self.controllers
-            .chunks(4)
+            .iter()
             .enumerate()
-            .map(|(i, block)| {
+            .map(|(i, controller)| {
                 vec![255, 1, i as u8]
                     .into_iter()
-                    .chain(
-                        block
-                            .iter()
-                            .map(|controller| controller.read().unwrap().init_bytes())
-                            .flatten(),
-                    )
+                    .chain(controller.read().unwrap().init_bytes())
                     .collect()
             })
             .collect()

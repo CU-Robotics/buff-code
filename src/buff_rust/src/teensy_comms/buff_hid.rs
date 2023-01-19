@@ -150,9 +150,9 @@ impl HidReader {
     /// After requesting a report this can be used to wait for a reply
     /// Usage:
     /// '''
-    ///     // set layer.output.data[0] to an int [1-3] (255 for can config)
-    ///     layer.write()
-    ///     layer.wait_for_report_reply(255, 10);
+    ///     // set writer.output.data[0] to an int [1-3] (255 for initializer)
+    ///     writer.write();
+    ///     reader.wait_for_report_reply(255, 10);
     /// '''
     pub fn wait_for_report_reply(&mut self, packet_id: u8, timeout: u128) {
         let mut loopt;
@@ -212,19 +212,20 @@ impl HidReader {
                 self.robot_status
                     .update_motor_encoder(index_offset + 3, self.input.get_floats(38, 3));
             }
-            2 => {
-                if self.input.get(1) == 1 {
+            2 => match self.input.get(1) {
+                1 => {
                     let index_offset = (self.input.get(2) * 4) as usize;
                     self.robot_status
-                        .update_controller(index_offset, self.input.get_floats(2, 3));
+                        .update_controller(index_offset, self.input.get_floats(3, 3));
                     self.robot_status
-                        .update_controller(index_offset + 1, self.input.get_floats(14, 3));
+                        .update_controller(index_offset + 1, self.input.get_floats(15, 3));
                     self.robot_status
-                        .update_controller(index_offset + 2, self.input.get_floats(26, 3));
+                        .update_controller(index_offset + 2, self.input.get_floats(27, 3));
                     self.robot_status
-                        .update_controller(index_offset + 3, self.input.get_floats(38, 3));
+                        .update_controller(index_offset + 3, self.input.get_floats(39, 3));
                 }
-            }
+                _ => {}
+            },
             3 => {
                 self.robot_status
                     .update_sensor(self.input.get(1) as usize, self.input.get_floats(2, 9));

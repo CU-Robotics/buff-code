@@ -4,6 +4,8 @@
 #define BUFFCAN_H
 
 #define NUM_CAN_BUSES				2
+#define MOTOR_FEEDBACK_SIZE 		3
+#define NUM_CAN_MESSAGE_TYPES		3
 #define CAN_MOTOR_BLOCK_SIZE		4
 #define MAX_NUM_RM_MOTORS			16
 #define MAX_CAN_RETURN_IDS			12
@@ -50,10 +52,12 @@ struct RM_CAN_Device {
 	int motor_id;       // index of motor in the serialized motor structure
 	int esc_type;       // 0: C610, 1: C620, 2: GM6020
 
+	int roll_over;		// track the true position
+
 	int return_id;    	// actual return code ( -0x201 )
 	float output_scale;
 
-	float data[3];
+	float data[MOTOR_FEEDBACK_SIZE];
 	uint32_t timestamp;
 
 };
@@ -81,6 +85,7 @@ struct RM_CAN_Interface {
 
 	// Disabler
 	void zero_can();
+	void stop_can();
 
 	// Pipeline
 	void set_output(int, float);
@@ -100,7 +105,7 @@ struct RM_CAN_Interface {
 	FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 	FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 
-	CAN_message_t output[NUM_CAN_BUSES][3];                     // 2 can busses with 3 messages types, each message type has up to 4 motors.
+	CAN_message_t output[NUM_CAN_BUSES][NUM_CAN_MESSAGE_TYPES];  // 2 can busses with 3 messages types, each message type has up to 4 motors.
 
 	int num_motors;
 };

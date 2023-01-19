@@ -9,7 +9,7 @@
 RM_CAN_Interface rm_can_ux;
 
 int8_t num_motors = 4; 
-byte input_motor_index[16][3] = {{1,0,1}, {1,0,2}, {2,1,1}, {2,2,6},
+byte input_motor_index[16][3] = {{1,0,1}, {2,0,2}, {2,0,3}, {2,2,6},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}};
@@ -162,7 +162,7 @@ void test_set_output() {
 	*/
 	Serial.println("\nTesting set_output:...");
 
-	float value = 0.4;	
+	float value = 0.1;	
 
 	for (int i = 0; i < rm_can_ux.num_motors; i++) {
 		timer_set(0);
@@ -304,6 +304,9 @@ void search_for_devices() {
 			rm_can_ux.set_feedback(1, &tmp);
 			if (motor_id >= 0) {
 				Serial.printf("\t[%i] Found Device: %X:%i (rid, motor_id)\n", timer_info_us(0), tmp.id, motor_id);
+			}
+			else {
+				Serial.printf("\t[%i] No Device config for: %X:%i (rid, motor_id)\n", timer_info_us(0), tmp.id, motor_id);
 			}
 		}
 

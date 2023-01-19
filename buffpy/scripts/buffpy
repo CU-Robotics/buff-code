@@ -164,6 +164,10 @@ def copy_dir_from_profile(dictionary, item, src_path, target_path):
 			src = os.path.join(src_path, dir_path)
 			shutil.copytree(src, target_path)
 
+def assert_directory(directory):
+	if not os.path.exists(directory):
+		os.mkdir(directory)
+
 def build_buffpy(build, v):
 	"""
 		Builds the current workspace locally.
@@ -173,16 +177,18 @@ def build_buffpy(build, v):
 	project_root = os.getenv('PROJECT_ROOT')
 	lib_path = os.path.join(project_root, 'buffpy', 'lib')
 	bin_path = os.path.join(project_root, 'buffpy', 'bin')
+	doc_path = os.path.join(project_root, 'documentation')
 
-	if not os.path.exists(lib_path):
-		os.mkdir(lib_path)
+	assert_directory(lib_path)
+	assert_directory(bin_path)
+	assert_directory(doc_path)
 	
 	builds = load_build_config(build)
 
 	for build in builds:
 		if 'project' in build:
 			src_path = os.path.join(project_root, 'src', build['project'])	
-			doc_path = os.path.join(project_root, 'documentation', build['project'])
+			doc_dir = os.path.join(doc_path, build['project'])
 
 			build_cmd = f'cd {src_path}'
 
@@ -193,7 +199,11 @@ def build_buffpy(build, v):
 		
 			copy_files_from_profile(build, 'install', src_path, lib_path)
 			copy_files_from_profile(build, 'bin', src_path, bin_path)
-			copy_dir_from_profile(build, 'docs', src_path, doc_path)
+			copy_dir_from_profile(build, 'docs', src_path, doc_dir)
+
+	for file in glob.glob(os.path.join(lib_path, '*')):
+		result = subprocess.run(f'chmod +x {file}', shell=True)
+
 
 
 def get_devices():

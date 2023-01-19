@@ -17,7 +17,7 @@ int16_t bytes_to_int16_t(byte upper, byte lower) {
 	return int16_t(upper << 8) | lower;
 }
 
-// value / 8191 * 2 * pi, (2 * pi) / 8191 = 0.00076708
+// (value / 8191) * (2 * pi), (2 * pi) / 8191 = 0.00076708
 float ang_from_can_bytes(byte b1, byte b2){
 	/*
 		  Getter for the angle in can bytes.
@@ -29,9 +29,9 @@ float ang_from_can_bytes(byte b1, byte b2){
 	*/
 	float angle = bytes_to_int16_t(b1, b2) * 0.00076708;
 	
-	if (angle > PI) {
-		angle -= (2 * PI);
-	}
+	// if (angle > PI) {
+	// 	angle -= (2 * PI);
+	// }
 
 	return angle;
 }
@@ -113,6 +113,8 @@ RM_CAN_Device::RM_CAN_Device() {
 	motor_id = -1;				// index of motor in the serialized motor structure
 	esc_type = -1;				// 0: C6XX, 1: GM6020
 
+	roll_over = 0;				// roll over of motor
+
 	return_id = -1;				// actual return code
 	output_scale = 0;
 
@@ -129,6 +131,8 @@ RM_CAN_Device::RM_CAN_Device(int id, byte* config) {
 	can_bus = config[0] - 1;
 	esc_type = config[1];
 	esc_id = config[2];
+
+	roll_over = 0;											// roll over of motor
 
 	message_type = int(config[2] / 4);						// message type = (esc ID / 4) ( + 1, if GM6020), [0x200, 0x1FF, 0x2FF]
 	message_offset = (2 * ((config[2] - 1) % 4));			// message offset = ((esc ID - 1) % 4) * 2, (% 4 gets the message postion, * 2 because theres two bytes)
@@ -326,17 +330,29 @@ void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
 			can_bus: number of can bus
 			msg: CAN message object
 		@return
-			None
+			roll over: bool
 	*/
 
 	int motor_id = motor_idx_from_return(can_bus, msg->id);
+	float current_angle = motor_index[motor_id].data[0];
+	float feedback_angle = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
+	float feedback_rpm = bytes_to_int16_t(msg->buf[2], msg->buf[3]);
+	float feedback_torque = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
 
 	if (motor_id >= 0) {
-		motor_index[motor_id].data[0] = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
-		motor_index[motor_id].data[1] = bytes_to_int16_t(msg->buf[2], msg->buf[3]);
-		motor_index[motor_id].data[2] = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
+		// need a detector for roll overs
+		if (current_angle - feedback_angle < -PI && feedback_rpm < 0) {
+			motor_index[motor_id].roll_over -= 1;
+		}
+
+		else if (current_angle - feedback_angle > PI && feedback_rpm > 0) {
+			motor_index[motor_id].roll_over += 1;
+		}
+
+		motor_index[motor_id].data[0] = feedback_angle;
+		motor_index[motor_id].data[1] = feedback_rpm;
+		motor_index[motor_id].data[2] = feedback_torque;
 		motor_index[motor_id].timestamp = ARM_DWT_CYCCNT;
-		// Serial.printf("Setting feedback %i, %f\n", motor_id, motor_index[motor_id].data[0]);
 	}
 }
 

@@ -8,8 +8,12 @@ Device_Manager::Device_Manager(){
 
 void Device_Manager::initializer_report_handle() {
 	int chunk_offset;
-	int chunk_size = 4 * FEEDBACK_SIZE;
+	int chunk_size = 4 * MOTOR_FEEDBACK_SIZE;
+	int controller_id = input_report.get(2);
 	int block_offset = CAN_MOTOR_BLOCK_SIZE * input_report.get(2);
+
+	float limits[4];
+	float gains[MOTOR_FEEDBACK_SIZE];
 
 	switch (input_report.get(1))	{
 		case 0:
@@ -25,16 +29,20 @@ void Device_Manager::initializer_report_handle() {
 			}
 
 		case 1:
-			// set the local controllers gains
-			for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
-
-				chunk_offset = (chunk_size * i) + 3;
-				
-				for (int j = 0; j < FEEDBACK_SIZE; j++) {
-					controller_manager.set_gain(block_offset + i, j, input_report.get_float(chunk_offset + (4 * j)));					
-				}
+			// set the local controllers gains, and limits
+			// Serial.printf("controller %i\ngains: ", controller_id);
+			for (int i = 0; i < MOTOR_FEEDBACK_SIZE; i++) {
+				gains[i] = input_report.get_float((4 * i) + 3);
+				// Serial.printf("%f, ", gains[i]);
 			}
 
+			for (int i = 0; i < 2; i++) {
+				limits[i] = input_report.get_float((4 * i) + 15);
+				limits[i + 2] = input_report.get_float((4 * (i + 2)) + 15);
+			}
+			// Serial.printf("\nlimits: %f, %f, %f, %f\n", limits[0], limits[1], limits[2], limits[3]);
+
+			controller_manager.init_controller(controller_id, gains, limits);
 			controller_switch = 1;												// enable local control
 			break;
 
@@ -43,13 +51,18 @@ void Device_Manager::initializer_report_handle() {
 			chunk_size = 4 * REMOTE_CONTROL_LEN;
 			block_offset = 2 * input_report.get(2);							// kinematic matrix comes in rows of two
 
+			if (block_offset == 0) {
+				// Serial.println("Chassis Invers Kinematics");
+			}
 			// set the local chassis model
-			for (int i = 0; i < 2; i++) {
-	
-				chunk_offset = (chunk_size * i) + 3;				
+			for (int i = 0; i < 2; i++) { 
+				// Serial.printf("%i: ", block_offset + i);
+				chunk_offset = (chunk_size * i) + 3;		
 				for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
+					// Serial.printf("%f, ", input_report.get_float(chunk_offset + (4 * j)));
 					controller_manager.chassis_inverse_kinematics[block_offset + i][j] = input_report.get_float(chunk_offset + (4 * j));					
 				}
+				// Serial.println();
 			}
 
 			controller_switch = 1;												// enable local control
@@ -66,7 +79,7 @@ void Device_Manager::feedback_request_handle() {
 	rm_can_ux.get_block_feedback(input_report.get(1), tmp);
 
 	// Serial.printf("Block ");
-	for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE * FEEDBACK_SIZE; i++) {
+	for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE * MOTOR_FEEDBACK_SIZE; i++) {
 		// Serial.printf("%f, ", tmp[i]);
 		output_report.put_float((4 * i) + 2, tmp[i]);
 	}
@@ -74,8 +87,10 @@ void Device_Manager::feedback_request_handle() {
 }
 
 void Device_Manager::control_input_handle() {
-	int block_offset = CAN_MOTOR_BLOCK_SIZE * input_report.get(2);
 	output_report.put(1, input_report.get(1));
+
+	int block_offset = CAN_MOTOR_BLOCK_SIZE * input_report.get(2);
+	float tmp[12];
 
 	switch (input_report.get(1)) {
 		case 0:
@@ -88,7 +103,6 @@ void Device_Manager::control_input_handle() {
 			break;
 
 		case 1:
-			float tmp[12];
 			output_report.put(2, input_report.get(2));
 			controller_manager.get_control_report(input_report.get(2), tmp);
 			for (int i = 0; i < 12; i++) {
