@@ -1,3 +1,4 @@
+#include "timing.h"
 #include "controllers.h"
 
 Feedback_Controller::Feedback_Controller() {
@@ -20,8 +21,6 @@ void Feedback_Controller::init(float* new_gains, float* limits) {
 }
 
 float Feedback_Controller::step(float* reference, float* feedback) {
-
-	// feedback[0] is the motor_angle add 2pi roll over to make robot angle
 	
 	float u = 0;
 
@@ -34,7 +33,6 @@ float Feedback_Controller::step(float* reference, float* feedback) {
 
 void Feedback_Controller::bound_reference(float* reference) {
 
-	// feedback[0] is the motor_angle add 2pi roll over to make robot angle
 	if (min_angle >= max_angle) {
 		return;
 	}
@@ -60,17 +58,27 @@ Controller_Manager::Controller_Manager() {
 			chassis_inverse_kinematics[i][j] = 0;
 		}
 	}
+
+	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+		input[i] = 0;			
+	}
+}
+
+void Controller_Manager::reset_controller(int controller_id) {
+	input[controller_id] = 0;
+	output[controller_id] = 0;
+	references[controller_id][0] = 0;
+	references[controller_id][1] = 0;
 }
 
 void Controller_Manager::set_gain(int controller_id, int gain_id, float data){
+	reset_controller(controller_id);
 	controllers[controller_id].gains[gain_id] = data;
 }
 
 void Controller_Manager::init_controller(int controller_id, float* gains, float* limits){
+	reset_controller(controller_id);
 	controllers[controller_id].init(gains, limits);
-	references[controller_id][0] = 0;
-	references[controller_id][1] = 0;
-	output[controller_id] = 0;
 }
 
 void Controller_Manager::get_control_report(int controller_block, float* data) {
@@ -82,32 +90,41 @@ void Controller_Manager::get_control_report(int controller_block, float* data) {
 	}
 }
 
-void Controller_Manager::step_motors(RM_CAN_Device* motor_index) {
+void Controller_Manager::step_motors(RM_CAN_Device* motor_index, float dt) {
 	// Set the output to each motor by giving that motors feedback to a controller
 	float tmp[3];
+	float speed = 0;
+
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
+		// only update references every 10ms
+		if (timer_info_ms(2) > 10) {
+			timer_set(2);
+			speed = 0;
+
+			for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
+				speed += chassis_inverse_kinematics[i][j] * input[j];
+			}
+
+			// integrate the speed as a postion
+			references[i][0] += speed * dt;
+			references[i][1] = speed;
+
+			// bound the reference state to the defined limits
+			controllers[i].bound_reference(references[i]);
+		}
+
+		// feedback[0] is the motor_angle add 2pi roll over to make an output angle
 		tmp[0] = motor_index[i].data[0] + (2 * PI * motor_index[i].roll_over);
 		tmp[1] = motor_index[i].data[1];
 		tmp[2] = motor_index[i].data[2];
-		Serial.printf("%i %f %f %f\n", i, tmp[0], tmp[1], tmp[2]);
+		// Serial.printf("%i %f %f %f\n", i, tmp[0], tmp[1], tmp[2]);
 		output[i] = controllers[i].step(references[i], tmp);
 	}
+	// Serial.printf("references %f %f\n", references[4][0], references[4][1]);
 }
 
-void Controller_Manager::set_input(float* control_input, float dt) {
-	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
-		float speed = 0;
-
-		for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
-			speed += chassis_inverse_kinematics[i][j] * control_input[j];
-		}
-
-		// integrate the speed as a postion
-		references[i][0] += speed * dt;
-		references[i][1] = speed;
-
-		// bound the reference state to the defined limits
-		controllers[i].bound_reference(references[i]);
+void Controller_Manager::set_input(float* control_input) {
+	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+		input[i] = control_input[i];		
 	}
-	// Serial.printf("references %f %f\n", references[4][0], references[4][1]);
 }

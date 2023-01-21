@@ -1,4 +1,6 @@
 # The buff stuff
+robot_type: infantry
+
 buff_rust:
   files: [comms_node] #, locomotion_node, estimator_node]
 
@@ -10,8 +12,6 @@ buff_rust:
 # Unused atm (should be, just isn't)
 teensy_vid: 0x16C0
 teensy_pid: 0x0486
-robot_name: penguin
-robot_type: infantry
 inertial_feedback: empty_topic
 velocity_state_feedback: kee_state
 velocity_state_reference: joystick_input

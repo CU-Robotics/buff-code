@@ -8,6 +8,24 @@
 export UBUNTU_VERSION=$(cut -f2 <<< $(lsb_release -r))
 export DEBIAN_FRONTEND=noninteractive	# prevent prompts in docker and everywhere else
 
+#		Setup robot params
+export DOCKER=False
+export PROJECT_ROOT=${PWD}
+export HOSTNAME=$HOSTNAME 
+export SUDO='sudo'
+
+if [[ -f /.dockerenv ]]; then
+	SUDO=''
+	DOCKER=True
+	PROJECT_ROOT=/home/cu-robotics/buff-code
+fi
+
+if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+	export ROS_DISTRO=noetic				# ROS for Ubuntu18
+elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
+	export ROS_DISTRO=melodic
+fi
+
 export ROS_PKG=ros-base
 
 if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then

@@ -24,11 +24,13 @@ struct Feedback_Controller {
 struct Controller_Manager {
 	Controller_Manager();
 	void set_gain(int, int, float);
+	void reset_controller(int);
 	void init_controller(int, float*, float*);
 	void get_control_report(int, float*);
-	void step_motors(RM_CAN_Device*);
-	void set_input(float*, float);
+	void step_motors(RM_CAN_Device*, float);
+	void set_input(float*);
 
+	float input[REMOTE_CONTROL_LEN];
 	float output[MAX_NUM_RM_MOTORS];
 	float references[MAX_NUM_RM_MOTORS][MOTOR_FEEDBACK_SIZE];
 	float chassis_inverse_kinematics[MAX_NUM_RM_MOTORS][REMOTE_CONTROL_LEN];

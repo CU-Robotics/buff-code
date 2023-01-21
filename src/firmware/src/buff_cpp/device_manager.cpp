@@ -22,6 +22,7 @@ void Device_Manager::initializer_report_handle() {
 
 				input_report.rgets(tmp, (3 * i) + 2, 3);
 				rm_can_ux.set_index(i, tmp);
+				// Serial.printf("New CAN device %i: [%i %i %i]\n", i, tmp[0], tmp[1], tmp[2]);
 
 				if (rm_can_ux.motor_index[i].can_bus > 0) {
 					output_report.rputs(tmp, (3 * i) + 2, 3);
@@ -51,9 +52,9 @@ void Device_Manager::initializer_report_handle() {
 			chunk_size = 4 * REMOTE_CONTROL_LEN;
 			block_offset = 2 * input_report.get(2);							// kinematic matrix comes in rows of two
 
-			if (block_offset == 0) {
-				// Serial.println("Chassis Invers Kinematics");
-			}
+			// if (block_offset == 0) {
+			// 	Serial.println("Chassis Invers Kinematics");
+			// }
 			// set the local chassis model
 			for (int i = 0; i < 2; i++) { 
 				// Serial.printf("%i: ", block_offset + i);
@@ -108,6 +109,28 @@ void Device_Manager::control_input_handle() {
 			for (int i = 0; i < 12; i++) {
 				output_report.put_float((4 * i) + 3, tmp[i]);
 			}
+			break;
+
+		case 2:
+			// set the gimbal input from ros control
+			controller_manager.input[3] = input_report.get_float(3);
+			controller_manager.input[4] = input_report.get_float(7);
+			controller_manager.input[5] = input_report.get_float(11);
+			
+			controller_switch = 2;												// block local gimbal input
+			break;
+
+		case 3:
+			// set the input from ros control
+			controller_manager.input[0] = input_report.get_float(3);
+			controller_manager.input[1] = input_report.get_float(7);
+			controller_manager.input[2] = input_report.get_float(11);
+			controller_manager.input[3] = input_report.get_float(15);
+			controller_manager.input[4] = input_report.get_float(19);
+			controller_manager.input[5] = input_report.get_float(23);
+			
+			controller_switch = 3;												// block local input
+			break;
 
 		default:
 			break;
@@ -153,6 +176,7 @@ void Device_Manager::report_switch() {
 		case 1:
 			// motor feedback data request
 			feedback_request_handle();
+			// Serial.println("Motor feedback requested");
 			break;
 
 		case 2:
@@ -238,13 +262,18 @@ void Device_Manager::read_sensors() {
 }
 
 void Device_Manager::step_controllers(float dt) {
-	if (controller_switch == 1) {
-		if (timer_info_ms(2) > 10) {
-			controller_manager.set_input(receiver.data, 1E-5);
-			timer_set(2);
+	if (controller_switch >= 1) {
+		// only update the state input every 10ms
+		if (controller_switch == 1) {
+			controller_manager.set_input(receiver.data);
 		}
-
-		controller_manager.step_motors(rm_can_ux.motor_index);
+		else if (controller_switch == 2) {
+			controller_manager.input[0] = receiver.data[0];
+			controller_manager.input[1] = receiver.data[1];
+			controller_manager.input[2] = receiver.data[2];
+		}
+		
+		controller_manager.step_motors(rm_can_ux.motor_index, 1E-5);
 	}
 
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
