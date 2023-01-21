@@ -14,7 +14,7 @@ void Shooter::setup(C_Shooter17 *config, S_Robot *state) {
     this->config = config;
     this->state = state;
 
-    this->feedMotor.init(2, 2);
+    this->feedMotor.init(2, 2); // First number is the ID, second number is the CAN line
 
     this->config->feedPID.K[0] = 0.0005;
 }

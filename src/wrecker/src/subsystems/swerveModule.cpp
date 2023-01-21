@@ -132,17 +132,18 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  float jsi = ((state->driverInput.rightStickX - 364) / 1320.0);
-  float stupid_ahh_angle = driveMotor.getAngle();
-  float new_angle;
-  stupid_ahh_angle > 168 ? new_angle = stupid_ahh_angle-160 : new_angle = stupid_ahh_angle+200;
+  //float jsi = ((state->driverInput.rightStickX - 364) / 1320.0);
+  // float stupid_ahh_angle = driveMotor.getAngle();
+  // float new_angle;
+  // stupid_ahh_angle > 168 ? new_angle = stupid_ahh_angle-160 : new_angle = stupid_ahh_angle+200;
 
-  tmp_steerPos.R = jsi*290+50;
-  config->steerPos.K[0] = 5;//30; // P = 5
-  config->steerPos.K[2] = 10;//1800; // D = 10
-  PID_Filter(&config->steerPos, &tmp_steerPos, new_angle, deltaTime);
+  // tmp_steerPos.R = jsi*290+50;
+  // config->steerPos.K[0] = 5;//30; // P = 5
+  // config->steerPos.K[2] = 10;//1800; // D = 10
+  // PID_Filter(&config->steerPos, &tmp_steerPos, new_angle, deltaTime);
 
-  moduleState->driveVel.R = 931.7;//((jsi * 2) - 1) * 9000;//tmp_steerPos.Y;
+  moduleState->driveVel.R = 9000;//931.7;//((jsi * 2) - 1) * 9000;//tmp_steerPos.Y;
+  //if (config->cornerID == 1) moduleState->driveVel.R = -9000;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
   Serial.print(micros());
@@ -167,6 +168,7 @@ void SwerveModule::update(float speed, float angle, float deltaTime) {
     // Only drive if sufficiently close to target angle
     //if (abs(inputAngle - steerAngle) < 20.0)
     driveMotor.setPower(moduleState->driveVel.Y);
+    //driveMotor.updateMotor();
     //else
       //driveMotor.setPower(0.0);
   }

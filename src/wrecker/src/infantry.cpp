@@ -171,12 +171,13 @@ void loop() {
 
   // Update subsystems
   //gimbal.update(deltaT);
-  Serial.println();
-  Serial.print(t0);
-  Serial.print(", ");
-  swerveChassis.update(deltaT);
-  //shooter.update(deltaT);
-  //xDrive.update(deltaT);
+  // Serial.println();
+  // Serial.print(t0);
+  // Serial.print(", ");
+  //swerveChassis.update(deltaT); //m3508
+  //shooter.update(deltaT); //m2006
+  xDrive.update(deltaT);
+  //Serial.println(robot_state);
 
 
 //58% power gave a high velocity of of 14.9 and a low of 12.9.

@@ -13,9 +13,9 @@ XDrive::XDrive(C_Robot *r_config, S_Robot *r_state) {
   config = r_config;
   state = r_state;
   
-  this->driveMotors[0].init(6, 2); // FR
+  this->driveMotors[0].init(3, 2); // FR
   this->driveMotors[1].init(1, 2); // FL
-  this->driveMotors[2].init(7, 2); // BL
+  this->driveMotors[2].init(6, 2); // BL
   this->driveMotors[3].init(5, 2); // BR
 }
 
@@ -58,25 +58,38 @@ void XDrive::update(float deltaTime) {
     speed4 = speed4 / bullshit;
   }
 
-  Serial.print(speed1);
-  Serial.print(" - ");
-  Serial.print(speed2);
-  Serial.println();
+  // Serial.print(speed1);
+  // Serial.print(" - ");
+  // Serial.print(speed2);
+  // Serial.println();
+
+  float power = state->refSystem.chassis_current * state->refSystem.chassis_voltage / 1000000.0;
+  float limit = 60;
+  float divisor = 1.0;
+
+  if (power > limit) {
+    divisor = power / limit;
+  }
 
   // PID
   state->chassis.FR.driveVel.R = speed1 * max_rpm;
   PID_Filter(&config->swerveChassis.FR.driveVel, &state->chassis.FR.driveVel, this->driveMotors[0].getRpm(), deltaTime);
-  this->driveMotors[0].setPower(state->chassis.FR.driveVel.Y);
+  this->driveMotors[0].setPower(state->chassis.FR.driveVel.Y / divisor);
 
   state->chassis.FL.driveVel.R = -speed2 * max_rpm;
   PID_Filter(&config->swerveChassis.FL.driveVel, &state->chassis.FL.driveVel, this->driveMotors[1].getRpm(), deltaTime);
-  this->driveMotors[1].setPower(state->chassis.FL.driveVel.Y);
+  this->driveMotors[1].setPower(state->chassis.FL.driveVel.Y / divisor);
 
   state->chassis.RL.driveVel.R = -speed3 * max_rpm;
   PID_Filter(&config->swerveChassis.RL.driveVel, &state->chassis.RL.driveVel, this->driveMotors[2].getRpm(), deltaTime);
-  this->driveMotors[2].setPower(state->chassis.RL.driveVel.Y);
+  this->driveMotors[2].setPower(state->chassis.RL.driveVel.Y / divisor);
 
   state->chassis.RR.driveVel.R = speed4 * max_rpm;
   PID_Filter(&config->swerveChassis.RR.driveVel, &state->chassis.RR.driveVel, this->driveMotors[3].getRpm(), deltaTime);
-  this->driveMotors[3].setPower(state->chassis.RR.driveVel.Y);
+  this->driveMotors[3].setPower(state->chassis.RR.driveVel.Y / divisor);
+
+  Serial.print(state->refSystem.chassis_current * state->refSystem.chassis_voltage / 1000000.0);
+  Serial.print(",");
+  Serial.print(deltaTime);
+  Serial.println();
 }
