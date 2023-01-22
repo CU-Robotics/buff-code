@@ -43,12 +43,9 @@ void DR16::print_receiver_input(byte* buffer){
 
 	Serial.println("\n\t===== DR16 Input");
 
-	for (int i = 0; i < 18; i++)
+	for (int i = 0; i < REMOTE_CONTROL_LEN; i++)
 	{
-		for (int j = 0; j < 8; j++)
-		{
-			Serial.print(bitRead(buffer[i], j));
-		}
+		Serial.print(buffer[i], BIN);
 
 		Serial.print(" ");
 		if ((i + 1) % 6 == 0) {
@@ -59,9 +56,9 @@ void DR16::print_receiver_input(byte* buffer){
 
 void DR16::print_control_data(){
 	Serial.println("\n\t===== DR16 Data");
-	Serial.printf("\n\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n\n", 
+	Serial.printf("\n\t%f\t%f\t%f\t%f\t%f\t%f\n\n", 
 		data[0], data[1], data[2], data[3], 
-		data[4], data[5], data[6]);
+		data[4], data[5]);
 }
 
 /*

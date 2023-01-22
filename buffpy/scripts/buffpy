@@ -251,34 +251,29 @@ def install_ssh_keys():
 			print(f'{robot} Timed out')
 
 
-def deploy_buffpy(robot_address, robot_type, source, target, ID):
+def deploy_directory(robot_address, source, target):
 	""" 
-		Install buffpy to a bot with scp.
+		Send buffpy directory to a robot with scp.
 		PARAMS:
 			robot_address: string, USERNAME@<IP/HOSTNAME>
-			robot_type: string, the bot type to install
 			source: string or path like object, the target directory to copy
-			target: string or path like object, the target directory to copy to
-			ID: string or path like object, the identify file of the install (self.yaml)
+			target: string or path like object, the target directory to copy into
 		RETURNS:
-			returncode: int, the return code of the install (failed = 13)
+			None
 	"""
-	with open(ID, 'w+') as f:
-		f.write(f"{robot_type}")
-	# if root does exist remove it
-	try:	
-		clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target}/buffpy ]]; then rm -rf {target}/buffpy; fi; mkdir -p {target}'], timeout=10)
-		if clean_dir_result.returncode == 0:
-			install_result = subprocess.run(['scp', '-r', source, f'{robot_address}:{target}'])
-			print(install_result)
+	clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ ! -d {target} ]]; then mkdir -p {target}; fi;'], timeout=10)
+	if clean_dir_result.returncode != 0:
+		return clean_dir_result.returncode
 
-			return install_result.returncode
+	try:	
+		install_result = subprocess.run(['scp', '-r', source, f'{robot_address}:{target}'])
+		print(install_result)
+		return install_result.returncode
 				
 	except subprocess.TimeoutExpired:
 		print(f'{robot_address} Timed out')
 
 	return 13
-
 
 def load_install_params():
 	"""
@@ -308,6 +303,47 @@ def load_install_params():
 
 	return source, target, ID, devices
 
+def initialize_devices():
+	"""
+		Deploy buffpy and run installation on
+		each registered device.
+	"""
+
+	# define the installation
+	source, target, ID, devices = load_install_params()
+
+	data_target = os.path.join(target, 'buffpy', 'data')
+	src_target = os.path.join(target, 'buffpy')
+	data_source = os.path.join(source, 'data', 'install')
+	src_source = os.path.join(source, 'scripts')
+
+	print(f'Running install as\n\tSource: {source}\n\tTarget: {target}\n\tID: {ID}\n\tDevices: {devices}')
+
+	for robot in devices:
+		# set target destination
+		robot_address = f'cu-robotics@{robot}'
+		# deploy buffpy and source the install scripts
+		clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target} ]]; then rm -rf {target}/; fi; mkdir -p {target}'], timeout=10)
+
+		if clean_dir_result.returncode != 0:
+			print(f'Failed to clean {robot}')
+			continue
+		elif deploy_directory(robot_address, data_source, data_target) != 0:
+			print(f'Failed to install data to {robot}')
+			continue
+		elif deploy_directory(robot_address, src_source, src_target) != 0:
+			print(f'Failed to install code to {robot}')
+			continue
+
+		try:
+			setup_result = subprocess.run(['ssh', 
+					'-t',
+					robot_address, 
+					f'cd /home/cu-robotics/buff-code && source buffpy/scripts/install.bash'])
+
+		except subprocess.TimeoutExpired:
+			print(f'{robot_address} Timed out')
+
 def deploy_all_devices():
 	"""
 		Install built code to all robots
@@ -328,35 +364,15 @@ def deploy_all_devices():
 		robot_type = devices[robot]
 		# set target destination
 		robot_address = f'cu-robotics@{robot}'
-		# deploy build
-		deploy_buffpy(robot_address, robot_type, source, target, ID)
-
-
-def initialize_devices():
-	"""
-		Deploy buffpy and run installation on
-		each registered device.
-	"""
-
-	# define the installation
-	source, target, ID, devices = load_install_params()
-
-	print(f'Running install as\n\tSource: {source}\n\tTarget: {target}\n\tID: {ID}\n\tDevices: {devices}')
-
-	for robot in devices:
-
-		# get robot type
-		robot_type = devices[robot]
-		# set target destination
-		robot_address = f'cu-robotics@{robot}'
-		# deploy buffpy and source the install scripts
-		if deploy_buffpy(robot_address, robot_type, source, target, ID) != 0:
-			continue
-		try:
-			setup_result = subprocess.run(['ssh', 
-					'-t',
-					robot_address, 
-					f'cd /home/cu-robotics/buff-code && source buffpy/scripts/install.bash'])
+		# set default robot
+		with open(ID, 'w+') as f:
+			f.write(f"{robot_type}")
+	
+		# if root does exist remove it
+		try:	
+			clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target}/buffpy ]]; then rm -rf {target}/buffpy; fi; mkdir -p {target}'], timeout=10)
+			if clean_dir_result.returncode == 0:
+				deploy_directory(robot_address, source, target)
 
 		except subprocess.TimeoutExpired:
 			print(f'{robot_address} Timed out')

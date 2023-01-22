@@ -1,5 +1,6 @@
 #! /bin/bash
 
+export UBUNTU_VERSION=$(cut -f2 <<< $(lsb_release -r))
 
 #		Setup robot params
 export DOCKER=False

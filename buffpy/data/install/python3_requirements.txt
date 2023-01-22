@@ -8,5 +8,5 @@ requests
 protobuf
 depthai
 setuptools
-platformio
+platformio==6.0.1
 opencv-python

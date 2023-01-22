@@ -95,8 +95,8 @@ void dr16_data_display() {
 int run_receiver_tests() {
 	UNITY_BEGIN();
 	RUN_TEST(test_dr16_serial_active);
-	// RUN_TEST(test_dr16_null_read);
-	// RUN_TEST(test_dr16_active_read);
+	RUN_TEST(test_dr16_null_read);
+	RUN_TEST(test_dr16_active_read);
 	RUN_TEST(dr16_data_display);
 	return UNITY_END();
 }

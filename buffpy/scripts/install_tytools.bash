@@ -12,6 +12,12 @@ curl https://www.pjrc.com/teensy/00-teensy.rules -O
 $SUDO mv 00-teensy.rules /etc/udev/rules.d/00-teensy.rules
 $SUDO chmod 0644 /etc/udev/rules.d/00-teensy.rules
 
+# Recommended
+curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core/master/scripts/99-platformio-udev.rules | sudo tee /etc/udev/rules.d/99-platformio-udev.rules
+
+# OR, manually download and copy this file to destination folder
+sudo cp 99-platformio-udev.rules /etc/udev/rules.d/99-platformio-udev.rules
+
 echo -e "\n\tInstalling TYcmd...\n"
 
 cd "${PROJECT_ROOT}/.."
