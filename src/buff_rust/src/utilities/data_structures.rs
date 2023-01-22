@@ -1,6 +1,7 @@
-use crate::utilities::loaders::*;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
+
+use crate::utilities::loaders::*;
 
 pub struct BuffBotSensorReport {
     pub id: u8,

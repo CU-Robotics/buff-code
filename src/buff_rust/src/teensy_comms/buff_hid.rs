@@ -26,28 +26,29 @@ pub struct HidWriter {
 }
 
 impl HidWriter {
-    // default constructor for HidWriter
     pub fn new(hidapi: &mut HidApi, vid: u16, pid: u16) -> HidWriter {
         let device = init_hid_device(hidapi, vid, pid); // not two teensys, just two instances
 
         HidWriter {
+            // shutdown will be replaced by a variable shared between several HidWriters
             shutdown: Arc::new(RwLock::new(false)),
             output: ByteBuffer::new(64),
             teensy: device,
         }
     }
 
-    /// Write the bytes from the output buffer
-    /// Usage:
-    /// '''
-    ///     hidwriter.write();
-    /// '''
+    /// Write the bytes from the output buffer to the teensy, then clear the buffer.
+    /// Shutdown if the write fails.
+    /// # Usage
+    /// ```
+    /// writer.output.puts(some_index, some_data);
+    /// writer.write(); // writes some_data to the teensy
+    /// ```
     pub fn write(&mut self) {
         // let t = Instant::now();
         match self.teensy.write(&self.output.data) {
             Ok(_) => {
                 // println!("Write time {}", t.elapsed().as_micros());
-                self.output.timestamp = Instant::now();
                 // self.output.print_data();
                 self.output.reset();
             }
@@ -57,24 +58,21 @@ impl HidWriter {
         }
     }
 
-    /// send initializers to a teensy
-    /// Usage:
-    /// '''
+    /// Creates a report from `id` and `data` and sends it to the teensy. Only use in testing.
+    /// # Usage
+    /// ```
     ///     writer.teensy = hidapi.open(vid, pid);
     ///     writer.send_report(report_id, data);
-    /// '''
+    /// ```
     pub fn send_report(&mut self, id: u8, data: Vec<u8>) {
         self.output.puts(0, vec![id]);
         self.output.puts(1, data);
         self.write();
     }
 
-    /// Main function to spin and connect the teensy to ROS
-    /// Usage:
-    /// '''
-    ///     initialize();
-    ///     layer.spin();       // runs until watchdog times out
-    /// '''
+    /// Main function to spin and connect the teensy to ROS.
+    /// Cycles through `reports` and sends a report to the teensy every millisecond.
+    /// Only use in testing.
     pub fn spin(&mut self, reports: Vec<Vec<u8>>) {
         let mut report_request = 0;
         println!("HID-writer Live");
@@ -92,7 +90,15 @@ impl HidWriter {
         }
         *self.shutdown.write().unwrap() = true;
     }
-
+    /// Continually sends data from [HidROS] (via `control_rx`) to the teensy.
+    ///
+    /// # Arguments
+    /// * `shutdown` - The function stops when this is true.
+    /// Used so that HidWriters in separate threads, all running pipeline() at the same time, can be shutdown at the same time (by passing them the same variable)
+    /// * `control_rx` - Receives the data from [HidROS].
+    ///
+    /// # Example
+    /// See [`HidLayer::pipeline()`] source
     pub fn pipeline(&mut self, shutdown: Arc<RwLock<bool>>, control_rx: Receiver<Vec<u8>>) {
         self.shutdown = shutdown;
 
@@ -106,7 +112,6 @@ impl HidWriter {
             self.output.puts(0, control_rx.recv().unwrap_or(vec![0]));
             self.write();
         }
-        *self.shutdown.write().unwrap() = true;
     }
 }
 

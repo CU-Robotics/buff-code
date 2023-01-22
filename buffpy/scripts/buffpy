@@ -162,6 +162,9 @@ def copy_dir_from_profile(dictionary, item, src_path, target_path):
 	if item in dictionary:
 		for dir_path in dictionary[item]:
 			src = os.path.join(src_path, dir_path)
+			if os.path.exists(target_path):
+				shutil.rmtree(target_path)
+
 			shutil.copytree(src, target_path)
 
 def assert_directory(directory):
