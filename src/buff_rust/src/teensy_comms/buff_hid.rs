@@ -310,6 +310,14 @@ impl HidReader {
     }
 }
 
+/// Handles publishing data to ROS from HID
+///
+/// # Usage
+/// ```
+/// use buff_rust::teensy_comms::buff_hid::HidROS;
+///
+/// let hidros = HidROS::new();
+/// ```
 pub struct HidROS {
     pub shutdown: Arc<RwLock<bool>>,
     pub robot_status: BuffBotStatusReport,
@@ -374,6 +382,15 @@ impl HidROS {
         }
     }
 
+    /// Create a new HidROS from an existing BuffBotStatusReport
+    ///
+    /// # Usage
+    ///
+    /// ```
+    /// use buff_rust::teensy_comms::buff_hid::HidROS;
+    ///
+    /// let hidros = HidROS::from_robot_status(shutdown, robotstatus);
+    /// ```
     pub fn from_robot_status(
         shutdown: Arc<RwLock<bool>>,
         robot_status: BuffBotStatusReport,
@@ -388,6 +405,7 @@ impl HidROS {
         hidros
     }
 
+    /// Publish motor data to ROS
     pub fn publish_motors(&self) {
         self.motor_publishers
             .iter()
@@ -408,6 +426,7 @@ impl HidROS {
             });
     }
 
+    /// Publish controller data to ROS
     pub fn publish_controllers(&self) {
         self.controller_publishers
             .iter()
@@ -424,6 +443,7 @@ impl HidROS {
             });
     }
 
+    /// Publish sensor data to ROS
     pub fn publish_sensors(&self) {
         self.sensor_publishers
             .iter()
@@ -444,6 +464,7 @@ impl HidROS {
             });
     }
 
+    /// Start to continually publish motor and sensor data
     pub fn spin(&mut self) {
         println!("HID-ROS Live");
 
@@ -463,6 +484,11 @@ impl HidROS {
         *self.shutdown.write().unwrap() = true;
     }
 
+    /// Begin publishing motor, controller, and sensor data to ROS and
+    /// sending control reports to [HidWriter]
+    ///
+    /// # Example
+    /// See [HidLayer::pipeline()]
     pub fn pipeline(
         &mut self,
         shutdown: Arc<RwLock<bool>>,
