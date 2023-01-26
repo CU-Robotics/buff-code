@@ -94,7 +94,7 @@ impl HidWriter {
     ///
     /// # Arguments
     /// * `shutdown` - The function stops when this is true.
-    /// Used so that HidWriters in separate threads, all running pipeline() at the same time, can be shutdown at the same time (by passing them the same variable)
+    /// Used so that HidLayer threads, all running pipeline() at the same time, can be shutdown at the same time (by passing them the same variable)
     /// * `control_rx` - Receives the data from [HidROS].
     ///
     /// # Example
@@ -131,7 +131,7 @@ impl HidReader {
         HidReader {
             shutdown: Arc::new(RwLock::new(false)),
             input: ByteBuffer::new(64),
-            robot_status: BuffBotStatusReport::load_robot(),
+            robot_status: BuffBotStatusReport::from_self(),
             teensy: device,
         }
     }
@@ -151,6 +151,7 @@ impl HidReader {
     pub fn read(&mut self) -> usize {
         match &self.teensy.read(&mut self.input.data) {
             Ok(value) => {
+                // reset watchdog... woof
                 self.input.timestamp = Instant::now();
                 return *value;
             }
@@ -322,6 +323,8 @@ pub struct HidROS {
     pub shutdown: Arc<RwLock<bool>>,
     pub robot_status: BuffBotStatusReport,
     pub control_flag: Arc<RwLock<i32>>,
+    pub gimbal_control: Arc<RwLock<Vec<f64>>>,
+    pub control_input: Arc<RwLock<Vec<f64>>>,
     pub motor_can_output: Arc<RwLock<Vec<f64>>>,
 
     pub motor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
@@ -332,7 +335,7 @@ pub struct HidROS {
 
 impl HidROS {
     pub fn new() -> HidROS {
-        let robot_status = BuffBotStatusReport::load_robot();
+        let robot_status = BuffBotStatusReport::from_self();
 
         env_logger::init();
         rosrust::init("buffpy_hid");
@@ -351,9 +354,15 @@ impl HidROS {
 
         let n_motors = robot_status.motors.len();
         let motor_can_output = Arc::new(RwLock::new(vec![0.0; n_motors]));
+        let gimbal_control = Arc::new(RwLock::new(vec![0.0; 3]));
+        let control_input = Arc::new(RwLock::new(vec![0.0; n_motors]));
+        let gc_clone = gimbal_control.clone();
+        let con_clone = control_input.clone();
         let mco_clone = motor_can_output.clone();
         let control_flag = Arc::new(RwLock::new(-1));
         let cf_clone = control_flag.clone();
+        let cf1_clone = control_flag.clone();
+        let cf2_clone = control_flag.clone();
 
         let motor_subscribers = vec![rosrust::subscribe(
             "motor_can_output",
@@ -363,8 +372,34 @@ impl HidROS {
                     msg.data.len() == n_motors,
                     "ROS can output msg had a different number of values than there are motors",
                 );
-                *control_flag.write().unwrap() = 0;
+                *cf_clone.write().unwrap() = 0;
                 *motor_can_output.write().unwrap() = msg.data;
+            },
+        )
+        .unwrap(),
+        rosrust::subscribe(
+            "gimbal_control_input",
+            1,
+            move |msg: std_msgs::Float64MultiArray| {
+                assert!(
+                    msg.data.len() == 3,
+                    "ROS gimbal control msg had a different number of values than there are gimbal actuators",
+                );
+                *cf1_clone.write().unwrap() = 1;
+                *gimbal_control.write().unwrap() = msg.data;
+            },
+        )
+        .unwrap(),
+        rosrust::subscribe(
+            "control_input",
+            1,
+            move |msg: std_msgs::Float64MultiArray| {
+                assert!(
+                    msg.data.len() == n_motors,
+                    "ROS control msg had a different number of values than there are motors",
+                );
+                *cf2_clone.write().unwrap() = 2;
+                *control_input.write().unwrap() = msg.data;
             },
         )
         .unwrap()];
@@ -372,7 +407,9 @@ impl HidROS {
         HidROS {
             shutdown: Arc::new(RwLock::new(false)),
             robot_status: robot_status,
-            control_flag: cf_clone,
+            control_flag: control_flag,
+            gimbal_control: gc_clone,
+            control_input: con_clone,
             motor_can_output: mco_clone,
 
             motor_publishers: motor_publishers,
@@ -499,7 +536,7 @@ impl HidROS {
 
         self.robot_status = feedback_rx
             .recv()
-            .unwrap_or(BuffBotStatusReport::load_robot());
+            .unwrap_or(BuffBotStatusReport::from_self());
 
         let initializers = self.robot_status.load_initializers();
 
@@ -541,6 +578,26 @@ impl HidROS {
                             control_buffer.put_floats(3, block.to_vec());
                             control_tx.send(control_buffer.data.clone()).unwrap();
                         });
+
+                    *self.control_flag.write().unwrap() = -1;
+                }
+                1 => {
+                    let mut control_buffer = ByteBuffer::new(64);
+
+                    let gimabl_reference = self.gimbal_control.read().unwrap().clone();
+                    control_buffer.puts(0, vec![2, 2]);
+                    control_buffer.put_floats(2, gimabl_reference);
+                    control_tx.send(control_buffer.data).unwrap();
+
+                    *self.control_flag.write().unwrap() = -1;
+                }
+                2 => {
+                    let mut control_buffer = ByteBuffer::new(64);
+
+                    let robot_reference = self.control_input.read().unwrap().clone();
+                    control_buffer.puts(0, vec![2, 3]);
+                    control_buffer.put_floats(2, robot_reference);
+                    control_tx.send(control_buffer.data).unwrap();
 
                     *self.control_flag.write().unwrap() = -1;
                 }

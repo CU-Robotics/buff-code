@@ -95,10 +95,13 @@ void Controller_Manager::step_motors(RM_CAN_Device* motor_index, float dt) {
 	float tmp[3];
 	float speed = 0;
 
+	bool new_references = timer_info_ms(2) > 10;
+
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
 		// only update references every 10ms
-		if (timer_info_ms(2) > 10) {
+		if  (new_references) {
 			timer_set(2);
+
 			speed = 0;
 
 			for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
@@ -117,10 +120,14 @@ void Controller_Manager::step_motors(RM_CAN_Device* motor_index, float dt) {
 		tmp[0] = motor_index[i].data[0] + (2 * PI * motor_index[i].roll_over);
 		tmp[1] = motor_index[i].data[1];
 		tmp[2] = motor_index[i].data[2];
-		// Serial.printf("%i %f %f %f\n", i, tmp[0], tmp[1], tmp[2]);
+		// if (i == 5) {
+		// 	Serial.printf("controller: %f %f %f\n", tmp[0], motor_index[i].data[0], (2 * PI * motor_index[i].roll_over));
+		// }
 		output[i] = controllers[i].step(references[i], tmp);
 	}
-	// Serial.printf("references %f %f\n", references[4][0], references[4][1]);
+	// if (new_references) {
+	// 	Serial.printf("input -> reference:\n\t%f %f %f\n", input[4], references[5][0], references[5][1]);
+	// }
 }
 
 void Controller_Manager::set_input(float* control_input) {

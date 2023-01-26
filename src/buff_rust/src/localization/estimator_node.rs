@@ -5,7 +5,7 @@ fn main() {
 
     rosrust::init("buff_estimation");
 
-    let mut kee = KinematicEncoderEstimator::new();
+    let mut rse = RobotStateEstimator::new();
 
-    kee.spin();
+    rse.spin();
 }

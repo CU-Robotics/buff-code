@@ -334,20 +334,20 @@ void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
 	*/
 
 	int motor_id = motor_idx_from_return(can_bus, msg->id);
-	// Serial.printf("Received data from %X, %i\n", msg->id - 0x201, motor_id);
 
 	if (motor_id >= 0) {
+		// Serial.printf("Received data from %X, %i\n", msg->id - 0x201, motor_id);
 		float current_angle = motor_index[motor_id].data[0];
 		float feedback_angle = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
 		float feedback_rpm = bytes_to_int16_t(msg->buf[2], msg->buf[3]);
 		float feedback_torque = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
 
 		// need a detector for roll overs
-		if (current_angle - feedback_angle < -PI && feedback_rpm < 0) {
+		if (current_angle < feedback_angle - PI && feedback_rpm < 0) {
 			motor_index[motor_id].roll_over -= 1;
 		}
 
-		else if (current_angle - feedback_angle > PI && feedback_rpm > 0) {
+		else if (current_angle > feedback_angle + PI && feedback_rpm > 0) {
 			motor_index[motor_id].roll_over += 1;
 		}
 

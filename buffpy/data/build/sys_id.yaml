@@ -1,5 +1,4 @@
-include: ['rust-debug.yaml']
 project: 'system_identification'
-install: ['scripts/motor_identification.py']
+install: ['scripts/motor_identification.py', 'scripts/camera_calibration.py']
 
 

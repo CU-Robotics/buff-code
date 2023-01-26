@@ -21,9 +21,9 @@ sensor_index:
 
 # This defines the indices of all the motors
 motor_index:
-  - xn_drive
   - xp_drive
   - yn_drive
+  - xn_drive
   - yp_drive
   - pitch
   - yaw
@@ -33,9 +33,9 @@ motor_index:
 # packet index
 motor_can_index:
   # [can bus, message type, motor offset] see datasheets if you don't understand
-  - [2, 1, 1]
   - [2, 1, 5]
   - [2, 1, 6]
+  - [2, 1, 1]
   - [2, 1, 3]
   - [0, 0, 0]
   - [0, 0, 0]
@@ -56,11 +56,12 @@ chassis_inverse_kinematics:
   - [  0.0,    0.0,    0.0,    0.0,     0.0,    1.0]      # V6 = dGamma
 
 # full state feedback gains (position, rpm, torque)
+
 motor_gains:
-  - [  0.00000,  0.00050,  0.00000]
-  - [  0.00000,  0.00050,  0.00000]
-  - [  0.00000,  0.00050,  0.00000]
-  - [  0.00000,  0.00050,  0.00000]
+  - [  0.00000,  0.00100,  0.00000]
+  - [  0.00000,  0.00100,  0.00000]
+  - [  0.00000,  0.00100,  0.00000]
+  - [  0.00000,  0.00100,  0.00000]
   - [  0.00000,  0.00000,  0.00000]
   - [  0.40000,  0.00000,  0.00000]
   - [  0.00000,  0.00001,  0.00000]

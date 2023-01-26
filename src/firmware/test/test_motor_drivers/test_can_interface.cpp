@@ -8,7 +8,7 @@
 
 RM_CAN_Interface rm_can_ux;
 
-int8_t num_motors = 4; 
+int8_t num_motors = 5; 
 byte input_motor_index[16][3] = {{2,0,1}, {2,0,5}, {2,0,3}, {2,2,6},
 						{2,0,6}, {0,0,0}, {0,0,0}, {0,0,0},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},
@@ -100,12 +100,12 @@ void test_angle_from_can_bytes() {
 
 	value = mapf(1.75 * PI, 0, 2 * PI, 0, 8191);
 	timer_set(0);
-	TEST_ASSERT_FLOAT_WITHIN(0.0005, (1.75 * PI) - (2 * PI), ang_from_can_bytes(highByte(value), lowByte(value)));
+	TEST_ASSERT_FLOAT_WITHIN(0.0005, 1.75 * PI, ang_from_can_bytes(highByte(value), lowByte(value)));
 	timer_mark(0);
 
 	value = mapf(2 * PI, 0, 2 * PI, 0, 8191);
 	timer_set(0);
-	TEST_ASSERT_FLOAT_WITHIN(0.0001, 0, ang_from_can_bytes(highByte(value), lowByte(value)));
+	TEST_ASSERT_FLOAT_WITHIN(0.0001, 2 * PI, ang_from_can_bytes(highByte(value), lowByte(value)));
 	timer_mark(0);
 }
 

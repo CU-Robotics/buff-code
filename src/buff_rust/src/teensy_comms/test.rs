@@ -1,5 +1,12 @@
 #![allow(unused_imports)]
-use crate::teensy_comms::buff_hid::*;
+extern crate hidapi;
+use hidapi::{HidApi, HidDevice};
+
+use crate::{
+    teensy_comms::buff_hid::*,
+    utilities::{data_structures::*, loaders::*},
+};
+
 use std::{
     env,
     sync::{Arc, RwLock},
@@ -8,249 +15,345 @@ use std::{
 };
 
 #[cfg(test)]
-pub mod dead_teensy_comms_tests {
+pub mod comms_tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
-    // pub fn write_with_debug(layer: &mut HidLayer, sys_time: Instant) {
-    //     let m = layer.output.get(0);
-    //     let t = Instant::now();
-    //     layer.write();
-    //     layer.output.print_data();
+    pub fn write_with_debug(writer: &mut HidWriter, sys_time: Instant) {
+        let m = writer.output.get(0);
+        let t = Instant::now();
+        writer.write();
+        writer.output.print_data();
 
-    //     println!(
-    //         "\t[{}] Layer write success: <{}, {} us>",
-    //         sys_time.elapsed().as_millis(),
-    //         m,
-    //         t.elapsed().as_micros()
-    //     );
-    // }
+        println!(
+            "\t[{}] Writer success: <{}, {} us>",
+            sys_time.elapsed().as_millis(),
+            m,
+            t.elapsed().as_micros()
+        );
+    }
 
-    // pub fn read_with_debug(layer: &mut HidLayer, sys_time: Instant) -> usize {
-    //     let n = layer.read();
-    //     layer.input.print_data();
-    //     println!(
-    //         "\t[{}] Layer read success: <{}, {} us>",
-    //         sys_time.elapsed().as_millis(),
-    //         layer.input.get(0),
-    //         layer.input.get_i32(60)
-    //     );
-    //     return n;
-    // }
+    pub fn read_with_debug(reader: &mut HidReader, sys_time: Instant) -> usize {
+        let n = reader.read();
+        reader.input.print_data();
+        println!(
+            "\t[{}] Reader success: <{}, {} us>",
+            sys_time.elapsed().as_millis(),
+            reader.input.get(0),
+            reader.input.get_i32(60)
+        );
+        return n;
+    }
 
-    // pub fn validate_input_packet(layer: &mut HidLayer, sys_time: Instant) -> u8 {
-    //     let mode = layer.input.get(0);
-    //     let timer = layer.input.get_i32(60);
+    pub fn validate_input_packet(reader: &mut HidReader, sys_time: Instant) -> u8 {
+        let mode = reader.input.get(0);
+        let timer = reader.input.get_i32(60);
 
-    //     if mode == 255 {
-    //         println!(
-    //             "\t[{}] Config Packet detected: <{}, {} us>",
-    //             sys_time.elapsed().as_millis(),
-    //             layer.input.get(0),
-    //             timer
-    //         );
-    //     } else if mode == 0 {
-    //         println!(
-    //             "\t[{}] Idle Packet detected: <{}, {} us>",
-    //             sys_time.elapsed().as_millis(),
-    //             layer.input.get(0),
-    //             timer
-    //         );
-    //     } else {
-    //         println!(
-    //             "\t[{}] Data Packet detected: <{}, {} us>",
-    //             sys_time.elapsed().as_millis(),
-    //             layer.input.get(0),
-    //             timer
-    //         );
-    //     }
+        if mode == 255 {
+            println!(
+                "\t[{}] Config Packet detected: <{}, {} us>",
+                sys_time.elapsed().as_millis(),
+                reader.input.get(0),
+                timer
+            );
+        } else if mode == 0 {
+            println!(
+                "\t[{}] Idle Packet detected: <{}, {} us>",
+                sys_time.elapsed().as_millis(),
+                reader.input.get(0),
+                timer
+            );
+        } else {
+            println!(
+                "\t[{}] Data Packet detected: <{}, {} us>",
+                sys_time.elapsed().as_millis(),
+                reader.input.get(0),
+                timer
+            );
+        }
 
-    //     if timer == 0 {
-    //         println!("\tTeensy does not recognize the connection!");
-    //     }
+        if timer == 0 {
+            println!("\tTeensy does not recognize the connection!");
+        }
 
-    //     return mode;
-    // }
+        return mode;
+    }
 
-    // pub fn watch_for_packet(layer: &mut HidLayer, packet_id: u8, timeout: u128) {
-    //     let mut loopt;
-    //     let mut mode = 0;
-    //     let t = Instant::now();
+    pub fn watch_for_packet(reader: &mut HidReader, packet_id: u8, timeout: u128) {
+        let mut loopt;
+        let mode = 0;
+        let t = Instant::now();
 
-    //     while t.elapsed().as_millis() < timeout {
-    //         loopt = Instant::now();
+        while t.elapsed().as_millis() < timeout {
+            loopt = Instant::now();
 
-    //         match layer.read() {
-    //             64 => {
-    //                 if validate_input_packet(layer, t) == packet_id {
-    //                     mode = packet_id;
-    //                     layer.input.print_data();
-    //                 }
-    //             }
-    //             0 => {
-    //                 println!("\tNo Packet available");
-    //             }
-    //             _ => {
-    //                 panic!("\tCorrupt packet!");
-    //             }
-    //         }
+            match reader.read() {
+                64 => {
+                    if reader.input.get(0) == 0 && reader.input.get_i32(60) == 0 {
+                        continue;
+                    } else if reader.input.get_i32(60) > 1000 {
+                        println!("\tTeensy cycle time is over the limit");
+                    }
 
-    //         layer.write();
+                    if reader.input.get(0) == packet_id {
+                        println!("\tTeenys report {} reply received", packet_id);
+                        return;
+                    }
+                }
+                0 => {
+                    println!("\tNo Packet available");
+                }
+                _ => {
+                    panic!("\tCorrupt packet!");
+                }
+            }
 
-    //         while loopt.elapsed().as_micros() < 1000 {}
-    //     }
+            // writer.write();
+            while loopt.elapsed().as_micros() < 1000 {}
+        }
 
-    //     assert_eq!(
-    //         packet_id,
-    //         mode,
-    //         "\t[{}] Requested Teensy Packet not found\n\n",
-    //         t.elapsed().as_millis()
-    //     );
-    //     println!(
-    //         "\t[{}] Requested Teensy Packet found\n\n",
-    //         t.elapsed().as_millis()
-    //     )
-    // }
+        assert_eq!(
+            packet_id,
+            mode,
+            "\t[{}] Requested Teensy Packet not found\n\n",
+            t.elapsed().as_millis()
+        );
+        println!(
+            "\t[{}] Requested Teensy Packet found\n\n",
+            t.elapsed().as_millis()
+        )
+    }
 
-    // pub fn watch_for_packet_data(
-    //     layer: &mut HidLayer,
-    //     packet_id: u8,
-    //     timeout: u128,
-    //     index: usize,
-    //     n: usize,
-    // ) {
-    //     let mut loopt;
-    //     let mut sum = 0.0;
-    //     let t = Instant::now();
+    pub fn watch_for_packet_data(
+        reader: &mut HidReader,
+        packet_id: u8,
+        timeout: u128,
+        index: usize,
+        n: usize,
+    ) {
+        let mut loopt;
+        let mut sum = -1.0;
+        let t = Instant::now();
 
-    //     while t.elapsed().as_millis() < timeout {
-    //         loopt = Instant::now();
+        while t.elapsed().as_millis() < timeout {
+            loopt = Instant::now();
 
-    //         match layer.read() {
-    //             64 => {
-    //                 if validate_input_packet(layer, t) == packet_id {
-    //                     sum = layer
-    //                         .input
-    //                         .gets(index, n)
-    //                         .into_iter()
-    //                         .map(|x| x as f64)
-    //                         .sum::<f64>();
-    //                     // layer.input.print_data();
-    //                     // break;
-    //                 }
-    //             }
-    //             0 => {
-    //                 println!("\tNo Packet available");
-    //             }
-    //             _ => {
-    //                 panic!("\tCorrupt packet!");
-    //             }
-    //         }
+            match reader.read() {
+                64 => {
+                    if reader.input.get(0) == 0 && reader.input.get_i32(60) == 0 {
+                        continue;
+                    } else if reader.input.get_i32(60) > 1000 {
+                        println!("\tTeensy cycle time is over the limit");
+                    }
 
-    //         layer.write();
+                    if validate_input_packet(reader, t) == packet_id {
+                        sum = reader
+                            .input
+                            .gets(index, n)
+                            .into_iter()
+                            .map(|x| x as f64)
+                            .sum::<f64>();
+                        // reader.input.print_data();
+                        break;
+                    }
+                }
+                0 => {
+                    println!("\tNo Packet available");
+                }
+                _ => {
+                    panic!("\tCorrupt packet!");
+                }
+            }
 
-    //         while loopt.elapsed().as_micros() < 1000 {}
-    //     }
+            // writer.write();
+            while loopt.elapsed().as_micros() < 1000 {}
+        }
 
-    //     assert!(
-    //         sum != 0.0,
-    //         "\t[{}] Requested Teensy Data Empty\n\n",
-    //         t.elapsed().as_millis()
-    //     );
-    //     println!(
-    //         "\t[{}] Requested Teensy Data found\n\n",
-    //         t.elapsed().as_millis()
-    //     )
-    // }
+        assert!(
+            sum >= 0.0,
+            "\t[{}] Requested Teensy Packet not found\n\n",
+            t.elapsed().as_millis()
+        );
+        assert!(
+            sum > 0.0,
+            "\t[{}] Requested Teensy Data Empty\n\n",
+            t.elapsed().as_millis()
+        );
+        println!(
+            "\t[{}] Requested Teensy Data found\n\n",
+            t.elapsed().as_millis()
+        )
+    }
 
-    // pub fn packet_request_test(layer: &mut HidLayer, packet_id: u8) {
-    //     println!("Testing packet request {}:...", packet_id);
-    //     layer.set_output_bytes(0, vec![packet_id]);
-    //     layer.write();
-    //     watch_for_packet(layer, packet_id, 6);
-    // }
+    pub fn watch_for_no_packet_data(
+        reader: &mut HidReader,
+        packet_id: u8,
+        timeout: u128,
+        index: usize,
+        n: usize,
+    ) {
+        let mut loopt;
+        let mut sum = -1.0;
+        let t = Instant::now();
 
-    // pub fn initializer_test(layer: &mut HidLayer) {
-    //     let initializers = layer.robot_status.load_initializers();
-    //     println!("\nTesting initializers:...\n\t{:?}", initializers);
-    //     layer.set_output_bytes(0, vec![255]);
-    //     layer.set_output_bytes(1, initializers[0].clone());
-    //     layer.write();
-    //     layer.output.print_data();
-    //     watch_for_packet(layer, 255, 5);
-    // }
+        while t.elapsed().as_millis() < timeout {
+            loopt = Instant::now();
 
-    // pub fn imu_connection_test(layer: &mut HidLayer) {
-    //     println!("\nTesting imu access:...\n");
-    //     layer.set_output_bytes(0, vec![3, 0]);
-    //     layer.write();
-    //     watch_for_packet_data(layer, 3, 5, 2, 36);
-    //     println!("IMU data: {:?}", layer.input.get_floats(2, 9));
-    // }
+            match reader.read() {
+                64 => {
+                    if reader.input.get(0) == 0 && reader.input.get_i32(60) == 0 {
+                        continue;
+                    } else if reader.input.get_i32(60) > 1000 {
+                        println!("\tTeensy cycle time is over the limit");
+                    }
 
-    // pub fn dr16_connection_test(layer: &mut HidLayer) {
-    //     println!("\nTesting dr16 access:...\n");
-    //     layer.set_output_bytes(0, vec![3, 1]);
-    //     layer.write();
-    //     watch_for_packet_data(layer, 3, 5, 2, 36);
-    //     println!("DR16 data {:?}", layer.input.get_floats(2, 7));
-    // }
+                    if validate_input_packet(reader, t) == packet_id {
+                        sum = reader
+                            .input
+                            .gets(index, n)
+                            .into_iter()
+                            .map(|x| x as f64)
+                            .sum::<f64>();
+                        // reader.input.print_data();
+                        break;
+                    }
+                }
+                0 => {
+                    println!("\tNo Packet available");
+                }
+                _ => {
+                    panic!("\tCorrupt packet!");
+                }
+            }
 
-    // pub fn motor_feedback_test(layer: &mut HidLayer) {
-    //     println!("\nTesting motor feedback:...\n");
-    //     layer.set_output_bytes(0, vec![1, 1]);
-    //     layer.write();
-    //     layer.output.print_data();
-    //     watch_for_packet_data(layer, 1, 10, 2, 49);
-    //     println!("Motor 4 data: {:?}", layer.input.get_floats(2, 3));
-    // }
+            // writer.write();
+            while loopt.elapsed().as_micros() < 1000 {}
+        }
 
-    // pub fn motor_control_test(layer: &mut HidLayer) {
-    //     println!("\nTesting motor control:...\n");
-    //     let bytes = f32::to_be_bytes(0.4).to_vec();
-    //     // set up control output for motor 3
-    //     layer.set_output_bytes(
-    //         0,
-    //         vec![
-    //             2, 0, 1, bytes[0], bytes[1], bytes[2], bytes[3], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    //         ],
-    //     );
+        assert!(
+            sum >= 0.0,
+            "\t[{}] Requested Teensy Packet not found\n\n",
+            t.elapsed().as_millis()
+        );
+        assert!(
+            sum == 0.0,
+            "\t[{}] Requested Teensy Data not empty\n\n",
+            t.elapsed().as_millis()
+        );
+        println!(
+            "\t[{}] Requested Teensy Data empty\n\n",
+            t.elapsed().as_millis()
+        )
+    }
 
-    //     let loopt = Instant::now();
-    //     layer.write();
-    //     layer.output.print_data();
-    //     watch_for_packet(layer, 2, 10);
+    pub fn packet_request_test(reader: &mut HidReader, writer: &mut HidWriter, packet_id: u8) {
+        println!("Testing packet request {}:...", packet_id);
+        writer.send_report(packet_id, vec![0]);
+        watch_for_packet(reader, packet_id, 5);
+    }
 
-    //     while loopt.elapsed().as_millis() < 1000 {}
+    pub fn initializer_test(reader: &mut HidReader, writer: &mut HidWriter) {
+        let mut robot_status = BuffBotStatusReport::new("penguin");
+        let initializers = robot_status.load_initializers();
+        println!("\nTesting initializers:...");
+        initializers.iter().for_each(|init| {
+            // println!("{:?}", init);
+            writer.send_report(255, init[1..].to_vec());
+            watch_for_packet(reader, 255, 5);
+        });
+    }
 
-    //     layer.set_output_bytes(
-    //         0,
-    //         vec![2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    //     );
-    //     layer.write();
-    //     layer.output.print_data();
-    // }
+    pub fn imu_connection_test(reader: &mut HidReader, writer: &mut HidWriter) {
+        println!("\nTesting imu access:...\n");
+        writer.send_report(3, vec![0]);
+        watch_for_packet_data(reader, 3, 5, 2, 36);
+        println!("IMU data: {:?}", reader.input.get_floats(2, 9));
+    }
 
-    // #[test]
-    // pub fn hid_comms_tests() {
-    //     /*
-    //         Attempt to connect and read/write from teensy
-    //     */
+    pub fn dr16_connection_test(reader: &mut HidReader, writer: &mut HidWriter) {
+        println!("\nTesting dr16 access:...\n");
+        writer.send_report(3, vec![1]);
+        watch_for_packet_data(reader, 3, 5, 2, 24);
+        println!("DR16 data {:?}", reader.input.get_floats(2, 6));
+    }
 
-    //     let mut layer = HidLayer::new();
+    pub fn motor_feedback_test(reader: &mut HidReader, writer: &mut HidWriter) {
+        println!("\nTesting motor feedback:...\n");
+        writer.send_report(1, vec![1]);
+        watch_for_packet_data(reader, 1, 10, 2, 49);
+        println!("Motor 5 data: {:?}", reader.input.get_floats(14, 3));
+    }
 
-    //     layer.init_comms();
+    pub fn can_control_test(reader: &mut HidReader, writer: &mut HidWriter) {
+        println!("\nTesting can control:...\n");
+        let bytes = f32::to_be_bytes(0.2).to_vec();
+        // set up control output for motor 4 & 5
+        writer.send_report(
+            2,
+            vec![
+                0, 1, bytes[0], bytes[1], bytes[2], bytes[3], bytes[0], bytes[1], bytes[2],
+                bytes[3],
+            ],
+        );
+        watch_for_packet(reader, 2, 5);
 
-    //     initializer_test(&mut layer);
+        let t = Instant::now();
+        while t.elapsed().as_secs() < 1 {}
 
-    //     // packet_request_test(&mut layer, 1);
-    //     // packet_request_test(&mut layer, 2);
+        // zero things out
+        writer.send_report(2, vec![0, 1]);
+    }
 
-    //     // imu_connection_test(&mut layer);
-    //     // dr16_connection_test(&mut layer);
+    pub fn gimbal_input_control_test(reader: &mut HidReader, writer: &mut HidWriter) {
+        println!("\nTesting gimbal input control:...\n");
+        let mut t = Instant::now();
+        while t.elapsed().as_secs() < 3 {}
+        // set up control output for motor 4, 5 & 6
+        writer.output.puts(0, vec![2, 2]);
+        writer.output.put_float(3, 500.0);
+        writer.output.put_float(7, 500.0);
+        writer.output.put_float(11, 500.0);
+        writer.write();
+        watch_for_packet(reader, 2, 5);
 
-    //     motor_feedback_test(&mut layer);
+        t = Instant::now();
+        while t.elapsed().as_secs() < 3 {}
 
-    //     motor_control_test(&mut layer);
-    // }
+        // check chassis controllers
+        writer.send_report(2, vec![1]);
+        watch_for_no_packet_data(reader, 2, 5, 3, 48);
+
+        // check gimbal controllers
+        writer.send_report(2, vec![1, 1]);
+        watch_for_packet_data(reader, 2, 5, 15, 12);
+
+        // zero things out
+        writer.send_report(2, vec![2]);
+        watch_for_packet(reader, 2, 5);
+    }
+
+    #[test]
+    pub fn teensy_test() {
+        /*
+            Attempt to connect and read/write from teensy
+        */
+
+        let byu = BuffYamlUtil::new("penguin");
+
+        let vid = byu.load_u16("teensy_vid");
+        let pid = byu.load_u16("teensy_pid");
+
+        let mut hidapi = HidApi::new().expect("Failed to create API instance");
+        let mut reader = HidReader::new(&mut hidapi, vid, pid);
+        let mut writer = HidWriter::new(&mut hidapi, vid, pid);
+
+        initializer_test(&mut reader, &mut writer);
+
+        packet_request_test(&mut reader, &mut writer, 1);
+        // imu_connection_test(&mut reader, &mut writer);
+        // dr16_connection_test(&mut reader, &mut writer);
+        motor_feedback_test(&mut reader, &mut writer);
+        // can_control_test(&mut reader, &mut writer);
+        gimbal_input_control_test(&mut reader, &mut writer);
+    }
 }

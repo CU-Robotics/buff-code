@@ -33,7 +33,7 @@ impl BuffYamlUtil {
 
     pub fn from_self() -> BuffYamlUtil {
         let project_root = env::var("PROJECT_ROOT").expect("Project root not set");
-        let self_path = format!("{}/buffpy/data/robots/self", project_root);
+        let self_path = format!("{}/buffpy/data/robots/self.txt", project_root);
         let robot_name = fs::read_to_string(self_path).unwrap();
 
         let yaml_path = format!(

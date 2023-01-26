@@ -34,12 +34,6 @@ elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
 	export ROS_DISTRO=melodic
 fi
 
-#
-#	Source buff.bash
-#
-
-source ${PROJECT_ROOT}/buffpy/buff.bash
-
 
 #
 #	Update the apt package manager

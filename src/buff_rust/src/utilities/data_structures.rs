@@ -171,20 +171,7 @@ impl BuffBotStatusReport {
         }
     }
 
-    pub fn new() -> BuffBotStatusReport {
-        BuffBotStatusReport {
-            motors: vec![],
-            sensors: vec![
-                Arc::new(RwLock::new(BuffBotSensorReport::new(2, vec![0.0; 9]))),
-                Arc::new(RwLock::new(BuffBotSensorReport::new(1, vec![0.0; 6]))),
-            ],
-            controllers: vec![],
-            chassis_inverse_kinematics: vec![vec![]],
-        }
-    }
-
-    pub fn load_robot() -> BuffBotStatusReport {
-        let byu = BuffYamlUtil::from_self();
+    pub fn from_byu(byu: BuffYamlUtil) -> BuffBotStatusReport {
         let motor_index = byu.load_string_list("motor_index");
         let motor_can_index = byu.load_integer_matrix("motor_can_index");
         let motor_gains = byu.load_float_matrix("motor_gains");
@@ -229,6 +216,16 @@ impl BuffBotStatusReport {
             controllers: controllers,
             chassis_inverse_kinematics: chassis_inverse_kinematics,
         }
+    }
+
+    pub fn new(robot_name: &str) -> BuffBotStatusReport {
+        let byu = BuffYamlUtil::new(robot_name);
+        BuffBotStatusReport::from_byu(byu)
+    }
+
+    pub fn from_self() -> BuffBotStatusReport {
+        let byu = BuffYamlUtil::from_self();
+        BuffBotStatusReport::from_byu(byu)
     }
 
     pub fn clone(&self) -> BuffBotStatusReport {

@@ -1,0 +1,7 @@
+project: 'cv_benchmarking'
+install:
+  - 'scripts/mobilenet-tf.py'
+  - 'scripts/luxonis_depth_colormap.py'
+  - 'scripts/luxonis_rgb_mobilenet.py'
+  - 'scripts/mobilenet-torch.py'
+  - 'scripts/luxonis_spatial_object_tracker.py'

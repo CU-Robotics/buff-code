@@ -288,7 +288,7 @@ def load_install_params():
 	project_root = os.getenv('PROJECT_ROOT')
 	source = os.path.join(project_root, 'buffpy')
 	target = os.path.join('/home', 'cu-robotics', 'buff-code')
-	ID = os.path.join(project_root, 'buffpy', 'data', 'robots', 'self')
+	ID = os.path.join(project_root, 'buffpy', 'data', 'robots', 'self.txt')
 
 	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
 		print("Workspace not built, run:\n\t \'buffpy --build <profile>\'")

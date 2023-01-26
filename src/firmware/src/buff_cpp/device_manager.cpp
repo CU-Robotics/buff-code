@@ -8,6 +8,7 @@ Device_Manager::Device_Manager(){
 
 void Device_Manager::initializer_report_handle() {
 	int chunk_offset;
+	int limit_offset;
 	int chunk_size = 4 * MOTOR_FEEDBACK_SIZE;
 	int controller_id = input_report.get(2);
 	int block_offset = CAN_MOTOR_BLOCK_SIZE * input_report.get(2);
@@ -37,9 +38,11 @@ void Device_Manager::initializer_report_handle() {
 				// Serial.printf("%f, ", gains[i]);
 			}
 
+			limit_offset = (4 * MOTOR_FEEDBACK_SIZE) + 3;
+
 			for (int i = 0; i < 2; i++) {
-				limits[i] = input_report.get_float((4 * i) + 15);
-				limits[i + 2] = input_report.get_float((4 * (i + 2)) + 15);
+				limits[i] = input_report.get_float((4 * i) + limit_offset);
+				limits[i + 2] = input_report.get_float((4 * (i + 2)) + limit_offset);
 			}
 			// Serial.printf("\nlimits: %f, %f, %f, %f\n", limits[0], limits[1], limits[2], limits[3]);
 
@@ -113,21 +116,22 @@ void Device_Manager::control_input_handle() {
 
 		case 2:
 			// set the gimbal input from ros control
-			controller_manager.input[3] = input_report.get_float(3);
-			controller_manager.input[4] = input_report.get_float(7);
-			controller_manager.input[5] = input_report.get_float(11);
+			controller_manager.input[3] = input_report.get_float(2);
+			controller_manager.input[4] = input_report.get_float(6);
+			controller_manager.input[5] = input_report.get_float(10);
+			// Serial.printf("Reference set to %f %f %f\n", controller_manager.input[3], controller_manager.input[4], controller_manager.input[5]);
 			
 			controller_switch = 2;												// block local gimbal input
 			break;
 
 		case 3:
 			// set the input from ros control
-			controller_manager.input[0] = input_report.get_float(3);
-			controller_manager.input[1] = input_report.get_float(7);
-			controller_manager.input[2] = input_report.get_float(11);
-			controller_manager.input[3] = input_report.get_float(15);
-			controller_manager.input[4] = input_report.get_float(19);
-			controller_manager.input[5] = input_report.get_float(23);
+			controller_manager.input[0] = input_report.get_float(2);
+			controller_manager.input[1] = input_report.get_float(6);
+			controller_manager.input[2] = input_report.get_float(10);
+			controller_manager.input[3] = input_report.get_float(14);
+			controller_manager.input[4] = input_report.get_float(18);
+			controller_manager.input[5] = input_report.get_float(22);
 			
 			controller_switch = 3;												// block local input
 			break;
@@ -213,8 +217,11 @@ void Device_Manager::hid_input_switch(){
 			output_report.put_int32(60, timer_info_us(0));
 			break;
 
+		case 0:
+			// rm_can_ux.zero_can();							// Shutdown motors if can disconnects
+			break;
+		
 		default:
-			rm_can_ux.zero_can();							// Shutdown motors if can disconnects
 			break;
 	}
 
@@ -263,7 +270,6 @@ void Device_Manager::read_sensors() {
 
 void Device_Manager::step_controllers(float dt) {
 	if (controller_switch >= 1) {
-		// only update the state input every 10ms
 		if (controller_switch == 1) {
 			controller_manager.set_input(receiver.data);
 		}

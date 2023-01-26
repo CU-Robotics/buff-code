@@ -43,7 +43,7 @@ void test_dr16_null_read() {
 	loop_for(1000, false);
 
 	int32_t byte_sum = 0;
-	for (int i = 2; i < 7; i++) {
+	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		byte_sum += receiver.data[i];
 	}
 
@@ -59,7 +59,8 @@ void test_dr16_active_read() {
 	loop_for(1000, false);
 
 	float byte_sum = 0;
-	for (int i = 2; i < 7; i++) {
+
+	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		byte_sum += receiver.data[i];
 	}
 

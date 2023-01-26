@@ -76,5 +76,4 @@ RUN apt update && \
 RUN echo "source /home/cu-robotics/buff-code/buffpy/buff.bash" >> ~/.bashrc
 
 CMD ["bash"]
-ENTRYPOINT ["/home/cu-robotics/buff-code/buffpy/scripts/buff_entrypoint.sh"]
 WORKDIR /home/cu-robotics/buff-code

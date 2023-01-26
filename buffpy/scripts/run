@@ -236,9 +236,14 @@ def main(args):
 		See wiki for input usage
 	"""
 	if len(args) < 2:
-		robot = 'penguin'
+		project_root = os.getenv("PROJECT_ROOT")
+		with open(os.path.join(project_root, 'buffpy', 'data', 'robots', 'self.txt'), 'r') as f:
+			robot = f.read()
 	else:
 		robot = args[1]
+		project_root = os.getenv("PROJECT_ROOT")
+		with open(os.path.join(project_root, 'buffpy', 'data', 'robots', 'self.txt'), 'w') as f:
+			f.write(robot)
 
 	# parse the input 
 	target_path, target_args, config = parse_target(robot)
