@@ -9,10 +9,9 @@
 
 data/*
 buffpy/lib/*
-buffpy/build/*
 documentation
-buffpy/models/*
 buffpy/bin/tycmd
+buffpy/data/models/*
 src/buff_rust/target
 buffpy/bin/firmware.hex
 buffpy/config/sensitive/*
