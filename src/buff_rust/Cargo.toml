@@ -19,11 +19,3 @@ env_logger = "0.9.0"
 [[bin]]
 name = "comms_node"
 path = "src/teensy_comms/comms_node.rs"
-
-[[bin]]
-name = "locomotion_node"
-path = "src/locomotion/locomotion_node.rs"
-
-[[bin]]
-name = "estimator_node"
-path = "src/localization/estimator_node.rs"
