@@ -49,7 +49,7 @@ void c620CAN::setPower(float power) {
   
   int16_t newPower = (int16_t)(power * 16384);
   // Serial.print("sending: ");
-  // Serial.println(newPower);
+  //Serial.println((power / 1000.0) * 16384 / 20.0);
 
   byte byteOne = highByte(newPower);
   byte byteTwo = lowByte(newPower);

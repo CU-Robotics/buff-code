@@ -20,6 +20,7 @@ class Shooter {
     C_Shooter17 *config;
 
     c620CAN feedMotor;
+    c620CAN feedMotor2;
 
     float calibrated = false;
 
