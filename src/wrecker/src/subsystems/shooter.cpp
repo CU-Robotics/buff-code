@@ -14,8 +14,8 @@ void Shooter::setup(C_Shooter17 *config, S_Robot *state) {
     this->config = config;
     this->state = state;
 
-    this->feedMotor.init(2, 2); // First number is the ID, second number is the CAN line
-    this->feedMotor2.init(1, 2);
+    this->feedMotor.init(3, 2); // First number is the ID, second number is the CAN line
+    //this->feedMotor2.init(1, 2);
 
     this->config->feedPID.K[0] = 0.0005;
 }
@@ -146,7 +146,7 @@ void Shooter::update(unsigned long deltaTime) {
         // }
         PID_Filter(&config->feedPID, &state->shooter17.feedPID, feedMotor.getRpm(), deltaTime);
         this->feedMotor.setPower(state->shooter17.feedPID.Y);
-        this->feedMotor2.setPower(-state->shooter17.feedPID.Y);
+        //this->feedMotor2.setPower(-state->shooter17.feedPID.Y);
 
     } else if (state->robot == 7 && state->driverInput.s2 != 2) {
         this->feedMotor.setPower(0.0);     

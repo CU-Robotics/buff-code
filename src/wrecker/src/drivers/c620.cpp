@@ -76,7 +76,7 @@ void c620CAN::updateMotor() {
     tempAngle = recMsg->buf[0];
     tempAngle = tempAngle << 8;
     tempAngle = tempAngle | recMsg->buf[1];
-    angle = map(tempAngle, 0, 8191, 0, 36000) / 100.0;
+    angle = tempAngle;//map(tempAngle, 0, 8191, 0, 36000) / 100.0;
 
     rpm = recMsg->buf[2];
     rpm = rpm << 8;

@@ -102,7 +102,7 @@ void setup() {
   robot_config.swerveChassis.FR.cornerID = 0;
   robot_config.swerveChassis.FR.steerMotorID = 10;
   robot_config.swerveChassis.FR.steerEncoderID = 1 + 1;
-  robot_config.swerveChassis.FR.driveMotorID = 4;
+  robot_config.swerveChassis.FR.driveMotorID = 7;//8;
   robot_config.swerveChassis.FR.absolute_offset = 45;
   int fr_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
   for (int i = 0; i < 9; i++)
@@ -112,7 +112,7 @@ void setup() {
   robot_config.swerveChassis.FL.cornerID = 1;
   robot_config.swerveChassis.FL.steerMotorID = 10;
   robot_config.swerveChassis.FL.steerEncoderID = 1 + 2;
-  robot_config.swerveChassis.FL.driveMotorID = 8;
+  robot_config.swerveChassis.FL.driveMotorID = 10;//4;
   robot_config.swerveChassis.FL.absolute_offset = -45;
   int fl_alignment[9] = {2, 42, 85, 125, 166, 206, 246, 288, 327};
   for (int i = 0; i < 9; i++)
@@ -122,7 +122,7 @@ void setup() {
   robot_config.swerveChassis.RL.cornerID = 2;
   robot_config.swerveChassis.RL.steerMotorID = 10;
   robot_config.swerveChassis.RL.steerEncoderID = 1 + 3;
-  robot_config.swerveChassis.RL.driveMotorID = 10;
+  robot_config.swerveChassis.RL.driveMotorID = 10;//2;
   robot_config.swerveChassis.RL.absolute_offset = -135;
   int bl_alignment[9] = {23, 63, 102, 142, 182, 222, 261, 301, 340};
   for (int i = 0; i < 9; i++)
@@ -145,8 +145,8 @@ void setup() {
 
   // Subsystem setup
   //gimbal.setup(&robot_config.gimbal, &robot_state);
-  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
-  shooter.setup(&robot_config.shooter17, &robot_state);
+  //swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  //shooter.setup(&robot_config.shooter17, &robot_state);
 
   //fw_1.init(28);
   //fw_2.init(29);
@@ -173,9 +173,11 @@ void loop() {
   //gimbal.update(deltaT);
   // Serial.println();
   // Serial.print(t0);
-  // Serial.print(", ");
+  Serial.print(", ");
+  
   //swerveChassis.update(deltaT); //m3508
   shooter.update(deltaT); //m2006
+  Serial.println(deltaT);
   //xDrive.update(deltaT);
   //Serial.println(robot_state);
 

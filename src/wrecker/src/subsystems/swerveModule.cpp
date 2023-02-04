@@ -150,43 +150,69 @@ void SwerveModule::update(float speed, float angle, float deltaTime)
     tmp_steerVel.Y = -1.0;
 
   // Drive Velocity PID
-  float jsi = ((state->driverInput.rightStickX - 364) / 1320.0);
-  // float stupid_ahh_angle = driveMotor.getAngle();
-  // float new_angle;
-  // stupid_ahh_angle > 168 ? new_angle = stupid_ahh_angle-160 : new_angle = stupid_ahh_angle+200;
+  float jsi1 = ((state->driverInput.rightStickX - 364) / 1320.0);
+  float jsi2 = ((state->driverInput.leftStickX - 364) / 1320.0);
 
-  // tmp_steerPos.R = jsi*290+50;
-  // config->steerPos.K[0] = 5;//30; // P = 5
-  // config->steerPos.K[2] = 10;//1800; // D = 10
-  // PID_Filter(&config->steerPos, &tmp_steerPos, new_angle, deltaTime);
+  if (config->cornerID == 2) {
+    float pitch_angle = driveMotor.getAngle();
 
-  //moduleState->driveVel.R = ((jsi * 2) - 1) * 800;//tmp_steerPos.Y;
-  if (state->driverInput.s2 == 1)
-    moduleState->driveVel.R = 9000;
-  PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
+    tmp_steerPos.R = jsi1*295+25;
 
-  Serial.print(jsi);
-  Serial.print(", ");
-  Serial.print(moduleState->driveVel.Y);
-  if (steerMotor.getAngle() != 0) {
-    Serial.print(", ");
-    Serial.print(steerMotor.getAngle());
+    config->steerPos.K[0] = 5;//30; // P = 5
+    config->steerPos.K[2] = 10;//1800; // D = 10
+    PID_Filter(&config->steerPos, &tmp_steerPos, pitch_angle, deltaTime);
+    moduleState->driveVel.R = tmp_steerPos.Y;
+    PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
+  } else {
+    // if (state->driverInput.s2 == 1) {
+    //   if (config->cornerID == 1)
+    //     moduleState->driveVel.R = -9000;
+    //   else
+    //     moduleState->driveVel.R = 9000;
+    // } else
+    //   moduleState->driveVel.R = 0;
+    // //moduleState->driveVel.R = ((jsi2 * 2) - 1) * 100;//tmp_steerPos.Y;
+    // PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
   }
 
-  Serial.println();
+  // if (state->driverInput.s2 == 1) {
+  //   if (config->cornerID == 1)
+  //     moduleState->driveVel.R = -9000;
+  //   else
+  //     moduleState->driveVel.R = 9000;
+  // } else
+  //   moduleState->driveVel.R = 0;
+  //moduleState->driveVel.R = ((jsi2 * 2) - 1) * 100;//tmp_steerPos.Y;
+  PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
+
+  if (driveMotor.getAngle() != 0 && config->cornerID == 2) {
+    Serial.print(jsi1);
+    Serial.print(", ");
+    Serial.print(driveMotor.getAngle());
+    Serial.print(", ");
+    Serial.print(jsi1*295+25);
+    Serial.print(", ");
+    Serial.print(steerMotor.getAngle());
+    Serial.println();
+  }
+
+  Serial.println(state->driverInput.s1);
+
+
 
   // 339    177-160
 
   // Set motor power
   if (calibrated)
   {
-    // steerMotor.setPower(tmp_steerVel.Y);
+    driveMotor.setPower(moduleState->driveVel.Y);
+    //driveMotor.updateMotor();
 
     // Serial.println("fortnite");
 
     // Only drive if sufficiently close to target angle
     // if (abs(inputAngle - steerAngle) < 20.0)
-    driveMotor.setPower(moduleState->driveVel.Y);
+    //driveMotor.setPower(moduleState->driveVel.Y);
     // driveMotor.updateMotor();
     // else
     // driveMotor.setPower(0.0);
