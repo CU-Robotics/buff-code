@@ -8,23 +8,24 @@
 ARG IMAGE_NAME
 FROM ${IMAGE_NAME}
 
+ENV PATH="/root/.cargo/bin:${PATH}"
 ENV PROJECT_ROOT=/home/cu-robotics/buff-code
 ENV DEBIAN_FRONTEND=noninteractive
 
 #
 # Add your code
 #
-
-COPY src /home/cu-robotics/buff-code/
-COPY buffpy /home/cu-robotics/buff-code/
+USER cu-robotics
+COPY src /home/cu-robotics/buff-code/src
+COPY buffpy /home/cu-robotics/buff-code/buffpy
 
 
 #
 # Build Buff-Code
 #
 
-# RUN /home/cu-robotics/buff-code/buffpy/buff.bash && \
-#	python3 /home/cu-robotics/buff-code/buffpy/scripts/buffpy --build deploy && \
+USER root
+#RUN /home/cu-robotics/buff-code/buffpy/scripts/buffpy -b rust-debug && \
 #	rm -rf /home/cu-robotics/buff-code/src
 
 
@@ -32,8 +33,7 @@ COPY buffpy /home/cu-robotics/buff-code/
 # Set up the environment
 # 
 
-
 CMD ["/bin/bash"]
-# ENTRYPOINT ["/home/cu-robotics/buff-code/buffpy/scripts/buff_entrypoint.sh"]
+ENTRYPOINT ["/home/cu-robotics/buff-code/buffpy/scripts/buff_entrypoint.sh"]
 WORKDIR /home/cu-robotics/buff-code
 

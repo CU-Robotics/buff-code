@@ -27,7 +27,7 @@ def hold_pose(hz, duration):
 	global control_active
 
 	gain =  5000
-	set_point = np.pi
+	set_point = np.pi / 3;
 	rate = rospy.Rate(hz) # 10hz
 
 	pub = rospy.Publisher('control_input', Float64MultiArray, queue_size=10)
