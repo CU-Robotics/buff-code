@@ -1,6 +1,11 @@
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
-
+use std::io::Write;
+use std::fs;
+use std::fs::OpenOptions;
+use std::path::Path;
+use std::env;
+use chrono::prelude::*;
 use crate::utilities::loaders::*;
 
 pub struct BuffBotSensorReport {
@@ -38,6 +43,14 @@ impl BuffBotSensorReport {
             self.timestamp.elapsed().as_micros(),
             self.data
         );
+    }
+
+    pub fn as_string_vec(&self) -> Vec<String> {
+        let mut result = vec![self.id.to_string(), self.timestamp.elapsed().as_micros().to_string()];
+        for i in &self.data {
+            result.push(i.to_string());
+        }
+        return result;
     }
 }
 
@@ -98,6 +111,14 @@ impl BuffBotCANMotorReport {
             self.timestamp.elapsed().as_micros(),
             self.feedback
         );
+    }
+
+    pub fn as_string_vec(&self) -> Vec<String> {
+        let mut result: Vec<String> = vec![self.index.to_string(), self.timestamp.elapsed().as_micros().to_string()];
+        for i in &self.feedback {
+            result.push(i.to_string());
+        }
+        return result;
     }
 }
 
@@ -339,5 +360,46 @@ impl BuffBotStatusReport {
         (0..self.motors.len()).for_each(|i| self.motors[i].read().unwrap().print());
         (0..self.sensors.len()).for_each(|i| self.sensors[i].read().unwrap().print());
         println!();
+    }
+
+    pub fn save(&self) {
+        let timestamp = Utc::now();
+        let report_filename = format!("report_{}_{}_{}_{}.csv", timestamp.year(), timestamp.month(), timestamp.day(), timestamp.hour());
+        let project_root = env::var("PROJECT_ROOT").expect("The environment variable PROJECT_ROOT is not set");
+        let robot_name = env::var("ROBOT_NAME").expect("The environment variable ROBOT_NAME is not set");
+        let report_dir = format!("{}/data/robot_status_reports/{}", project_root, robot_name);
+        let report_path = format!("{}/{}", report_dir, report_filename);
+
+        let report_is_new = !Path::new(&report_path).exists();
+        fs::create_dir_all(report_dir).expect("Could not create directory for robot status reports");
+        let mut sensor_report_file = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(&report_path)
+            .expect("Error trying to open or create report file");
+
+        let mut csv_header = String::new();
+        let mut csv_data = String::new();
+        if report_is_new { csv_header.push_str("timestamp,"); }
+        csv_data.push_str(&*format!("{},", timestamp));
+
+        for sensor_arc in &self.sensors {
+            let sensor = sensor_arc.read().unwrap();
+            let sensor_string_vec = sensor.as_string_vec();
+            csv_header.push_str(&*format!("sensor{},", sensor.id));
+            csv_header.push_str(&*",".repeat(sensor_string_vec.len()-1));
+            csv_data.push_str(&*(sensor_string_vec.join(",") + ","));
+        }
+        for motor_arc in &self.motors {
+            let motor = motor_arc.read().unwrap();
+            let motor_string_vec = motor.as_string_vec();
+            csv_header.push_str(&*format!("motor{},", motor.index));
+            csv_header.push_str(&*",".repeat(motor_string_vec.len()-1));
+            csv_data.push_str(&*(motor_string_vec.join(",") + ","));
+        }
+        if report_is_new {
+            write!(sensor_report_file, "{}\n", csv_header).expect("Could not write to report file");
+        }
+        write!(sensor_report_file, "{}\n", csv_data).expect("Could not write to report file");
     }
 }

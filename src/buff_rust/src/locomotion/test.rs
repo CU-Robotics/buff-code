@@ -117,4 +117,5 @@ pub mod dead_control_tests {
             "Failed gamma test"
         );
     }
+
 }
