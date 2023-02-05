@@ -71,6 +71,9 @@ void Device_Manager::initializer_report_handle() {
 
 			controller_switch = 1;												// enable local control
 			break;
+
+		default:
+			break;
 	}
 }
 
@@ -279,10 +282,11 @@ void Device_Manager::step_controllers(float dt) {
 			controller_manager.input[2] = receiver.data[2];
 		}
 		
-		controller_manager.step_motors(rm_can_ux.motor_index, 1E-5);
+		controller_manager.step_motors(rm_can_ux.motor_index);
 	}
 
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
+		// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);
 		rm_can_ux.set_output(i, controller_manager.output[i]);
 	}
 }

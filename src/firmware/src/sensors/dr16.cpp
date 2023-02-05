@@ -118,10 +118,10 @@ void DR16::generate_control_from_joysticks() {
 	data[1] = l_stick_y * JOYSTICK_Y_SENSITIVITY;
 
 	if ((tmp[5] & 0x30) >> 4 == 1.0) {						// angular velocity (theta)
-		data[2] = -4000.0;
+		data[2] = -1000.0;
 	} 
 	else if ((tmp[5] & 0x30) >> 4 == 2.0) {
-		data[2] = 4000.0;
+		data[2] = 1000.0;
 	} 
 	else {
 		data[2] = 0.0;
@@ -133,10 +133,10 @@ void DR16::generate_control_from_joysticks() {
 	data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
 
 	if ((tmp[5] & 0xC0) >> 6 == 1.0) {						// feeder speed
-		data[5] = -4000.0;
+		data[5] = -900.0;
 	} 
 	else if ((tmp[5] & 0xC0) >> 6 == 2.0) {
-		data[5] = 4000.0;
+		data[5] = 900.0;
 	} 
 	else {
 		data[5] = 0.0;

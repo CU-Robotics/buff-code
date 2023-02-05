@@ -13,7 +13,6 @@ ENV UBUNTU_VERSION=20.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
 ENV PROJECT_ROOT=/home/cu-robotics/buff-code
-ENV PATH=/home/cu-robotics/.local/bin:${PATH}
 
 #
 # Create a new user
@@ -25,14 +24,14 @@ RUN useradd -ms /bin/bash cu-robotics
 # Install Dependencies
 #
 
-# USER cu-robotics
+USER cu-robotics
 COPY buffpy/ /home/cu-robotics/buff-code/buffpy
 
 #
 # Install Buffpy
 #
 
-# USER root
+USER root
 RUN apt update && \
 	xargs apt install -y --no-install-recommends <${PROJECT_ROOT}/buffpy/data/install/dependencies.txt && \
 	curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
@@ -60,6 +59,7 @@ RUN apt update && apt install -y python3-rosdep && cd /opt/ros/${ROS_DISTRO} && 
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
 
+
 # 
 # Clean apt
 #
@@ -76,4 +76,5 @@ RUN apt update && \
 RUN echo "source /home/cu-robotics/buff-code/buffpy/buff.bash" >> ~/.bashrc
 
 CMD ["bash"]
+ENTRYPOINT ["/home/cu-robotics/buff-code/buffpy/scripts/buff_entrypoint.sh"]
 WORKDIR /home/cu-robotics/buff-code

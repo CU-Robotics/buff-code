@@ -310,9 +310,9 @@ pub mod comms_tests {
         while t.elapsed().as_secs() < 3 {}
         // set up control output for motor 4, 5 & 6
         writer.output.puts(0, vec![2, 2]);
-        writer.output.put_float(3, 500.0);
-        writer.output.put_float(7, 500.0);
-        writer.output.put_float(11, 500.0);
+        writer.output.put_float(3, 1.0);
+        writer.output.put_float(7, 1.0);
+        writer.output.put_float(11, 1.0);
         writer.write();
         watch_for_packet(reader, 2, 5);
 

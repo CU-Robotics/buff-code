@@ -9,7 +9,7 @@
 RM_CAN_Interface rm_can_ux;
 
 int8_t num_motors = 5; 
-byte input_motor_index[16][3] = {{2,0,1}, {2,0,5}, {2,0,3}, {2,2,6},
+byte input_motor_index[16][3] = {{2,1,5}, {1,0,5}, {2,0,2}, {2,2,6},
 						{2,0,6}, {0,0,0}, {0,0,0}, {0,0,0},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}};
@@ -162,7 +162,7 @@ void test_set_output() {
 	*/
 	Serial.println("\nTesting set_output:...");
 
-	float value = 0.1;	
+	float value = 0.00;	
 
 	for (int i = 0; i < rm_can_ux.num_motors; i++) {
 		timer_set(0);
@@ -214,7 +214,6 @@ void test_set_output() {
 		timer_wait_us(1, 1000);
 	}
 	
-
 	rm_can_ux.zero_can();
 	rm_can_ux.write_can();
 }
