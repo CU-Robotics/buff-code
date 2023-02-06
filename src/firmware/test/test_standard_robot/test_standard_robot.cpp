@@ -29,14 +29,14 @@ void setup() {
 
 void loop() {
   float deltaTime = micros() - programTime;
+  programTime = micros();
 
-  // Read ref, reciever
+  /* Read ref, reciever */
   globalRobotState->receiver.read();
   globalRobotState->receiver.print_control_data();
 
-  // Generate control output
+  /* Generate control output */
   //gimbal.loop(deltaTime);
 
-  while (micros() - programTime < loopFrequency) continue;
-  programTime = micros();
+  while (micros() - deltaTime < loopFrequency) continue;
 }
