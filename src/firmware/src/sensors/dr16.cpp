@@ -143,6 +143,31 @@ void DR16::generate_control_from_joysticks() {
 	}
 }
 
+void DR16::generate_control() {
+	byte tmp[18];
+	serial->readBytes(tmp, 18);
+
+	// debugging (bitwise view)
+	// print_receiver_input(tmp);
+
+	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -1, 1);
+	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -1, 1);
+
+	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -1, 1);
+	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -1, 1);
+
+	// Serial.println("\n\t===== Normalized Sticks");
+	// Serial.printf("\t%f\t%f\t%f\t%f\n", 
+	// 	r_stick_x, r_stick_y, l_stick_x, l_stick_y);
+
+	data[0] = l_stick_x;
+	data[1] = l_stick_y;
+	data[2] = r_stick_x;
+	data[3] = r_stick_y;
+	data[5] = (tmp[5] & 0x30) >> 4;				// switch 1
+	data[6] = (tmp[5] & 0xC0) >> 6;				// switch 2
+}
+
 bool DR16::read()
 {
 
