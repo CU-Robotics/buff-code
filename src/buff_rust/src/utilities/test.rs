@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
-use crate::utilities::{buffers::*, loaders::*};
+use crate::utilities::{buffers::*, loaders::*, data_structures::*};
 use rand::Rng;
+use std::env;
 
 #[cfg(test)]
 pub mod byu_tests {
@@ -177,5 +178,16 @@ pub mod buffer_tests {
             3.1415927410125732,
             buffer.get_float(2)
         );
+    }
+}
+
+pub mod report_tests {
+    use super::*;
+
+    #[test]
+    pub fn status_report() {
+        let report = BuffBotStatusReport::from_byu(BuffYamlUtil::new("penguin"));
+        env::set_var("ROBOT_NAME", "penguin");
+        report.save();
     }
 }
