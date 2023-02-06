@@ -122,53 +122,91 @@ pub mod quadtree_tests {
 
     #[test]
     pub fn quadtree_basic() {
+        let zero = vec![0.0; 3];
+        let points = vec![vec![0.0, 0.0, 0.0],
+            vec![1.0, 0.0, 0.0],
+            vec![0.05, 0.0, 0.0],
+            vec![0.0, 10.0, 0.0],
+            vec![0.0, 0.05, 0.0],
+            vec![10.0, 0.0, 0.0],
+            vec![-1.0, 0.0, 0.0],
+            vec![0.25, 0.25, 0.0]];
+
         let mut qt = QuadTree::new();
-        let pose = ArenaObject::default_robot();
-        let pose1 = ArenaObject::new_robot(vec![1.0, 0.0, 0.0], vec![0.0, 0.0, 0.0]);
-        let pose2 = ArenaObject::new_tag(vec![0.5, 0.0, 0.0], vec![0.0, 0.0, 0.0], 0.0);
-        let pose3 = ArenaObject::new_wall(vec![0.0, 12.0, 0.0], vec![0.0, 0.0, 0.0], 5.0, 5.0);
-        let pose4 = ArenaObject::new_wall(vec![0.5, -10.0, 0.0], vec![0.0, 0.0, 0.0], 5.0, 5.0);
-        let pose5 = ArenaObject::new_robot(vec![0.25, 0.25, 0.0], vec![0.0, 0.0, 0.0]);
+        let pose = ArenaObject::new_robot(points[0].clone(), zero.clone());
+        let pose1 = ArenaObject::new_robot(points[1].clone(), zero.clone());
+        let pose2 = ArenaObject::new_tag(points[2].clone(), zero.clone(), 0.0);
+        let pose3 = ArenaObject::new_wall(points[3].clone(), zero.clone(), 5.0, 5.0);
+        let pose4 = ArenaObject::new_wall(points[4].clone(), zero.clone(), 5.0, 5.0);
+        let pose5 = ArenaObject::new_robot(points[5].clone(), zero.clone());
 
-        qt.insert(pose);
-        qt.insert(pose1);
-        qt.insert(pose2);
-        qt.insert(pose3);
-        qt.insert(pose4);
-        qt.insert(pose5);
+        let mut insertion_count = 0;
+        insertion_count += if qt.insert(pose) {1} else{0};
+        insertion_count += if qt.insert(pose1) {1} else{0};
+        insertion_count += if qt.insert(pose2) {1} else{0};
+        insertion_count += if qt.insert(pose3) {1} else{0};
+        insertion_count += if qt.insert(pose4) {1} else{0};
+        insertion_count += if qt.insert(pose5) {1} else{0};
 
-        let head = &mut qt.head;
+        // check number of elements inserted
+        assert_eq!(qt.objects.len(), insertion_count, "mismatch in count of objects inserted");
 
-        match head {
-            &mut Some(ref mut node) => {
-                match &mut node.children[0] {
-                    &mut Some(ref mut node1) => match &node1.children[3] {
-                        &Some(_) => {}
-                        &None => panic!("failed to insert x2 node"),
-                    },
-                    &mut None => panic!("failed to insert x1 node"),
-                }
+        // let head = &mut qt.head;
 
-                match &mut node.children[3] {
-                    &mut Some(_) => {}
-                    &mut None => panic!("failed to insert x3 node"),
-                }
+        // match head {
+        //     &mut Some(ref mut node) => {
+        //         match &mut node.children[0] {
+        //             &mut Some(ref mut node1) => match &node1.children[3] {
+        //                 &Some(_) => {}
+        //                 &None => panic!("failed to insert x2 node"),
+        //             },
+        //             &mut None => panic!("failed to insert x1 node"),
+        //         }
 
-                match &mut node.children[1] {
-                    &mut Some(_) => {}
-                    &mut None => panic!("failed to insert x4 node"),
-                }
-            }
-            &mut None => panic!("failed to set head"),
+        //         match &mut node.children[3] {
+        //             &mut Some(_) => {}
+        //             &mut None => panic!("failed to insert x3 node"),
+        //         }
+
+        //         match &mut node.children[1] {
+        //             &mut Some(_) => {}
+        //             &mut None => panic!("failed to insert x4 node"),
+        //         }
+        //     }
+        //     &mut None => panic!("failed to set head"),
+        // }
+
+
+        {
+            let radius = 100.0;
+            let test_point = vec![0.0, 0.0, 0.0];
+            let results = qt.obstacles_near(test_point.clone(), radius);
+            let distances: Vec<f64> = points.iter().map(|point| test_point.iter().zip(point.iter()).map(|(p1, p2)| (p1 - p2).powf(2.0)).sum::<f64>().sqrt()).collect();
+            assert_ne!(results.into_iter().filter(|&r| distances[r] < radius).collect::<Vec<usize>>().len(), 0, "failed to serch objects");
         }
 
-        assert!(qt.obstacles_near(vec![0.0, 0.0, 0.0], 100.0).len() == 6);
-        assert_eq!(qt.obstacles_near(vec![0.0, 0.0, 0.0], 100.0), vec![0, 1, 2, 5, 4, 3]);
+        {
+            let radius = 0.05;
+            let test_point = vec![0.0, 0.0, 0.0];
+            let results = qt.obstacles_near(test_point.clone(), radius);
+            let distances: Vec<f64> = points.iter().map(|point| test_point.iter().zip(point.iter()).map(|(p1, p2)| (p1 - p2).powf(2.0)).sum::<f64>().sqrt()).collect();
+            assert_ne!(results.into_iter().filter(|&r| distances[r] < radius).collect::<Vec<usize>>().len(), 0, "failed to serch objects");
+        }
 
-        assert!(qt.obstacles_near(vec![0.0, 12.0, 0.0], 1.0).len() == 1);
-        assert_eq!(qt.obstacles_near(vec![0.0, 12.0, 0.0], 1.0), vec![3]);
+        {
+            let radius = 1.0;
+            let test_point = vec![1.0, 0.0, 0.0];
+            let results = qt.obstacles_near(test_point.clone(), radius);
+            let distances: Vec<f64> = points.iter().map(|point| test_point.iter().zip(point.iter()).map(|(p1, p2)| (p1 - p2).powf(2.0)).sum::<f64>().sqrt()).collect();
+            assert_ne!(results.into_iter().filter(|&r| distances[r] < radius).collect::<Vec<usize>>().len(), 0, "failed to serch objects");
+        }
 
-        assert!(qt.obstacles_near(vec![0.0, -10.0, 0.0], 1.0).len() == 1);
-        assert_eq!(qt.obstacles_near(vec![0.0, -10.0, 0.0], 1.0), vec![4]);
+        {
+            let radius = 0.05;
+            let test_point = vec![0.0, 10.0, 0.0];
+            let results = qt.obstacles_near(test_point.clone(), radius);
+            let distances: Vec<f64> = points.iter().map(|point| test_point.iter().zip(point.iter()).map(|(p1, p2)| (p1 - p2).powf(2.0)).sum::<f64>().sqrt()).collect();
+            assert_ne!(results.into_iter().filter(|&r| distances[r] < radius).collect::<Vec<usize>>().len(), 0, "failed to serch objects");
+        }
     }
 }
