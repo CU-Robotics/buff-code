@@ -1,9 +1,15 @@
 #include "global_robot_state.h"
+
 #include "sensors/dr16.h"
+#include "sensors/revEnc.h"
+
 #include "gimbal.h"
 
 GlobalRobotState* globalRobotState;
+
 DR16 receiver;
+RevEnc testRevEncoder(1);
+
 Gimbal gimbal(globalRobotState);
 
 int loopFrequency = 1000; // in microseconds
@@ -34,6 +40,10 @@ void loop() {
   /* Read ref, reciever */
   globalRobotState->receiver.read();
   globalRobotState->receiver.print_control_data();
+
+  Serial.print(testRevEncoder.getAngle());
+  Serial.print(", ");
+  Serial.println(testRevEncoder.getAngleRaw());
 
   /* Generate control output */
   //gimbal.loop(deltaTime);
