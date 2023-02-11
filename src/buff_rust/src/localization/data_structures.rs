@@ -1,3 +1,10 @@
+pub fn euclidean_distance(p1: &Vec<f64>, p2: &Vec<f64>) -> f64 {
+    p1.iter()
+        .zip(p2.iter())
+        .map(|(p1, p2)| (p2 - p1).powf(2.0))
+        .sum::<f64>()
+}
+
 #[derive(Clone)]
 pub struct RobotPose {
     pub position: Vec<f64>,

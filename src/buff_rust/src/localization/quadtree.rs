@@ -1,6 +1,8 @@
 use crate::localization::data_structures::*;
 use image;
 
+const NUM_CHILDREN: usize = 5;
+
 #[derive(Clone)]
 pub struct QuadTreeNode {
     pub index: usize,
@@ -18,7 +20,7 @@ impl QuadTreeNode {
         QuadTreeNode {
             index: index,
             position: position,
-            children: vec![None, None, None, None],
+            children: vec![None; NUM_CHILDREN],
         }
     }
 
@@ -30,13 +32,7 @@ impl QuadTreeNode {
     }
 
     pub fn angle_to_direction(&self, angle: f64) -> usize {
-        match angle {
-            angle if angle >= std::f64::consts::PI / 2.0 => 3,
-            angle if angle >= 0.0 => 0,
-            angle if angle >= -std::f64::consts::PI / 2.0 => 1,
-            angle if angle < -std::f64::consts::PI / 2.0 => 2,
-            _ => usize::MAX,
-        }
+        (angle / (2.0 * std::f64::consts::PI / NUM_CHILDREN as f64)) as usize
     }
 
     pub fn distance_to(&self, point: &Vec<f64>) -> f64 {
@@ -60,7 +56,7 @@ impl QuadTreeNode {
         if y_err == 0.0 {
             (x_err / magnitude).acos()
         } else {
-            (x_err / magnitude).acos() * y_err / y_err.abs() // if y is negative use the angles shadow
+            (2.0 * std::f64::consts::PI) - (x_err / magnitude).acos() // subtract from 2pi
         }
     }
 
@@ -103,7 +99,7 @@ impl QuadTreeNode {
     pub fn insert(&mut self, mut node: Box<QuadTreeNode>) -> bool {
         // println!("Inserting {}", self.index);
 
-        (0..4).for_each(|i| {
+        (0..NUM_CHILDREN).for_each(|i| {
             if node.has_child(i) {
                 let child = node.children[i].as_ref().unwrap().clone();
                 self.insert(child);
@@ -137,7 +133,7 @@ impl QuadTreeNode {
     }
 
     pub fn get_ordered_children(&self) -> Vec<usize> {
-        let mut ordered_children = (0..self.children.len())
+        let mut ordered_children = (0..NUM_CHILDREN)
             .filter(|index| match &self.children[*index] {
                 Some(_) => true,
                 None => false,
@@ -153,12 +149,14 @@ impl QuadTreeNode {
     }
 
     pub fn get_ordered_children_wrt(&self, point: &Vec<f64>) -> Vec<(f64, usize)> {
-        let mut ordered_children = (0..self.children.len())
+        let mut ordered_children = (0..NUM_CHILDREN)
             .map(|index| {
                 if self.has_child(index) {
-                    (self.children[index].as_ref().unwrap().distance_to(point), index)
-                }
-                else {
+                    (
+                        self.children[index].as_ref().unwrap().distance_to(point),
+                        index,
+                    )
+                } else {
                     (-1.0, index)
                 }
             })
@@ -172,8 +170,7 @@ impl QuadTreeNode {
     pub fn search_child(&self, point: &Vec<f64>, radius: &f64, index: usize) -> Vec<usize> {
         if self.has_child(index) {
             self.children[index].as_ref().unwrap().search(point, radius)
-        }
-        else {
+        } else {
             vec![]
         }
     }
@@ -188,7 +185,6 @@ impl QuadTreeNode {
             self.get_ordered_children_wrt(point)
                 .into_iter()
                 .for_each(|(dist, index)| {
-
                     if dist >= 0.0 {
                         // 4 symmetric diretions two point toward, two point away
                         // remember the children are ordered here
@@ -224,7 +220,7 @@ impl QuadTreeNode {
 
     pub fn print(&self) {
         println!("Node {} :\t{:?}", self.index, self.get_child_indices());
-        (0..4).for_each(|i| {
+        (0..NUM_CHILDREN).for_each(|i| {
             if self.has_child(i) {
                 self.children[i].as_ref().unwrap().print();
             }
@@ -330,17 +326,49 @@ impl QuadTree {
         }
     }
 
+    pub fn obstacles_on_line(&self, p1: Vec<f64>, p2: Vec<f64>) -> Vec<usize> {
+        let radius = 0.1;
+        let max_points = euclidean_distance(&p1, &p2) / (2.0 * radius);
+        let search_points = (0..max_points as i8)
+            .map(|i| {
+                p1.iter()
+                    .zip(p2.iter())
+                    .map(|(p1, p2)| (i as f64 / max_points * (p2 - p1)) + p1)
+                    .collect::<Vec<f64>>()
+            })
+            .collect::<Vec<Vec<f64>>>();
+
+        let mut results = vec![];
+
+        if self.has_head() {
+            search_points.iter().for_each(|p1| {
+                results.extend(self.head.as_ref().unwrap().search(&p1, &radius));
+            });
+        }
+
+        results
+    }
+
     pub fn get_robots_near(&self, point: Vec<f64>) -> Vec<RobotPose> {
         let mut results = vec![];
         // maybe change the search radius
-        self.obstacles_near(point, 3.0).iter().for_each(|index| {
-            match &self.objects[*index] {
+        self.obstacles_near(point, 3.0)
+            .iter()
+            .for_each(|index| match &self.objects[*index] {
                 ArenaObject::Robot(robot) => results.push(robot.clone()),
-                _ => {},
-            }
-        });
+                _ => {}
+            });
 
         results
+    }
+
+    pub fn new_tag_detection(&self) {
+        // use the tag location relative to the
+        // robot to assert the robots position
+
+        // look up the detected tag
+        // re-insert robot (self, 0) at tag position + offest from detection
+        // do we also need to carry over detections?
     }
 
     pub fn new_target_detection(&self, depth: f64, pixel_coords: Vec<i16>, camera_heading: f64) {
