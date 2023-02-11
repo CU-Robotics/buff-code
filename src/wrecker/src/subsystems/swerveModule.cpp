@@ -175,13 +175,13 @@ void SwerveModule::update(float speed, float angle, float deltaTime)
     // PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
   }
 
-  // if (state->driverInput.s2 == 1) {
-  //   if (config->cornerID == 1)
-  //     moduleState->driveVel.R = -9000;
-  //   else
-  //     moduleState->driveVel.R = 9000;
-  // } else
-  //   moduleState->driveVel.R = 0;
+  if (state->driverInput.s2 == 1) {
+    if (config->cornerID == 1)
+      moduleState->driveVel.R = -9000;
+    else
+      moduleState->driveVel.R = 9000;
+  } else
+    moduleState->driveVel.R = 0;
   //moduleState->driveVel.R = ((jsi2 * 2) - 1) * 100;//tmp_steerPos.Y;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
@@ -198,25 +198,8 @@ void SwerveModule::update(float speed, float angle, float deltaTime)
 
   Serial.println(state->driverInput.s1);
 
-
-
-  // 339    177-160
-
   // Set motor power
-  if (calibrated)
-  {
-    driveMotor.setPower(moduleState->driveVel.Y);
-    //driveMotor.updateMotor();
-
-    // Serial.println("fortnite");
-
-    // Only drive if sufficiently close to target angle
-    // if (abs(inputAngle - steerAngle) < 20.0)
-    //driveMotor.setPower(moduleState->driveVel.Y);
-    // driveMotor.updateMotor();
-    // else
-    // driveMotor.setPower(0.0);
-  }
+  driveMotor.setPower(moduleState->driveVel.Y);
 }
 
 int SwerveModule::findCalibrationMatch(int currValue, int *alignmentTable, int tableSize)

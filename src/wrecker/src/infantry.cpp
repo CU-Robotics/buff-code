@@ -144,9 +144,9 @@ void setup() {
   reciever.init(&robot_state.driverInput);
 
   // Subsystem setup
-  //gimbal.setup(&robot_config.gimbal, &robot_state);
-  //swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
-  //shooter.setup(&robot_config.shooter17, &robot_state);
+  gimbal.setup(&robot_config.gimbal, &robot_state);
+  swerveChassis.setup(&robot_config.swerveChassis, &robot_state);
+  shooter.setup(&robot_config.shooter17, &robot_state);
 
   //fw_1.init(28);
   //fw_2.init(29);
@@ -175,9 +175,9 @@ void loop() {
   // Serial.print(t0);
   Serial.print(", ");
   
-  //swerveChassis.update(deltaT); //m3508
+  swerveChassis.update(deltaT); //m3508
   shooter.update(deltaT); //m2006
-  Serial.println(deltaT);
+  //Serial.println(deltaT);
   //xDrive.update(deltaT);
   //Serial.println(robot_state);
 
