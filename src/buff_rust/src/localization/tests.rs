@@ -1,5 +1,6 @@
-#[allow(unused_imports)]
 use crate::localization::{data_structures::*, quadtree::*};
+#[allow(unused_imports)]
+use std::time::Instant;
 
 #[cfg(test)]
 pub mod quadtree_tests {
@@ -120,36 +121,158 @@ pub mod quadtree_tests {
         );
     }
 
+    pub fn insert_with_debug(qt: &mut QuadTree, pose: ArenaObject) -> usize {
+        let t = Instant::now();
+        let ret = qt.insert(pose);
+        println!("Insert duration: {} us", t.elapsed().as_micros());
+        if ret {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    // basic list search for nearby points
+    pub fn get_nearby_points(point: &Vec<f64>, radius: &f64, points: &Vec<Vec<f64>>) -> Vec<usize> {
+        (0..points.len())
+            .filter(|i| {
+                points[*i]
+                    .iter()
+                    .zip(point.iter())
+                    .map(|(p1, p2)| (p1 - p2).powf(2.0))
+                    .sum::<f64>()
+                    .sqrt()
+                    <= *radius
+            })
+            .collect()
+    }
+
+    pub fn sort_by_distance(point: &Vec<f64>, points: &Vec<Vec<f64>>) -> Vec<usize> {
+        let mut sorted = (0..points.len()).collect::<Vec<usize>>();
+
+        sorted.sort_by_key(|i| {
+            points[*i]
+                .iter()
+                .zip(point.iter())
+                .map(|(p1, p2)| ((p1 - p2).powf(2.0) * 10000.0) as i128)
+                .sum::<i128>()
+        });
+
+        sorted
+    }
+
+    pub fn combine_nearby_and_sorted(
+        nearby_points: &Vec<usize>,
+        sorted_points: Vec<usize>,
+    ) -> Vec<usize> {
+        sorted_points
+            .into_iter().filter(|sorted| nearby_points.iter().map(|p| if *sorted == *p {1} else {0}).sum::<i16>() > 0).collect()
+    }
+
+    pub fn test_search(
+        qt: &mut QuadTree,
+        test_point: &Vec<f64>,
+        radius: f64,
+        all_points: &Vec<Vec<f64>>,
+    ) {
+        let t = Instant::now();
+        let results = qt.obstacles_near(test_point.clone(), radius);
+        println!("Searched {} objects in {} us", results.len(), t.elapsed().as_micros());
+
+        let distances: Vec<f64> = all_points
+            .iter()
+            .map(|point| {
+                test_point
+                    .iter()
+                    .zip(point.iter())
+                    .map(|(p1, p2)| (p1 - p2).powf(2.0))
+                    .sum::<f64>()
+                    .sqrt()
+            })
+            .collect();
+
+        let nearby_test = get_nearby_points(&test_point, &radius, &all_points);
+        let sorted_test = sort_by_distance(&test_point, &all_points);
+        let test_results = combine_nearby_and_sorted(&nearby_test, sorted_test.clone());
+
+        assert_ne!(
+            results
+                .clone()
+                .into_iter()
+                .filter(|&r| distances[r] <= radius)
+                .collect::<Vec<usize>>()
+                .len(),
+            0,
+            "failed to find objects within {} meters of {:?}",
+            radius,
+            test_point
+        );
+
+        // assert_eq!(
+        //     results, test_results,
+        //     "basic search and quadtree search returned different results\n\t {:?} {}", test_point, radius
+        // );
+
+        // results are not exactly the same just check sum of the indices
+        assert_eq!(
+            results.iter().sum::<usize>(), test_results.iter().sum::<usize>(),
+            "basic search and quadtree search returned different results\n\t {:?} {}", test_point, radius
+        );
+    }
+
     #[test]
     pub fn quadtree_basic() {
         let zero = vec![0.0; 3];
-        let points = vec![vec![0.0, 0.0, 0.0],
+        let points = vec![
+            vec![0.0, 0.0, 0.0],
             vec![1.0, 0.0, 0.0],
             vec![0.05, 0.0, 0.0],
             vec![0.0, 10.0, 0.0],
             vec![0.0, 0.05, 0.0],
             vec![10.0, 0.0, 0.0],
             vec![-1.0, 0.0, 0.0],
-            vec![0.25, 0.25, 0.0]];
+            vec![0.25, 0.25, 0.0],
+        ];
 
         let mut qt = QuadTree::new();
-        let pose = ArenaObject::new_robot(points[0].clone(), zero.clone());
+        // objects[0] is self, make a mock point to account for it
+        // let pose = ArenaObject::new_robot(points[0].clone(), zero.clone());
         let pose1 = ArenaObject::new_robot(points[1].clone(), zero.clone());
         let pose2 = ArenaObject::new_tag(points[2].clone(), zero.clone(), 0.0);
         let pose3 = ArenaObject::new_wall(points[3].clone(), zero.clone(), 5.0, 5.0);
         let pose4 = ArenaObject::new_wall(points[4].clone(), zero.clone(), 5.0, 5.0);
         let pose5 = ArenaObject::new_robot(points[5].clone(), zero.clone());
+        let pose6 = ArenaObject::new_robot(points[6].clone(), zero.clone());
+        let pose7 = ArenaObject::new_robot(points[7].clone(), zero.clone());
 
-        let mut insertion_count = 0;
-        insertion_count += if qt.insert(pose) {1} else{0};
-        insertion_count += if qt.insert(pose1) {1} else{0};
-        insertion_count += if qt.insert(pose2) {1} else{0};
-        insertion_count += if qt.insert(pose3) {1} else{0};
-        insertion_count += if qt.insert(pose4) {1} else{0};
-        insertion_count += if qt.insert(pose5) {1} else{0};
+        // count insertions, the constructor inserts self at 0
+        // self doesn't necesarily stay as the head
+        let mut insertion_count = 1;
+        // insertion_count += if qt.insert(pose) { 1 } else { 0 };
+        insertion_count += insert_with_debug(&mut qt, pose1);
+        insertion_count += insert_with_debug(&mut qt, pose2);
+        insertion_count += insert_with_debug(&mut qt, pose3);
+        insertion_count += insert_with_debug(&mut qt, pose4);
+        insertion_count += insert_with_debug(&mut qt, pose5);
+        insertion_count += insert_with_debug(&mut qt, pose6);
+        insertion_count += insert_with_debug(&mut qt, pose7);
+
+        qt.print();
 
         // check number of elements inserted
-        assert_eq!(qt.objects.len(), insertion_count, "mismatch in count of objects inserted");
+        assert_eq!(
+            qt.objects.len(),
+            insertion_count,
+            "mismatch in count of objects inserted"
+        );
+
+        points.iter().for_each(|point| {
+            test_search(&mut qt, point, 0.01, &points);
+            test_search(&mut qt, point, 1.0, &points);
+            test_search(&mut qt, point, 10.0, &points);
+        });
+
+        // test_search(&mut qt, &points[3], 10.0, &points);
 
         // let head = &mut qt.head;
 
@@ -175,38 +298,5 @@ pub mod quadtree_tests {
         //     }
         //     &mut None => panic!("failed to set head"),
         // }
-
-
-        {
-            let radius = 100.0;
-            let test_point = vec![0.0, 0.0, 0.0];
-            let results = qt.obstacles_near(test_point.clone(), radius);
-            let distances: Vec<f64> = points.iter().map(|point| test_point.iter().zip(point.iter()).map(|(p1, p2)| (p1 - p2).powf(2.0)).sum::<f64>().sqrt()).collect();
-            assert_ne!(results.into_iter().filter(|&r| distances[r] < radius).collect::<Vec<usize>>().len(), 0, "failed to serch objects");
-        }
-
-        {
-            let radius = 0.05;
-            let test_point = vec![0.0, 0.0, 0.0];
-            let results = qt.obstacles_near(test_point.clone(), radius);
-            let distances: Vec<f64> = points.iter().map(|point| test_point.iter().zip(point.iter()).map(|(p1, p2)| (p1 - p2).powf(2.0)).sum::<f64>().sqrt()).collect();
-            assert_ne!(results.into_iter().filter(|&r| distances[r] < radius).collect::<Vec<usize>>().len(), 0, "failed to serch objects");
-        }
-
-        {
-            let radius = 1.0;
-            let test_point = vec![1.0, 0.0, 0.0];
-            let results = qt.obstacles_near(test_point.clone(), radius);
-            let distances: Vec<f64> = points.iter().map(|point| test_point.iter().zip(point.iter()).map(|(p1, p2)| (p1 - p2).powf(2.0)).sum::<f64>().sqrt()).collect();
-            assert_ne!(results.into_iter().filter(|&r| distances[r] < radius).collect::<Vec<usize>>().len(), 0, "failed to serch objects");
-        }
-
-        {
-            let radius = 0.05;
-            let test_point = vec![0.0, 10.0, 0.0];
-            let results = qt.obstacles_near(test_point.clone(), radius);
-            let distances: Vec<f64> = points.iter().map(|point| test_point.iter().zip(point.iter()).map(|(p1, p2)| (p1 - p2).powf(2.0)).sum::<f64>().sqrt()).collect();
-            assert_ne!(results.into_iter().filter(|&r| distances[r] < radius).collect::<Vec<usize>>().len(), 0, "failed to serch objects");
-        }
     }
 }

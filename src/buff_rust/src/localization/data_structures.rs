@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct RobotPose {
     pub position: Vec<f64>,
     pub rotation: Vec<f64>,
@@ -21,6 +22,16 @@ pub enum ArenaObject {
     Robot(RobotPose),
     ArucoTag(ArucoTag),
     Obstacle(ArenaObstacle),
+}
+
+impl RobotPose {
+    pub fn detection_match(&self, point: Vec<f64>) -> f64 {
+        point
+            .iter()
+            .zip(self.position.iter().zip(self.velocity.iter()))
+            .map(|(p1, (p2, v))| (p1 - p2) - v)
+            .sum::<f64>()
+    }
 }
 
 impl ArenaObject {
@@ -130,6 +141,16 @@ impl ArenaObject {
             }
             ArenaObject::ArucoTag(_) => {}
             ArenaObject::Obstacle(_) => {}
+        }
+    }
+
+    pub fn print(&self) {
+        match self {
+            ArenaObject::Robot(robot_pose) => println!("Robot: {:?}", robot_pose.position),
+            ArenaObject::ArucoTag(aruco_tag) => println!("Tag: {:?}", aruco_tag.position),
+            ArenaObject::Obstacle(arena_obstacle) => {
+                println!("Wall: {:?}", arena_obstacle.position)
+            }
         }
     }
 }

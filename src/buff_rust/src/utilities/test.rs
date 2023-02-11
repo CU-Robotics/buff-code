@@ -1,5 +1,5 @@
 #![allow(unused_imports)]
-use crate::utilities::{buffers::*, loaders::*, data_structures::*};
+use crate::utilities::{buffers::*, data_structures::*, loaders::*};
 use rand::Rng;
 use std::env;
 
@@ -20,7 +20,7 @@ pub mod byu_tests {
 
         assert_eq!(
             byu.load_string_list("motor_index"),
-            vec!["xn_drive", "xp_drive", "yn_drive", "yp_drive", "yaw", "pitch", "feeder"]
+            vec!["xn_drive", "xp_drive", "yn_drive", "yp_drive", "pitch", "yaw", "feeder"]
         );
 
         assert_eq!(
@@ -30,9 +30,9 @@ pub mod byu_tests {
                 vec![0, 0, 0],
                 vec![0, 0, 0],
                 vec![0, 0, 0],
-                vec![2, 2, 6],
-                vec![0, 0, 0],
-                vec![0, 0, 0]
+                vec![2, 1, 5],
+                vec![1, 1, 0],
+                vec![2, 0, 2]
             ]
         );
     }
