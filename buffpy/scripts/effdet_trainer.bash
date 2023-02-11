@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd ${PROJECT_ROOT}
-cd buff-code/src/efficientdet-d0-trainer/models/research/
+cd "buff-code/src/efficientdet-d0-trainer/models/research/"
 researchDir=$(pwd)
 
 cd ${PROJECT_ROOT}
