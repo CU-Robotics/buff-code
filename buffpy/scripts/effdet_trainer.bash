@@ -1,21 +1,22 @@
 #!/bin/bash
 
-cd ${PROJECT_ROOT}
-cd "buff-code/src/efficientdet-d0-trainer/models/research/"
-researchDir=$(pwd)
-
-cd ${PROJECT_ROOT}
-cd "buff-code/src/efficientdet-d0-trainer/software/protobuf-21.12/"
-protoDir=$(pwd)
-
-bashrcExport="export PATH=\"${protoDir}/bin:PATH\""
-
 cd ${PROJECT_ROOT} 
 cd buff-code/src
 if [[ ! -d "efficientdet-d0-trainer" ]]; then
 
     # Clones repo into buff-code/src/
     git clone https://github.com/ethan-wst/efficientdet-d0-trainer.git 
+    
+    cd ${PROJECT_ROOT}
+    cd "buff-code/src/efficientdet-d0-trainer/models/research/"
+    researchDir=$(pwd)
+    
+    cd ${PROJECT_ROOT}
+    cd "buff-code/src/efficientdet-d0-trainer/software/protobuf-21.12/"
+    protoDir=$(pwd)
+    
+    
+    bashrcExport="export PATH=\"${protoDir}/bin:PATH\""
 
     # Installs tensorflow
     pip install --ignore-installed --upgrade tensorflow==2.5.0
