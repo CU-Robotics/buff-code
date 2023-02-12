@@ -292,9 +292,9 @@ pub mod quadtree_tests {
         // maybe rebuild the tree with the search point as the head
         // this way the search will have shortest path from search point to
         // every node. Also increasing the number of children leads to
-        // less traversing but paths can lead to very similar endpoints. 
+        // less traversing but paths can lead to very similar endpoints.
         // with a large radius the endpoints of two branches can be in the
-        // same search, but may be out of order.  
+        // same search, but may be out of order.
         points.iter().for_each(|point| {
             test_search(&mut qt, point, 0.01, &points);
             test_search(&mut qt, point, 0.5, &points);
