@@ -53,7 +53,7 @@ if [[ ! -d "efficientdet-d0-trainer" ]]; then
     cd ${PROJECT_ROOT}
     cd $researchDir
     cp object_detection/packages/tf2/setup.py .
-    python -m pip install --use-feature=2020-resolver . 
+    python -m pip install . 
 
     # Installs Panda Package
     pip install pandas
