@@ -1,0 +1,3 @@
+project: 'efficientdet-d0-trainer'
+build: 'bash'
+install: ['scripts/start_training.bash']
