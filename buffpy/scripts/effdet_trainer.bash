@@ -21,14 +21,15 @@ if [[ ! -d "efficientdet-d0-trainer" ]]; then
     pip install --ignore-installed --upgrade tensorflow==2.5.0
     
     # Appends Protobuf to .bashrc
+    cd ${PROJECT_ROOT}
     echo $bashrcExport >> ~/.bashrc 
     reset
     cd $researchDir
     protoc object_detection/protos/*.proto --python_out=.
 
     # Clones COCO repo and makes pythonAPI
-    cd efficientdet-d0-trainer/software/
-    git clone git clone https://github.com/cocodataset/cocoapi.git
+    cd efficientdet-d0-trainer/software
+    git clone https://github.com/cocodataset/cocoapi.git
     cd cocoapi/PythonAPI
     make
     
