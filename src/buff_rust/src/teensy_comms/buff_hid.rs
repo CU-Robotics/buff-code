@@ -238,15 +238,13 @@ impl HidReader {
             }
             2 => match self.input.get(1) {
                 1 => {
-                    let index_offset = (self.input.get(2) * 4) as usize;
+                    let index1 = self.input.get(2) as usize;
+                    let index2 = self.input.get(3) as usize;
+
                     self.robot_status
-                        .update_controller(index_offset, self.input.get_floats(3, 3));
+                        .update_controller(index1, self.input.get_floats(4, 6));
                     self.robot_status
-                        .update_controller(index_offset + 1, self.input.get_floats(15, 3));
-                    self.robot_status
-                        .update_controller(index_offset + 2, self.input.get_floats(27, 3));
-                    self.robot_status
-                        .update_controller(index_offset + 3, self.input.get_floats(39, 3));
+                        .update_controller(index2, self.input.get_floats(28, 6));
                 }
                 _ => {}
             },
@@ -311,14 +309,6 @@ impl HidReader {
     }
 }
 
-/// Handles publishing data to ROS from HID
-///
-/// # Usage
-/// ```
-/// use buff_rust::teensy_comms::buff_hid::HidROS;
-///
-/// let hidros = HidROS::new();
-/// ```
 pub struct HidROS {
     pub shutdown: Arc<RwLock<bool>>,
     pub robot_status: BuffBotStatusReport,
@@ -334,6 +324,14 @@ pub struct HidROS {
 }
 
 impl HidROS {
+    /// Handles publishing data to ROS from HID
+    ///
+    /// # Usage
+    /// ```
+    /// use buff_rust::teensy_comms::buff_hid::HidROS;
+    ///
+    /// let hidros = HidROS::new();
+    /// ```
     pub fn new() -> HidROS {
         let robot_status = BuffBotStatusReport::from_self();
 
@@ -457,7 +455,11 @@ impl HidROS {
                     < 10
                 {
                     let mut msg = std_msgs::Float64MultiArray::default();
-                    msg.data = self.robot_status.motors[i].read().unwrap().feedback.clone();
+                    msg.data = self.robot_status.controllers[i]
+                        .read()
+                        .unwrap()
+                        .feedback
+                        .clone();
                     motor_pub.send(msg).unwrap();
                 }
             });
@@ -467,16 +469,26 @@ impl HidROS {
     pub fn publish_controllers(&self) {
         self.controller_publishers
             .iter()
+            .zip(self.motor_publishers.iter())
             .enumerate()
-            .for_each(|(i, control_pub)| {
-                let mut msg = std_msgs::Float64MultiArray::default();
+            .for_each(|(i, (control_pub, motor_pub))| {
                 let controller = self.robot_status.controllers[i].read().unwrap();
-                msg.data = vec![
-                    controller.output.clone(),
-                    controller.reference[0].clone(),
-                    controller.reference[1].clone(),
-                ];
-                control_pub.send(msg).unwrap();
+
+                {
+                    let mut msg = std_msgs::Float64MultiArray::default();
+                    msg.data = vec![
+                        controller.output.clone(),
+                        controller.reference[0].clone(),
+                        controller.reference[1].clone(),
+                    ];
+                    control_pub.send(msg).unwrap();
+                }
+
+                {
+                    let mut msg = std_msgs::Float64MultiArray::default();
+                    msg.data = controller.feedback.clone();
+                    motor_pub.send(msg).unwrap();
+                }
             });
     }
 
@@ -557,7 +569,7 @@ impl HidROS {
             // don't publish every cycle
             if publish_timer.elapsed().as_millis() > 30 {
                 publish_timer = Instant::now();
-                self.publish_motors();
+                // self.publish_motors();
                 self.publish_controllers();
                 self.publish_sensors();
             }

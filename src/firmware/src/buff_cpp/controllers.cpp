@@ -89,64 +89,53 @@ void Controller_Manager::init_controller(int controller_id, float* gains, float*
 	controllers[controller_id].init(gains, limits);
 }
 
-void Controller_Manager::get_control_report(int controller_block, float* data) {
-	int block_offset = controller_block * CAN_MOTOR_BLOCK_SIZE;
-	for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
-		data[(3 * i)] = output[i + block_offset];
-		data[(3 * i) + 1] = references[i + block_offset][0];
-		data[(3 * i) + 2] = references[i + block_offset][1];
-	}
+void Controller_Manager::get_control_report(int controller_id, float* data) {
+	data[0] = output[controller_id];
+	data[1] = references[controller_id][0];
+	data[2] = references[controller_id][1];
+	data[3] = feedback[controller_id][0];
+	data[4] = feedback[controller_id][1];
+	data[5] = feedback[controller_id][2];
 }
 
-void Controller_Manager::step_motors(RM_CAN_Device* motor_index) {
+void Controller_Manager::step_motors() {
 	// Set the output to each motor by giving that motors feedback to a controller
-	float speed = 0;
-	float prev_angle = 0;
-	bool new_references = timer_info_ms(2) > 10;
-
 	// Serial.printf("outputs: ");
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
-
-		// only update references every 10ms
-		if  (new_references) {
-			timer_set(2);
-
-			speed = 0;
-
-			for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
-				speed += chassis_inverse_kinematics[i][j] * input[j];
-			}
-
-			// integrate the speed to a postion
-			references[i][0] += speed * 0.01; // 10ms
-			references[i][1] = speed;
-
-			// bound the reference state to the defined limits
-			controllers[i].bound_reference(references[i]);
-		}
-
-
-		// motor_index[i].data[0] is the motor_angle add 2pi roll over to make an output angle
-		// leave tmp[1] 0 to allow velocity control (doesn't use error like position)
-		// set tmp[2] to the sum of the change in input (make gain 3 act as a damper)
-		if (biases[i] == 0){
-			biases[i] = motor_index[i].data[0] + (2 * PI * motor_index[i].roll_over);
-		}
-
-		prev_angle = feedback[i][0];
-		feedback[i][0] = motor_index[i].data[0] + (2 * PI * motor_index[i].roll_over) - biases[i];
-		feedback[i][1] = motor_index[i].data[1];
-		feedback[i][2] = (feedback[i][0] - prev_angle);
-
-		// if (i == 4) {
-		// 	Serial.printf("controller: %f %f %f\n", feedback[i][0], motor_index[i].data[0], (2 * PI * motor_index[i].roll_over));
-		// }
-
 		output[i] = controllers[i].step(references[i], feedback[i]);
 		// Serial.printf("%.4f, ", output[i]);
 	}
 	// Serial.println();
-	
+}
+
+void Controller_Manager::set_reference(int controller_id) {
+	float speed = 0;
+
+	for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
+		speed += chassis_inverse_kinematics[controller_id][j] * input[j];
+	}
+
+	// integrate the speed to a postion
+	references[controller_id][0] += speed * 0.01; // 10ms
+	references[controller_id][1] = speed;
+
+	// bound the reference state to the defined limits
+	controllers[controller_id].bound_reference(references[controller_id]);
+}
+
+
+void Controller_Manager::set_feedback(int controller_id, float* data, float rollover) {
+	// motor_index[i].data[0] is the motor_angle add 2pi roll over to make an output angle
+	// leave tmp[1] 0 to allow velocity control (doesn't use error like position)
+	// set tmp[2] to the sum of the change in input (make gain 3 act as a damper)
+	if (biases[controller_id] == 0){
+		biases[controller_id] = data[0] + (2 * PI * rollover);
+	}
+
+	float prev_speed = feedback[controller_id][1];
+	feedback[controller_id][0] = data[0] + (2 * PI * rollover) - biases[controller_id];
+	feedback[controller_id][1] = data[1];
+	feedback[controller_id][2] = (feedback[controller_id][1] - prev_speed);
 }
 
 void Controller_Manager::set_input(float* control_input) {

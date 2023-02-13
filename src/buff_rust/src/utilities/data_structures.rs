@@ -131,6 +131,7 @@ pub struct BuffBotControllerReport {
 
     pub output: f64,
     pub reference: Vec<f64>,
+    pub feedback: Vec<f64>,
     pub timestamp: Instant,
 }
 
@@ -141,6 +142,7 @@ impl BuffBotControllerReport {
             limits: vec![0.0; 4],
             output: 0.0,
             reference: vec![0.0; 2],
+            feedback: vec![0.0; 3],
             timestamp: Instant::now(),
         }
     }
@@ -151,6 +153,7 @@ impl BuffBotControllerReport {
             limits: limits,
             output: 0.0,
             reference: vec![0.0; 2],
+            feedback: vec![0.0; 3],
             timestamp: Instant::now(),
         }
     }
@@ -171,7 +174,12 @@ impl BuffBotControllerReport {
 
     pub fn write(&mut self, feedback: Vec<f64>) {
         self.output = feedback[0];
-        self.reference = feedback[1..].to_vec();
+        self.reference = feedback[1..3].to_vec();
+        self.feedback = feedback[3..].to_vec();
+    }
+
+    pub fn print(&self, id: usize) {
+        println!("Controller {}\t\n\tReference\tFeedback\tOutput\n\t{:?} {:?} {}\n\tGains\t\tLimits\n\t{:?} {:?}", id, self.reference, self.feedback, self.output, self.gains, self.limits);
     }
 }
 
@@ -337,8 +345,9 @@ impl BuffBotStatusReport {
     pub fn get_reports(&mut self) -> Vec<Vec<u8>> {
         let mut reports = vec![];
         (0..self.sensors.len()).for_each(|i| reports.push(vec![3, i as u8]));
-        (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![1, i as u8]));
-        (0..(self.controllers.len() / 4) + 1).for_each(|i| reports.push(vec![2, 1, i as u8]));
+        // (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![1, i as u8]));
+        (0..(self.controllers.len() / 2) + 1)
+            .for_each(|i| reports.push(vec![2, 1, (2 * i) as u8, ((2 * i) + 1) as u8]));
         reports
     }
 
@@ -362,6 +371,7 @@ impl BuffBotStatusReport {
         println!("\n\tRobot Status Report:");
         (0..self.motors.len()).for_each(|i| self.motors[i].read().unwrap().print());
         (0..self.sensors.len()).for_each(|i| self.sensors[i].read().unwrap().print());
+        (0..self.controllers.len()).for_each(|i| self.controllers[i].read().unwrap().print(i));
         println!();
     }
 

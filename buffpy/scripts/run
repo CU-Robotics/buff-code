@@ -38,7 +38,7 @@ def load_config(target_path):
 
 	if not data is None:
 		data['self'] = target_path
-        os.setenv('ROBOT_NAME', target_path)
+		os.environ['ROBOT_NAME'] = target_path
 
 	return data
 

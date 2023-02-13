@@ -23,17 +23,18 @@ void test_dr16_serial_active() {
 void loop_for(int32_t duration, bool debug) {
 	int32_t test_timout = ARM_DWT_CYCCNT;
 
-	while (DURATION_MS(test_timout, ARM_DWT_CYCCNT) < duration) {
+	while (DURATION_MS(test_timout, ARM_DWT_CYCCNT) < 60000/*duration*/) {
 
 		timer_set(0);
 		receiver.read();
 		timer_mark(0);
 
-		if (debug) {
-			receiver.print_control_data();		
+		if (1 /*debug*/) {
+			receiver.print_receiver_input();		
 		}
 
 		timer_wait_us(0, 15000);
+
 	}
 }
 
@@ -99,6 +100,7 @@ int run_receiver_tests() {
 	RUN_TEST(test_dr16_null_read);
 	RUN_TEST(test_dr16_active_read);
 	RUN_TEST(dr16_data_display);
+	RUN_TEST(loop_for);
 	return UNITY_END();
 }
 

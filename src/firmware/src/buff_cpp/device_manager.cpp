@@ -111,9 +111,11 @@ void Device_Manager::control_input_handle() {
 
 		case 1:
 			output_report.put(2, input_report.get(2));
+			output_report.put(3, input_report.get(3));
 			controller_manager.get_control_report(input_report.get(2), tmp);
+			controller_manager.get_control_report(input_report.get(3), &tmp[6]);
 			for (int i = 0; i < 12; i++) {
-				output_report.put_float((4 * i) + 3, tmp[i]);
+				output_report.put_float((4 * i) + 4, tmp[i]);
 			}
 			break;
 
@@ -221,7 +223,7 @@ void Device_Manager::hid_input_switch(){
 			break;
 
 		case 0:
-			// rm_can_ux.zero_can();							// Shutdown motors if can disconnects
+			rm_can_ux.zero_can();							// Shutdown motors if can disconnects
 			break;
 		
 		default:
@@ -272,17 +274,29 @@ void Device_Manager::read_sensors() {
 }
 
 void Device_Manager::step_controllers(float dt) {
-	if (controller_switch >= 1) {
-		if (controller_switch == 1) {
-			controller_manager.set_input(receiver.data);
-		}
-		else if (controller_switch == 2) {
-			controller_manager.input[0] = receiver.data[0];
-			controller_manager.input[1] = receiver.data[1];
-			controller_manager.input[2] = receiver.data[2];
-		}
+	bool new_references = timer_info_us(2) >= 10;
+
+	if (controller_switch == 1) {
+		controller_manager.set_input(receiver.data);
+	}
+	else if (controller_switch == 2) {
+		controller_manager.input[0] = receiver.data[0];
+		controller_manager.input[1] = receiver.data[1];
+		controller_manager.input[2] = receiver.data[2];
+	}
 		
-		controller_manager.step_motors(rm_can_ux.motor_index);
+
+	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
+		// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);
+		if (new_references) {
+			controller_manager.set_reference(i);			
+			timer_set(2);
+		}
+		controller_manager.set_feedback(i, rm_can_ux.motor_index[i].data, rm_can_ux.motor_index[i].roll_over);
+	}
+
+	if (controller_switch != 0) {
+		controller_manager.step_motors();
 	}
 
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {

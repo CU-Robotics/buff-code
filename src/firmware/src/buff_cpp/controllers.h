@@ -27,8 +27,10 @@ struct Controller_Manager {
 	void reset_controller(int);
 	void init_controller(int, float*, float*);
 	void get_control_report(int, float*);
-	void step_motors(RM_CAN_Device*);
+	void step_motors();
 	void set_input(float*);
+	void set_feedback(int, float*, float);
+	void set_reference(int);
 
 	float input[REMOTE_CONTROL_LEN];
 	float output[MAX_NUM_RM_MOTORS];

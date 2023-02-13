@@ -2,7 +2,7 @@
 robot_type: infantry
 
 buff_rust:
-  files: [comms_node]
+  files: [comms_node, motor_identification.py]
 
 # Maybe some kind of option to shut this down via cmdline
 # rqt_plot:
@@ -88,7 +88,7 @@ motor_gains:
   - [  0.00000,  0.00000,  0.00000]
   - [  0.00000,  0.00000,  0.00000]
   - [  0.00000,  0.00000,  0.00000]
-  - [  0.01000,  0.00000,  2.00000]
+  - [  0.02000,  0.00000,  0.00800]
   - [  0.00000,  0.00000,  0.00000]
   - [  0.01000,  0.01500,  2.50000]
 

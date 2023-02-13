@@ -45,7 +45,10 @@ void DR16::print_receiver_input(byte* buffer){
 
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++)
 	{
-		Serial.print(buffer[i], BIN);
+		for (int j = 0; j < 8; j++) {
+			Serial.print(bitRead(buffer[i], j));
+		}
+		// Serial.print(buffer[i], BIN);
 
 		Serial.print(" ");
 		if ((i + 1) % 6 == 0) {
