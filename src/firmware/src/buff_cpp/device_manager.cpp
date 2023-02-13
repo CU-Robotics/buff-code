@@ -223,6 +223,7 @@ void Device_Manager::hid_input_switch(){
 			break;
 
 		case 0:
+			controller_switch = 1;
 			rm_can_ux.zero_can();							// Shutdown motors if can disconnects
 			break;
 		

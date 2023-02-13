@@ -40,7 +40,7 @@ def controller_callback(msg):
 		controller_positions.append(msg.data[1]);
 		controller_speeds.append(msg.data[2]);
 
-def discrete_impulse(magnitude=0.2, length=100, start=10, stop=-1):
+def discrete_impulse(magnitude=0.2, length=100, start=10, stop=60):
 	control = []
 	for i in range(length):
 		if i >= start and (i < stop or 0 > start):
@@ -50,7 +50,20 @@ def discrete_impulse(magnitude=0.2, length=100, start=10, stop=-1):
 
 	return control
 
-def freq_sweep_sinusiod(length=100, start=10, stop=60, maximum=1):
+def sinusiod(length=100, start=10, stop=60):
+	control = []
+	amplitudes = 0.2
+	frequencies = 0.2
+
+	for i in range(length):
+		if i >= start and i < stop:
+			control.append(np.sum(amplitudes * np.sin(frequencies * i)))
+		else:
+			control.append(0)
+
+	return control
+
+def freq_sweep_sinusiod(length=100, start=10, stop=60):
 	control = []
 	amplitudes = np.linspace(0, 10, 150) / 500
 	frequencies = np.linspace(0, 100, 150)
@@ -60,7 +73,6 @@ def freq_sweep_sinusiod(length=100, start=10, stop=60, maximum=1):
 			control.append(np.sum(amplitudes * np.sin(frequencies * i)))
 		else:
 			control.append(0)
-
 
 	return control
 
@@ -261,11 +273,12 @@ if __name__ == '__main__':
 		rospy.init_node('motor_identifier', anonymous=True)
 
 		target_motor = 4
-		control = freq_sweep_sinusiod()
+		# control = freq_sweep_sinusiod()
+		control = discrete_impulse()
 
 		time.sleep(2)
 		print(f"Starting system identification for motor {target_motor}")
-		hz = 10
+		hz = 20
 		duration = len(control) / hz
 		control = send_inputs(hz, control, target_motor)
 
