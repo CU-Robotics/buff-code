@@ -176,7 +176,7 @@ void DR16::generate_control() {
 void DR16::control_test() {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
-	for (int i = 0; i < sizeof(tmp); i++) Serial.printf("\n "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[o]));
+	for (int i = 0; i < sizeof(tmp); i++) Serial.printf("\n "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
 	Serial.println();
 }
 

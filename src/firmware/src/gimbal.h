@@ -3,16 +3,14 @@
 
 class Gimbal {
     public:
-        Gimbal(GlobalRobotState* globalRobotState);
+        Gimbal(GlobalRobotState* globalRobotState, RM_CAN_Interface* rmCAN);
         bool ready() { return true; };
         void loop(int deltaTime);
 
         void aim(float yaw, float pitch);
         
     private:
-        RM_CAN_Device yawMotor1;
-        RM_CAN_Device yawMotor2;
-        RM_CAN_Device pitchMotor;
+        RM_CAN_Interface* rmCAN;
 
         float aimYaw;
         float aimPitch;
