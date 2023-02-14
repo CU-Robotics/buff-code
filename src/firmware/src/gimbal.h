@@ -4,7 +4,7 @@
 class Gimbal {
     public:
         Gimbal(GlobalRobotState* globalRobotState);
-        bool ready();
+        bool ready() { return true; };
         void loop(int deltaTime);
 
         void aim(float yaw, float pitch);

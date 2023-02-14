@@ -15,10 +15,12 @@ RevEnc::RevEnc(uint8_t encPin) {
 int RevEnc::getAngleRaw() {
    // Burn through buffer of values in freq
   while (this->freq.available() > 2) this->freq.read();
-  return round(freq.countToNanoseconds(freq.read()) / 1000.0);
+  int angle = round(freq.countToNanoseconds(freq.read()) / 1000.0);
+  if (angle >= 1 && angle <= 1025) return angle;
+  return -1;
 }
 
 float RevEnc::getAngle() {
   int rawAngle = this->getAngleRaw();
-  return map(rawAngle, 1, 1024, 0, 36000) / 100.0;
+  return rawAngle == -1 ? -1 : map(rawAngle, 1, 1024, 0, 36000) / 100.0;
 }

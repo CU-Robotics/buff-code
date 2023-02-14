@@ -14,6 +14,10 @@
 #define ESC_1_OUTPUT_SCALE			16384
 #define ESC_2_OUTPUT_SCALE			30000
 
+#define C610   0
+#define C620   1
+#define GM6020 2
+
 /*
 
 	Initialize LUTs with motor_can_index[MAX_NUM_MOTORS][2] from HID

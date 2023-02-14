@@ -1,5 +1,17 @@
 #include "dr16.h"
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+	(byte & 0x80 ? '1' : '0'), \
+	(byte & 0x40 ? '1' : '0'), \
+	(byte & 0x20 ? '1' : '0'), \
+	(byte & 0x10 ? '1' : '0'), \
+	(byte & 0x08 ? '1' : '0'), \
+	(byte & 0x04 ? '1' : '0'), \
+	(byte & 0x02 ? '1' : '0'), \
+	(byte & 0x01 ? '1' : '0')
+
+
 float bounded_map(int value, int in_low, int in_high, int out_low, int out_high){
 	/*
 		 This is derived from sthe arduino map() function.
@@ -55,8 +67,8 @@ void DR16::print_receiver_input(byte* buffer){
 }
 
 void DR16::print_control_data(){
-	Serial.println("\n\t===== DR16 Data");
-	Serial.printf("\n\t%f\t%f\t%f\t%f\t%f\t%f\n\n", 
+	//Serial.println("\n\t===== DR16 Data");
+	Serial.printf("\n\t%f\t%f\t%f\t%f\t%f\t%f", 
 		data[0], data[1], data[2], data[3], 
 		data[4], data[5]);
 }
@@ -147,18 +159,11 @@ void DR16::generate_control() {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
 
-	// debugging (bitwise view)
-	// print_receiver_input(tmp);
+	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -1000, 1000) / 1000.0;
+	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -1000, 1000) / 1000.0;
 
-	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -1, 1);
-	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -1, 1);
-
-	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -1, 1);
-	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -1, 1);
-
-	// Serial.println("\n\t===== Normalized Sticks");
-	// Serial.printf("\t%f\t%f\t%f\t%f\n", 
-	// 	r_stick_x, r_stick_y, l_stick_x, l_stick_y);
+	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -1000, 1000) / 1000.0;
+	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -1000, 1000) / 1000.0;
 
 	data[0] = l_stick_x;
 	data[1] = l_stick_y;
@@ -168,26 +173,21 @@ void DR16::generate_control() {
 	data[6] = (tmp[5] & 0xC0) >> 6;				// switch 2
 }
 
-bool DR16::read()
-{
+void DR16::control_test() {
+	byte tmp[18];
+	serial->readBytes(tmp, 18);
+	for (int i = 0; i < sizeof(tmp); i++) Serial.printf("\n "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[o]));
+	Serial.println();
+}
 
-	// if (serial->available() < 18)
-	// {
-	// 	return false;
-	// }
-	
-	// else if (serial->available() % 18 != 0)
-	// {
-	// 	serial->clear();
-	// }
-
-	if (serial->available() == 18)
-	{
-		generate_control_from_joysticks();
+bool DR16::read() {
+	generate_control();
+	return true;
+	if (serial->available() == 18) {
+		generate_control();
 		return true;
 	}
 
 	serial->clear();
 	return false;
-
 }

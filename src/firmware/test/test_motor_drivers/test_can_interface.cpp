@@ -5,7 +5,6 @@
 #include "buff_cpp/timing.cpp"
 #include "motor_drivers/rm_can_interface.cpp"
 
-
 RM_CAN_Interface rm_can_ux;
 
 int8_t num_motors = 5; 
