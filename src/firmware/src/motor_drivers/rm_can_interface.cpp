@@ -235,16 +235,32 @@ float RM_CAN_Interface::get_motor_angle(int motor_id) {
 	return motor_index[motor_id].data[0];
 }
 
+float RM_CAN_Interface::get_motor_angle(String alias) {
+	return get_motor_angle(aliasToMotorID(alias));
+}
+
 float RM_CAN_Interface::get_motor_RPM(int motor_id) {
 	return motor_index[motor_id].data[1];
+}
+
+float RM_CAN_Interface::get_motor_RPM(String alias) {
+	return get_motor_RPM(aliasToMotorID(alias));
 }
 
 float RM_CAN_Interface::get_motor_torque(int motor_id) {
 	return motor_index[motor_id].data[2];
 }
 
+float RM_CAN_Interface::get_motor_torque(String alias) {
+	return get_motor_torque(aliasToMotorID(alias));
+}
+
 float RM_CAN_Interface::get_motor_ts(int motor_id) {
 	return motor_index[motor_id].timestamp;
+}
+
+float RM_CAN_Interface::get_motor_ts(String alias) {
+	return get_motor_ts(aliasToMotorID(alias));
 }
 
 int8_t RM_CAN_Interface::motor_idx_from_return(int can_bus, int return_id){
@@ -299,7 +315,7 @@ void RM_CAN_Interface::write_can(){
 	}
 }
 
-void RM_CAN_Interface::set_output(int index, float value){
+void RM_CAN_Interface::set_output(int index, float value) {
 	/*
 		  Send the motor command from serial to the
 		can packets.
@@ -321,6 +337,10 @@ void RM_CAN_Interface::set_output(int index, float value){
 	
 	output[can_bus][msg_type].buf[msg_offset] = highByte(control_in_esc_resolution);
 	output[can_bus][msg_type].buf[msg_offset + 1] = lowByte(control_in_esc_resolution);
+}
+
+void RM_CAN_Interface::set_output(String alias, float value) {
+	set_output(aliasToMotorID(alias), value);
 }
 
 void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
@@ -392,6 +412,10 @@ void RM_CAN_Interface::get_motor_feedback(int idx, float* data) {
 	}
 }
 
+void RM_CAN_Interface::get_motor_feedback(String alias, float* data) {
+	get_motor_feedback(aliasToMotorID(alias), data);
+}
+
 void RM_CAN_Interface::get_block_feedback(int id, float* data) {
 	/*
 		  Read the feedback values for a block of motors.
@@ -408,6 +432,10 @@ void RM_CAN_Interface::get_block_feedback(int id, float* data) {
 		data[(3 * j) + 1] = tmp[1];
 		data[(3 * j) + 2] = tmp[2];
 	}
+}
+
+void RM_CAN_Interface::get_block_feedback(String alias, float* data) {
+	get_block_feedback(aliasToMotorID(alias), data);
 }
 
 void RM_CAN_Interface::read_can(int bus_num){
@@ -436,7 +464,21 @@ void RM_CAN_Interface::read_can(int bus_num){
 		default:
 			break;
 	}
-	
 }
 
+bool RM_CAN_Interface::addMotor(String alias, int motorID, int CANID, int motorType) {
+	byte config[3] = {CANID, motorType, motorID};
+	if (motor_index[motorID].esc_id == -1) {
+		set_index(motorID, config);
+		motorAliases[motorID] = alias;
+		return true;
+	}
+	Serial.println("Error adding motor! Motor ID is already assigned.");
+	return false;
+}
 
+// TODO: Optimize (binary insertion + sort?)
+int RM_CAN_Interface::aliasToMotorID(String alias) {
+	for (int i = 0; i < sizeof(motorAliases); i++) if (motorAliases[i] == alias) return i;
+	return -1;
+}

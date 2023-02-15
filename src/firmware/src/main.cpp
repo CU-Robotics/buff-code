@@ -36,8 +36,7 @@ void setup() {
 
   flywheelPID.K[0] = 0.0005;
 
-  byte bt[3] = {2, C620, 7};
-  rmCAN.set_index(7, bt);
+  rmCAN.addMotor("Flywheel", 7, 2, C620);
 
   programTime = micros();
 }
@@ -60,7 +59,7 @@ void loop() {
   rmCAN.read_can(2);
 
   flywheelPID.setpoint = 9000;
-  flywheelPID.measurement = rmCAN.get_motor_RPM(0);
+  flywheelPID.measurement = rmCAN.get_motor_RPM("Flywheel");
   flywheelPID.filter(deltaTime);
 
   rmCAN.set_output(7, flywheelPID.output);

@@ -63,7 +63,6 @@ struct RM_CAN_Device {
 
 	float data[MOTOR_FEEDBACK_SIZE];
 	uint32_t timestamp;
-
 };
 
 int16_t bytes_to_int16_t(byte, byte);
@@ -80,9 +79,13 @@ struct RM_CAN_Interface {
 
 	// motor getters and setters
 	float get_motor_angle(int);
+	float get_motor_angle(String);
 	float get_motor_RPM(int);
+	float get_motor_RPM(String);
 	float get_motor_torque(int);
+	float get_motor_torque(String);
 	float get_motor_ts(int);
+	float get_motor_ts(String);
 
 	// Get the motors ID from a can msg return ID
 	int8_t motor_idx_from_return(int, int);
@@ -93,9 +96,12 @@ struct RM_CAN_Interface {
 
 	// Pipeline
 	void set_output(int, float);
+	void set_output(String, float);
 	void set_feedback(int, CAN_message_t*);
 	void get_motor_feedback(int, float*);
+	void get_motor_feedback(String, float*);
 	void get_block_feedback(int, float*);
+	void get_block_feedback(String, float*);
 
 	// CAN I/O
 	void write_can();
@@ -112,6 +118,11 @@ struct RM_CAN_Interface {
 	CAN_message_t output[NUM_CAN_BUSES][NUM_CAN_MESSAGE_TYPES];  // 2 can busses with 3 messages types, each message type has up to 4 motors.
 
 	int num_motors;
+
+	// Motor Aliasing
+	String motorAliases[MAX_NUM_RM_MOTORS];
+	bool addMotor(String alias, int motorID, int CANID, int motorType);
+	int aliasToMotorID(String alias);
 };
 
 #endif
