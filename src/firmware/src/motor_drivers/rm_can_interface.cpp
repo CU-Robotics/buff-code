@@ -236,7 +236,8 @@ float RM_CAN_Interface::get_motor_angle(int motor_id) {
 }
 
 float RM_CAN_Interface::get_motor_angle(String alias) {
-	return get_motor_angle(aliasToMotorID(alias));
+	int motorID = aliasToMotorID(alias);
+	if (motorID != -1) return get_motor_angle(motorID);
 }
 
 float RM_CAN_Interface::get_motor_RPM(int motor_id) {
@@ -244,7 +245,8 @@ float RM_CAN_Interface::get_motor_RPM(int motor_id) {
 }
 
 float RM_CAN_Interface::get_motor_RPM(String alias) {
-	return get_motor_RPM(aliasToMotorID(alias));
+	int motorID = aliasToMotorID(alias);
+	if (motorID != -1) return get_motor_RPM(motorID);
 }
 
 float RM_CAN_Interface::get_motor_torque(int motor_id) {
@@ -252,7 +254,8 @@ float RM_CAN_Interface::get_motor_torque(int motor_id) {
 }
 
 float RM_CAN_Interface::get_motor_torque(String alias) {
-	return get_motor_torque(aliasToMotorID(alias));
+	int motorID = aliasToMotorID(alias);
+	if (motorID != -1) return get_motor_torque(motorID);
 }
 
 float RM_CAN_Interface::get_motor_ts(int motor_id) {
@@ -260,10 +263,11 @@ float RM_CAN_Interface::get_motor_ts(int motor_id) {
 }
 
 float RM_CAN_Interface::get_motor_ts(String alias) {
-	return get_motor_ts(aliasToMotorID(alias));
+	int motorID = aliasToMotorID(alias);
+	if (motorID != -1) return get_motor_ts(motorID);
 }
 
-int8_t RM_CAN_Interface::motor_idx_from_return(int can_bus, int return_id){
+int8_t RM_CAN_Interface::motor_idx_from_return(int can_bus, int return_id) {
 	/*
 		  Getter for the motor index.
 		@param
@@ -301,7 +305,7 @@ void RM_CAN_Interface::zero_can() {
 	}
 }
 
-void RM_CAN_Interface::write_can(){
+void RM_CAN_Interface::write_can() {
 	/*
 		  Write the can output packets to the can busses.
 		@param
@@ -340,7 +344,8 @@ void RM_CAN_Interface::set_output(int index, float value) {
 }
 
 void RM_CAN_Interface::set_output(String alias, float value) {
-	set_output(aliasToMotorID(alias), value);
+	int motorID = aliasToMotorID(alias);
+	if (motorID != -1) set_output(motorID, value);
 }
 
 void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
@@ -413,7 +418,8 @@ void RM_CAN_Interface::get_motor_feedback(int idx, float* data) {
 }
 
 void RM_CAN_Interface::get_motor_feedback(String alias, float* data) {
-	get_motor_feedback(aliasToMotorID(alias), data);
+	int motorID = aliasToMotorID(alias);
+	if (motorID != -1) get_motor_feedback(motorID, data);
 }
 
 void RM_CAN_Interface::get_block_feedback(int id, float* data) {
@@ -435,7 +441,8 @@ void RM_CAN_Interface::get_block_feedback(int id, float* data) {
 }
 
 void RM_CAN_Interface::get_block_feedback(String alias, float* data) {
-	get_block_feedback(aliasToMotorID(alias), data);
+	int motorID = aliasToMotorID(alias);
+	if (motorID != -1) get_block_feedback(motorID, data);
 }
 
 void RM_CAN_Interface::read_can(int bus_num){
