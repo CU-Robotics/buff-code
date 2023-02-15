@@ -15,7 +15,7 @@ if [[ ! -d "efficientdet-d0-trainer" ]]; then
     cd "buff-code/src/efficientdet-d0-trainer/software/protobuf-21.12/"
     protoDir=$(pwd)
     
-    
+    # Creates string that is later added to path
     bashrcExport="export PATH=\"${protoDir}/bin:PATH\""
 
     # Installs tensorflow & numpy
