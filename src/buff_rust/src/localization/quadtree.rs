@@ -162,7 +162,7 @@ impl QuadTreeNode {
             })
             .collect::<Vec<(f64, usize)>>();
 
-        ordered_children.sort_by_key(|(d, i)| (d * 100000.0) as i128);
+        ordered_children.sort_by_key(|(d, _)| (d * 100000.0) as i128);
 
         ordered_children
     }
@@ -371,14 +371,14 @@ impl QuadTree {
         // do we also need to carry over detections?
     }
 
-    pub fn new_target_detection(&self, depth: f64, pixel_coords: Vec<i16>, camera_heading: f64) {
-        // handle image coord projection need camera params
+    // pub fn new_target_detection(&self, depth: f64, pixel_coords: Vec<i16>, camera_heading: f64) {
+    //     // handle image coord projection need camera params
 
-        // match point with nearby bots and choose the maximum
-        // let closest_match = self.get_robots_near(point).iter().map(|robot| {
-        //     robot.detection_match()
-        // }).filter_max();
-    }
+    //     // match point with nearby bots and choose the maximum
+    //     // let closest_match = self.get_robots_near(point).iter().map(|robot| {
+    //     //     robot.detection_match()
+    //     // }).filter_max();
+    // }
 
     pub fn print(&self) {
         println!("\t===== Quadtree Dump =====");

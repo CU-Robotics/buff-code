@@ -21,3 +21,4 @@ chrono = "0.4.23"
 [[bin]]
 name = "comms_node"
 path = "src/teensy_comms/comms_node.rs"
+

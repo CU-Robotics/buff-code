@@ -6,12 +6,11 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
-use std::time::Instant;
 
 pub struct BuffBotSensorReport {
     pub id: u8,
     pub data: Vec<f64>,
-    pub timestamp: Instant,
+    pub timestamp: u32,
 }
 
 impl BuffBotSensorReport {
@@ -19,7 +18,7 @@ impl BuffBotSensorReport {
         BuffBotSensorReport {
             id: u8::MAX,
             data: vec![0.0; 24],
-            timestamp: Instant::now(),
+            timestamp: 0,
         }
     }
 
@@ -27,26 +26,24 @@ impl BuffBotSensorReport {
         BuffBotSensorReport {
             id: id,
             data: data,
-            timestamp: Instant::now(),
+            timestamp: 0,
         }
     }
 
-    pub fn write(&mut self, data: Vec<f64>) {
+    pub fn write(&mut self, data: Vec<f64>, time: u32) {
         self.data = data[0..self.data.len()].to_vec();
-        self.timestamp = Instant::now();
+        self.timestamp = time;
     }
 
     pub fn print(&self) {
         println!(
             "\t\tSensor {} Data:\t{}\n\t\t{:?}",
-            self.id,
-            self.timestamp.elapsed().as_micros(),
-            self.data
+            self.id, self.timestamp, self.data
         );
     }
 
     pub fn as_string_vec(&self) -> Vec<String> {
-        let mut result = vec![self.timestamp.elapsed().as_micros().to_string()];
+        let mut result = vec![self.timestamp.to_string()];
         for i in &self.data {
             result.push(i.to_string());
         }
@@ -61,7 +58,7 @@ pub struct BuffBotCANMotorReport {
     pub motor_type: u8,
     pub esc_id: u8,
     pub feedback: Vec<f64>,
-    pub timestamp: Instant,
+    pub timestamp: u32,
 }
 
 impl BuffBotCANMotorReport {
@@ -73,7 +70,7 @@ impl BuffBotCANMotorReport {
             motor_type: u8::MAX,
             esc_id: u8::MAX,
             feedback: vec![0.0; 3],
-            timestamp: Instant::now(),
+            timestamp: 0,
         }
     }
 
@@ -91,13 +88,13 @@ impl BuffBotCANMotorReport {
             motor_type: motor_type,
             esc_id: esc_id,
             feedback: vec![0.0; 3],
-            timestamp: Instant::now(),
+            timestamp: 0,
         }
     }
 
-    pub fn write(&mut self, data: Vec<f64>) {
+    pub fn write(&mut self, data: Vec<f64>, time: u32) {
         self.feedback = data;
-        self.timestamp = Instant::now();
+        self.timestamp = time;
     }
 
     pub fn init_bytes(&self) -> Vec<u8> {
@@ -107,17 +104,12 @@ impl BuffBotCANMotorReport {
     pub fn print(&self) {
         println!(
             "\t\tMotor {} Data:\t{}\n\t\t{:?}",
-            self.index,
-            self.timestamp.elapsed().as_micros(),
-            self.feedback
+            self.index, self.timestamp, self.feedback
         );
     }
 
     pub fn as_string_vec(&self) -> Vec<String> {
-        let mut result: Vec<String> = vec![
-            self.index.to_string(),
-            self.timestamp.elapsed().as_micros().to_string(),
-        ];
+        let mut result: Vec<String> = vec![self.index.to_string(), self.timestamp.to_string()];
         for i in &self.feedback {
             result.push(i.to_string());
         }
@@ -132,7 +124,7 @@ pub struct BuffBotControllerReport {
     pub output: f64,
     pub reference: Vec<f64>,
     pub feedback: Vec<f64>,
-    pub timestamp: Instant,
+    pub timestamp: u32,
 }
 
 impl BuffBotControllerReport {
@@ -143,7 +135,7 @@ impl BuffBotControllerReport {
             output: 0.0,
             reference: vec![0.0; 2],
             feedback: vec![0.0; 3],
-            timestamp: Instant::now(),
+            timestamp: 0,
         }
     }
 
@@ -154,7 +146,7 @@ impl BuffBotControllerReport {
             output: 0.0,
             reference: vec![0.0; 2],
             feedback: vec![0.0; 3],
-            timestamp: Instant::now(),
+            timestamp: 0,
         }
     }
 
@@ -172,10 +164,11 @@ impl BuffBotControllerReport {
             .collect()
     }
 
-    pub fn write(&mut self, feedback: Vec<f64>) {
+    pub fn write(&mut self, feedback: Vec<f64>, time: u32) {
         self.output = feedback[0];
         self.reference = feedback[1..3].to_vec();
         self.feedback = feedback[3..].to_vec();
+        self.timestamp = time;
     }
 
     pub fn print(&self, id: usize) {
@@ -344,27 +337,37 @@ impl BuffBotStatusReport {
 
     pub fn get_reports(&mut self) -> Vec<Vec<u8>> {
         let mut reports = vec![];
-        (0..self.sensors.len()).for_each(|i| reports.push(vec![3, i as u8]));
+        // (0..self.sensors.len()).for_each(|i| reports.push(vec![3, i as u8]));
         // (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![1, i as u8]));
         (0..(self.controllers.len() / 2) + 1)
             .for_each(|i| reports.push(vec![2, 1, (2 * i) as u8, ((2 * i) + 1) as u8]));
+
         reports
     }
 
-    pub fn update_motor_encoder(&mut self, index: usize, feedback: Vec<f64>) {
+    pub fn update_motor_encoder(&mut self, index: usize, feedback: Vec<f64>, timestamp: u32) {
         if index < self.motors.len() {
-            self.motors[index].write().unwrap().write(feedback);
+            self.motors[index]
+                .write()
+                .unwrap()
+                .write(feedback, timestamp);
         }
     }
 
-    pub fn update_controller(&mut self, index: usize, feedback: Vec<f64>) {
+    pub fn update_controller(&mut self, index: usize, feedback: Vec<f64>, timestamp: u32) {
         if index < self.controllers.len() {
-            self.controllers[index].write().unwrap().write(feedback);
+            self.controllers[index]
+                .write()
+                .unwrap()
+                .write(feedback, timestamp);
         }
     }
 
-    pub fn update_sensor(&mut self, index: usize, feedback: Vec<f64>) {
-        self.sensors[index].write().unwrap().write(feedback);
+    pub fn update_sensor(&mut self, index: usize, feedback: Vec<f64>, timestamp: u32) {
+        self.sensors[index]
+            .write()
+            .unwrap()
+            .write(feedback, timestamp);
     }
 
     pub fn print(&self) {

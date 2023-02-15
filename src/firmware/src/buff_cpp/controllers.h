@@ -30,6 +30,7 @@ struct Controller_Manager {
 	void step_motors();
 	void set_input(float*);
 	void set_feedback(int, float*, float);
+	void estimate_state(float*);
 	void set_reference(int);
 
 	float input[REMOTE_CONTROL_LEN];

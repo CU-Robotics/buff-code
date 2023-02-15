@@ -27,23 +27,28 @@ controller_outputs = []
 controller_positions = []
 controller_speeds = []
 
+motor_time = []
+controller_time = []
+
 
 def motor_callback(msg):
 	if collect_samples:
 		motor_positions.append(msg.data[0]);
 		motor_speeds.append(msg.data[1]);
 		motor_dampers.append(msg.data[2]);
+		motor_time.append(msg.data[3]);
 
 def controller_callback(msg):
 	if collect_samples:
 		controller_outputs.append(msg.data[0]);
 		controller_positions.append(msg.data[1]);
 		controller_speeds.append(msg.data[2]);
+		controller_time.append(msg.data[3]);
 
-def discrete_impulse(magnitude=0.2, length=100, start=10, stop=60):
+def discrete_impulse(magnitude=0.1, length=100, start=10, stop=25):
 	control = []
 	for i in range(length):
-		if i >= start and (i < stop or 0 > start):
+		if i >= start and i < stop:
 			control.append(magnitude)
 		else:
 			control.append(0)
@@ -96,14 +101,16 @@ def send_inputs(hz, control, target_motor):
 	for u in control:
 		collect_samples = True
 
-		msg.data = np.ones(n_motors)
-		msg.data[target_motor] *= u
+		msg.data = np.zeros(n_motors)
+		msg.data[target_motor] = abs(u)
 		pub.publish(msg)
 		rate.sleep()
 
 		if rospy.is_shutdown():
 			exit(0)
 
+	msg.data = np.zeros(n_motors)
+	pub.publish(msg)
 	collect_samples = False
 	print("Test Finished")
 
@@ -129,24 +136,13 @@ def send_inputs(hz, control, target_motor):
 		motor_speeds = motor_speeds[(n - m):]
 		motor_dampers = motor_dampers[(n - m):]
 
-	l = int(len(motor_positions) / len(control))
-
-	control = np.array([[u] * l for u in control]).flatten()
-
-	if l > n or l > m:
-		controller_outputs = controller_outputs[(m - l):]
-		controller_positions = controller_positions[(m - l):]
-		controller_speeds = controller_speeds[(m - l):]
-		motor_positions = motor_positions[(n - l):]
-		motor_speeds = motor_speeds[(n - l):]
-		motor_dampers = motor_dampers[(n - l):]
-
-
 	if len(motor_positions) == 0:
 		print("No samples exiting")
 		exit(0)
 
-	print(f"Elapsed time: {len(control) / hz} secs")
+	print(f"Duration: {len(control) / hz} secs")
+	# print(f"Teensy Motor Duration: {(motor_time[-1] - motor_time[0]) / 600000000}")
+	# print(f"Teensy Control Duration: {(controller_time[-1] - controller_time[0]) / 600000000}")
 	print(f"Feedback packets: {motor_positions.shape} {motor_speeds.shape} {motor_dampers.shape}")
 	print(f"Control packets: {controller_outputs.shape} {controller_positions.shape} {controller_speeds.shape}")
 	return control
@@ -168,11 +164,11 @@ def least_squares_solver(motor, control):
 	sys_A = X.T[:,:-1].T
 	sys_B = np.array([X.T[:,-1]]).T
 
-	print(f"Modeled system with delay:\n{sys_A}\n{sys_B}")
+	print(f"Modeled system:\n{sys_A}\n{sys_B}")
 	return sys_A, sys_B
 
 
-def validate_system(A, B, control, hz):
+def validate_system(A, B):
 	error = 0
 	p = motor_positions[0]
 	v = motor_speeds[0]
@@ -183,7 +179,7 @@ def validate_system(A, B, control, hz):
 	sim_damper = [d]
 
 	print(f"Simulating {A.shape} @ {p} + {B.shape} * {control[0]}")
-	for i, u in enumerate(control[:-1]):
+	for i, u in enumerate(controller_outputs[:-1]):
 		x_new = (A @ np.array([[p],[v],[d]])) + (B * u)
 		p = x_new[0,0]
 		v = x_new[1,0]
@@ -214,26 +210,26 @@ def find_edge(arr, threashold):
 
 def find_control_delay(duration, control):
 	ctrl_edge = find_edge(control, 0.001)
+	out_edge = find_edge(controller_outputs, 0.001)
 	pos_edge = find_edge(motor_positions, 0.001)
 	rpm_edge = find_edge(motor_speeds, 0.1)
 
-	if ctrl_edge >= 0 and pos_edge >= 0 and rpm_edge >= 0:
-		"""
-			(ctrl_edge / ctrl_len) + delay = (pos_edge / pos_len)
-			delay = (pos_edge / pos_len) - (ctrl_edge / ctrl_len)
-		"""
-		p_control_shift = (pos_edge / len(motor_positions)) - (ctrl_edge / len(control))
-		v_control_shift = (rpm_edge / len(motor_speeds)) - (ctrl_edge / len(control))
+	"""
+		(ctrl_edge / ctrl_len) + delay = (pos_edge / pos_len)
+		delay = (pos_edge / pos_len) - (ctrl_edge / ctrl_len)
+	"""
+	teensy_shift = 
+	control_shift = (out_edge / len(controller_outputs)) - (ctrl_edge / len(control))
+	p_control_shift = (pos_edge / len(motor_positions)) - (out_edge / len(controller_outputs))
+	v_control_shift = (rpm_edge / len(motor_speeds)) - (out_edge / len(controller_outputs))
 
-		print(f"Position estimated latency: {p_control_shift * duration}")
-		print(f"RPM estimated latency: {v_control_shift * duration}")
-		print(f"Fused estimated latency: {(p_control_shift + v_control_shift) * duration / 2}")
-		
-		return (p_control_shift + v_control_shift) / (2 * duration)
+	fusion = ((0.55 * control_shift) + (0.225 * p_control_shift) + (0.225 * v_control_shift)) * duration
 
-	else:
-		print("Couldn't find edge")
-		return 0
+	print(f"Control to Output latency: {control_shift * duration}")
+	print(f"Position Motor latency: {p_control_shift * duration}")
+	print(f"RPM Motor latency: {v_control_shift * duration}")
+	
+	return fusion
 
 
 def display_data(motor, duration, control, sim_positions, sim_speeds):
@@ -262,9 +258,13 @@ def display_data(motor, duration, control, sim_positions, sim_speeds):
 	axes[1][0].plot(fb_steps, motor_dampers, label="hardware")
 
 	axes[1][1].set_title("controller output")
-	axes[1][1].plot(ctrl_steps, control, label="output")
+	axes[1][1].plot(ctrl_steps, control, label="local")
+	axes[1][1].plot(fb_steps, controller_outputs, label="controller output")
 
 	axes[0][0].legend()
+	axes[0][1].legend()
+	axes[1][0].legend()
+	axes[1][1].legend()
 	plt.show()
 
 
@@ -272,19 +272,19 @@ if __name__ == '__main__':
 	try:
 		rospy.init_node('motor_identifier', anonymous=True)
 
-		target_motor = 4
+		target_motor = 6
 		# control = freq_sweep_sinusiod()
 		control = discrete_impulse()
 
 		time.sleep(2)
 		print(f"Starting system identification for motor {target_motor}")
-		hz = 20
+		hz = 100
 		duration = len(control) / hz
 		control = send_inputs(hz, control, target_motor)
 
 		sys_A, sys_B = least_squares_solver(target_motor, control)
 
-		p, v = validate_system(sys_A, sys_B, control, hz)
+		p, v = validate_system(sys_A, sys_B)
 		# Q = np.array([[1.0,  0.0,  0.0], 
 		# 			 [0.0, 0.001,  0.0],
 		# 			 [0.0,  0.0, 0.001]])

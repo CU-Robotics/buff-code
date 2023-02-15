@@ -134,6 +134,20 @@ impl ByteBuffer {
         ])
     }
 
+    pub fn get_u32(&mut self, idx: usize) -> u32 {
+        /*
+            Read an i32 from the buffer.
+        */
+        self.validate_index(idx);
+        self.validate_index(idx + 3);
+        u32::from_be_bytes([
+            self.data[idx],
+            self.data[idx + 1],
+            self.data[idx + 2],
+            self.data[idx + 3],
+        ])
+    }
+
     pub fn put_i32(&mut self, idx: usize, value: i32) {
         /*
             Write an i32 to the buffer.

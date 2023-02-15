@@ -219,11 +219,11 @@ void Device_Manager::hid_input_switch(){
 		case 64:
 			blink();										// only blink when connected to a robot
 			report_switch();
-			output_report.put_int32(60, timer_info_us(0));
+			output_report.put_int32(60, ARM_DWT_CYCCNT);
 			break;
 
 		case 0:
-			controller_switch = 1;
+			// controller_switch = 1;
 			rm_can_ux.zero_can();							// Shutdown motors if can disconnects
 			break;
 		

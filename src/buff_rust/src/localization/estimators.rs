@@ -1,30 +1,28 @@
 // use rosrust_msg::std_msgs;
 // use std::{
 //     sync::{Arc, RwLock},
-//     thread::sleep,
-//     time::{Duration, Instant},
+//     time::Instant,
 // };
 
-// use image::{GenericImage, GenericImageView, ImageBuffer, RgbImage};
+// // use image::{GenericImage, GenericImageView, ImageBuffer, RgbImage};
 
 // use crate::utilities::loaders::*;
 
 // pub struct RobotStateEstimator {
-//     pub rate: u128,
 //     pub kinematic_matrix: Vec<Vec<f64>>,
-//     pub position: Vec<f64>,
-//     pub velocity: Vec<f64>,
+//     pub state: Vec<f64>,
+//     pub trajectory: Vec<f64>,
 //     pub motor_hist: Vec<f64>,
 //     pub motor_feedback: Vec<Arc<RwLock<Vec<f64>>>>,
 //     pub subscribers: Vec<rosrust::Subscriber>,
 //     pub state_publisher: rosrust::Publisher<std_msgs::Float64MultiArray>,
+//     pub trajectory_publisher: rosrust::Publisher<std_msgs::Float64MultiArray>,
 // }
 
 // impl RobotStateEstimator {
 //     pub fn new() -> RobotStateEstimator {
-//         let byu = BuffYamlUtil::default();
+//         let byu = BuffYamlUtil::from_self();
 //         // motor config info (only needed for name indexing)
-//         let rate = byu.load_u128("publish_rate");
 //         let k_mat = byu.load_float_matrix("kinematic_matrix");
 //         // let state_ref = byu.load_string("velocity_state_feedback");
 
@@ -45,16 +43,18 @@
 //             })
 //             .collect();
 
-//         let publ = rosrust::publish("robot_state", 1).unwrap();
+//         let publ1 = rosrust::publish("robot_state", 1).unwrap();
+//         let publ2 = rosrust::publish("robot_trajectory", 1).unwrap();
 
 //         RobotStateEstimator {
-//             rate: rate,
 //             kinematic_matrix: k_mat,
-//             state: vec![0f64; 12],
+//             state: vec![0f64; 6],
+//             trajectory: vec![0f64; 6],
 //             motor_hist: vec![0f64; n],
 //             motor_feedback: motor_feedback,
 //             subscribers: subs,
-//             state_publisher: publ,
+//             state_publisher: publ1,
+//             trajectory_publisher: publ2,
 //         }
 //     }
 
@@ -89,14 +89,14 @@
 //     //     self.accel_publisher.send(msg).unwrap();
 //     // }
 
-//     // pub fn update_kinematics(&mut self) -> Vec<f64> {
-//     //     let v = self.get_motor_speeds();
+//     pub fn update_kinematics(&mut self) -> Vec<f64> {
+//         let v = self.get_motor_speeds();
 
-//     //     self.kinematic_matrix
-//     //         .iter()
-//     //         .map(|a| a.iter().zip(v.iter()).map(|(a, x)| a * x).sum::<f64>())
-//     //         .collect()
-//     // }
+//         self.kinematic_matrix
+//             .iter()
+//             .map(|a| a.iter().zip(v.iter()).map(|(a, x)| a * x).sum::<f64>())
+//             .collect()
+//     }
 
 //     // pub fn update_deadreackoning(&mut self, dt: f64) -> (Vec<f64>, Vec<f64>) {
 //     //     self.velocity = self.update_kinematics();
@@ -120,41 +120,33 @@
 //     pub fn publish_state(&self) {
 //         let mut msg = std_msgs::Float64MultiArray::default();
 //         msg.data = self.state.clone();
-//         self.state_publisher.send(msg).unwrap();
+//         self.trajectory_publisher.send(msg).unwrap();
 //     }
 
 //     pub fn spin(&mut self) {
-//         let mut micros;
 //         let mut timestamp;
 
 //         while rosrust::is_ok() {
 //             timestamp = Instant::now();
 
-//             self.update();
-//             self.publish_state();
+//             self.trajectory = self.update_kinematics();
+//             self.publish_trajectory();
 
-//             micros = timestamp.elapsed().as_micros();
-//             if micros < 1e6 as u128 / self.rate {
-//                 sleep(Duration::from_micros(
-//                     ((1e6 as u128 / self.rate) - micros) as u64,
-//                 ));
-//             } else {
-//                 println!("RSE overtime {}", micros);
-//             }
+//             while timestamp.elapsed().as_millis() < 10 {}
 //         }
 //     }
 // }
 
-// // pub struct ArenaStateEstimator {
-// //     pub rate: u128,
-// //     pub map: ImageBuffer,
-// //     pub enemy_robots: Vec<f64>,
-// //     pub buff_robots: Vec<f64>,
-// //     pub camera_transform: Vec<f64>,
-// //     pub gimbal_heading: Vec<f64>,
-// //     pub subscribers: Vec<rosrust::Subscriber>,
-// //     pub state_publisher: rosrust::Publisher<std_msgs::Float64MultiArray>,
-// // }
+// // // pub struct ArenaStateEstimator {
+// // //     pub rate: u128,
+// // //     pub map: ImageBuffer,
+// // //     pub enemy_robots: Vec<f64>,
+// // //     pub buff_robots: Vec<f64>,
+// // //     pub camera_transform: Vec<f64>,
+// // //     pub gimbal_heading: Vec<f64>,
+// // //     pub subscribers: Vec<rosrust::Subscriber>,
+// // //     pub state_publisher: rosrust::Publisher<std_msgs::Float64MultiArray>,
+// // // }
 
-// // // Construct a new RGB ImageBuffer with the specified width and height.
-// // let img: RgbImage = ImageBuffer::new(512, 512);,
+// // // // Construct a new RGB ImageBuffer with the specified width and height.
+// // // let img: RgbImage = ImageBuffer::new(512, 512);,

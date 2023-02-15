@@ -3,11 +3,11 @@
 #ifndef BUFF_DR16_H
 #define BUFF_DR16_H
 
-#define REMOTE_CONTROL_LEN 6
+#define REMOTE_CONTROL_LEN 7
 #define JOYSTICK_X_SENSITIVITY 1.5
 #define JOYSTICK_Y_SENSITIVITY 1.5
 #define JOYSTICK_PAN_SENSITIVITY 0.1
-#define JOYSTICK_PITCH_SENSITIVITY 0.1
+#define JOYSTICK_PITCH_SENSITIVITY 0.001
 
 /*
 	 Driver software for the dr16 receiver.
@@ -33,7 +33,7 @@ struct DR16 {
 		void generate_control_from_joysticks();
 		bool read();
 
-		float data[7];
+		float data[REMOTE_CONTROL_LEN];
 		
 		HardwareSerial* serial;
 };

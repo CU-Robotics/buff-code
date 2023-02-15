@@ -136,14 +136,16 @@ void DR16::generate_control_from_joysticks() {
 	data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
 
 	if ((tmp[5] & 0xC0) >> 6 == 1.0) {						// feeder speed
-		data[5] = -900.0;
+		data[5] = -50.0;
 	} 
 	else if ((tmp[5] & 0xC0) >> 6 == 2.0) {
-		data[5] = 900.0;
+		data[5] = 50.0;
 	} 
 	else {
 		data[5] = 0.0;
 	}
+
+	data[6] = 2000.0;
 }
 
 bool DR16::read()

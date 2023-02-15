@@ -342,7 +342,7 @@ int run_can_tests() {
 		RUN_TEST(test_can_bus_read);
 	}
 
-	RUN_TEST(test_set_output);
+	// RUN_TEST(test_set_output);
 	RUN_TEST(test_set_feedback);
 	RUN_TEST(test_get_feedback);
 

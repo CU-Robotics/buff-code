@@ -219,38 +219,57 @@ impl HidReader {
     /// }
     /// ```
     pub fn parse_report(&mut self) {
-        if self.input.get_i32(60) > 1000 {
-            println!("Teensy cycle time is over the limit");
-        }
+        let teensy_clock = self.input.get_u32(60);
 
         // match the report number to determine the structure
         match self.input.get(0) {
             1 => {
                 let index_offset = (self.input.get(1) * 4) as usize;
-                self.robot_status
-                    .update_motor_encoder(index_offset, self.input.get_floats(2, 3));
-                self.robot_status
-                    .update_motor_encoder(index_offset + 1, self.input.get_floats(14, 3));
-                self.robot_status
-                    .update_motor_encoder(index_offset + 2, self.input.get_floats(26, 3));
-                self.robot_status
-                    .update_motor_encoder(index_offset + 3, self.input.get_floats(38, 3));
+                self.robot_status.update_motor_encoder(
+                    index_offset,
+                    self.input.get_floats(2, 3),
+                    teensy_clock,
+                );
+                self.robot_status.update_motor_encoder(
+                    index_offset + 1,
+                    self.input.get_floats(14, 3),
+                    teensy_clock,
+                );
+                self.robot_status.update_motor_encoder(
+                    index_offset + 2,
+                    self.input.get_floats(26, 3),
+                    teensy_clock,
+                );
+                self.robot_status.update_motor_encoder(
+                    index_offset + 3,
+                    self.input.get_floats(38, 3),
+                    teensy_clock,
+                );
             }
             2 => match self.input.get(1) {
                 1 => {
                     let index1 = self.input.get(2) as usize;
                     let index2 = self.input.get(3) as usize;
 
-                    self.robot_status
-                        .update_controller(index1, self.input.get_floats(4, 6));
-                    self.robot_status
-                        .update_controller(index2, self.input.get_floats(28, 6));
+                    self.robot_status.update_controller(
+                        index1,
+                        self.input.get_floats(4, 6),
+                        teensy_clock,
+                    );
+                    self.robot_status.update_controller(
+                        index2,
+                        self.input.get_floats(28, 6),
+                        teensy_clock,
+                    );
                 }
                 _ => {}
             },
             3 => {
-                self.robot_status
-                    .update_sensor(self.input.get(1) as usize, self.input.get_floats(2, 9));
+                self.robot_status.update_sensor(
+                    self.input.get(1) as usize,
+                    self.input.get_floats(2, 9),
+                    teensy_clock,
+                );
             }
             u8::MAX => {}
             _ => {}
@@ -446,22 +465,17 @@ impl HidROS {
             .iter()
             .enumerate()
             .for_each(|(i, motor_pub)| {
-                if self.robot_status.motors[i]
+                let mut msg = std_msgs::Float64MultiArray::default();
+                msg.data = self.robot_status.controllers[i]
                     .read()
                     .unwrap()
-                    .timestamp
-                    .elapsed()
-                    .as_millis()
-                    < 10
-                {
-                    let mut msg = std_msgs::Float64MultiArray::default();
-                    msg.data = self.robot_status.controllers[i]
-                        .read()
-                        .unwrap()
-                        .feedback
-                        .clone();
-                    motor_pub.send(msg).unwrap();
-                }
+                    .feedback
+                    .clone();
+
+                msg.data
+                    .push(self.robot_status.controllers[i].read().unwrap().timestamp as f64);
+
+                motor_pub.send(msg).unwrap();
             });
     }
 
@@ -480,6 +494,7 @@ impl HidROS {
                         controller.output.clone(),
                         controller.reference[0].clone(),
                         controller.reference[1].clone(),
+                        controller.timestamp as f64,
                     ];
                     control_pub.send(msg).unwrap();
                 }
@@ -487,6 +502,7 @@ impl HidROS {
                 {
                     let mut msg = std_msgs::Float64MultiArray::default();
                     msg.data = controller.feedback.clone();
+                    msg.data.push(controller.timestamp as f64);
                     motor_pub.send(msg).unwrap();
                 }
             });
@@ -498,18 +514,11 @@ impl HidROS {
             .iter()
             .enumerate()
             .for_each(|(i, sensor_pub)| {
-                if self.robot_status.sensors[i]
-                    .read()
-                    .unwrap()
-                    .timestamp
-                    .elapsed()
-                    .as_millis()
-                    < 10
-                {
-                    let mut msg = std_msgs::Float64MultiArray::default();
-                    msg.data = self.robot_status.sensors[i].read().unwrap().data.clone();
-                    sensor_pub.send(msg).unwrap();
-                }
+                let mut msg = std_msgs::Float64MultiArray::default();
+                msg.data = self.robot_status.sensors[i].read().unwrap().data.clone();
+                msg.data
+                    .push(self.robot_status.sensors[i].read().unwrap().timestamp as f64);
+                sensor_pub.send(msg).unwrap();
             });
     }
 
@@ -562,16 +571,22 @@ impl HidROS {
         let reports = self.robot_status.get_reports();
 
         let mut publish_timer = Instant::now();
+        let mut pub_switch = 0;
 
         while rosrust::is_ok() && !*self.shutdown.read().unwrap() {
             let loopt = Instant::now();
 
             // don't publish every cycle
-            if publish_timer.elapsed().as_millis() > 30 {
+            if publish_timer.elapsed().as_millis() > 5 {
                 publish_timer = Instant::now();
                 // self.publish_motors();
-                self.publish_controllers();
-                self.publish_sensors();
+                if pub_switch == 0 {
+                    self.publish_controllers();
+                    pub_switch = 1;
+                } else {
+                    self.publish_sensors();
+                    pub_switch = 0;
+                }
             }
 
             // handle control inputs

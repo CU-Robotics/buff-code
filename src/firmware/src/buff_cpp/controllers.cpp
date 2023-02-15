@@ -138,6 +138,14 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	feedback[controller_id][2] = (feedback[controller_id][1] - prev_speed);
 }
 
+void Controller_Manager::estimate_state(float* inertial_measurement) {
+	// do imu -> attitude & feedack + chassis dynamics fusion
+	// plenty of 9dof imu -> attitude stuff online
+	// chassis kinematic estimate
+	// possibly fuse imu and encoder estimate in kalman (imu is measurement and [pos_est, traj_est] is the state)
+	// otherwise integrate position from estimate (rotated to world frame)
+}
+
 void Controller_Manager::set_input(float* control_input) {
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		input[i] = control_input[i];		
