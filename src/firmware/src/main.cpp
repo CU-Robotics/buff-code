@@ -62,7 +62,7 @@ void loop() {
   flywheelPID.measurement = rmCAN.get_motor_RPM("Flywheel");
   flywheelPID.filter(deltaTime);
 
-  rmCAN.set_output(7, flywheelPID.output);
+  rmCAN.set_output("Flywheel", flywheelPID.output);
   rmCAN.write_can();
 
   while (micros() - programTime < loopFrequency) continue;

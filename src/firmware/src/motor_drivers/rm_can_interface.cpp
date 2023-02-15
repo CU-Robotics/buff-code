@@ -475,12 +475,14 @@ void RM_CAN_Interface::read_can(int bus_num){
 
 bool RM_CAN_Interface::addMotor(String alias, int motorID, int CANID, int motorType) {
 	byte config[3] = {CANID, motorType, motorID};
-	if (motor_index[motorID].esc_id == -1) {
-		set_index(motorID, config);
-		motorAliases[motorID] = alias;
-		return true;
+	for (int i = 0; i < sizeof(motor_index); i++) {
+		if (motor_index[i].esc_id == -1) {
+			set_index(i, config);
+			motorAliases[i] = alias;
+			return true;
+		}
 	}
-	Serial.println("Error adding motor! Motor ID is already assigned.");
+	Serial.println("Error adding motor! All RM device slots are claimed.");
 	return false;
 }
 
