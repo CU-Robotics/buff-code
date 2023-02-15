@@ -45,8 +45,8 @@ void print_rm_config_struct(RM_CAN_Device* dev) {
 			None
 	*/
 	Serial.println("\n\t====== RM Config");
-	Serial.printf("\tcan bus:\t\t%i\n\tmessage_type:\t\t%i\n\tmessage_offset:\t\t%i\n\tmotor_id:\t\t%i\n\tesc_id:\t\t\t%i\n\treturn_id:\t\t%X\n\tesc_type:\t\t%i\n",
-		dev->can_bus, dev->message_type, dev->message_offset, dev->motor_id, dev->esc_id, dev->return_id, dev->esc_type);
+	Serial.printf("\tcan bus:\t\t%i\n\tmessage_type:\t\t%i\n\tmessage_offset:\t\t%i\n\tmotor_index:\t\t%i\n\tesc_id:\t\t\t%i\n\treturn_id:\t\t%X\n\tesc_type:\t\t%i\n",
+		dev->can_bus, dev->message_type, dev->message_offset, dev->motor_index, dev->esc_id, dev->return_id, dev->esc_type);
 	Serial.printf("\tfeedback:\t\t[%f\t%f\t%f\t%i]\n", 
 		dev->data[0], 
 		dev->data[1], 
@@ -110,7 +110,7 @@ RM_CAN_Device::RM_CAN_Device() {
 	message_offset = -1;		// 0-6 (always even)
 
 	esc_id = -1;				// 0-8 the blinking light
-	motor_id = -1;				// index of motor in the serialized motor structure
+	motor_index = -1;				// index of motor in the serialized motor structure
 	esc_type = -1;				// 0: C6XX, 1: GM6020
 
 	roll_over = 0;				// roll over of motor
@@ -118,7 +118,7 @@ RM_CAN_Device::RM_CAN_Device() {
 	return_id = -1;				// actual return code
 	output_scale = 0;
 
-	motor_id = -1;				// index of device in motor_index
+	motor_index = -1;				// index of device in motor_arr
 
 	data[0] = 0;				// Feedback data (position, rpm, torque)
 	data[1] = 0;
@@ -157,7 +157,7 @@ RM_CAN_Device::RM_CAN_Device(int id, byte* config) {
 			break;
 	}
 
-	motor_id = id;
+	motor_index = id;
 
 	data[0] = 0;
 	data[1] = 0;
@@ -190,7 +190,7 @@ RM_CAN_Interface::RM_CAN_Interface(){
 
 	for (int i = 0; i < NUM_CAN_BUSES; i++) {
 		for (int j = 0; j < MAX_CAN_RETURN_IDS; j++) {
-			can_motor_index[i][j] = -1;
+			can_motor_arr[i][j] = -1;
 		}
 	}
 }
@@ -201,7 +201,7 @@ RM_CAN_Interface::RM_CAN_Interface(){
 //     int8_t message_offset; // 0-6 (always even)
 
 //     int8_t esc_id;         // 1-8 the blinking light
-//     int8_t motor_id;       // index of motor in the serialized motor structure
+//     int8_t motor_index;       // index of motor in the serialized motor structure
 //     int8_t return_id;      // id of can message returned from device (- 0x201 to store as int8_t)
 
 //     int8_t esc_type;     // 0: C6XX, 1: GM6020
@@ -217,22 +217,22 @@ void RM_CAN_Interface::set_index(int idx, byte config[3]){
 		@return
 			None
 	*/
-	motor_index[idx] = RM_CAN_Device(idx, config);
+	motor_arr[idx] = RM_CAN_Device(idx, config);
 
-	int rid = motor_index[idx].return_id;
+	int rid = motor_arr[idx].return_id;
 	int can_bus = config[0] - 1;
 
 	if(can_bus >= 0) {
 		// Serial.printf("New device (can bus, motor id, return id) %i %i %i\n", can_bus, idx, rid);
-		can_motor_index[can_bus][rid] = idx;
+		can_motor_arr[can_bus][rid] = idx;
 		num_motors += 1;
 	}
 }
 
 // Some quick getters so you don't have to write
-// motor_index[motor_id].angle everytime
-float RM_CAN_Interface::get_motor_angle(int motor_id) {
-	return motor_index[motor_id].data[0];
+// motor_arr[motor_index].angle everytime
+float RM_CAN_Interface::get_motor_angle(int motor_index) {
+	return motor_arr[motor_index].data[0];
 }
 
 float RM_CAN_Interface::get_motor_angle(String alias) {
@@ -240,8 +240,8 @@ float RM_CAN_Interface::get_motor_angle(String alias) {
 	if (motorID != -1) return get_motor_angle(motorID);
 }
 
-float RM_CAN_Interface::get_motor_RPM(int motor_id) {
-	return motor_index[motor_id].data[1];
+float RM_CAN_Interface::get_motor_RPM(int motor_index) {
+	return motor_arr[motor_index].data[1];
 }
 
 float RM_CAN_Interface::get_motor_RPM(String alias) {
@@ -249,8 +249,8 @@ float RM_CAN_Interface::get_motor_RPM(String alias) {
 	if (motorID != -1) return get_motor_RPM(motorID);
 }
 
-float RM_CAN_Interface::get_motor_torque(int motor_id) {
-	return motor_index[motor_id].data[2];
+float RM_CAN_Interface::get_motor_torque(int motor_index) {
+	return motor_arr[motor_index].data[2];
 }
 
 float RM_CAN_Interface::get_motor_torque(String alias) {
@@ -258,8 +258,8 @@ float RM_CAN_Interface::get_motor_torque(String alias) {
 	if (motorID != -1) return get_motor_torque(motorID);
 }
 
-float RM_CAN_Interface::get_motor_ts(int motor_id) {
-	return motor_index[motor_id].timestamp;
+float RM_CAN_Interface::get_motor_ts(int motor_index) {
+	return motor_arr[motor_index].timestamp;
 }
 
 float RM_CAN_Interface::get_motor_ts(String alias) {
@@ -267,7 +267,7 @@ float RM_CAN_Interface::get_motor_ts(String alias) {
 	if (motorID != -1) return get_motor_ts(motorID);
 }
 
-int8_t RM_CAN_Interface::motor_idx_from_return(int can_bus, int return_id) {
+int8_t RM_CAN_Interface::motor_index_from_return(int can_bus, int return_id) {
 	/*
 		  Getter for the motor index.
 		@param
@@ -278,7 +278,7 @@ int8_t RM_CAN_Interface::motor_idx_from_return(int can_bus, int return_id) {
 	*/
 	if (return_id - 0x201 >= 0 && return_id - 0x201 < MAX_CAN_RETURN_IDS) {
 		if (can_bus >= 0 && can_bus < NUM_CAN_BUSES) {
-			return can_motor_index[can_bus][return_id - 0x201];
+			return can_motor_arr[can_bus][return_id - 0x201];
 		}
 		// Serial.printf("Can bus invalid %i\n", can_bus);
 	}
@@ -329,10 +329,10 @@ void RM_CAN_Interface::set_output(int index, float value) {
 			None
 	*/
 
-	int can_bus = motor_index[index].can_bus;
-	int msg_type = motor_index[index].message_type;
-	int msg_offset = motor_index[index].message_offset;
-	int16_t control_in_esc_resolution = int16_t(value * motor_index[index].output_scale);
+	int can_bus = motor_arr[index].can_bus;
+	int msg_type = motor_arr[index].message_type;
+	int msg_offset = motor_arr[index].message_offset;
+	int16_t control_in_esc_resolution = int16_t(value * motor_arr[index].output_scale);
 
 	// The can busses are numbered 1-2 (indexed 0-1)
 
@@ -358,28 +358,28 @@ void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
 			roll over: bool
 	*/
 
-	int motor_id = motor_idx_from_return(can_bus, msg->id);
+	int motor_index = motor_index_from_return(can_bus, msg->id);
 
-	if (motor_id >= 0) {
-		// Serial.printf("Received data from %X, %i\n", msg->id - 0x201, motor_id);
-		float current_angle = motor_index[motor_id].data[0];
+	if (motor_index >= 0) {
+		// Serial.printf("Received data from %X, %i\n", msg->id - 0x201, motor_index);
+		float current_angle = motor_arr[motor_index].data[0];
 		float feedback_angle = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
 		float feedback_rpm = bytes_to_int16_t(msg->buf[2], msg->buf[3]) * 0.033333333 * PI;
 		float feedback_torque = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
 
 		// need a detector for roll overs
 		if (current_angle < feedback_angle - PI) {
-			motor_index[motor_id].roll_over -= 1;
+			motor_arr[motor_index].roll_over -= 1;
 		}
 
 		else if (current_angle > feedback_angle + PI) {
-			motor_index[motor_id].roll_over += 1;
+			motor_arr[motor_index].roll_over += 1;
 		}
 
-		motor_index[motor_id].data[0] = feedback_angle;
-		motor_index[motor_id].data[1] = feedback_rpm;
-		motor_index[motor_id].data[2] = feedback_torque;
-		motor_index[motor_id].timestamp = ARM_DWT_CYCCNT;
+		motor_arr[motor_index].data[0] = feedback_angle;
+		motor_arr[motor_index].data[1] = feedback_rpm;
+		motor_arr[motor_index].data[2] = feedback_torque;
+		motor_arr[motor_index].timestamp = ARM_DWT_CYCCNT;
 	}
 }
 
@@ -388,7 +388,7 @@ void RM_CAN_Interface::get_motor_feedback(int idx, float* data) {
 		  Read the feedback values for a motor at idx.
 		@param
 			data: buffer for output data
-			idx: index of the motor in the motor_index
+			idx: index of the motor in the motor_arr
 		@return
 			None
 	*/
@@ -475,8 +475,8 @@ void RM_CAN_Interface::read_can(int bus_num){
 
 bool RM_CAN_Interface::addMotor(String alias, int motorID, int CANID, int motorType) {
 	byte config[3] = {CANID, motorType, motorID};
-	for (int i = 0; i < sizeof(motor_index); i++) {
-		if (motor_index[i].esc_id == -1) {
+	for (int i = 0; i < sizeof(motor_arr); i++) {
+		if (motor_arr[i].esc_id == -1) {
 			set_index(i, config);
 			motorAliases[i] = alias;
 			return true;

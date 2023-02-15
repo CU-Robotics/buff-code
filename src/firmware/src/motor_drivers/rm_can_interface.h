@@ -53,7 +53,7 @@ struct RM_CAN_Device {
 	int message_offset; // 0-6 (always even)
 
 	int esc_id;         // 0-8 the blinking light
-	int motor_id;       // index of motor in the serialized motor structure
+	int motor_index;       // index of motor in the serialized motor structure
 	int esc_type;       // 0: C610, 1: C620, 2: GM6020
 
 	int roll_over;		// track the true position
@@ -88,7 +88,7 @@ struct RM_CAN_Interface {
 	float get_motor_ts(String);
 
 	// Get the motors ID from a can msg return ID
-	int8_t motor_idx_from_return(int, int);
+	int8_t motor_index_from_return(int, int);
 
 	// Disabler
 	void zero_can();
@@ -107,9 +107,9 @@ struct RM_CAN_Interface {
 	void write_can();
 	void read_can(int bus_num);
 
-	RM_CAN_Device motor_index[MAX_NUM_RM_MOTORS];               // support for 16 motors total (max 12 per bus)
+	RM_CAN_Device motor_arr[MAX_NUM_RM_MOTORS];               // support for 16 motors total (max 12 per bus)
 	
-	int can_motor_index[NUM_CAN_BUSES][MAX_CAN_RETURN_IDS];  	// 2 can busses, 11 possible return values
+	int can_motor_arr[NUM_CAN_BUSES][MAX_CAN_RETURN_IDS];  	// 2 can busses, 11 possible return values
 
 	// CAN info https://github.com/tonton81/FlexCAN_T4/blob/master/FlexCAN_T4.h
 	FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
