@@ -18,6 +18,9 @@
 #define C620   1
 #define GM6020 2
 
+#define CAN1   1
+#define CAN2   2
+
 /*
 
 	Initialize LUTs with motor_can_index[MAX_NUM_MOTORS][2] from HID

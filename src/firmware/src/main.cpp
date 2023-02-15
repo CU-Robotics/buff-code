@@ -36,7 +36,7 @@ void setup() {
 
   flywheelPID.K[0] = 0.0005;
 
-  rmCAN.addMotor("Flywheel", 7, 2, C620);
+  rmCAN.addMotor("Flywheel", 7, CAN2, C620);
 
   programTime = micros();
 }
