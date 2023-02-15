@@ -1,13 +1,5 @@
 #!/bin/bash
 
-cd ${PROJECT_ROOT}
-    cd "buff-code/src/efficientdet-d0-trainer/models/research/"
-    researchDir=$(pwd)
-    cd ${PROJECT_ROOT}
-    cd $researchDir
-    pwd
-
-
 cd ${PROJECT_ROOT} 
 cd buff-code/src
 if [[ ! -d "efficientdet-d0-trainer" ]]; then
@@ -26,8 +18,9 @@ if [[ ! -d "efficientdet-d0-trainer" ]]; then
     
     bashrcExport="export PATH=\"${protoDir}/bin:PATH\""
 
-    # Installs tensorflow
-    pip install --ignore-installed --upgrade tensorflow==2.10.1
+    # Installs tensorflow & numpy
+    pip install --ignore-installed --upgrade tensorflow==2.11.0
+    pip install numpy==1.22.0
     
     # Appends Protobuf to .bashrc
     cd ${PROJECT_ROOT}
