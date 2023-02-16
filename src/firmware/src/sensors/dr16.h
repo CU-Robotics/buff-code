@@ -28,7 +28,7 @@ float wrap_radians(float);
 struct DR16 {
 		DR16();
 		DR16(HardwareSerial*);
-		void print_receiver_input(byte*);
+		void print_receiver_input();
 		void print_control_data();
 		void generate_control_from_joysticks();
 		bool read();

@@ -1,12 +1,11 @@
-pyyaml
 numpy
+pyyaml
 pandas
 pillow
 cython
 seaborn
 requests
 protobuf
-depthai
 setuptools
 platformio==6.0.1
 opencv-python

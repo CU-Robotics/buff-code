@@ -23,17 +23,76 @@ void test_dr16_serial_active() {
 void loop_for(int32_t duration, bool debug) {
 	int32_t test_timout = ARM_DWT_CYCCNT;
 
-	while (DURATION_MS(test_timout, ARM_DWT_CYCCNT) < 60000/*duration*/) {
+	while (DURATION_MS(test_timout, ARM_DWT_CYCCNT) < duration) {
 
 		timer_set(0);
 		receiver.read();
 		timer_mark(0);
 
-		if (1 /*debug*/) {
+		if (debug) {
 			receiver.print_receiver_input();		
 		}
 
-		timer_wait_us(0, 15000);
+		timer_wait_us(0, int(duration / 15));
+
+		for ( int j = 0 ; j < REMOTE_CONTROL_LEN; j++) {
+			float tmp = receiver.data[j];
+			float sum = 0;
+			for (int i = 0 ; i < REMOTE_CONTROL_LEN; i++) {
+				sum += receiver.data[i];
+			}
+
+			TEST_ASSERT(sum - tmp > 10, "Found more than one non-zero value");
+		}
+		//determine if there are wrong bits being read 
+		// if(abs(receiver.data[0]) > 100)
+		// {
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[3]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[4]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[5]);
+		// }
+		// if(receiver.data[1] > 100)
+		// {
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[3]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[4]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[5]);
+		// }
+		// if(receiver.data[3] > 1)
+		// {
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[0]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[1]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[2]);
+		// } 
+		// if(receiver.data[4] > 1)
+		// {
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[0]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[1]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[2]);
+		// } 
+		// if(receiver.data[0] < -100)
+		// {
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[4]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[5]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[6]);
+		// }
+		// if(receiver.data[1] < -100)
+		// {
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[4]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[5]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[6]);
+		// }
+		// if(receiver.data[3] < -1)
+		// {
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[0]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[1]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[2]);
+		// } 
+		// if(receiver.data[4] < -1)
+		// {
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[0]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[1]);
+		// 	TEST_ASSERT_EQUAL_FLOAT(0, receiver.data[2]);
+		// } 
 
 	}
 }
@@ -76,20 +135,28 @@ typedef union
 
 void dr16_data_display() {
 	Serial.printf("\tDisplaying input, press any button/joystick:...\n");
-	loop_for(100, false);
 
-	FLOATBYTE_t fb;	
-	receiver.print_control_data();
-	for (int i = 2; i < REMOTE_CONTROL_LEN; i++) {
-		fb.number = receiver.data[i];
-		Serial.print(fb.bytes[0], HEX);
-		Serial.print(" ");
-		Serial.print(fb.bytes[1], HEX);
-		Serial.print(" ");
-		Serial.print(fb.bytes[2], HEX);
-		Serial.print(" ");
-		Serial.print(fb.bytes[3], HEX);
-		Serial.println();
+	int32_t test_timout = ARM_DWT_CYCCNT;
+	int duration = 10000000;
+
+	while (DURATION_US(test_timout, ARM_DWT_CYCCNT) < duration) {
+
+		receiver.read();
+
+		timer_wait_us(0, int(duration / 100));
+		// for (int i = 0; i < REMOTE_CONTROL_LEN; i++)
+		// {
+		// 	for (int j = 0; j < 8; j++) {
+		// 		Serial.print(bitRead(tmp[i], j));
+		// 	}
+
+		// 	Serial.print(" ");
+		// 	if ((i + 1) % 6 == 0) {
+		// 		Serial.println();
+		// 	}
+		// }
+
+		receiver.print_control_data();
 	}
 }
 

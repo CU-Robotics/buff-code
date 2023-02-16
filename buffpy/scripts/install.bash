@@ -20,19 +20,15 @@ if [[ -f /.dockerenv ]]; then
 	PROJECT_ROOT=/home/cu-robotics/buff-code
 fi
 
-if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
+	export ROS_DISTRO=humble
+elif [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
 	export ROS_DISTRO=noetic				# ROS for Ubuntu18
 elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
 	export ROS_DISTRO=melodic
 fi
 
-export ROS_PKG=ros-base
-
-if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
-	export ROS_DISTRO=noetic				# ROS for Ubuntu18
-elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
-	export ROS_DISTRO=melodic
-fi
+export ROS_PKG=desktop
 
 
 #
@@ -66,7 +62,12 @@ $SUDO apt update
 #
 
 if [[ ! -d /opt/ros/${ROS_DISTRO} ]]; then
-	source ${PROJECT_ROOT}/buffpy/scripts/install_ros.bash
+	if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
+		source ${PROJECT_ROOT}/buffpy/scripts/install_ros2.bash
+	else
+		source ${PROJECT_ROOT}/buffpy/scripts/install_ros.bash
+	fi
+	
 fi
 
 $SUDO apt autoremove -y

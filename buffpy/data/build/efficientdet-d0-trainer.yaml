@@ -1,3 +1,2 @@
 project: 'efficientdet-d0-trainer'
-build: 'bash'
-install: ['scripts/start_training.bash']
+build: 'chmod +x scripts/* && ./scripts/start_training.bash'

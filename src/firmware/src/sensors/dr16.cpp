@@ -39,26 +39,26 @@ DR16::DR16(HardwareSerial* serial_port)
 	}
 }
 
-void DR16::print_receiver_input(byte* buffer){
+void DR16::print_receiver_input(){
 
 	Serial.println("\n\t===== DR16 Input");
 
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++)
 	{
-		for (int j = 0; j < 8; j++) {
-			Serial.print(bitRead(buffer[i], j));
-		}
-		// Serial.print(buffer[i], BIN);
+		// for (int j = 0; j < 8; j++) {
+		// 	Serial.print(bitRead(data[i], j));
+		// }
+		Serial.print(data[i]);
 
-		Serial.print(" ");
-		if ((i + 1) % 6 == 0) {
-			Serial.println();
-		}
+		// Serial.print(" ");
+		// if ((i + 1) % 6 == 0) {
+		// 	Serial.println();
+		// }
 	}
 }
 
 void DR16::print_control_data(){
-	Serial.println("\n\t===== DR16 Data");
+	// Serial.println("\n\t===== DR16 Data");
 	Serial.printf("\n\t%f\t%f\t%f\t%f\t%f\t%f\n\n", 
 		data[0], data[1], data[2], data[3], 
 		data[4], data[5]);
@@ -105,7 +105,7 @@ void DR16::generate_control_from_joysticks() {
 
 	// Normalize the joystick values
 	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -660, 660);
-	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
+	float r_stick_y = bounded_map(((tmp[2] & 0x3F) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
 	// Set the left stick to [-1:1]
 	// 1 / 660.0 = 0.00151515 (avoids an unnecesarry division)
 	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -660, 660);

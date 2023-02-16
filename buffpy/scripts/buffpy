@@ -152,24 +152,50 @@ def generate_pio_command(upload, v):
 
 	return pio_cmd
 
-def copy_files_from_profile(dictionary, item, src_path, target_path):
-	if item in dictionary:
-		for file_path in dictionary[item]:
-			target_file = file_path.split('/')[-1]
-			shutil.copyfile(os.path.join(src_path, file_path), os.path.join(target_path, target_file))
-
-def copy_dir_from_profile(dictionary, item, src_path, target_path):
-	if item in dictionary:
-		for dir_path in dictionary[item]:
-			src = os.path.join(src_path, dir_path)
-			if os.path.exists(target_path):
-				shutil.rmtree(target_path)
-
-			shutil.copytree(src, target_path)
+def reset_directory(directory):
+	if os.path.exists(directory):
+		shutil.rmtree(directory)
 
 def assert_directory(directory):
 	if not os.path.exists(directory):
 		os.mkdir(directory)
+
+def copy_file_from_profile(src, target_path):
+	target_file = src.split('/')[-1]
+	shutil.copyfile(src, os.path.join(target_path, target_file))
+
+def copy_dir_from_profile(src, target_path):
+	# for file in glob.glob(os.path.join(src, "*")):
+	# 	copy_file_from_profile(os.path.join(src, file), target_path)
+	
+	# for path in glob.glob(os.path.join(src, "*/")):
+	# 	print(path)
+	# 	reset_directory(os.path.join(target_path, path))
+	# 	copy_dir_from_profile(os.path.join(src, path), target_path)
+	target_file = src.split('/')[-1]
+	target = os.path.join(target_path, target_file)
+	reset_directory(target)
+	shutil.copytree(src, target)
+	
+
+def copy_packages(dictionary, item, src_path, target_path):
+	os.chdir(src_path)
+	if item in dictionary:
+		for file in dictionary[item]:
+			src = os.path.join(src_path, file)
+			if os.path.isdir(file):
+				copy_dir_from_profile(src, target_path)
+			elif os.path.isfile(file):
+				copy_file_from_profile(src, target_path)
+
+			# for file in glob.glob(os.path.join(src_path, f"{install_obj}/")):
+			# 	src = os.path.join(src_path, file)
+			# 	print(src)
+			# 	copy_dir_from_profile(src, target_path)
+
+			# for file in glob.glob(os.path.join(src_path, install_obj)):
+			# 	src = os.path.join(src_path, file)
+			# 	copy_file_from_profile(src, target_path)
 
 def build_buffpy(build, v):
 	"""
@@ -200,9 +226,9 @@ def build_buffpy(build, v):
 
 			result = subprocess.run(build_cmd, shell=True)
 		
-			copy_files_from_profile(build, 'install', src_path, lib_path)
-			copy_files_from_profile(build, 'bin', src_path, bin_path)
-			copy_dir_from_profile(build, 'docs', src_path, doc_dir)
+			copy_packages(build, 'install', src_path, lib_path)
+			copy_packages(build, 'bin', src_path, bin_path)
+			copy_packages(build, 'docs', src_path, doc_dir)
 
 	for file in glob.glob(os.path.join(lib_path, '*')):
 		result = subprocess.run(f'chmod +x {file}', shell=True)
@@ -241,7 +267,7 @@ def install_ssh_keys():
 	for robot in devices:
 		robot_address = f'cu-robotics@{robot}'
 		try:
-			result = subprocess.run(['ssh', robot_address, f'if [[ ! -f /home/cu-robotics/.ssh/id_ed25519.pub ]]; then ssh-keygen -t ed25519; fi'], timeout=10)
+			result = subprocess.run(['ssh', robot_address, f'if [[ ! -f /home/cu-robotics/.ssh/id_ed25519.pub ]]; then ssh-keygen -t ed25519; fi'], timeout=30)
 			if result.returncode == 0:
 				result = subprocess.run(['ssh-copy-id', '-i', f'{home}/.ssh/id_ed25519.pub', robot_address])
 				if result.returncode == 0:
@@ -261,7 +287,7 @@ def deploy_directory(robot_address, source, target):
 		RETURNS:
 			None
 	"""
-	clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ ! -d {target} ]]; then mkdir -p {target}; fi;'], timeout=10)
+	clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ ! -d {target} ]]; then mkdir -p {target}; fi;'], timeout=60)
 	if clean_dir_result.returncode != 0:
 		return clean_dir_result.returncode
 
@@ -323,7 +349,7 @@ def initialize_devices():
 		# set target destination
 		robot_address = f'cu-robotics@{robot}'
 		# deploy buffpy and source the install scripts
-		clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target} ]]; then rm -rf {target}/; fi; mkdir -p {target}'], timeout=10)
+		clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target} ]]; then rm -rf {target}/; fi; mkdir -p {target}'], timeout=30)
 
 		if clean_dir_result.returncode != 0:
 			print(f'Failed to clean {robot}')
@@ -370,7 +396,7 @@ def deploy_all_devices():
 	
 		# if root does exist remove it
 		try:	
-			clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target}/buffpy ]]; then rm -rf {target}/buffpy; fi; mkdir -p {target}'], timeout=10)
+			clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target}/buffpy ]]; then rm -rf {target}/buffpy; fi; mkdir -p {target}'], timeout=30)
 			if clean_dir_result.returncode == 0:
 				deploy_directory(robot_address, source, target)
 

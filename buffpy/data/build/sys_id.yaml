@@ -1,4 +1,4 @@
 project: 'system_identification'
-install: ['scripts/motor_identification.py', 'scripts/camera_calibration.py']
+install: ['']
 
 
