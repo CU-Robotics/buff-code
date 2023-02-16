@@ -155,7 +155,7 @@ void DR16::generate_control_from_joysticks() {
 	}
 }
 
-void DR16::generate_control() {
+void DR16::generate_output() {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
 
@@ -181,13 +181,12 @@ void DR16::control_test() {
 }
 
 bool DR16::read() {
-	generate_control();
+	generate_output();
 	return true;
-	if (serial->available() == 18) {
-		generate_control();
-		return true;
-	}
-
-	serial->clear();
-	return false;
+	// if (serial->available() == 18) {
+	// 	generate_output();
+	// 	return true;
+	// }
+	// serial->clear();
+	// return false;
 }

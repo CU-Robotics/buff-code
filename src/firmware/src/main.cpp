@@ -5,19 +5,12 @@
 #include "sensors/dr16.h"
 #include "sensors/revEnc.h"
 
-#include "gimbal.h"
+#include "global_robot_state.h"
 
-PIDFilter flywheelPID;
+GlobalRobotState state;
 
-RM_CAN_Interface rmCAN;
-
-DR16 receiver;
-RevEnc testRevEncoder(2);
-
-//Gimbal gimbal(globalRobotState);
-
-int loopFrequency = 2000; // in microseconds
-int programTime; // updates at the end of every loop
+uint32_t loopFrequency = 2000; // in microseconds
+uint32_t programTime; // stores the system time at the start of every loop
 
 void setup() {
   delay(500); // Half-second startup delay
@@ -25,45 +18,52 @@ void setup() {
   Serial.begin(1000000);
 	Serial.println("-- STANDARD ROBOT TEST PROGRAM --\n");
 
-  //globalRobotState->receiver = receiver;
-
   // Serial.print("Waiting for sensor initialization");
-  // while (!gimbal.ready()) {
+  // while ( {Sensors are outputting garbage data} ) {
   //   Serial.print(".");
   //   delay(100);
   // }
   // Serial.print("Complete!\n");
 
-  flywheelPID.K[0] = 0.0005;
-
-  rmCAN.addMotor("Flywheel", 7, CAN2, C620);
-
   programTime = micros();
 }
 
 void loop() {
-  int deltaTime = micros() - programTime;
-  programTime = micros();
+  uint32_t currentTime = micros();
+  state.deltaTime = currentTime - programTime;
+  programTime = currentTime;
 
-  /* Read ref, reciever */
-  // receiver.control_test();
-  // if (receiver.read()) receiver.print_control_data();
-
-  // Serial.print(testRevEncoder.getAngle());
-  // Serial.print(", ");
-  // Serial.println(testRevEncoder.getAngleRaw());
+  /* Read sensors */
+  state.receiver.read();
+  state.rmCAN.read_can(1);
+  state.rmCAN.read_can(2);
 
   /* Generate control output */
-  //gimbal.loop(deltaTime);
+  int leftSwitch = (int)(state.receiver.data[5]);
+  if (leftSwitch == 0) {
+    state.robotMode == DEMO;
+    demoLoop();
+  } else if (leftSwitch == 1) {
+    state.robotMode == MATCH;
+    matchLoop();
+  } else {
+    state.robotMode == OFF;
+    state.motorMap.allOff();
+  }
 
-  rmCAN.read_can(2);
-
-  flywheelPID.setpoint = 9000;
-  flywheelPID.measurement = rmCAN.get_motor_RPM("Flywheel");
-  flywheelPID.filter(deltaTime);
-
-  rmCAN.set_output("Flywheel", flywheelPID.output);
-  rmCAN.write_can();
+  /* Send CAN output */
+  state.rmCAN.write_can();
 
   while (micros() - programTime < loopFrequency) continue;
+}
+
+void demoLoop() {
+  if (state.receiver.data[6] == 1) {
+    state.setMotorRPM("Flywheel L", -9000.0);
+    state.setMotorRPM("Flywheel R", 9000.0);
+  }
+}
+
+void matchLoop() {
+
 }

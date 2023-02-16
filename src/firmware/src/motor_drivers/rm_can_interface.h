@@ -3,23 +3,23 @@
 #ifndef BUFFCAN_H
 #define BUFFCAN_H
 
-#define NUM_CAN_BUSES				2
+#define NUM_CAN_BUSES				    2
 #define MOTOR_FEEDBACK_SIZE 		3
 #define NUM_CAN_MESSAGE_TYPES		3
 #define CAN_MOTOR_BLOCK_SIZE		4
-#define MAX_NUM_RM_MOTORS			16
+#define MAX_NUM_RM_MOTORS			  16
 #define MAX_CAN_RETURN_IDS			12
-#define MOTOR_FEEDBACK_TIMEOUT  	100
+#define MOTOR_FEEDBACK_TIMEOUT  100
 #define ESC_0_OUTPUT_SCALE			10000
 #define ESC_1_OUTPUT_SCALE			16384
 #define ESC_2_OUTPUT_SCALE			30000
 
-#define C610   0
-#define C620   1
-#define GM6020 2
+#define C610      0
+#define C620      1
+#define GM6020    2
 
-#define CAN1   1
-#define CAN2   2
+#define CANBUS_1  1
+#define CANBUS_2  2
 
 /*
 

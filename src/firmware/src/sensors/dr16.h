@@ -31,7 +31,7 @@ struct DR16 {
 		void print_receiver_input(byte*);
 		void print_control_data();
 		void generate_control_from_joysticks();
-		void generate_control();
+		void generate_output();
 		void control_test();
 		bool read();
 
