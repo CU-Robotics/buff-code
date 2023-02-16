@@ -11,10 +11,9 @@
 data/*
 buffpy/lib/*
 documentation
-src/edge2-npu/*
 buffpy/bin/tycmd
 buffpy/data/models/*
-src/efficientdet-d0-trainer/*
-src/buff_rust/target
+src/buff_rust/target/*
 buffpy/bin/firmware.hex
 buffpy/config/sensitive/*
+src/efficientdet-d0-trainer/*
