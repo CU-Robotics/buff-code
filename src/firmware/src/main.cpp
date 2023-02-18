@@ -58,6 +58,26 @@ void loop() {
 }
 
 void demoLoop() {
+  // Gimbal
+  if (state.receiver.data[1] != -1.0) {
+    // Manual control
+    float yawRate = state.receiver.data[0] * 3000.0; // Multiply by max RPM allowed in demo mode
+    float maxPitchRPM = 500.0;
+    if (state.pitchEncoder.getAngle()) {
+      state.pitchEncoder.getAngle() * 0.01;
+    }
+    state.setMotorRPM("Yaw 1", yawRate);
+    state.setMotorRPM("Yaw 2", yawRate);
+
+    float pitchRate = state.receiver.data[1] * 500.0; // Multiply by max RPM allowed in demo mode
+    float pitchGravityFeedForward = cosf(1.0/* Pitch Angle * pi / 180 */);
+    state.setMotorRPM("Pitch L", -pitchRate);
+    state.setMotorRPM("Pitch R", pitchRate);
+  } else {
+    // Autoaim
+  }
+
+  // Shooter
   if (state.receiver.data[6] == 1) {
     state.setMotorRPM("Flywheel L", -9000.0);
     state.setMotorRPM("Flywheel R", 9000.0);
