@@ -175,7 +175,7 @@ void SwerveChassis::drive(float driveX, float driveY, float spin, unsigned long 
 
   // Update each module
   moduleFR.update(speedFR, angleFR, deltaTime);
-  //moduleFL.update(speedFL, angleFL, deltaTime);
+  moduleFL.update(speedFL, angleFL, deltaTime);
   //moduleBL.update(speedBL, angleBL, deltaTime);
   //moduleBR.update(speedBR, angleBR, deltaTime);
 }

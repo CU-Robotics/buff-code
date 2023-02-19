@@ -12,7 +12,7 @@
 #include "subsystems/shooter.h"
 #include "subsystems/swerveChassis.h"
 #include "subsystems/xDrive.h"
-
+  
 // CAN
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
@@ -102,7 +102,7 @@ void setup() {
   robot_config.swerveChassis.FR.cornerID = 0;
   robot_config.swerveChassis.FR.steerMotorID = 10;
   robot_config.swerveChassis.FR.steerEncoderID = 1 + 1;
-  robot_config.swerveChassis.FR.driveMotorID = 7;//8;
+  robot_config.swerveChassis.FR.driveMotorID = 8;//7;
   robot_config.swerveChassis.FR.absolute_offset = 45;
   int fr_alignment[9] = {20, 60, 100, 140, 181, 221, 261, 302, 341};
   for (int i = 0; i < 9; i++)
@@ -112,7 +112,7 @@ void setup() {
   robot_config.swerveChassis.FL.cornerID = 1;
   robot_config.swerveChassis.FL.steerMotorID = 10;
   robot_config.swerveChassis.FL.steerEncoderID = 1 + 2;
-  robot_config.swerveChassis.FL.driveMotorID = 10;//4;
+  robot_config.swerveChassis.FL.driveMotorID = 4;//2;
   robot_config.swerveChassis.FL.absolute_offset = -45;
   int fl_alignment[9] = {2, 42, 85, 125, 166, 206, 246, 288, 327};
   for (int i = 0; i < 9; i++)
@@ -122,7 +122,7 @@ void setup() {
   robot_config.swerveChassis.RL.cornerID = 2;
   robot_config.swerveChassis.RL.steerMotorID = 10;
   robot_config.swerveChassis.RL.steerEncoderID = 1 + 3;
-  robot_config.swerveChassis.RL.driveMotorID = 10;//2;
+  robot_config.swerveChassis.RL.driveMotorID = 7;//2;
   robot_config.swerveChassis.RL.absolute_offset = -135;
   int bl_alignment[9] = {23, 63, 102, 142, 182, 222, 261, 301, 340};
   for (int i = 0; i < 9; i++)
@@ -170,16 +170,12 @@ void loop() {
   reciever.update();
 
   // Update subsystems
-  //gimbal.update(deltaT);
-  // Serial.println();
-  // Serial.print(t0);
-  Serial.print(", ");
-  
   swerveChassis.update(deltaT); //m3508
-  shooter.update(deltaT); //m2006
-  //Serial.println(deltaT);
+  //shooter.update(deltaT); //m2006
   //xDrive.update(deltaT);
-  //Serial.println(robot_state);
+  //gimbal.update(deltaT);
+
+  Serial.println();
 
 
 //58% power gave a high velocity of of 14.9 and a low of 12.9.

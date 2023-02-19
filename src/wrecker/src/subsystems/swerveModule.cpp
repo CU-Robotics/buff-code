@@ -18,7 +18,10 @@ void SwerveModule::setup(C_SwerveModule *data, S_Robot *r_state, S_SwerveModule 
   moduleState = modState;
 
   this->steerMotor.init(config->steerMotorID, 1, config->steerEncoderID);
-  this->driveMotor.init(config->driveMotorID, 2);
+  if (config->cornerID == 2)
+    this->driveMotor.init(config->driveMotorID, 2);
+  else
+    this->driveMotor.init(config->driveMotorID, 1);
 }
 
 void SwerveModule::calibrate()
@@ -175,28 +178,25 @@ void SwerveModule::update(float speed, float angle, float deltaTime)
     // PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
   }
 
-  if (state->driverInput.s2 == 1) {
-    if (config->cornerID == 1)
-      moduleState->driveVel.R = -9000;
-    else
+  // if (state->driverInput.s2 == 1) {
+  //   if (config->cornerID == 1)
+  //     moduleState->driveVel.R = -9000;
+  //   else
+  //     moduleState->driveVel.R = 9000;
+  // } else
+  //   moduleState->driveVel.R = 0;
+  if (config->cornerID == 2) {
+    if (state->driverInput.s2 == 1)
       moduleState->driveVel.R = 9000;
+    else
+      moduleState->driveVel.R = 0;
   } else
-    moduleState->driveVel.R = 0;
-  //moduleState->driveVel.R = ((jsi2 * 2) - 1) * 100;//tmp_steerPos.Y;
+    moduleState->driveVel.R = ((jsi2 * 2) - 1) * 4000;//tmp_steerPos.Y;
   PID_Filter(&config->driveVel, &moduleState->driveVel, driveMotor.getRpm(), deltaTime);
 
-  if (driveMotor.getAngle() != 0 && config->cornerID == 2) {
-    Serial.print(jsi1);
-    Serial.print(", ");
-    Serial.print(driveMotor.getAngle());
-    Serial.print(", ");
-    Serial.print(jsi1*295+25);
-    Serial.print(", ");
-    Serial.print(steerMotor.getAngle());
-    Serial.println();
-  }
-
-  Serial.println(state->driverInput.s1);
+  Serial.print(driveMotor.getRpm());
+  Serial.print(" ");
+  driveMotor.updateMotor();
 
   // Set motor power
   driveMotor.setPower(moduleState->driveVel.Y);
