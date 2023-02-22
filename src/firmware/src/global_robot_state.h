@@ -18,6 +18,15 @@ enum SystemMode {
   AUTO
 };
 
+struct MotorMap {
+  MotorMap(RM_CAN_Interface* rmCAN);
+  void setMotorRPM(String alias, float rpm, int deltaTime);
+  void allOff();
+
+  RM_CAN_Interface* rmCAN;
+  PIDFilter pid;
+};
+
 struct GlobalRobotState {
   RM_CAN_Interface rmCAN;
 
@@ -43,15 +52,6 @@ struct GlobalRobotState {
   float gimbalHeadingRate[2];    // (yawRate, pitchRate): rpm
 
   SystemMode shooterMode = IDLE;
-};
-
-struct MotorMap {
-  MotorMap(RM_CAN_Interface* rmCAN);
-  void setMotorRPM(String alias, float rpm, int deltaTime);
-  void allOff();
-
-  RM_CAN_Interface* rmCAN;
-  PIDFilter pid;
 };
 
 #endif

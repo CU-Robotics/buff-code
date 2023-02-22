@@ -160,7 +160,7 @@ void DR16::generate_output() {
 	serial->readBytes(tmp, 18);
 
 	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -1000, 1000) / 1000.0;
-	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -1000, 1000) / 1000.0;
+	float r_stick_y = bounded_map(((tmp[2] & 0x3F) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -1000, 1000) / 1000.0;
 
 	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -1000, 1000) / 1000.0;
 	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -1000, 1000) / 1000.0;
@@ -171,12 +171,14 @@ void DR16::generate_output() {
 	data[3] = r_stick_y;
 	data[5] = (tmp[5] & 0x30) >> 4;				// switch 1
 	data[6] = (tmp[5] & 0xC0) >> 6;				// switch 2
+	// for (int i = 0; i < sizeof(data); i++) Serial.print(data[i]);
+	// Serial.println();
 }
 
 void DR16::control_test() {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
-	for (int i = 0; i < sizeof(tmp); i++) Serial.printf("\n "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
+	for (int i = 0; i < sizeof(tmp); i++) Serial.printf(" "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
 	Serial.println();
 }
 
