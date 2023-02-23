@@ -29,6 +29,12 @@ void setup() {
 }
 
 void demoLoop() {
+  // for (float value : state.rmCAN.motor_arr[8].data) {
+  //   Serial.printf("%f, ", value);
+  // }
+  // Serial.println();
+  //Serial.printf("rpm: %f\n", state.rmCAN.get_motor_RPM(8));
+
   // Gimbal
   // if (state.receiver.data[1] != -1.0) {
   //   // Manual control
@@ -53,11 +59,6 @@ void demoLoop() {
   //   state.setMotorRPM("Flywheel L", -9000.0);
   //   state.setMotorRPM("Flywheel R", 9000.0);
   // }
-
-  //Serial.println(state.receiver.data[0]);
-
-  for (int i = 0; i < sizeof(state.receiver.data); i++) Serial.print(state.receiver.data[i]);
-	Serial.println();
 }
 
 void matchLoop() {
@@ -66,30 +67,31 @@ void matchLoop() {
 
 void loop() {
   uint32_t currentTime = micros();
-  state.deltaTime = currentTime - programTime;
+  state.deltaTime = (currentTime - programTime) / 1000.0;
   programTime = currentTime;
 
   /* Read sensors */
   state.receiver.read();
-  state.rmCAN.read_can(1);
-  state.rmCAN.read_can(2);
+  state.rmCAN.read_can(0);
+  state.rmCAN.read_can(CAN1);
+  state.rmCAN.read_can(CAN2);
 
   /* Generate control output */
-  int leftSwitch = (int)(state.receiver.data[5]);
-  if (leftSwitch == 3) {
+  if (state.receiver.out.l_switch == 3) {
     state.robotMode = DEMO;
     demoLoop();
-  } else if (leftSwitch == ASCII_21) {
+  } else if (state.receiver.out.l_switch == 2) {
     state.robotMode = MATCH;
     matchLoop();
   } else {
     state.robotMode = OFF;
-    state.motorMap.allOff();
+    //state.motorMap.allOff();
   }
-  demoLoop();
 
   /* Send CAN output */
   state.rmCAN.write_can();
+
+  // Serial.println(state.deltaTime);
 
   while (micros() - programTime < loopFrequency) continue;
 }

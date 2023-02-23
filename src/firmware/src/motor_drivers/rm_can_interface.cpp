@@ -359,6 +359,7 @@ void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
 	*/
 
 	int motor_index = motor_index_from_return(can_bus, msg->id);
+	Serial.println(motor_index);
 
 	if (motor_index >= 0) {
 		// Serial.printf("Received data from %X, %i\n", msg->id - 0x201, motor_index);

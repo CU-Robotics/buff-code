@@ -25,6 +25,16 @@
 float normalize_channel(int16_t);
 float wrap_radians(float);
 
+struct DR16_DATA {
+	float l_stick_x;
+	float l_stick_y;
+	float r_stick_x;
+	float r_stick_y;
+	float wheel;
+	int l_switch;
+	int r_switch;
+};
+
 struct DR16 {
 		DR16();
 		DR16(HardwareSerial*);
@@ -36,6 +46,7 @@ struct DR16 {
 		bool read();
 
 		float data[7];
+		DR16_DATA out;
 
 		float demo[];
 		

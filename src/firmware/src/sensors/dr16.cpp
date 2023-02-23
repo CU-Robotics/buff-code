@@ -166,12 +166,19 @@ void DR16::generate_output() {
 	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -1000, 1000) / 1000.0;
 
 	data[0] = l_stick_x;
+	out.l_stick_x = l_stick_x;
 	data[1] = l_stick_y;
+	out.l_stick_y = l_stick_y;
 	data[2] = r_stick_x;
+	out.r_stick_x = r_stick_x;
 	data[3] = r_stick_y;
+	out.r_stick_y = r_stick_y;
 	data[5] = (tmp[5] & 0x30) >> 4;				// switch 1
+	out.r_switch = data[5];
 	data[6] = (tmp[5] & 0xC0) >> 6;				// switch 2
-	// for (int i = 0; i < sizeof(data); i++) Serial.print(data[i]);
+	out.l_switch = data[6];
+
+	// for (float value : data) Serial.printf("%f ", value);
 	// Serial.println();
 }
 
@@ -183,12 +190,11 @@ void DR16::control_test() {
 }
 
 bool DR16::read() {
-	generate_output();
-	return true;
-	// if (serial->available() == 18) {
-	// 	generate_output();
-	// 	return true;
+	//if (serial->available() == 18) {
+		generate_output();
+		return true;
 	// }
 	// serial->clear();
+	// Serial.println("No Controller Connected!");
 	// return false;
 }
