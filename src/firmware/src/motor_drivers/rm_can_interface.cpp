@@ -359,13 +359,12 @@ void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
 	*/
 
 	int motor_index = motor_index_from_return(can_bus, msg->id);
-	Serial.println(motor_index);
 
 	if (motor_index >= 0) {
 		// Serial.printf("Received data from %X, %i\n", msg->id - 0x201, motor_index);
 		float current_angle = motor_arr[motor_index].data[0];
 		float feedback_angle = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
-		float feedback_rpm = bytes_to_int16_t(msg->buf[2], msg->buf[3]) * 0.033333333 * PI;
+		float feedback_rpm = bytes_to_int16_t(msg->buf[2], msg->buf[3]);
 		float feedback_torque = bytes_to_int16_t(msg->buf[4], msg->buf[5]);
 
 		// need a detector for roll overs
@@ -476,13 +475,9 @@ void RM_CAN_Interface::read_can(int bus_num){
 
 bool RM_CAN_Interface::addMotor(String alias, int motorID, int CANID, int motorType) {
 	byte config[3] = {CANID, motorType, motorID};
-	for (int i = 0; i < sizeof(motor_arr); i++) {
-		if (motor_arr[i].esc_id == -1) {
-			set_index(i, config);
-			motorAliases[i] = alias;
-			return true;
-		}
-	}
+	int index = motorID + ((CANID - 1) * 8) - 1;
+	set_index(index, config);
+	motorAliases[index] = alias;
 	Serial.println("Error adding motor! All RM device slots are claimed.");
 	return false;
 }

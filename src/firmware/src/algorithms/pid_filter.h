@@ -14,10 +14,10 @@ struct PIDFilter {
     float filter(int deltaTime) {
         float error = setpoint - measurement;
         sumError += error * deltaTime;
-        output = (K[0] * error)
-            + (K[1] * sumError)
-            + (K[2] * ((error - prevError) / deltaTime))
-            + (K[3] * variableFeedForward);
+        output = (K[0] * error);
+            // + (K[1] * sumError)
+            // + (K[2] * ((error - prevError) / deltaTime))
+            // + (K[3] * variableFeedForward);
         prevError = error;
         return output;
     }

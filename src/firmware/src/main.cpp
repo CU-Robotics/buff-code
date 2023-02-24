@@ -3,6 +3,7 @@
 #include "algorithms/pid_filter.h"
 #include "motor_drivers/rm_can_interface.h"
 #include "sensors/dr16.h"
+#include "sensors/lsm6dsox.h"
 #include "sensors/revEnc.h"
 
 #include "global_robot_state.h"
@@ -33,7 +34,13 @@ void demoLoop() {
   //   Serial.printf("%f, ", value);
   // }
   // Serial.println();
-  //Serial.printf("rpm: %f\n", state.rmCAN.get_motor_RPM(8));
+  float ratio = 17.0 / 246.0;
+  Serial.printf("rpm: %f, %f, %f\n", state.rmCAN.get_motor_RPM(8), state.rmCAN.get_motor_RPM(4), state.imu.data[5] / 6.0);
+
+  float rpm = state.imu.data[5] / 6.0 / ratio;
+  float rpm2 = -state.rmCAN.get_motor_RPM(8);
+  //state.setMotorRPM(8, rpm);//state.receiver.out.l_stick_x * 0);
+  //state.setMotorRPM(4, rpm);//state.receiver.out.l_stick_x * 0);
 
   // Gimbal
   // if (state.receiver.data[1] != -1.0) {
@@ -72,6 +79,12 @@ void loop() {
 
   /* Read sensors */
   state.receiver.read();
+  state.imu.read_lsm6dsox_gyro();
+  // for (float value : state.imu.data) {
+  //   Serial.printf("%f, ", value);
+  // }
+  //Serial.println(state.imu.data[5] / 6.0);
+
   state.rmCAN.read_can(0);
   state.rmCAN.read_can(CAN1);
   state.rmCAN.read_can(CAN2);
@@ -83,8 +96,12 @@ void loop() {
   } else if (state.receiver.out.l_switch == 2) {
     state.robotMode = MATCH;
     matchLoop();
+    state.rmCAN.set_output(8, 0);
+    state.rmCAN.set_output(4, 0);
   } else {
     state.robotMode = OFF;
+    state.rmCAN.set_output(8, 0);
+    state.rmCAN.set_output(4, 0);
     //state.motorMap.allOff();
   }
 
