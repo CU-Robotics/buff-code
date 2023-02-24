@@ -5,11 +5,21 @@
 MotorMap::MotorMap(RM_CAN_Interface* rmCAN) {
   this->rmCAN = rmCAN;
 
+  byte b6[3] = {1, 1, 6};
+  rmCAN->set_index(6, b6);
+
+  byte b5[3] = {1, 1, 5};
+  rmCAN->set_index(5, b5);
+
+  byte b3[3] = {1, 1, 3};
+  rmCAN->set_index(3, b3);
+
+  byte b1[3] = {1, 1, 1};
+  rmCAN->set_index(1, b1);
+
   byte b8[3] = {1, 1, 8};
   rmCAN->set_index(8, b8);
 
-  byte b4[3] = {1, 1, 4};
-  rmCAN->set_index(4, b4);
 
   //rmCAN->addMotor("Yaw 1", 8, CAN1, C620);
 
@@ -33,7 +43,6 @@ void MotorMap::setMotorRPM(int idx, float rpm, int deltaTime) {
   pid.setpoint = rpm;
   pid.measurement = rmCAN->get_motor_RPM(idx);
   pid.filter(deltaTime);
-  Serial.println(pid.output);
   rmCAN->set_output(idx, pid.output);
 }
 

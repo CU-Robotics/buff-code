@@ -34,26 +34,66 @@ void demoLoop() {
   //   Serial.printf("%f, ", value);
   // }
   // Serial.println();
-  float ratio = 17.0 / 246.0;
-  Serial.printf("rpm: %f, %f, %f\n", state.rmCAN.get_motor_RPM(8), state.rmCAN.get_motor_RPM(4), state.imu.data[5] / 6.0);
+  // float ratio = 17.0 / 246.0;
+  // Serial.printf("rpm: %f, %f, %f\n", state.rmCAN.get_motor_RPM(8), state.rmCAN.get_motor_RPM(4), state.imu.data[5] / 6.0);
 
-  float rpm = state.imu.data[5] / 6.0 / ratio;
-  float rpm2 = -state.rmCAN.get_motor_RPM(8);
-  //state.setMotorRPM(8, rpm);//state.receiver.out.l_stick_x * 0);
-  //state.setMotorRPM(4, rpm);//state.receiver.out.l_stick_x * 0);
+  // float rpm = state.imu.data[5] / 6.0 / ratio;
+  // float rpm2 = -state.rmCAN.get_motor_RPM(8);
+
+
+  float x = state.receiver.out.l_stick_x;
+  float y = state.receiver.out.l_stick_y;
+  float spin = state.receiver.out.r_stick_x;
+
+  int max_rpm = 9000;
+
+  double speed_fr = y - x - spin;
+  double speed_fl = y + x + spin;
+  double speed_bl = y - x + spin;
+  double speed_br = y + x - spin;
+
+  // if (isnan(speed_fr)) speed_fr = 0;
+  // if (isnan(speed_fl)) speed_fl = 0;
+  // if (isnan(speed_bl)) speed_bl = 0;
+  // if (isnan(speed_br)) speed_br = 0;
+
+  double max_speed = fabs(speed_fr);
+  max_speed = max(max_speed, fabs(speed_fl));
+  max_speed = max(max_speed, fabs(speed_bl));
+  max_speed = max(max_speed, fabs(speed_br));
+
+  if (max_speed > 1.0) {
+    speed_fr /= max_speed;
+    speed_fl /= max_speed;
+    speed_bl /= max_speed;
+    speed_br /= max_speed;
+  }
+
+  state.setMotorRPM(6, speed_fr * max_rpm);
+  state.setMotorRPM(5, speed_fl * max_rpm);
+  state.setMotorRPM(3, speed_bl * max_rpm);
+  state.setMotorRPM(1, speed_br * max_rpm);
+
+  // Serial.println(speed_fr);
+
+  Serial.println(state.rmCAN.get_motor_RPM(1));
+
+
+
+  //state.setMotorRPM(8, rpm);//state.receiver.out.l_stick_x);
+  //state.setMotorRPM(4, rpm);//state.receiver.out.l_stick_x);
 
   // Gimbal
   // if (state.receiver.data[1] != -1.0) {
   //   // Manual control
-  //   float yawRate = state.receiver.data[0] * 3000.0; // Multiply by max RPM allowed in demo mode
-  //   float maxPitchRPM = 500.0;
+  //   float yawRate = state.receiver.data[0] * 2000; // Multiply by max RPM allowed in demo mode
   //   if (state.pitchEncoder.getAngle()) {
   //     state.pitchEncoder.getAngle() * 0.01;
   //   }
   //   state.setMotorRPM("Yaw 1", yawRate);
   //   state.setMotorRPM("Yaw 2", yawRate);
 
-  //   float pitchRate = state.receiver.data[1] * 500.0; // Multiply by max RPM allowed in demo mode
+  //   float pitchRate = state.receiver.data[1] * 200; // Multiply by max RPM allowed in demo mode
   //   float pitchGravityFeedForward = cosf(1.0/* Pitch Angle * pi / 180 */);
   //   state.setMotorRPM("Pitch L", -pitchRate);
   //   state.setMotorRPM("Pitch R", pitchRate);
@@ -96,12 +136,16 @@ void loop() {
   } else if (state.receiver.out.l_switch == 2) {
     state.robotMode = MATCH;
     matchLoop();
-    state.rmCAN.set_output(8, 0);
-    state.rmCAN.set_output(4, 0);
+    state.setMotorRPM(6, 0);
+    state.setMotorRPM(5, 0);
+    state.setMotorRPM(3, 0);
+    state.setMotorRPM(1, 0);
   } else {
     state.robotMode = OFF;
-    state.rmCAN.set_output(8, 0);
-    state.rmCAN.set_output(4, 0);
+    state.setMotorRPM(6, 0);
+    state.setMotorRPM(5, 0);
+    state.setMotorRPM(3, 0);
+    state.setMotorRPM(1, 0);
     //state.motorMap.allOff();
   }
 
