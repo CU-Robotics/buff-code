@@ -58,16 +58,6 @@ void MotorMap::setMotorRPM(String alias, float rpm, int deltaTime) {
 }
 
 void MotorMap::allOff() {
-  rmCAN->set_output("FR Drive",   0.0);
-  rmCAN->set_output("FL Drive",   0.0);
-  rmCAN->set_output("BL Drive",   0.0);
-  rmCAN->set_output("BR Drive",   0.0);
-  rmCAN->set_output("Yaw 1",      0.0);
-  rmCAN->set_output("Yaw 2",      0.0);
-  rmCAN->set_output("Pitch L",    0.0);
-  rmCAN->set_output("Pitch R",    0.0);
-  rmCAN->set_output("Flywheel L", 0.0);
-  rmCAN->set_output("Flywheel R", 0.0);
-  rmCAN->set_output("Feeder L",   0.0);
-  rmCAN->set_output("Feeder R",   0.0);
+  for (int i = 0; i < sizeof(rmCAN->motor_arr); i++)
+    rmCAN->set_output(i, 0.0);
 }
