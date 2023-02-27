@@ -34,10 +34,14 @@ void demoLoop() {
   //   Serial.printf("%f, ", value);
   // }
   // Serial.println();
-  // float ratio = 17.0 / 246.0;
-  // Serial.printf("rpm: %f, %f, %f\n", state.rmCAN.get_motor_RPM(8), state.rmCAN.get_motor_RPM(4), state.imu.data[5] / 6.0);
+  //Serial.printf("rpm: %f, %f, %f\n", state.rmCAN.get_motor_RPM(8), state.rmCAN.get_motor_RPM(4), state.imu.data[5] / 6.0);
 
-  // float rpm = state.imu.data[5] / 6.0 / ratio;
+  float ratio = 17.0 / 246.0;
+  float rpm = (state.imu.data[5] / 6.0 / ratio) * 3.0;
+  Serial.println(state.imu.data[5]);
+  state.setMotorRPM(8, rpm);//state.receiver.out.l_stick_x);
+  state.setMotorRPM(4, rpm);
+
   // float rpm2 = -state.rmCAN.get_motor_RPM(8);
 
 
@@ -45,17 +49,17 @@ void demoLoop() {
   float y = state.receiver.out.l_stick_y;
   float spin = state.receiver.out.r_stick_x;
 
-  int max_rpm = 9000;
+  int max_rpm = 8000;
 
   double speed_fr = y - x - spin;
-  double speed_fl = y + x + spin;
-  double speed_bl = y - x + spin;
+  double speed_fl = -(y + x + spin);
+  double speed_bl = -(y - x + spin);
   double speed_br = y + x - spin;
 
-  // if (isnan(speed_fr)) speed_fr = 0;
-  // if (isnan(speed_fl)) speed_fl = 0;
-  // if (isnan(speed_bl)) speed_bl = 0;
-  // if (isnan(speed_br)) speed_br = 0;
+  if (isnan(speed_fr)) speed_fr = 0;
+  if (isnan(speed_fl)) speed_fl = 0;
+  if (isnan(speed_bl)) speed_bl = 0;
+  if (isnan(speed_br)) speed_br = 0;
 
   double max_speed = fabs(speed_fr);
   max_speed = max(max_speed, fabs(speed_fl));
@@ -69,15 +73,18 @@ void demoLoop() {
     speed_br /= max_speed;
   }
 
-  state.setMotorRPM(6, speed_fr * max_rpm);
-  state.setMotorRPM(5, speed_fl * max_rpm);
-  state.setMotorRPM(3, speed_bl * max_rpm);
-  state.setMotorRPM(1, speed_br * max_rpm);
+  state.setMotorRPM(3, speed_fr * max_rpm);
+  state.setMotorRPM(1, speed_fl * max_rpm);
+  state.setMotorRPM(6, speed_bl * max_rpm);
+  state.setMotorRPM(5, speed_br * max_rpm);
 
-  // Serial.println(speed_fr);
+  //Serial.printf("%f - %f\n", state.receiver.out.l_stick_x, state.rmCAN.get_motor_RPM(3));
 
-  Serial.println(state.rmCAN.get_motor_RPM(1));
+  // Serial.printf("fr: %f  fl: %f  bl: %f  br: %f\n", speed_fr, speed_fl, speed_bl, speed_br);
+  // Serial.printf("fr: %f  fl: %f  bl: %f  br: %f\n", state.rmCAN.get_motor_RPM(3), state.rmCAN.get_motor_RPM(1), state.rmCAN.get_motor_RPM(6), state.rmCAN.get_motor_RPM(5));
+  // Serial.printf("x: %f, y: %f, spin: %f\n\n", x, y, spin);
 
+  //Serial.println(state.rmCAN.get_motor_RPM(1));
 
 
   //state.setMotorRPM(8, rpm);//state.receiver.out.l_stick_x);
@@ -152,7 +159,7 @@ void loop() {
   /* Send CAN output */
   state.rmCAN.write_can();
 
-  // Serial.println(state.deltaTime);
+  //Serial.println(state.deltaTime);
 
   while (micros() - programTime < loopFrequency) continue;
 }

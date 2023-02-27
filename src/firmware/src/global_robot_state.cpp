@@ -17,6 +17,9 @@ MotorMap::MotorMap(RM_CAN_Interface* rmCAN) {
   byte b1[3] = {1, 1, 1};
   rmCAN->set_index(1, b1);
 
+  byte b4[3] = {1, 1, 4};
+  rmCAN->set_index(4, b4);
+
   byte b8[3] = {1, 1, 8};
   rmCAN->set_index(8, b8);
 
@@ -36,7 +39,8 @@ MotorMap::MotorMap(RM_CAN_Interface* rmCAN) {
   // rmCAN->addMotor("Feeder L",   5, CAN2, C610);
   // rmCAN->addMotor("Feeder R",   6, CAN2, C610);
 
-  pid.K[0] = 0.0005;
+  pid.K[0] = 0.0002;
+  //pid.K[2] = 0.0004;
 }
 
 void MotorMap::setMotorRPM(int idx, float rpm, int deltaTime) {
