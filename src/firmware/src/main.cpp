@@ -30,20 +30,7 @@ void setup() {
 }
 
 void demoLoop() {
-  // for (float value : state.rmCAN.motor_arr[8].data) {
-  //   Serial.printf("%f, ", value);
-  // }
-  // Serial.println();
-  //Serial.printf("rpm: %f, %f, %f\n", state.rmCAN.get_motor_RPM(8), state.rmCAN.get_motor_RPM(4), state.imu.data[5] / 6.0);
-
-  float ratio = 17.0 / 246.0;
-  float rpm = (state.imu.data[5] / 6.0 / ratio) * 3.0;
-  Serial.println(state.imu.data[5]);
-  state.setMotorRPM(8, rpm);//state.receiver.out.l_stick_x);
-  state.setMotorRPM(4, rpm);
-
-  // float rpm2 = -state.rmCAN.get_motor_RPM(8);
-
+  /* Chassis */
 
   float x = state.receiver.out.l_stick_x;
   float y = state.receiver.out.l_stick_y;
@@ -78,35 +65,16 @@ void demoLoop() {
   state.setMotorRPM(6, speed_bl * max_rpm);
   state.setMotorRPM(5, speed_br * max_rpm);
 
-  //Serial.printf("%f - %f\n", state.receiver.out.l_stick_x, state.rmCAN.get_motor_RPM(3));
-
-  // Serial.printf("fr: %f  fl: %f  bl: %f  br: %f\n", speed_fr, speed_fl, speed_bl, speed_br);
-  // Serial.printf("fr: %f  fl: %f  bl: %f  br: %f\n", state.rmCAN.get_motor_RPM(3), state.rmCAN.get_motor_RPM(1), state.rmCAN.get_motor_RPM(6), state.rmCAN.get_motor_RPM(5));
-  // Serial.printf("x: %f, y: %f, spin: %f\n\n", x, y, spin);
-
-  //Serial.println(state.rmCAN.get_motor_RPM(1));
-
-
-  //state.setMotorRPM(8, rpm);//state.receiver.out.l_stick_x);
-  //state.setMotorRPM(4, rpm);//state.receiver.out.l_stick_x);
-
-  // Gimbal
-  // if (state.receiver.data[1] != -1.0) {
-  //   // Manual control
-  //   float yawRate = state.receiver.data[0] * 2000; // Multiply by max RPM allowed in demo mode
-  //   if (state.pitchEncoder.getAngle()) {
-  //     state.pitchEncoder.getAngle() * 0.01;
-  //   }
-  //   state.setMotorRPM("Yaw 1", yawRate);
-  //   state.setMotorRPM("Yaw 2", yawRate);
-
-  //   float pitchRate = state.receiver.data[1] * 200; // Multiply by max RPM allowed in demo mode
-  //   float pitchGravityFeedForward = cosf(1.0/* Pitch Angle * pi / 180 */);
-  //   state.setMotorRPM("Pitch L", -pitchRate);
-  //   state.setMotorRPM("Pitch R", pitchRate);
-  // } else {
-  //   // Autoaim
-  // }
+  /* Gimbal */
+  if (state.receiver.out.l_stick_y != -1.0) {
+    // Manual control
+    float ratio = 17.0 / 246.0;
+    float rpm = state.imu.data[5] / 6.0 / ratio;
+    state.setMotorRPM(8, rpm);
+    state.setMotorRPM(4, rpm);
+  } else {
+    // Autoaim
+  }
 
   // // Shooter
   // if (state.receiver.data[6] == 1) {
@@ -127,12 +95,7 @@ void loop() {
   /* Read sensors */
   state.receiver.read();
   state.imu.read_lsm6dsox_gyro();
-  // for (float value : state.imu.data) {
-  //   Serial.printf("%f, ", value);
-  // }
-  //Serial.println(state.imu.data[5] / 6.0);
 
-  state.rmCAN.read_can(0);
   state.rmCAN.read_can(CAN1);
   state.rmCAN.read_can(CAN2);
 
