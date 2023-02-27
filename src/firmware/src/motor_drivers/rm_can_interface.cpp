@@ -468,11 +468,11 @@ void RM_CAN_Interface::read_can(int bus_num){
 			}
 			break;
 
-		case CAN3:
-			while (can3.read(tmp)) {
-				set_feedback(bus_num, &tmp);
-			}
-			break;
+		// case CAN3:
+		// 	while (can3.read(tmp)) {
+		// 		set_feedback(bus_num, &tmp);
+		// 	}
+		// 	break;
 
 		default:
 			break;
