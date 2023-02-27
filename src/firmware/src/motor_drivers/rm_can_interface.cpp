@@ -456,14 +456,20 @@ void RM_CAN_Interface::read_can(int bus_num){
 	timer_set(3);
 	CAN_message_t tmp;
 	switch (bus_num) {
-		case 0:
+		case CAN1:
 			while (can1.read(tmp) && timer_info_us(3) < 10) {
 				set_feedback(bus_num, &tmp);
 			}
 			break;
 
-		case 1:
+		case CAN2:
 			while (can2.read(tmp)) {
+				set_feedback(bus_num, &tmp);
+			}
+			break;
+
+		case CAN3:
+			while (can3.read(tmp)) {
 				set_feedback(bus_num, &tmp);
 			}
 			break;
