@@ -40,7 +40,6 @@ MotorMap::MotorMap(RM_CAN_Interface* rmCAN) {
   // rmCAN->addMotor("Feeder R",   6, CAN2, C610);
 
   pid.K[0] = 0.0002;
-  //pid.K[2] = 0.0004;
 }
 
 void MotorMap::setMotorRPM(int idx, float rpm, int deltaTime) {

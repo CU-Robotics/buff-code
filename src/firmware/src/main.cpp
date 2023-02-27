@@ -106,17 +106,9 @@ void loop() {
   } else if (state.receiver.out.l_switch == 2) {
     state.robotMode = MATCH;
     matchLoop();
-    state.setMotorRPM(6, 0);
-    state.setMotorRPM(5, 0);
-    state.setMotorRPM(3, 0);
-    state.setMotorRPM(1, 0);
   } else {
     state.robotMode = OFF;
-    state.setMotorRPM(6, 0);
-    state.setMotorRPM(5, 0);
-    state.setMotorRPM(3, 0);
-    state.setMotorRPM(1, 0);
-    //state.motorMap.allOff();
+    state.motorMap.allOff();
   }
 
   /* Send CAN output */
