@@ -165,6 +165,8 @@ void DR16::generate_output() {
 	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -1000, 1000) / 1000.0;
 	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -1000, 1000) / 1000.0;
 
+	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -1000, 1000) / 1000.0;
+
 	data[0] = l_stick_x;
 	out.l_stick_x = l_stick_x;
 	data[1] = l_stick_y;
@@ -173,6 +175,8 @@ void DR16::generate_output() {
 	out.r_stick_x = r_stick_x;
 	data[3] = r_stick_y;
 	out.r_stick_y = r_stick_y;
+	data[4] = wheel;
+	out.wheel = wheel;
 	data[5] = (tmp[5] & 0x30) >> 4;				// switch 1
 	out.r_switch = data[5];
 	data[6] = (tmp[5] & 0xC0) >> 6;				// switch 2
@@ -190,11 +194,22 @@ void DR16::control_test() {
 }
 
 bool DR16::read() {
-	//if (serial->available() == 18) {
+    if (serial->available() > numBytes) {     // if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
+        numBytes = serial->available();
+        lastTime = micros();
+    }
+
+    if (micros() - lastTime > 150) {  // if more than 150 microseconds has passed since the last byte recieved then frame has probably ended
+        if (serial->available() % 18 != 0) {  // if the number of bytes is not divisible by 18 then there is a mangled frame and all data should be thrown out
+            while (serial->available()) serial->read();
+            numBytes = 0;
+        }
+    }
+
+	if (serial->available() >= 18) {
 		generate_output();
 		return true;
-	// }
-	// serial->clear();
-	// Serial.println("No Controller Connected!");
-	// return false;
+	}
+
+	return false;
 }

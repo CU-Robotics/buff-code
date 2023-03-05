@@ -319,6 +319,25 @@ void RM_CAN_Interface::write_can() {
 	}
 }
 
+void RM_CAN_Interface::set_output_raw(int index, float value) {
+	/*
+		  Send the motor command from serial to the
+		can packets.
+		@param
+			values: values to set in the can packet
+		@return
+			None
+	*/
+
+	int can_bus = motor_arr[index].can_bus;
+	int msg_type = motor_arr[index].message_type;
+	int msg_offset = motor_arr[index].message_offset;
+	int16_t control_in_esc_resolution = int16_t(value);
+
+	output[can_bus][msg_type].buf[msg_offset] = highByte(control_in_esc_resolution);
+	output[can_bus][msg_type].buf[msg_offset + 1] = lowByte(control_in_esc_resolution);
+}
+
 void RM_CAN_Interface::set_output(int index, float value) {
 	/*
 		  Send the motor command from serial to the
@@ -334,11 +353,6 @@ void RM_CAN_Interface::set_output(int index, float value) {
 	int msg_offset = motor_arr[index].message_offset;
 	int16_t control_in_esc_resolution = int16_t(value * motor_arr[index].output_scale);
 
-	// The can busses are numbered 1-2 (indexed 0-1)
-
-	// if (msg_type == 2)
-	// 	Serial.printf("Setting output for %i %i %i %f\n", can_bus, msg_type, msg_offset, value);
-	
 	output[can_bus][msg_type].buf[msg_offset] = highByte(control_in_esc_resolution);
 	output[can_bus][msg_type].buf[msg_offset + 1] = lowByte(control_in_esc_resolution);
 }
@@ -456,19 +470,19 @@ void RM_CAN_Interface::read_can(int bus_num){
 	timer_set(3);
 	CAN_message_t tmp;
 	switch (bus_num) {
-		case CAN1:
+		case CANBUS_1:
 			while (can1.read(tmp) && timer_info_us(3) < 10) {
-				set_feedback(bus_num, &tmp);
+				set_feedback(bus_num-1, &tmp);
 			}
 			break;
 
-		case CAN2:
+		case CANBUS_2:
 			while (can2.read(tmp)) {
-				set_feedback(bus_num, &tmp);
+				set_feedback(bus_num-1, &tmp);
 			}
 			break;
 
-		// case CAN3:
+		// case CANBUS_3:
 		// 	while (can3.read(tmp)) {
 		// 		set_feedback(bus_num, &tmp);
 		// 	}

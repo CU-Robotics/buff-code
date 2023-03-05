@@ -11,7 +11,9 @@ only be sending 2-3 particular messages and I could not test the full scope of t
 accurately test the code when I have a fully up and running ref system. 
 */
 
-RefSystem::RefSystem() {}
+RefSystem::RefSystem() {
+	Serial2.begin(115200);
+}
 
 void RefSystem::init() {
 	Serial2.begin(115200);
@@ -44,7 +46,7 @@ bool RefSystem::read_serial() {
 			while(Serial2.readBytes(&temp, 1) != 1) {}
 			cmd_id = cmd_id | (temp << 8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-			if(cmd_id == 0x202) {   //power and heat data   
+			if(cmd_id == 0x202) {   //power and heat data
 				 
 
 				////////////////////////////////////////////////////////////////////////////
@@ -58,11 +60,23 @@ bool RefSystem::read_serial() {
 
 				Serial2.readBytes(&temp, 1);
 				temp_stat = temp;
-				Serial2.readBytes(&temp, 1);    //Setting chasis output current
+				Serial2.readBytes(&temp, 1);    // Setting chasis output current
 				data.chassis_current = temp_stat | (temp<<8);
 
 				////////////////////////////////////////////////////////////////////////////
-								
+
+				Serial2.readBytes(&temp, 1);
+				Serial2.readBytes(&temp, 1);
+				Serial2.readBytes(&temp, 1);
+				Serial2.readBytes(&temp, 1);
+
+				////////////////////////////////////////////////////////////////////////////
+
+				Serial2.readBytes(&temp, 1);
+				temp_stat = temp;
+				Serial2.readBytes(&temp, 1);
+				data.power_buffer = temp_stat | (temp<<8);
+
 			}
 
 			else if(cmd_id == 0x1) {  //stage 1

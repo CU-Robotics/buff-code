@@ -98,6 +98,7 @@ struct RM_CAN_Interface {
 	void stop_can();
 
 	// Pipeline
+	void set_output_raw(int, float);
 	void set_output(int, float);
 	void set_output(String, float);
 	void set_feedback(int, CAN_message_t*);

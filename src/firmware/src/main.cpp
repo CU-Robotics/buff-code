@@ -1,6 +1,7 @@
 //#include "global_robot_state.h"
 
 #include "algorithms/pid_filter.h"
+#include "algorithms/rolling_average_filter.h"
 #include "motor_drivers/rm_can_interface.h"
 #include "sensors/dr16.h"
 #include "sensors/lsm6dsox.h"
@@ -12,6 +13,9 @@ GlobalRobotState state;
 
 uint32_t loopFrequency = 2000; // in microseconds
 uint32_t programTime; // stores the system time at the start of every loop
+
+float energyBuffer = 0;
+RollingAverageFilter IMUFilter(10);
 
 void setup() {
   delay(500); // Half-second startup delay
@@ -31,12 +35,9 @@ void setup() {
 
 void demoLoop() {
   /* Chassis */
-
-  float x = state.receiver.out.l_stick_x;
-  float y = state.receiver.out.l_stick_y;
-  float spin = state.receiver.out.r_stick_x;
-
-  int max_rpm = 8000;
+  float x = state.receiver.out.r_stick_x;
+  float y = state.receiver.out.r_stick_y;
+  float spin = -state.receiver.out.wheel;
 
   double speed_fr = y - x - spin;
   double speed_fl = -(y + x + spin);
@@ -60,27 +61,59 @@ void demoLoop() {
     speed_br /= max_speed;
   }
 
-  state.setMotorRPM(3, speed_fr * max_rpm);
-  state.setMotorRPM(1, speed_fl * max_rpm);
-  state.setMotorRPM(6, speed_bl * max_rpm);
-  state.setMotorRPM(5, speed_br * max_rpm);
+  float energyBufferCritThreshold = 30.0;
+  float energyBufferLimitThreshold = 60.0;
+  energyBuffer = state.ref.data.power_buffer;
+  float ratio = 1.0;
+  if (energyBuffer < energyBufferLimitThreshold) {
+    ratio = constrain((energyBuffer - energyBufferCritThreshold) / energyBufferLimitThreshold, 0.0, 1.0);
+  }
 
-  /* Gimbal */
+  float powerDraw = state.ref.data.chassis_current * state.ref.data.chassis_voltage / 1000000.0;
+  float powerLimit = state.ref.data.robot_power_lim;
+  float raw_fr = state.generateMotorRPMOutput(1, speed_fr * DEMO_CHASSIS_MAX_RPM) * ratio;
+  float raw_fl = state.generateMotorRPMOutput(2, speed_fl * DEMO_CHASSIS_MAX_RPM) * ratio;
+  float raw_bl = state.generateMotorRPMOutput(3, speed_bl * DEMO_CHASSIS_MAX_RPM) * ratio;
+  float raw_br = state.generateMotorRPMOutput(7, speed_br * DEMO_CHASSIS_MAX_RPM) * ratio;
+
+  state.rmCAN.set_output(1, raw_fr);
+  state.rmCAN.set_output(2, raw_fl);
+  state.rmCAN.set_output(3, raw_bl);
+  state.rmCAN.set_output(7, raw_br);
+
+  // /* Gimbal */
   if (state.receiver.out.l_stick_y != -1.0) {
     // Manual control
     float ratio = 17.0 / 246.0;
-    float rpm = state.imu.data[5] / 6.0 / ratio;
-    state.setMotorRPM(8, rpm);
-    state.setMotorRPM(4, rpm);
+    IMUFilter.addMeasurement(state.imu.data[5]);
+    float rpm = IMUFilter.getMean() / 6.0 / ratio;
+
+    rpm += state.receiver.out.l_stick_x * DEMO_GIMBAL_YAW_MAX_RPM;
+
+    state.setMotorRPM(5, rpm);
+    state.setMotorRPM(6, rpm);
   } else {
-    // Autoaim
+    state.setMotorRPM(5, 0);
+    state.setMotorRPM(6, 0);
   }
 
-  // // Shooter
-  // if (state.receiver.data[6] == 1) {
-  //   state.setMotorRPM("Flywheel L", -9000.0);
-  //   state.setMotorRPM("Flywheel R", 9000.0);
-  // }
+  // /* Shooter */
+  if (state.receiver.out.r_switch == 1) {
+    state.setMotorRPM(11, 8500.0);
+    state.setMotorRPM(12, -8500.0);
+    state.setMotorRPM(13, -150.0 * 36);
+    state.setMotorRPM(14, 150.0 * 36);
+  } else if (state.receiver.out.r_switch == 3) {
+    state.setMotorRPM(11, 8500.0);
+    state.setMotorRPM(12, -8500.0);
+    state.setMotorRPM(13, 0);
+    state.setMotorRPM(14, 0);
+  } else {
+    state.setMotorRPM(11, 0);
+    state.setMotorRPM(12, 0);
+    state.setMotorRPM(13, 0);
+    state.setMotorRPM(14, 0);
+  }
 }
 
 void matchLoop() {
@@ -95,9 +128,10 @@ void loop() {
   /* Read sensors */
   state.receiver.read();
   state.imu.read_lsm6dsox_gyro();
+  state.ref.read_serial();
 
-  state.rmCAN.read_can(CAN1);
-  state.rmCAN.read_can(CAN2);
+  state.rmCAN.read_can(CANBUS_1);
+  state.rmCAN.read_can(CANBUS_2);
 
   /* Generate control output */
   if (state.receiver.out.l_switch == 3) {
@@ -110,6 +144,14 @@ void loop() {
     state.robotMode = OFF;
     state.motorMap.allOff();
   }
+
+  int index = 11;
+	int can_bus = state.rmCAN.motor_arr[index].can_bus;
+	int msg_type = state.rmCAN.motor_arr[index].message_type;
+	int msg_offset = state.rmCAN.motor_arr[index].message_offset;
+	Serial.print(state.rmCAN.output[can_bus][msg_type].buf[msg_offset], BIN);
+  Serial.print(" ");
+  Serial.println(state.rmCAN.output[can_bus][msg_type].buf[msg_offset + 1], BIN);
 
   /* Send CAN output */
   state.rmCAN.write_can();

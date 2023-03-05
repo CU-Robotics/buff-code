@@ -45,6 +45,9 @@ struct DR16 {
 		void control_test();
 		bool read();
 
+		float numBytes;
+		unsigned long lastTime;
+
 		float data[7];
 		DR16_DATA out;
 

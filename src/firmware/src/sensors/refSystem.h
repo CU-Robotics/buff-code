@@ -56,6 +56,7 @@ struct RefData {
 
     int chassis_voltage = -1;
     int chassis_current = -1;
+    int power_buffer = -1;
 
     int robot_buff = -1;
 
