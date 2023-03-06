@@ -5,9 +5,9 @@
 #define BUFF_CONTROLLERS_H
 
 /*
-	A scheduler to handle all the different scenarios and report
-	types. This should make checking and parsing all HID a one call
-	function.
+	Break this out into two controllers
+	- Gravity compensated
+	- Power Limited
 */
 
 struct Feedback_Controller {
@@ -21,6 +21,12 @@ struct Feedback_Controller {
 	float gains[MOTOR_FEEDBACK_SIZE];
 };
 
+/*
+	This object is meant to run the control pipeline
+	it allows easy use of the DM store to update inputs
+	and feedback, then uses HID initializers to setup 
+	control laws.
+*/
 struct Controller_Manager {
 	Controller_Manager();
 	void set_gain(int, int, float);
