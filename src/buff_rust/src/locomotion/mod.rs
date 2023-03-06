@@ -1,1 +1,3 @@
-pub mod swerve_controller;
+pub mod controllers;
+pub mod locomotion;
+pub mod test;

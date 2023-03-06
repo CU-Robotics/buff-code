@@ -1,282 +1,697 @@
 extern crate hidapi;
 
-use hidapi::{HidApi, HidDevice, HidError};
-// use rosrust::ros_info;
+use crate::utilities::{buffers::*, data_structures::*, loaders::*};
+use hidapi::{HidApi, HidDevice};
 use rosrust_msg::std_msgs;
-use std::thread::sleep;
-use std::time::Duration;
 use std::{
-    sync::{Arc, RwLock},
+    sync::{
+        mpsc,
+        mpsc::{Receiver, Sender},
+        Arc, RwLock,
+    },
+    thread::spawn,
     time::Instant,
 };
 
-pub struct HidBuffer {
-    pub data: [u8; 64],
-    pub seek_ptr: usize,
-    pub update_flag: bool,
-    pub timestamp: Instant,
+pub fn init_hid_device(hidapi: &mut HidApi, vid: u16, pid: u16) -> HidDevice {
+    let dev = hidapi.open(vid, pid).unwrap();
+    dev.set_blocking_mode(false).unwrap();
+    dev
 }
 
-impl HidBuffer {
-    pub fn new() -> HidBuffer {
-        HidBuffer {
-            data: [0; 64],
-            seek_ptr: 0,
-            update_flag: false,
-            timestamp: Instant::now(),
-        }
-    }
-
-    pub fn seek(&mut self, set: Option<usize>) -> u8 {
-        self.seek_ptr = set.unwrap_or(self.seek_ptr);
-        let tmp = self.data[self.seek_ptr];
-
-        if self.seek_ptr >= 63 {
-            self.seek_ptr = 0;
-        } else {
-            self.seek_ptr += 1;
-        }
-
-        tmp
-    }
-
-    pub fn put(&mut self, value: u8) {
-        self.data[self.seek_ptr] = value;
-        if self.seek_ptr < 63 {
-            self.seek_ptr += 1;
-        } else {
-            self.seek_ptr = 0;
-        }
-    }
-
-    pub fn puts(&mut self, data: Vec<u8>) {
-        for d in data {
-            self.put(d);
-        }
-    }
-
-    pub fn check_of(&self, n: usize) -> bool {
-        if 64 - self.seek_ptr > n {
-            return false;
-        }
-        true
-    }
-
-    pub fn reset(&mut self) {
-        self.data = [0u8; 64];
-        self.seek_ptr = 0;
-        self.update_flag = false;
-        self.timestamp = Instant::now();
-    }
-
-    pub fn print_buffer(&self) {
-        let mut data_string: String = String::new();
-
-        let mut i = 0;
-
-        for u in self.data {
-            data_string.push_str(&(u.to_string() + "\t"));
-
-            if (i + 1) % 16 == 0 && i != 0 {
-                data_string.push_str("\n");
-            }
-            i += 1;
-        }
-        data_string.push_str("\n==========\n");
-        println!("{}", data_string);
-    }
+pub struct HidWriter {
+    pub shutdown: Arc<RwLock<bool>>,
+    pub output: ByteBuffer,
+    pub teensy: HidDevice,
 }
 
-pub struct HidLayer {
-    pub hidapi: HidApi,
-    pub vid: u16,
-    pub pid: u16,
-    pub input: HidBuffer,
-    pub output: HidBuffer,
-    pub teensy: Result<HidDevice, HidError>,
-    pub output_queue: Arc<RwLock<HidBuffer>>,
-    pub subscriber: rosrust::Subscriber,
-    pub can_pub: rosrust::Publisher<std_msgs::UInt8MultiArray>,
-    pub sensor_pubs: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
-}
+impl HidWriter {
+    pub fn new(hidapi: &mut HidApi, vid: u16, pid: u16) -> HidWriter {
+        let device = init_hid_device(hidapi, vid, pid); // not two teensys, just two instances
 
-impl HidLayer {
-    pub fn new() -> HidLayer {
-        let output_buffer = Arc::new(RwLock::new(HidBuffer::new()));
-
-        let buffer = Arc::clone(&output_buffer);
-        let can_topic = "can_output";
-
-        let can_sub = rosrust::subscribe(&can_topic, 1, move |msg: std_msgs::UInt8MultiArray| {
-            let mut w = buffer.write().unwrap();
-            w.seek_ptr = 0;
-            msg.data.iter().for_each(|c| {
-                w.put(*c);
-            });
-        })
-        .unwrap();
-
-        let pubs = vec![
-            rosrust::publish("imu_raw", 1).unwrap(),
-            rosrust::publish("receiver_raw", 1).unwrap(),
-        ];
-
-        let api = HidApi::new().expect("Failed to create API instance");
-        let teensy = api.open(0x0000, 0x0000);
-
-        HidLayer {
-            hidapi: api,
-            vid: 0x16C0,
-            pid: 0x0486,
-            teensy: teensy,
-            input: HidBuffer::new(),
-            output: HidBuffer::new(),
-            output_queue: output_buffer,
-            subscriber: can_sub,
-            can_pub: rosrust::publish("can_raw", 1).unwrap(),
-            sensor_pubs: pubs,
+        HidWriter {
+            // shutdown will be replaced by a variable shared between several HidWriters
+            shutdown: Arc::new(RwLock::new(false)),
+            output: ByteBuffer::new(64),
+            teensy: device,
         }
     }
 
-    pub fn reset(&mut self) {
-        self.input.reset();
-        self.output.reset();
-        self.output_queue.write().unwrap().reset();
-    }
-
-    pub fn read_bytes(&mut self, n_bytes: u8) -> Vec<u8> {
-        vec![0u8; n_bytes as usize]
-            .iter()
-            .map(|_| self.input.seek(None))
-            .collect()
-    }
-
-    pub fn parse_hid(&mut self, n: usize) {
-        if n == 0 {
-            return;
-        }
-
-        self.input.seek_ptr = 0;
-
-        {
-            let mut msg = std_msgs::UInt8MultiArray::default();
-            msg.data = self.read_bytes(33);
-            self.can_pub.send(msg).unwrap();
-        }
-
-        {
-            self.input.seek_ptr = 34;
-
-            let sensor_id = self.input.seek(None);
-
-            if sensor_id == 0 {
-                self.input.reset();
-                return;
-            }
-
-            let mut msg = std_msgs::Float64MultiArray::default();
-            msg.data = self
-                .read_bytes(24)
-                .chunks_exact(4)
-                .map(|chunk| f32::from_be_bytes(chunk.try_into().unwrap_or([0, 0, 0, 0])) as f64)
-                .collect();
-
-            self.sensor_pubs[(sensor_id - 1) as usize]
-                .send(msg)
-                .unwrap();
-        }
-
-        self.input.reset();
-    }
-
-    pub fn read(&mut self) {
-        let mut n = 0;
-
-        match &self.teensy {
-            Ok(dev) => match dev.read(&mut self.input.data) {
-                Ok(value) => {
-                    n = value;
-                    self.input.timestamp = Instant::now();
-                }
-                _ => {
-                    n = 0;
-                    self.connection_repair();
-                }
-            },
-            _ => self.connection_repair(),
-        }
-
-        // self.input.print_buffer();
-        self.parse_hid(n);
-    }
-
+    /// Write the bytes from the output buffer to the teensy, then clear the buffer.
+    /// Shutdown if the write fails.
+    /// # Usage
+    /// ```
+    /// writer.output.puts(some_index, some_data);
+    /// writer.write(); // writes some_data to the teensy
+    /// ```
     pub fn write(&mut self) {
-        let mut queue = self.output_queue.write().unwrap();
-        self.output.reset();
-        self.output.data = queue.data;
-        queue.reset();
-        drop(queue);
-
-        match &self.teensy {
-            Ok(dev) => match dev.write(&self.output.data) {
-                Ok(_) => self.output.timestamp = Instant::now(),
-                Err(_) => self.connection_repair(),
-            },
-            _ => {
-                self.connection_repair();
-                return;
-            }
-        }
-
-        // self.output.print_buffer();
-        self.output.reset();
-    }
-
-    pub fn init_comms(&mut self) {
-        self.teensy = self.hidapi.open(self.vid, self.pid);
-        self.input.timestamp = Instant::now();
-
-        match &self.teensy {
+        // let t = Instant::now();
+        match self.teensy.write(&self.output.data) {
             Ok(_) => {
-                self.write();
-                println!("Teensy connected");
-
-                let param_id = format!("/buffbot/HID_ACTIVE");
-                rosrust::param(&param_id).unwrap().set::<i32>(&1).unwrap();
+                // println!("Write time {}", t.elapsed().as_micros());
+                // self.output.print_data();
+                self.output.reset();
             }
             _ => {
-                let param_id = format!("/buffbot/HID_ACTIVE");
-                rosrust::param(&param_id).unwrap().set::<i32>(&0).unwrap();
-                self.connection_repair();
+                *self.shutdown.write().unwrap() = true;
             }
         }
     }
 
-    pub fn connection_repair(&mut self) {
-        if self.input.timestamp.elapsed().as_millis() < 5000 {
-            println!("Can't find teensy!");
-            sleep(Duration::from_millis(
-                5000 - self.input.timestamp.elapsed().as_millis() as u64,
-            ));
-        }
-
-        self.init_comms();
+    /// Creates a report from `id` and `data` and sends it to the teensy. Only use in testing.
+    /// # Usage
+    /// ```
+    ///     writer.teensy = hidapi.open(vid, pid);
+    ///     writer.send_report(report_id, data);
+    /// ```
+    pub fn send_report(&mut self, id: u8, data: Vec<u8>) {
+        self.output.puts(0, vec![id]);
+        self.output.puts(1, data);
+        self.write();
     }
 
+    /// Main function to spin and connect the teensy to ROS.
+    /// Cycles through `reports` and sends a report to the teensy every millisecond.
+    /// Only use in testing.
+    pub fn spin(&mut self, reports: Vec<Vec<u8>>) {
+        let mut report_request = 0;
+        println!("HID-writer Live");
+
+        while !*self.shutdown.read().unwrap() && self.output.timestamp.elapsed().as_millis() < 50 {
+            let loopt = Instant::now();
+
+            self.output.puts(0, reports[report_request].clone());
+            self.write();
+            report_request = (report_request + 1) % reports.len();
+            if loopt.elapsed().as_micros() > 1000 {
+                println!("HID writer over cycled {}", loopt.elapsed().as_micros());
+            }
+            while loopt.elapsed().as_micros() < 1000 {}
+        }
+        *self.shutdown.write().unwrap() = true;
+    }
+    /// Continually sends data from [HidROS] (via `control_rx`) to the teensy.
+    ///
+    /// # Arguments
+    /// * `shutdown` - The function stops when this is true.
+    /// Used so that HidLayer threads, all running pipeline() at the same time, can be shutdown at the same time (by passing them the same variable)
+    /// * `control_rx` - Receives the data from [HidROS].
+    ///
+    /// # Example
+    /// See [`HidLayer::pipeline()`] source
+    pub fn pipeline(&mut self, shutdown: Arc<RwLock<bool>>, control_rx: Receiver<Vec<u8>>) {
+        self.shutdown = shutdown;
+
+        // let mut status = BuffBotStatusReport::load_robot();
+
+        // self.send_report(255, status.load_initializers()[0].clone());
+
+        println!("HID-writer Live");
+
+        while !*self.shutdown.read().unwrap() {
+            self.output.puts(0, control_rx.recv().unwrap_or(vec![0]));
+            self.write();
+        }
+    }
+}
+
+/// Responsible for initializing [BuffBotStatusReport] and continuously
+/// sending status reports
+pub struct HidReader {
+    pub shutdown: Arc<RwLock<bool>>,
+    pub input: ByteBuffer,
+    pub robot_status: BuffBotStatusReport,
+    pub teensy: HidDevice,
+}
+
+impl HidReader {
+    pub fn new(hidapi: &mut HidApi, vid: u16, pid: u16) -> HidReader {
+        let device = init_hid_device(hidapi, vid, pid); // not two teensys, just two instances
+
+        HidReader {
+            shutdown: Arc::new(RwLock::new(false)),
+            input: ByteBuffer::new(64),
+            robot_status: BuffBotStatusReport::from_self(),
+            teensy: device,
+        }
+    }
+
+    /// Read data into the input buffer and return how many bytes were read
+    ///
+    /// # Usage
+    ///
+    /// ```
+    /// match reader.read() {
+    ///     64 => {
+    ///         // packet OK, do something
+    ///     }
+    ///     _ => {} // do nothing
+    /// }
+    /// ```
+    pub fn read(&mut self) -> usize {
+        match &self.teensy.read(&mut self.input.data) {
+            Ok(value) => {
+                // reset watchdog... woof
+                self.input.timestamp = Instant::now();
+                return *value;
+            }
+            _ => {
+                *self.shutdown.write().unwrap() = true;
+            }
+        }
+        return 0;
+    }
+
+    /// After requesting a report this can be used to wait for a reply
+    ///
+    /// # Panics
+    ///
+    /// This will panic if a reply is not received from the Teensy
+    /// within `timeout` ms.
+    ///
+    /// # Usage
+    ///
+    /// ```
+    /// // set writer.output.data[0] to an int [1-3] (255 for initializer)
+    /// writer.write();
+    /// reader.wait_for_report_reply(255, 10);
+    /// ```
+    pub fn wait_for_report_reply(&mut self, packet_id: u8, timeout: u128) {
+        let mut loopt;
+        let t = Instant::now();
+
+        while t.elapsed().as_millis() < timeout {
+            loopt = Instant::now();
+
+            match self.read() {
+                64 => {
+                    if self.input.get(0) == 0 && self.input.get_i32(60) == 0 {
+                        continue;
+                    } else if self.input.get_i32(60) > 1000 {
+                        println!("Teensy cycle time is over the limit");
+                    }
+
+                    if self.input.get(0) == packet_id {
+                        println!("Teenys report {} reply received", packet_id);
+                        return;
+                    }
+                }
+                _ => {}
+            }
+
+            // HID runs at 1 ms
+            while loopt.elapsed().as_micros() < 1000 {}
+        }
+
+        // If packet never arrives
+        *self.shutdown.write().unwrap() = true;
+        panic!("\tTimed out waiting for reply from Teensy");
+    }
+
+    /// Parse the stored HID packet into BuffBot Data Structures
+    ///
+    /// # Usage
+    ///
+    /// ```
+    /// // HID packet waiting
+    /// if reader.read() > 0 { // read returns the number of bytes (64 or bust)
+    ///     reader.parse_report();
+    /// }
+    /// ```
+    pub fn parse_report(&mut self) {
+        let teensy_clock = self.input.get_u32(60);
+
+        // match the report number to determine the structure
+        match self.input.get(0) {
+            1 => {
+                let index_offset = (self.input.get(1) * 4) as usize;
+                self.robot_status.update_motor_encoder(
+                    index_offset,
+                    self.input.get_floats(2, 3),
+                    teensy_clock,
+                );
+                self.robot_status.update_motor_encoder(
+                    index_offset + 1,
+                    self.input.get_floats(14, 3),
+                    teensy_clock,
+                );
+                self.robot_status.update_motor_encoder(
+                    index_offset + 2,
+                    self.input.get_floats(26, 3),
+                    teensy_clock,
+                );
+                self.robot_status.update_motor_encoder(
+                    index_offset + 3,
+                    self.input.get_floats(38, 3),
+                    teensy_clock,
+                );
+            }
+            2 => match self.input.get(1) {
+                1 => {
+                    let index1 = self.input.get(2) as usize;
+                    let index2 = self.input.get(3) as usize;
+
+                    self.robot_status.update_controller(
+                        index1,
+                        self.input.get_floats(4, 6),
+                        teensy_clock,
+                    );
+                    self.robot_status.update_controller(
+                        index2,
+                        self.input.get_floats(28, 6),
+                        teensy_clock,
+                    );
+                }
+                _ => {}
+            },
+            3 => {
+                self.robot_status.update_sensor(
+                    self.input.get(1) as usize,
+                    self.input.get_floats(2, 9),
+                    teensy_clock,
+                );
+            }
+            u8::MAX => {}
+            _ => {}
+        }
+        // self.robot_status.motors[4].read().unwrap().print();
+    }
+
+    /// Main function to spin and connect the teensys
+    /// input to ROS.
+    ///
+    /// # Usage
+    /// ```
+    /// use hidapi::HidApi;
+    /// use buff_rust::teensy_comms::buff_hid::HidReader;
+    ///
+    /// let mut hidapi = HidApi::new().expect("Failed to create API instance");
+    /// let mut reader = HidReader::new(&mut hidapi, vid, pid);
+    /// reader.spin();       // runs until watchdog times out
+    /// ```
     pub fn spin(&mut self) {
-        self.init_comms();
+        while !*self.shutdown.read().unwrap() {
+            let loopt = Instant::now();
+
+            match self.read() {
+                64 => self.parse_report(),
+                _ => {}
+            }
+
+            if loopt.elapsed().as_micros() > 1000 {
+                println!("HID reader over cycled {}", loopt.elapsed().as_micros());
+            }
+            while loopt.elapsed().as_micros() < 1000 {}
+        }
+    }
+
+    /// Sends robot status report packet to [HidROS], waits for the reply packet,
+    /// then calls [HidReader::spin] to begin parsing reports
+    ///
+    /// # Example
+    ///
+    /// see [HidLayer::pipeline()]
+    pub fn pipeline(
+        &mut self,
+        shutdown: Arc<RwLock<bool>>,
+        feedback_tx: Sender<BuffBotStatusReport>,
+    ) {
+        self.shutdown = shutdown;
+
+        feedback_tx.send(self.robot_status.clone()).unwrap();
+        println!("HID-reader Live");
+
+        // wait for initializers reply
+        self.wait_for_report_reply(255, 50);
+
+        self.spin();
+    }
+}
+
+pub struct HidROS {
+    pub shutdown: Arc<RwLock<bool>>,
+    pub robot_status: BuffBotStatusReport,
+    pub control_flag: Arc<RwLock<i32>>,
+    pub gimbal_control: Arc<RwLock<Vec<f64>>>,
+    pub control_input: Arc<RwLock<Vec<f64>>>,
+    pub motor_can_output: Arc<RwLock<Vec<f64>>>,
+
+    pub motor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub controller_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub sensor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub motor_subscribers: Vec<rosrust::Subscriber>,
+}
+
+impl HidROS {
+    /// Handles publishing data to ROS from HID
+    ///
+    /// # Usage
+    /// ```
+    /// use buff_rust::teensy_comms::buff_hid::HidROS;
+    ///
+    /// let hidros = HidROS::new();
+    /// ```
+    pub fn new() -> HidROS {
+        let robot_status = BuffBotStatusReport::from_self();
+
+        env_logger::init();
+        rosrust::init("buffpy_hid");
+
+        let motor_publishers = (0..robot_status.motors.len())
+            .map(|i| rosrust::publish(format!("motor_{}_feedback", i).as_str(), 1).unwrap())
+            .collect();
+
+        let controller_publishers = (0..robot_status.controllers.len())
+            .map(|i| rosrust::publish(format!("controller_{}_report", i).as_str(), 1).unwrap())
+            .collect();
+
+        let sensor_publishers = (0..robot_status.sensors.len())
+            .map(|i| rosrust::publish(format!("sensor_{}_feedback", i).as_str(), 1).unwrap())
+            .collect();
+
+        let n_motors = robot_status.motors.len();
+        let motor_can_output = Arc::new(RwLock::new(vec![0.0; n_motors]));
+        let gimbal_control = Arc::new(RwLock::new(vec![0.0; 3]));
+        let control_input = Arc::new(RwLock::new(vec![0.0; n_motors]));
+        let gc_clone = gimbal_control.clone();
+        let con_clone = control_input.clone();
+        let mco_clone = motor_can_output.clone();
+        let control_flag = Arc::new(RwLock::new(-1));
+        let cf_clone = control_flag.clone();
+        let cf1_clone = control_flag.clone();
+        let cf2_clone = control_flag.clone();
+
+        let motor_subscribers = vec![rosrust::subscribe(
+            "motor_can_output",
+            1,
+            move |msg: std_msgs::Float64MultiArray| {
+                assert!(
+                    msg.data.len() == n_motors,
+                    "ROS can output msg had a different number of values than there are motors",
+                );
+                *cf_clone.write().unwrap() = 0;
+                *motor_can_output.write().unwrap() = msg.data;
+            },
+        )
+        .unwrap(),
+        rosrust::subscribe(
+            "gimbal_control_input",
+            1,
+            move |msg: std_msgs::Float64MultiArray| {
+                assert!(
+                    msg.data.len() == 3,
+                    "ROS gimbal control msg had a different number of values than there are gimbal actuators",
+                );
+                *cf1_clone.write().unwrap() = 1;
+                *gimbal_control.write().unwrap() = msg.data;
+            },
+        )
+        .unwrap(),
+        rosrust::subscribe(
+            "control_input",
+            1,
+            move |msg: std_msgs::Float64MultiArray| {
+                assert!(
+                    msg.data.len() == n_motors,
+                    "ROS control msg had a different number of values than there are motors",
+                );
+                *cf2_clone.write().unwrap() = 2;
+                *control_input.write().unwrap() = msg.data;
+            },
+        )
+        .unwrap()];
+
+        HidROS {
+            shutdown: Arc::new(RwLock::new(false)),
+            robot_status: robot_status,
+            control_flag: control_flag,
+            gimbal_control: gc_clone,
+            control_input: con_clone,
+            motor_can_output: mco_clone,
+
+            motor_publishers: motor_publishers,
+            sensor_publishers: sensor_publishers,
+            controller_publishers: controller_publishers,
+            motor_subscribers: motor_subscribers,
+        }
+    }
+
+    /// Create a new HidROS from an existing BuffBotStatusReport
+    ///
+    /// # Usage
+    ///
+    /// ```
+    /// use buff_rust::teensy_comms::buff_hid::HidROS;
+    ///
+    /// let hidros = HidROS::from_robot_status(shutdown, robotstatus);
+    /// ```
+    pub fn from_robot_status(
+        shutdown: Arc<RwLock<bool>>,
+        robot_status: BuffBotStatusReport,
+    ) -> HidROS {
+        env_logger::init();
+        rosrust::init("buffpy_hid");
+
+        let mut hidros = HidROS::new();
+        hidros.shutdown = shutdown;
+        hidros.robot_status = robot_status;
+
+        hidros
+    }
+
+    /// Publish motor data to ROS
+    pub fn publish_motors(&self) {
+        self.motor_publishers
+            .iter()
+            .enumerate()
+            .for_each(|(i, motor_pub)| {
+                let mut msg = std_msgs::Float64MultiArray::default();
+                msg.data = self.robot_status.controllers[i]
+                    .read()
+                    .unwrap()
+                    .feedback
+                    .clone();
+
+                msg.data
+                    .push(self.robot_status.controllers[i].read().unwrap().timestamp as f64);
+
+                motor_pub.send(msg).unwrap();
+            });
+    }
+
+    /// Publish controller data to ROS
+    pub fn publish_controllers(&self) {
+        self.controller_publishers
+            .iter()
+            .zip(self.motor_publishers.iter())
+            .enumerate()
+            .for_each(|(i, (control_pub, motor_pub))| {
+                let controller = self.robot_status.controllers[i].read().unwrap();
+
+                {
+                    let mut msg = std_msgs::Float64MultiArray::default();
+                    msg.data = vec![
+                        controller.output.clone(),
+                        controller.reference[0].clone(),
+                        controller.reference[1].clone(),
+                        controller.timestamp as f64,
+                    ];
+                    control_pub.send(msg).unwrap();
+                }
+
+                {
+                    let mut msg = std_msgs::Float64MultiArray::default();
+                    msg.data = controller.feedback.clone();
+                    msg.data.push(controller.timestamp as f64);
+                    motor_pub.send(msg).unwrap();
+                }
+            });
+    }
+
+    /// Publish sensor data to ROS
+    pub fn publish_sensors(&self) {
+        self.sensor_publishers
+            .iter()
+            .enumerate()
+            .for_each(|(i, sensor_pub)| {
+                let mut msg = std_msgs::Float64MultiArray::default();
+                msg.data = self.robot_status.sensors[i].read().unwrap().data.clone();
+                msg.data
+                    .push(self.robot_status.sensors[i].read().unwrap().timestamp as f64);
+                sensor_pub.send(msg).unwrap();
+            });
+    }
+
+    /// Start to continually publish motor and sensor data
+    pub fn spin(&mut self) {
+        println!("HID-ROS Live");
 
         while rosrust::is_ok() {
-            // timestamp = Instant::now();
+            let loopt = Instant::now();
 
-            self.read();
-            self.write();
+            self.publish_motors();
+            self.publish_sensors();
 
-            // if micros < 500 {
-            //     sleep(Duration::from_micros(500 - micros as u64));
-            // } else {
-            //     println!("overtime {}", micros);
-            // }
+            if loopt.elapsed().as_millis() > 30 {
+                println!("HID ROS over cycled {}", loopt.elapsed().as_micros());
+            }
+            while loopt.elapsed().as_millis() < 30 {}
         }
+
+        // buffpy RUN relies on ros to shutdown
+        *self.shutdown.write().unwrap() = true;
+    }
+
+    /// Begin publishing motor, controller, and sensor data to ROS and
+    /// sending control reports to [HidWriter]
+    ///
+    /// # Example
+    /// See [HidLayer::pipeline()]
+    pub fn pipeline(
+        &mut self,
+        shutdown: Arc<RwLock<bool>>,
+        control_tx: Sender<Vec<u8>>,
+        feedback_rx: Receiver<BuffBotStatusReport>,
+    ) {
+        self.shutdown = shutdown;
+
+        self.robot_status = feedback_rx
+            .recv()
+            .unwrap_or(BuffBotStatusReport::from_self());
+
+        let initializers = self.robot_status.load_initializers();
+
+        initializers.iter().for_each(|init| {
+            control_tx.send(init.clone()).unwrap();
+        });
+
+        println!("HID-ROS Live");
+
+        let mut current_report = 0;
+        let reports = self.robot_status.get_reports();
+
+        let mut publish_timer = Instant::now();
+        let mut pub_switch = 0;
+
+        while rosrust::is_ok() && !*self.shutdown.read().unwrap() {
+            let loopt = Instant::now();
+
+            // don't publish every cycle
+            if publish_timer.elapsed().as_millis() > 5 {
+                publish_timer = Instant::now();
+                // self.publish_motors();
+                if pub_switch == 0 {
+                    self.publish_controllers();
+                    pub_switch = 1;
+                } else {
+                    self.publish_sensors();
+                    pub_switch = 0;
+                }
+            }
+
+            // handle control inputs
+            let control_mode = *self.control_flag.read().unwrap();
+            match control_mode {
+                0 => {
+                    let mut control_buffer = ByteBuffer::new(64);
+
+                    self.motor_can_output
+                        .read()
+                        .unwrap()
+                        .chunks(4)
+                        .enumerate()
+                        .for_each(|(i, block)| {
+                            control_buffer.puts(0, vec![2, 0, i as u8]);
+                            control_buffer.put_floats(3, block.to_vec());
+                            control_tx.send(control_buffer.data.clone()).unwrap();
+                        });
+
+                    *self.control_flag.write().unwrap() = -1;
+                }
+                1 => {
+                    let mut control_buffer = ByteBuffer::new(64);
+
+                    let gimabl_reference = self.gimbal_control.read().unwrap().clone();
+                    control_buffer.puts(0, vec![2, 2]);
+                    control_buffer.put_floats(2, gimabl_reference);
+                    control_tx.send(control_buffer.data).unwrap();
+
+                    *self.control_flag.write().unwrap() = -1;
+                }
+                2 => {
+                    let mut control_buffer = ByteBuffer::new(64);
+
+                    let robot_reference = self.control_input.read().unwrap().clone();
+                    control_buffer.puts(0, vec![2, 3]);
+                    control_buffer.put_floats(2, robot_reference);
+                    control_tx.send(control_buffer.data).unwrap();
+
+                    *self.control_flag.write().unwrap() = -1;
+                }
+                _ => {
+                    // send a new report request every cycle
+                    control_tx.send(reports[current_report].clone()).unwrap();
+                    current_report = (current_report + 1) % reports.len();
+                }
+            }
+
+            // if loopt.elapsed().as_micros() > 1000 {
+            //     println!("HID ROS over cycled {}", loopt.elapsed().as_micros());
+            // }
+            while loopt.elapsed().as_micros() < 1000 {}
+        }
+
+        // buffpy RUN relies on ros to shutdown
+        *self.shutdown.write().unwrap() = true;
+    }
+}
+
+/// An HID Comms layer for teensys
+/// Usage:
+/// '''
+///     HidLayer::spin();
+/// '''
+pub struct HidLayer;
+
+impl HidLayer {
+    /// careful hard to shutdown...
+
+    pub fn pipeline() {
+        let byu = BuffYamlUtil::from_self();
+
+        let vid = byu.load_u16("teensy_vid");
+        let pid = byu.load_u16("teensy_pid");
+
+        let shutdown = Arc::new(RwLock::new(false));
+        let shdn1 = shutdown.clone();
+        let shdn2 = shutdown.clone();
+
+        let mut hidapi = HidApi::new().expect("Failed to create API instance");
+        let mut hidreader = HidReader::new(&mut hidapi, vid, pid);
+        let mut hidwriter = HidWriter::new(&mut hidapi, vid, pid);
+        let mut hidros = HidROS::new();
+
+        // create the rust channels
+        let (feedback_tx, feedback_rx): (
+            Sender<BuffBotStatusReport>,
+            Receiver<BuffBotStatusReport>,
+        ) = mpsc::channel();
+        let (control_tx, control_rx): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = mpsc::channel();
+
+        let hidwriter_handle = spawn(move || {
+            hidwriter.pipeline(shutdown, control_rx);
+        });
+
+        let hidros_handle = spawn(move || {
+            hidros.pipeline(shdn2, control_tx, feedback_rx);
+        });
+
+        let hidreader_handle = spawn(move || {
+            hidreader.pipeline(shdn1, feedback_tx);
+        });
+
+        hidreader_handle.join().expect("HID Reader failed");
+        hidros_handle.join().expect("HID ROS failed");
+        hidwriter_handle.join().expect("HID Writer failed");
     }
 }

@@ -1,0 +1,3 @@
+project: 'buff_rust'
+build: 'cargo fmt && cargo doc --no-deps --open'
+docs: ['target/doc']

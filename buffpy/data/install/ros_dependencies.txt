@@ -1,0 +1,4 @@
+python3-wstool
+python3-rosdep2
+python3-rosinstall
+python3-rosinstall-generator

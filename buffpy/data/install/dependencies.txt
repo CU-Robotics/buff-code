@@ -1,0 +1,15 @@
+git
+vim
+htop
+tmux
+wget
+curl
+gnupg2
+libudev-dev
+lsb-release
+python3-dev
+iputils-ping
+openssh-client
+openssh-server
+build-essential
+ca-certificates

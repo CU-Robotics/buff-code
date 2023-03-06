@@ -1,0 +1,89 @@
+# The buff stuff
+robot_type: infantry
+
+buff_rust:
+  files: [comms_node]
+
+# Maybe some kind of option to shut this down via cmdline
+# rqt_plot:
+#   files: [rqt_plot]
+#   package: rqt_plot
+
+# Unused atm (should be, just isn't)
+teensy_vid: 0x16C0
+teensy_pid: 0x0486
+
+# Defines the sensor index for
+# HID packets. String is the topic
+sensor_index:
+  - mpu6050
+  - dr16
+
+# This defines the indices of all the motors
+motor_index:
+  - xp_drive
+  - yn_drive
+  - xn_drive
+  - yp_drive
+  - pitch
+  - yaw1
+  - yaw2
+  - feeder
+  - shooter
+
+# Uses the motor indices to determine a can
+# packet index
+motor_can_index:
+  # [can bus, message type, motor offset] see datasheets if you don't understand
+  - [2, 1, 5]
+  - [2, 1, 6]
+  - [2, 1, 1]
+  - [2, 1, 3]
+  - [2, 1, 2]
+  - [0, 0, 0]
+  - [2, 1, 4]
+  - [2, 0, 3]
+  - [2, 1, 7]
+
+# Motor controls are a linear combo
+# of the state and reference. U = Nr - Kx
+# states are defined by the estimator
+# [Vx, Vy, Omega, dPhi, dPsi, dGamma] -> [V1, V2, V3, V4, dP, dY, dG] (kee)
+chassis_inverse_kinematics: 
+#  least squares kinematic gains
+  - [  1.0,    0.0,    1.0,    0.0,     0.0,    0.0,    0.0]      # V0 = Vx + Omega
+  - [  0.0,   -1.0,    1.0,    0.0,     0.0,    0.0,    0.0]      # V1 = -Vy + Omega
+  - [ -1.0,    0.0,    1.0,    0.0,     0.0,    0.0,    0.0]      # V2 = -Vx + Omega
+  - [  0.0,    1.0,    1.0,    0.0,     0.0,    0.0,    0.0]      # V3 = Vy + Omega
+  - [  0.0,    0.0,    0.0,    1.0,     0.0,    0.0,    0.0]      # V4 = dPhi
+  - [  0.0,    0.0,   -1.0,    0.0,     1.0,    0.0,    0.0]      # V5 = -Omega + dPsi
+  - [  0.0,    0.0,   -1.0,    0.0,     1.0,    0.0,    0.0]      # V6 = -Omega + dPsi
+  - [  0.0,    0.0,    0.0,    0.0,     0.0,    1.0,    0.0]      # V7 = dGamma
+  - [  0.0,    0.0,    0.0,    0.0,     0.0,    0.0,    1.0]      # V8 = const
+
+# full state feedback gains (position, rpm, torque)
+
+motor_gains:
+  - [  0.00000,  0.00500,  0.00000] # x pos
+  - [  0.00000,  0.00500,  0.00000] # y neg
+  - [  0.00000,  0.00500,  0.00000] # x neg
+  - [  0.00000,  0.00500,  0.00000] # y pos
+  - [  0.20000,  0.00000,  0.00000] # pitch
+  - [  0.00000,  0.00000,  0.00000] # yaw1
+  - [  0.00000,  0.00000,  0.00000] # yaw2
+  - [  0.10000,  0.00000,  0.10000] # feeder
+  - [  0.00000,  0.00000,  0.00000] # shooter v = 0.015s
+
+
+#   [ low roll over limit, high roll over limit, low angle, high angle]
+motor_limits:
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  5.5]
+  - [ -1.0,  1.0,  0.0,  0.0]
+  - [ -1.0,  1.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+

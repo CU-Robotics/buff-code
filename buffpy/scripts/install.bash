@@ -8,19 +8,27 @@
 export UBUNTU_VERSION=$(cut -f2 <<< $(lsb_release -r))
 export DEBIAN_FRONTEND=noninteractive	# prevent prompts in docker and everywhere else
 
-export ROS_PKG=ros-base
+#		Setup robot params
+export DOCKER=False
+export PROJECT_ROOT=${PWD}
+export HOSTNAME=$HOSTNAME 
+export SUDO='sudo'
 
-if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+if [[ -f /.dockerenv ]]; then
+	SUDO=''
+	DOCKER=True
+	PROJECT_ROOT=/home/cu-robotics/buff-code
+fi
+
+if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
+	export ROS_DISTRO=humble
+elif [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
 	export ROS_DISTRO=noetic				# ROS for Ubuntu18
 elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
 	export ROS_DISTRO=melodic
 fi
 
-#
-#	Source buff.bash
-#
-
-source ${PROJECT_ROOT}/buffpy/buff.bash
+export ROS_PKG=desktop
 
 
 #
@@ -49,24 +57,22 @@ $SUDO apt autoremove -y
 $SUDO apt clean
 $SUDO apt update
 
-
 #
 #	Check for ROS install (installs if none)
 #
 
 if [[ ! -d /opt/ros/${ROS_DISTRO} ]]; then
-	source ${PROJECT_ROOT}/buffpy/scripts/install_ros.bash
+	if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
+		source ${PROJECT_ROOT}/buffpy/scripts/install_ros2.bash
+	else
+		source ${PROJECT_ROOT}/buffpy/scripts/install_ros.bash
+	fi
+	
 fi
 
 $SUDO apt autoremove -y
 $SUDO apt clean
 $SUDO apt update
-
-
-#
-#	Also install Sublime Text-editor
-# Deprecated, IDE on edge devices/containers is slow
-# source "${PROJECT_ROOT}/buffpy/scripts/install_sublime.bash"
 
 
 #
@@ -77,19 +83,11 @@ source ${PROJECT_ROOT}/buffpy/scripts/install_tytools.bash
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
 
-echo "source ${HOME}/.cargo/env" >> ~/.bashrc
-
-if [[ "${DOCKER}" == "False" ]]; then
-	source ${PROJECT_ROOT}/buffpy/scripts/install_docker.bash
-fi
-
 if [[ "${HOSTNAME}" == "edge"* ]]; then
-
 	$SUDO cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
-
-else 
+elif [[ "${DOCKER}" == "False" ]]; then
+	source ${PROJECT_ROOT}/buffpy/scripts/install_docker.bash
 	curl -sSL http://get.gazebosim.org | sh
-
 fi
 
 

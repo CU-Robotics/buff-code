@@ -1,0 +1,11 @@
+numpy
+pyyaml
+pandas
+pillow
+cython
+seaborn
+requests
+protobuf
+setuptools
+platformio==6.0.1
+opencv-python

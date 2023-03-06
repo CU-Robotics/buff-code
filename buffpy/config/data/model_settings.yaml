@@ -1,5 +1,0 @@
-IOU: 0.0
-NCLASSES: 4
-CONFIDENCE: 0.6
-PT_FILE: "buffnet.pt"
-BLOB_FILE: "buffnetv3-3-320s.blob"

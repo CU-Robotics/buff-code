@@ -1,7 +1,7 @@
 
 OS = LINUX
-#OS = MACOSX
-#OS = WINDOWS
+# OS = MACOSX
+# OS = WINDOWS
 
 PROG = rawhid_test
 
@@ -19,8 +19,8 @@ CFLAGS = -Wall -O2 -DOS_$(OS)
 LIBS = -lusb
 else ifeq ($(OS), MACOSX)
 TARGET = $(PROG).dmg
-SDK = /Developer/SDKs/MacOSX10.5.sdk
-ARCH = -mmacosx-version-min=10.5 -arch ppc -arch i386
+# SDK = /Developer/SDKs/MacOSX10.5.sdk
+# ARCH = -mmacosx-version-min=10.5 -arch ppc -arch i386
 CC = gcc
 STRIP = strip
 CFLAGS = -Wall -O2 -DOS_$(OS) -isysroot $(SDK) $(ARCH)

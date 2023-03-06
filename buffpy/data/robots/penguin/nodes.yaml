@@ -1,0 +1,105 @@
+# The buff stuff
+robot_type: infantry
+
+buff_rust:
+  files: [comms_node , motor_identification.py]
+
+# Maybe some kind of option to shut this down via cmdline
+# rqt_plot:
+#   files: [rqt_plot]
+#   package: rqt_plot
+
+# Unused atm (should be, just isn't)
+teensy_vid: 0x16C0
+teensy_pid: 0x0486
+inertial_feedback: empty_topic
+velocity_state_feedback: kee_state
+velocity_state_reference: joystick_input
+
+# Set the rates of the controllers
+pid_control_rate: 400
+state_control_rate: 40
+
+# Defines the sensor index for
+# HID packets. String is the topic
+sensor_index:
+  - mpu6050
+  - dr16
+
+# This defines the indices of all the motors
+motor_index:
+  - xn_drive
+  - xp_drive
+  - yn_drive
+  - yp_drive
+  - pitch
+  - yaw
+  - feeder
+
+# Uses the motor indices to determine a can
+# packet index
+motor_can_index:
+  # [can bus, message type, motor offset] see datasheets if you don't understand
+  - [0, 0, 0]
+  - [0, 0, 0]
+  - [0, 0, 0]
+  - [0, 0, 0]
+  - [2, 1, 5]
+  - [1, 1, 0]
+  - [2, 0, 2]
+
+
+# Used by encoder estimator (kee)
+# [V1, V2, V3, V4, dP, dY, dG] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma]
+kinematic_matrix: # K
+  - [    0.5,    0.0,   -0.5,    0.0,    0.0,    0.0,    0.0]
+  - [    0.0,    0.5,    0.0,   -0.5,    0.0,    0.0,    0.0]
+  - [   0.25,   0.25,   0.25,   0.25,    0.0,    0.0,    0.0]
+  - [    0.0,    0.0,    0.0,    0.0,    1.0,    0.0,    0.0]
+  - [  0.025,  0.025,  0.025,  0.025,    0.0,    1.0,    0.0]
+  - [    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0]
+
+# Motor controls are a linear combo
+# of the state and reference. U = Nr - Kx
+# states are defined by the estimator
+# [Vx, Vy, Omega, dPhi, dPsi, dGamma] -> [V1, V2, V3, V4, dP, dY, dG] (kee)
+chassis_inverse_kinematics: 
+#  least squares kinematic gains
+  - [  1.0,    0.0,    1.0,    0.0,     0.0,    0.0]      # V0 = Vx + Omega
+  - [  0.0,    1.0,    1.0,    0.0,     0.0,    0.0]      # V1 = Vy + Omega
+  - [ -1.0,    0.0,    1.0,    0.0,     0.0,    0.0]      # V2 = -Vx + Omega
+  - [  0.0,   -1.0,    1.0,    0.0,     0.0,    0.0]      # V3 = -Vy + Omega
+  - [  0.0,    0.0,    0.0,    1.0,     0.0,    0.0]      # V4 = dPhi
+  - [  0.0,    0.0,   -1.0,    0.0,     1.0,    0.0]      # V5 = -Omega + dPsi
+  - [  0.0,    0.0,    0.0,    0.0,     0.0,    1.0]      # V6 = dGamma
+
+  # lqr gains (probably corrupted)
+  # - [ 0.0000,    1.7913,    0.6344,    0.0000,    13.8756,    0.0000,    0.0000,    1.9644,    0.0000]
+  # - [ 1.7913,    0.0000,    0.6344,    0.0000,    13.8756,    0.0000,    0.0000,    1.9644,    0.0000]
+  # - [ 0.0000,   -1.7913,    0.6344,    0.0000,    13.8756,    0.0000,    0.0000,    1.9644,    0.0000]
+  # - [-1.7913,    0.0000,    0.6344,    0.0000,    13.8756,    0.0000,    0.0000,    1.9644,    0.0000]
+  # - [ 0.0000,    0.0000,    0.0000,   49.1896,     0.0000,    0.0000,   10.0399,    0.0000,    0.0000]
+  # - [ 0.0000,    0.0000,   -2.4317,    0.0000,    19.6056,    0.0000,    0.0000,    4.6826,    0.0000]
+  # - [ 0.0000,    0.0000,    0.0000,    0.0000,     0.0000,   49.1896,    0.0000,    0.0000,   10.0399]
+
+# full state feedback gains (position, rpm, torque)
+motor_gains:
+  - [  0.00000,  0.00000,  0.00000]
+  - [  0.00000,  0.00000,  0.00000]
+  - [  0.00000,  0.00000,  0.00000]
+  - [  0.00000,  0.00000,  0.00000]
+  - [  0.02000,  0.00000,  0.00800]
+  - [  0.00000,  0.00000,  0.00000]
+  - [  0.00000,  0.00100,  0.00000]
+
+
+#   [ low roll over limit, high roll over limit, low angle, high angle]
+motor_limits:
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [ -1.0,  0.0, -2.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+  - [  0.0,  0.0,  0.0,  0.0]
+

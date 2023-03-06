@@ -1,103 +1,33 @@
-#include <Arduino.h>
-#include <FlexCAN_T4.h>
+#include "buff_cpp/blink.h"
+#include "buff_cpp/timing.h"
+#include "buff_cpp/device_manager.h"
 
-#include "buff_hid.h"
-#include "buff_can.h"
-#include "mpu6050.h"
-#include "dr16.h"
-
-//		Timing variables
-unsigned long top_time;
-unsigned long cycle_time = 1000;
+uint32_t cycle_time_us = 1000;
+uint32_t cycle_time_ms = cycle_time_us / 1000;
+float cycle_time_s = cycle_time_us / 1E6;
 
 
-HID_Packet input;
-HID_Packet output;
-
-MPU6050 imu;
-DR16 receiver;
-
-BuffCan buffcan;
-
-int bus_switch = 0;
+Device_Manager device_manager;
 
 // Runs once
 void setup() {
+
 	Serial.begin(1000000);
 
-	if (Serial)
+	if (Serial) {
 		Serial.println("-- TEENSY SERIAL START --");
-
- 	// Hardware setup
-	pinMode(LED_BUILTIN, OUTPUT);
-	digitalWrite(LED_BUILTIN, HIGH);
-
-    read_HID(&input);
-}
-
-void blink(){
-	static bool status = false;
-	static unsigned long t = millis();
-
-	if (millis() - t > 250){
-		status = !status;
-		t = millis();
 	}
-
-	digitalWrite(LED_BUILTIN, status);
-
-}
-
-
-void handle1(){ // double readig messages makes for better syncing ???
-
-	buffcan.read_can1(output.data);
-	// imu.read(output.data);
-}
-
-void handle2(){
-	buffcan.read_can2(output.data);
-  	receiver.read(output.data, 34);  	
 }
 
 // Runs continuously
 void loop() {
-	top_time = micros();
+	timer_set(0);
 
-	if (read_HID(&input) > 0) {
-		get_can_input(&input, buffcan.input[get_can_id(&input) - 1]);
-		buffcan.write();
+	// handle any hid input output
+	device_manager.read_sensors();
+	device_manager.step_controllers(cycle_time_s);
+	device_manager.hid_input_switch();
+	device_manager.push_can();
 
-		switch (bus_switch){
-			case 0:
-				handle1();
-				bus_switch = 1;
-				break;
-
-			case 1:
-				handle2();
-				bus_switch = 0;
-				break;
-
-			default:
-				break;
-		}
-
-		write_HID(&output);
-		blink();
-		clear(&input);
-		clear(&output);
-
-	}
-	else{
-		buffcan.zero_can();
-		buffcan.write();
-	}
-	
-	
-	if (micros() - top_time > cycle_time) {
-		Serial.print("Overtime ");
-		Serial.println(micros() - top_time);
-	}
-	while (micros() - top_time < cycle_time){}
+	timer_wait_us(0, cycle_time_us);
 }

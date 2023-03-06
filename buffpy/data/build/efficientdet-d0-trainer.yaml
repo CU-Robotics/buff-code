@@ -1,0 +1,2 @@
+project: 'efficientdet-d0-trainer'
+build: 'chmod +x scripts/* && ./scripts/start_training.bash'

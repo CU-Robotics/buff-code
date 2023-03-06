@@ -1,1 +1,0 @@
-INCLUDE: ['rust.yaml', 'firmware.yaml']

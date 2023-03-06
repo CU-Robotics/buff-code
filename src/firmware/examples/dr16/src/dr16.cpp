@@ -1,20 +1,23 @@
 #include "dr16.h"
 
-union {
-    float num;
-    byte bytes[4];
-  } F2BUnion;
+int16_t normalize_channel(int16_t value){
+    return int16_t((float(value) - 1024.0) / 700.0 * pow(2, 15));
+}
 
 void print_receiver_input(byte* buffer){
     for (int i = 0; i < 18; i++)
     {
-        for (int j = 7; j >= 0; j--)
+        for (int j = 0; j < 8; j++)
         {
             Serial.print(bitRead(buffer[i], j));
         }
+
         Serial.print(" ");
+        if ((i + 1) % 6 == 0) {
+            Serial.println();
+        }
     }
-    Serial.println();
+    Serial.println("\n===========");
 }
 
 DR16::DR16()
@@ -45,92 +48,85 @@ void DR16::read(byte *buffer, int offset)
 
         buffer[offset] = 2;
 
-        uint8_t numBytes = 0;
-        float r_stick_x_scale = (1684.0 - 364.0) / 2.0;
-        float r_stick_y_scale = (1684.0 - 268.0) / 2.0;
-        float l_stick_x_scale = (1684.0 - 364.0) / 2.0;
-        float l_stick_y_scale = (1704.0 - 476.0) / 2.0;
-
         // debugging
         // print_receiver_input(tmp);
 
-        // need to convert to normalized values
-        uint16_t r_stick_x = ((tmp[1] & 0b00000111) << 8) | tmp[0];
-        uint16_t r_stick_y = ((tmp[2] & 0b11111100) << 5) | ((tmp[1] & 0b11111000) >> 3);
-        uint16_t l_stick_x = (((tmp[4] & 0b00000001) << 10) | (tmp[3] << 2)) | (tmp[2] & 0b00000011);
-        uint16_t l_stick_y = ((tmp[5] & 0b00001111) << 7) | (tmp[4] & 0b11111110);
+        /*
+         DR16 data format
+            0:  [ch0.7,   ch0.6,   ch0.5,   ch0.4,   ch0.3,   ch0.2,   ch0.1,   ch0.0]
+            1:  [ch1.4,   ch1.3,   ch1.2,   ch1.1,   ch1.0,  ch0.10,   ch0.9,   ch0.8]
+            2:  [ch2.1,   ch2.0,  ch1.10,   ch1.9,   ch1.8,   ch1.7,   ch1.6,   ch1.5]
+            3:  [ch2.9,   ch2.8,   ch2.7,   ch2.6,   ch2.5,   ch2.4,   ch2.3,   ch2.2]
+            4:  [ch3.6,   ch3.5,   ch3.4,   ch3.3,   ch3.2,   ch3.1,   ch3.0,  ch2.10]
+            5:  [s2H,       s2L,     s1H,     s1L,  ch3.10,   ch3.9,   ch3.8,   ch3.7]
+            6:  [                              mouse_x_L                             ]
+            7:  [                              mouse_x_H                             ]
+            8:  [                              mouse_y_L                             ]
+            9:  [                              mouse_y_H                             ]
+            10: [                              mouse_z_L                             ]
+            11: [                              mouse_z_H                             ]
+            12: [lmb,       lmb,     lmb,     lmb,     lmb,     lmb,     lmb,     lmb]
+            13: [rmb,       rmb,     rmb,     rmb,     rmb,     rmb,     rmb,     rmb]
+            14: [key,       key,     key,     key,     key,     key,     key,     key]
+            15: [key,       key,     key,     key,     key,     key,     key,     key]
+            16: [                              reserved                              ]
+            17: [                                text                                ]
 
-        // Serial.print("r_stick_x ");
-        // Serial.print(r_stick_x);
+         HID packet format
+            0:  [                                 0x02                               ]
+            1:  [0,           0,       0,      0,      s2H,     s2L,     s1H,     s1L] (switches)
+            2:  [                                 lmb                                ] (mouse buttons)
+            3:  [                                 rmb                                ]
+            4:  [                            ch0_normal_L                            ] (joysticks)
+            5:  [                            ch0_normal_H                            ]
+            6:  [                            ch1_normal_L                            ]
+            7:  [                            ch1_normal_H                            ]
+            8:  [                            ch2_normal_L                            ]
+            9:  [                            ch2_normal_H                            ]
+            10: [                            ch3_normal_L                            ]
+            11: [                            ch3_normal_H                            ]
+            12: [                              mouse_x_L                             ] (mouse)
+            13: [                              mouse_x_H                             ]
+            14: [                              mouse_y_L                             ]
+            15: [                              mouse_y_H                             ]
+            16: [                              mouse_z_L                             ]
+            17: [                              mouse_z_H                             ]
+            18: [                             keyboard_L                             ] (keyboard buttons)
+            19: [                             keyboard_H                             ]
+        */
 
-        byte s1 = ((tmp[5] & 0b00110000) >> 4);
-        byte s2 = ((tmp[5] & 0b11000000) >> 6); // Set it up like this.
+        int16_t r_stick_x = normalize_channel(((tmp[1] & 0b00000111) << 8) | tmp[0]);
+        int16_t r_stick_y = normalize_channel(((tmp[2] & 0b11111100) << 5) | ((tmp[1] & 0b11111000) >> 3));
+        int16_t l_stick_x = normalize_channel((((tmp[4] & 0b00000001) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0b11000000) >> 6));
+        int16_t l_stick_y = normalize_channel(((tmp[5] & 0b00001111) << 7) | ((tmp[4] & 0b11111110) >> 1));
 
-        F2BUnion.num = float(r_stick_x) - 1024.0;
-        for(int i = 0; i < 4; i++) {
-            buffer[offset+1+i] = F2BUnion.bytes[i];
-        }
+        // Serial.println("norm vals");
+        // Serial.print(r_stick_x); Serial.print(" "); Serial.println(((tmp[1] & 0b00000111) << 8) | tmp[0]);
+        // Serial.print(r_stick_y); Serial.print(" "); Serial.println(((tmp[2] & 0b11111100) << 5) | ((tmp[1] & 0b11111000) >> 3));
+        // Serial.print(l_stick_x); Serial.print(" "); Serial.println((((tmp[4] & 0b00000001) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0b11000000) >> 6));
+        // Serial.print(l_stick_y); Serial.print(" "); Serial.println(((tmp[5] & 0b00001111) << 7) | ((tmp[4] & 0b11111110) >> 1));
 
-        F2BUnion.num = float(r_stick_y) - 1024.0;
-        for(int i = 0; i < 4; i++) {
-            buffer[offset+5+i] = F2BUnion.bytes[i];
-        }
 
-        F2BUnion.num = float(l_stick_x) - 1024.0;
-        for(int i = 0; i < 4; i++) {
-            buffer[offset+9+i] = F2BUnion.bytes[i];
-        }
-
-        F2BUnion.num = float(l_stick_y) - 1024.0;
-        for(int i = 0; i < 4; i++) {
-            buffer[offset+13+i] = F2BUnion.bytes[i];
-        }
-
-        buffer[offset+17] = s1;
-        buffer[offset+18] = s2;      
-
-        // buffer[offset+1] = int8_t((float(r_stick_x) - 1024.0));
-        // buffer[offset+2] = int8_t((float(r_stick_y) - 1024.0) / r_stick_y_scale);
-        // buffer[offset+3] = int8_t((float(l_stick_x) - 1024.0) / l_stick_x_scale);
-        // buffer[offset+4] = int8_t((float(l_stick_y) - 1024.0) / l_stick_y_scale);
-        // buffer[offset+5] = s1;
-        // buffer[offset+6] = s2;
-
-        // Serial.print(" scaled ");
-        // Serial.println(buffer[offset+1]);
-
-        // Serial.println(input->S1, BIN);
-
-        // first byte of keyboard
-        // input->w = tmp[14] & 0b00000001;
-        // input->s = tmp[14] & 0b00000010;
-        // input->a = tmp[14] & 0b00000100;
-        // input->d = tmp[14] & 0b00001000;
-        // input->shift = tmp[14] & 0b00010000;
-        // input->ctrl = tmp[14] & 0b00100000;
-        // input->q = tmp[14] & 0b01000000;
-        // input->e = tmp[14] & 0b10000000;
-
-        // // second byte of keyboard
-        // input->r = tmp[15] & 0b00000001;
-        // input->f = tmp[15] & 0b00000010;
-        // input->g = tmp[15] & 0b00000100;
-        // input->z = tmp[15] & 0b00001000;
-        // input->x = tmp[15] & 0b00010000;
-        // input->c = tmp[15] & 0b00100000;
-        // input->v = tmp[15] & 0b01000000;
-        // input->b = tmp[15] & 0b10000000;
-
-        // // mouse
-        // input->mouseX = (int16_t)(tmp[6] | (tmp[7] << 8));
-        // input->mouseY = (int16_t)(tmp[8] | (tmp[9] << 8));
-        // input->mouseZ = (int16_t)(tmp[10] | (tmp[11] << 8));
-        // input->mouseLeft = tmp[12];
-        // input->mouseRight = tmp[13];
-
-        // // remote wheel
-        // input->remoteWheel = (tmp[17] << 8) | tmp[16];
-
-        return;
+        buffer[offset+1] = ((tmp[5] & 0b11110000) >> 4);   // switches
+        buffer[offset+2] = tmp[12];                        // lmb
+        buffer[offset+3] = tmp[13];                        // rmb
+        buffer[offset+4] = (r_stick_x >> 8) & 0xff;       // ch 0 high
+        buffer[offset+5] = r_stick_x && 0xff;              // ch 0 low
+        buffer[offset+6] = (r_stick_y >> 8) & 0xff;       // ch 1 high
+        buffer[offset+7] = r_stick_y && 0xff;              // ch 1 low
+        buffer[offset+8] = (l_stick_x >> 8) & 0xff;       // ch 2 high
+        buffer[offset+9] = l_stick_x && 0xff;              // ch 2 low
+        buffer[offset+10] = (l_stick_y >> 8) & 0xff;      // ch 3 high
+        buffer[offset+11] = l_stick_y && 0xff;             // ch 3 low
+        buffer[offset+12] = tmp[7];                        // mouse_x high
+        buffer[offset+13] = tmp[6];                        // mouse_x low
+        buffer[offset+14] = tmp[9];                        // mouse_y high
+        buffer[offset+15] = tmp[8];                        // mouse_y low
+        buffer[offset+16] = tmp[11];                       // mouse_z high
+        buffer[offset+17] = tmp[10];                       // mouse_z low
+        buffer[offset+18] = tmp[15];                       // keyboard high
+        buffer[offset+19] = tmp[14];                       // keyboard low
+        
+        // print_receiver_input(&buffer[offset]);
     }
 }

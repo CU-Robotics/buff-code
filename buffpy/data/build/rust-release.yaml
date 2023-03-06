@@ -1,0 +1,6 @@
+project: 'buff_rust'
+build: 'cargo build --release && cargo fmt'
+install: ['target/release/comms_node', 'target/release/estimator_node']
+
+
+
