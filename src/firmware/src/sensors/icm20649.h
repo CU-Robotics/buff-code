@@ -1,4 +1,6 @@
-#include <Adafruit_ICM20649>
+// #include <Adafruit_ICM20X.h>
+#include <Adafruit_ICM20649.h>
+// #include <Adafruit_Sensor.h>
 
 #ifndef BUFF_ICM20649_H
 #define BUFF_ICM20649_H
