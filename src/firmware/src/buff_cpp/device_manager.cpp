@@ -2,10 +2,22 @@
 #include "buff_cpp/timing.h"
 #include "buff_cpp/device_manager.h"
 
+// Uses builtin LED to show when HID is connected
 Device_Manager::Device_Manager(){
 	setup_blink();
 }
 
+/*
+	There are a set of initializer reports required by drivers 
+	to configure the devices. This is the case handler
+	for each of those.
+
+	TODO:
+		make this more generic so there is not
+	a new case for each driver.
+
+	Author: Mitchell Scott
+*/
 void Device_Manager::initializer_report_handle() {
 	int chunk_offset;
 	int limit_offset;
@@ -77,6 +89,17 @@ void Device_Manager::initializer_report_handle() {
 	}
 }
 
+/*
+	The device manager will continously read from can devices.
+	This data is put in the DM Store. The HIDLayer
+	will request these samples. This is the handler for
+	that.
+
+	TODO:
+		
+
+	Author: Mitchell Scott
+*/
 void Device_Manager::feedback_request_handle() {
 	// use input_report.data[1] as the block ID
 	// sensors are expected to have a 
@@ -93,6 +116,19 @@ void Device_Manager::feedback_request_handle() {
 	// Serial.println();
 }
 
+/*
+	The device manager will continously update control outputs. 
+	The HIDLayer will request reports of this. This is the handler for
+	that.
+
+	TODO:
+		Add more general data on the controller
+		i.e. dumb the control mode, the input and
+		timestamps. Currently this only share motor controller
+		info. Talk with Mitchell about designing the reports.
+
+	Author: Mitchell Scott
+*/
 void Device_Manager::control_input_handle() {
 	output_report.put(1, input_report.get(1));
 
@@ -146,6 +182,17 @@ void Device_Manager::control_input_handle() {
 	}
 }
 
+/*
+	The device manager will continously read from each of
+	the sensors. This data is put in the DM Store. The HIDLayer
+	will request each of these samples. This is the handler for
+	that.
+
+	TODO:
+		Add other IMU
+
+	Author: Mitchell Scott
+*/
 void Device_Manager::sensor_request_handle() {
 	// use input_report.data[1] as the sensor to read
 	// imu = 0 (36 bytes = 9 floats), dr16 = 1 (28 bytes = 7 floats)
@@ -171,6 +218,15 @@ void Device_Manager::sensor_request_handle() {
 	}
 }
 
+/*
+	Input reports will have an ID indicating
+	how to handle the report. Do this here
+
+	TODO:
+		
+
+	Author: Mitchell Scott
+*/
 void Device_Manager::report_switch() {
 	// reply to the report with the same id
 	output_report.put(0, input_report.get(0));
@@ -205,6 +261,14 @@ void Device_Manager::report_switch() {
 	}
 }
 
+/*
+	Check for an HID packet
+
+	TODO:
+		
+
+	Author: Mitchell Scott
+*/
 void Device_Manager::hid_input_switch(){
 	/*
 		Check if there is an HID input packet, 
@@ -235,21 +299,36 @@ void Device_Manager::hid_input_switch(){
 	output_report.clear();
 }
 
+/*
+	Push all output values to the CAN bus.
+	Read all feedback messages from the CAN bus.
+
+
+	TODO:
+		Motor ID 4 is having issue, 
+		Issac is leading the investigation.
+
+	Author: Mitchell Scott
+*/
 void Device_Manager::push_can(){
-	/*
-		Read and Write to the CAN busses.
-		@param:
-			None
-		@return:
-			None
-	*/
+	rm_can_ux.write_can();
+
 	for (int i = 0; i < NUM_CAN_BUSES; i++) {
 		rm_can_ux.read_can(i);		
 	}
-
-	rm_can_ux.write_can();
 }
 
+/*
+	Read one of the I2c sensors and any other quick
+	to read devices.
+
+
+	TODO:
+		- Add high range IMU driver to state machine
+		- Add rev encoder to be read each loop (if fast enough)
+
+	Author: Mitchell Scott
+*/
 void Device_Manager::read_sensors() {
 	switch (sensor_switch) {
 		case 0:
@@ -274,13 +353,42 @@ void Device_Manager::read_sensors() {
 	}
 }
 
+/*
+	Based on the control switch and the various
+	input/feedback in the DM store, compute the
+	motor output values = [-1:1].
+
+	controller_switch tells the controller where input
+	is coming from. This will need to be relayed to HID.
+	Do this from the controller report handler and HIDLayer
+
+
+	TODO:
+		Add different controllers,
+			- Gravity compensated
+			- Power limited
+
+		These two can inherit or replace
+		the feedback controller object. The first two
+		feedback values should remain unchanged (position, velocity)
+		The third will be dependant on the controller type (maybe handled by each controller)
+			power = i * V = v * F (current * Voltage/velocity * torque/rotational velocity * force)
+			grav compensation = mglsin(theta), assume params have been identified
+			and come from an initializer report.
+
+		We can disscuss removing the velocity reference, this will make the velocity feedack
+		a very strong damper i.e. Kd * (Rv - v) -> Kd * v (any non zero v will cause an opposing control force)
+		(currently is used to help track velocity, should always have small gain ~< 1 due to noise)
+
+	Author: Mitchell Scott
+*/
 void Device_Manager::step_controllers(float dt) {
 	bool new_references = timer_info_us(2) >= 10;
 
-	if (controller_switch == 1) {
+	if (controller_switch == 1) {								// Use DR16 control input
 		controller_manager.set_input(receiver.data);
 	}
-	else if (controller_switch == 2) {
+	else if (controller_switch == 2) {							// Use DR16 chassis control and HID gimbal control
 		controller_manager.input[0] = receiver.data[0];
 		controller_manager.input[1] = receiver.data[1];
 		controller_manager.input[2] = receiver.data[2];
@@ -296,11 +404,11 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.set_feedback(i, rm_can_ux.motor_index[i].data, rm_can_ux.motor_index[i].roll_over);
 	}
 
-	if (controller_switch != 0) {
+	if (controller_switch != 0) {								// Use the HIDLayers CAN output values or the controllers
 		controller_manager.step_motors();
 	}
 
-	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
+	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {				// Send the controllers output to the can interface
 		// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);
 		rm_can_ux.set_output(i, controller_manager.output[i]);
 	}

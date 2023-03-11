@@ -5,9 +5,9 @@
 #define BUFF_CONTROLLERS_H
 
 /*
-	A scheduler to handle all the different scenarios and report
-	types. This should make checking and parsing all HID a one call
-	function.
+	Break this out into two controllers
+	- Gravity compensated
+	- Power Limited
 */
 
 struct Feedback_Controller {
@@ -21,6 +21,12 @@ struct Feedback_Controller {
 	float gains[MOTOR_FEEDBACK_SIZE];
 };
 
+/*
+	This object is meant to run the control pipeline
+	it allows easy use of the DM store to update inputs
+	and feedback, then uses HID initializers to setup 
+	control laws.
+*/
 struct Controller_Manager {
 	Controller_Manager();
 	void set_gain(int, int, float);
@@ -39,7 +45,13 @@ struct Controller_Manager {
 	float feedback[MAX_NUM_RM_MOTORS][MOTOR_FEEDBACK_SIZE];
 	float references[MAX_NUM_RM_MOTORS][MOTOR_FEEDBACK_SIZE];
 	float chassis_inverse_kinematics[MAX_NUM_RM_MOTORS][REMOTE_CONTROL_LEN];
-
+	// add forward kinematics for estimation: float chassis_forward_kinematics[ROBOT_STATE_LEN][MAX_NUM_RM_MOTORS]
+	
+	// add sensor weight vector for sensor fusion where sum(a) = 1, 
+	// then state_est = (a1*m1) + (a2*m2) + (a3*m3), tune weights to remove
+	// noise. m1 can be a linear transform from a sensor reading to a state. ie mi = R_i * measurement_i
+	// Assume sensor readings are filtered by the drivers that read them.
+	
 	Feedback_Controller controllers[MAX_NUM_RM_MOTORS];
 };
 
