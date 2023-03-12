@@ -126,6 +126,24 @@ void test_imu_bias(void) {
 
 	Serial.println();
 }
+void test_angles(void) {
+Serial.printf("TEST IS STARTING TESTSTSTS \n");
+	for(int i = 0; i < 1000000; i++) {
+		//imu.read_lsm6dsox_accel();
+		//imu.read_lis3mdl();
+		 imu.get_angles();
+		
+		Serial.printf("pitch angle: %f ", imu.pitch);
+		Serial.printf("roll angle: %f " , imu.roll);
+		Serial.printf("yaw angle: %f" , imu.yaw);
+		Serial.printf("\n");
+		timer_wait_us(0, 5000);
+
+
+}
+
+
+}
 
 
 int run_imu_tests(void) {

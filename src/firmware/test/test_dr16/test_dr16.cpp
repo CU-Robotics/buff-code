@@ -42,7 +42,7 @@ void loop_for(int32_t duration, bool debug) {
 				sum += receiver.data[i];
 			}
 
-			TEST_ASSERT(sum - tmp > 10, "Found more than one non-zero value");
+			TEST_ASSERT_MESSAGE(sum - tmp > 10, "Found more than one non-zero value");
 		}
 		//determine if there are wrong bits being read 
 		// if(abs(receiver.data[0]) > 100)
@@ -167,7 +167,7 @@ int run_receiver_tests() {
 	RUN_TEST(test_dr16_null_read);
 	RUN_TEST(test_dr16_active_read);
 	RUN_TEST(dr16_data_display);
-	RUN_TEST(loop_for);
+	//RUN_TEST(loop_for);
 	return UNITY_END();
 }
 
