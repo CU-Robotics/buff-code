@@ -1,7 +1,7 @@
 #include "unity.h"
-#include "buff_cpp/timing.cpp"
-#include "sensors/lsm6dsox.cpp"
-
+#include <Arduino.h>
+#include "buff_cpp/timing.h"
+#include "sensors/lsm6dsox.h"
 
 int imu_dev_cnt = 0;
 
@@ -137,13 +137,10 @@ int run_imu_tests(void) {
 }
 
 // Runs once
-void setup() {
+int main() {
 	// Wait ~2 seconds before the Unity test runner
 	// establishes connection with a board Serial interface
 	delay(2000);
 
 	run_imu_tests();
 }
-
-// Runs continuously
-void loop() {}

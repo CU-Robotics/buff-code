@@ -1,5 +1,17 @@
 #include "dr16.h"
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+	(byte & 0x80 ? '1' : '0'), \
+	(byte & 0x40 ? '1' : '0'), \
+	(byte & 0x20 ? '1' : '0'), \
+	(byte & 0x10 ? '1' : '0'), \
+	(byte & 0x08 ? '1' : '0'), \
+	(byte & 0x04 ? '1' : '0'), \
+	(byte & 0x02 ? '1' : '0'), \
+	(byte & 0x01 ? '1' : '0')
+
+
 float bounded_map(int value, int in_low, int in_high, int out_low, int out_high){
 	/*
 		 This is derived from sthe arduino map() function.
@@ -39,27 +51,24 @@ DR16::DR16(HardwareSerial* serial_port)
 	}
 }
 
-void DR16::print_receiver_input(){
+void DR16::print_receiver_input(byte* buffer){
 
 	Serial.println("\n\t===== DR16 Input");
 
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++)
 	{
-		// for (int j = 0; j < 8; j++) {
-		// 	Serial.print(bitRead(data[i], j));
-		// }
-		Serial.print(data[i]);
+		Serial.print(buffer[i], BIN);
 
-		// Serial.print(" ");
-		// if ((i + 1) % 6 == 0) {
-		// 	Serial.println();
-		// }
+		Serial.print(" ");
+		if ((i + 1) % 6 == 0) {
+			Serial.println();
+		}
 	}
 }
 
 void DR16::print_control_data(){
-	// Serial.println("\n\t===== DR16 Data");
-	Serial.printf("\n\t%f\t%f\t%f\t%f\t%f\t%f\n\n", 
+	//Serial.println("\n\t===== DR16 Data");
+	Serial.printf("\n\t%f\t%f\t%f\t%f\t%f\t%f", 
 		data[0], data[1], data[2], data[3], 
 		data[4], data[5]);
 }
@@ -105,7 +114,7 @@ void DR16::generate_control_from_joysticks() {
 
 	// Normalize the joystick values
 	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -660, 660);
-	float r_stick_y = bounded_map(((tmp[2] & 0x3F) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
+	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
 	// Set the left stick to [-1:1]
 	// 1 / 660.0 = 0.00151515 (avoids an unnecesarry division)
 	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -660, 660);
@@ -136,38 +145,73 @@ void DR16::generate_control_from_joysticks() {
 	data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
 
 	if ((tmp[5] & 0xC0) >> 6 == 1.0) {						// feeder speed
-		data[5] = -50.0;
+		data[5] = -900.0;
 	} 
 	else if ((tmp[5] & 0xC0) >> 6 == 2.0) {
-		data[5] = 50.0;
+		data[5] = 900.0;
 	} 
 	else {
 		data[5] = 0.0;
 	}
-
-	data[6] = 2000.0;
 }
 
-bool DR16::read()
-{
+void DR16::generate_output() {
+	byte tmp[18];
+	serial->readBytes(tmp, 18);
 
-	// if (serial->available() < 18)
-	// {
-	// 	return false;
-	// }
-	
-	// else if (serial->available() % 18 != 0)
-	// {
-	// 	serial->clear();
-	// }
+	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -1000, 1000) / 1000.0;
+	float r_stick_y = bounded_map(((tmp[2] & 0x3F) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -1000, 1000) / 1000.0;
 
-	if (serial->available() == 18)
-	{
-		generate_control_from_joysticks();
+	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -1000, 1000) / 1000.0;
+	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -1000, 1000) / 1000.0;
+
+	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -1000, 1000) / 1000.0;
+
+	data[0] = l_stick_x;
+	out.l_stick_x = l_stick_x;
+	data[1] = l_stick_y;
+	out.l_stick_y = l_stick_y;
+	data[2] = r_stick_x;
+	out.r_stick_x = r_stick_x;
+	data[3] = r_stick_y;
+	out.r_stick_y = r_stick_y;
+	data[4] = wheel;
+	out.wheel = wheel;
+	data[5] = (tmp[5] & 0x30) >> 4;				// switch 1
+	out.r_switch = data[5];
+	data[6] = (tmp[5] & 0xC0) >> 6;				// switch 2
+	out.l_switch = data[6];
+
+	// for (float value : data) Serial.printf("%f ", value);
+	// Serial.println();
+}
+
+void DR16::control_test() {
+	byte tmp[18];
+	serial->readBytes(tmp, 18);
+	for (size_t i = 0; i < sizeof(tmp); i++) {
+		Serial.printf(" ", BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
+	}
+	Serial.println();
+}
+
+bool DR16::read() {
+    if (serial->available() > numBytes) {     				// if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
+        numBytes = serial->available();
+        lastTime = micros();
+    }
+
+    if (micros() - lastTime > 150) {  						// if more than 150 microseconds has passed since the last byte recieved then frame has probably ended
+        if (serial->available() % 18 != 0) {  				// if the number of bytes is not divisible by 18 then there is a mangled frame and all data should be thrown out
+            while (serial->available()) serial->read();     // Why not Serial.clear(), This seems complicated it was working fine with a if bytes available == 18 read; else clear();
+            numBytes = 0;
+        }
+    }
+
+	if (serial->available() >= 18) {
+		generate_output();
 		return true;
 	}
 
-	serial->clear();
 	return false;
-
 }

@@ -37,7 +37,7 @@ void Device_Manager::initializer_report_handle() {
 				rm_can_ux.set_index(i, tmp);
 				// Serial.printf("New CAN device %i: [%i %i %i]\n", i, tmp[0], tmp[1], tmp[2]);
 
-				if (rm_can_ux.motor_index[i].can_bus > 0) {
+				if (rm_can_ux.motor_arr[i].can_bus > 0) {
 					output_report.rputs(tmp, (3 * i) + 2, 3);
 				}
 			}
@@ -401,7 +401,7 @@ void Device_Manager::step_controllers(float dt) {
 			controller_manager.set_reference(i);			
 			timer_set(2);
 		}
-		controller_manager.set_feedback(i, rm_can_ux.motor_index[i].data, rm_can_ux.motor_index[i].roll_over);
+		controller_manager.set_feedback(i, rm_can_ux.motor_arr[i].data, rm_can_ux.motor_arr[i].roll_over);
 	}
 
 	if (controller_switch != 0) {								// Use the HIDLayers CAN output values or the controllers

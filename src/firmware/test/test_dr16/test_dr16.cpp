@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "unity.h"
-#include "sensors/dr16.cpp"
-#include "buff_cpp/timing.cpp"
+#include "sensors/dr16.h"
+#include "buff_cpp/timing.h"
 
 DR16 receiver;
 
@@ -30,7 +30,7 @@ void loop_for(int32_t duration, bool debug) {
 		timer_mark(0);
 
 		if (debug) {
-			receiver.print_receiver_input();		
+			receiver.print_control_data();		
 		}
 
 		timer_wait_us(0, int(duration / 15));
@@ -42,7 +42,7 @@ void loop_for(int32_t duration, bool debug) {
 				sum += receiver.data[i];
 			}
 
-			TEST_ASSERT(sum - tmp > 10, "Found more than one non-zero value");
+			TEST_ASSERT_MESSAGE(sum - tmp > 10, "Found more than one non-zero value");
 		}
 		//determine if there are wrong bits being read 
 		// if(abs(receiver.data[0]) > 100)
@@ -171,16 +171,11 @@ int run_receiver_tests() {
 	return UNITY_END();
 }
 
-// Runs once
-void setup() {
+int main() {
 	// Wait ~2 seconds before the Unity test runner
 	// establishes connection with a board Serial interface
 	delay(2000);
 
 	run_receiver_tests();
-}
-
-// Runs continuously
-void loop() {
-
+	return 0;
 }
