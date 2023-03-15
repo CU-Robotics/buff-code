@@ -55,3 +55,9 @@
 // void loop() {
 
 // }
+
+int main() {
+	// Wait ~2 seconds before the Unity test runner
+	// establishes connection with a board Serial interface
+	return 0;
+}

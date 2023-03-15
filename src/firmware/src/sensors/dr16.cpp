@@ -189,19 +189,21 @@ void DR16::generate_output() {
 void DR16::control_test() {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
-	for (int i = 0; i < sizeof(tmp); i++) Serial.printf(" "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
+	for (size_t i = 0; i < sizeof(tmp); i++) {
+		Serial.printf(" ", BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
+	}
 	Serial.println();
 }
 
 bool DR16::read() {
-    if (serial->available() > numBytes) {     // if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
+    if (serial->available() > numBytes) {     				// if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
         numBytes = serial->available();
         lastTime = micros();
     }
 
-    if (micros() - lastTime > 150) {  // if more than 150 microseconds has passed since the last byte recieved then frame has probably ended
-        if (serial->available() % 18 != 0) {  // if the number of bytes is not divisible by 18 then there is a mangled frame and all data should be thrown out
-            while (serial->available()) serial->read();
+    if (micros() - lastTime > 150) {  						// if more than 150 microseconds has passed since the last byte recieved then frame has probably ended
+        if (serial->available() % 18 != 0) {  				// if the number of bytes is not divisible by 18 then there is a mangled frame and all data should be thrown out
+            while (serial->available()) serial->read();     // Why not Serial.clear(), This seems complicated it was working fine with a if bytes available == 18 read; else clear();
             numBytes = 0;
         }
     }

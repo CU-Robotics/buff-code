@@ -1,6 +1,6 @@
 #include "unity.h"
-#include "buff_cpp/timing.cpp"
-#include "buff_cpp/blink.cpp"
+#include "buff_cpp/timing.h"
+#include "buff_cpp/blink.h"
 
 void setUp(void) {
   // set stuff up here
@@ -41,11 +41,12 @@ int runUnityTests(void) {
 /**
   * For Arduino framework
   */
-void setup() {
+int main() {
   // Wait ~2 seconds before the Unity test runner
   // establishes connection with a board Serial interface
   delay(2000);
 
   runUnityTests();
+
+  return 0;
 }
-void loop() {}

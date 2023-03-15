@@ -2,14 +2,14 @@
 
 #include "unity.h"
 
-#include "buff_cpp/timing.cpp"
-#include "motor_drivers/rm_can_interface.cpp"
+#include "buff_cpp/timing.h"
+#include "motor_drivers/rm_can_interface.h"
 
 
 RM_CAN_Interface rm_can_ux;
 
 int8_t num_motors = 5; 
-byte input_motor_index[16][3] = {{2,1,5}, {1,0,5}, {2,0,2}, {2,2,6},
+byte input_motor_arr[16][3] = {{2,1,5}, {1,0,5}, {2,0,2}, {2,2,6},
 						{2,0,6}, {0,0,0}, {0,0,0}, {0,0,0},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},
 						{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}};
@@ -23,16 +23,16 @@ void tearDown() {
 }
 
 void validate_motor(int i) {
-	TEST_ASSERT_EQUAL_INT8(rm_can_ux.motor_index[i].can_bus, input_motor_index[i][0] - 1);
-	TEST_ASSERT_EQUAL_INT8(rm_can_ux.motor_index[i].esc_type, input_motor_index[i][1]);
-	TEST_ASSERT_EQUAL_INT8(rm_can_ux.motor_index[i].esc_id, input_motor_index[i][2]);
+	TEST_ASSERT_EQUAL_INT8(rm_can_ux.motor_arr[i].can_bus, input_motor_arr[i][0] - 1);
+	TEST_ASSERT_EQUAL_INT8(rm_can_ux.motor_arr[i].esc_type, input_motor_arr[i][1]);
+	TEST_ASSERT_EQUAL_INT8(rm_can_ux.motor_arr[i].esc_id, input_motor_arr[i][2]);
 }
 
 void index_check() {
 	Serial.println("\tIndex setup test:...");
 	timer_set(0);
 	for (size_t i = 0; i < MAX_NUM_RM_MOTORS; i++) {
-		rm_can_ux.set_index(i, input_motor_index[i]);    
+		rm_can_ux.set_index(i, input_motor_arr[i]);    
 	}
 	timer_mark(0);
 
@@ -113,20 +113,20 @@ void test_can_bus_indices() {
 	/*
 			Helper to test the can things ability to access a motor from a return id.
 		@param
-			motor_index: index of the motor
+			motor_arr: index of the motor
 			expected: value to compare to
 		@return
 			None
 	*/
 	Serial.println("\tCAN message Return id index:...");
 	for (int i = 0; i < MAX_CAN_RETURN_IDS; i++) {
-		Serial.printf("\t[%d]\t%i\t%i\n", i, rm_can_ux.can_motor_index[0][i], rm_can_ux.can_motor_index[1][i]);
+		Serial.printf("\t[%d]\t%i\t%i\n", i, rm_can_ux.can_motor_arr[0][i], rm_can_ux.can_motor_arr[1][i]);
 
-		if (rm_can_ux.can_motor_index[0][i] >= 0) {
-			TEST_ASSERT_EQUAL_INT8(0, rm_can_ux.motor_index[rm_can_ux.can_motor_index[0][i]].can_bus);
+		if (rm_can_ux.can_motor_arr[0][i] >= 0) {
+			TEST_ASSERT_EQUAL_INT8(0, rm_can_ux.motor_arr[rm_can_ux.can_motor_arr[0][i]].can_bus);
 		}
-		if (rm_can_ux.can_motor_index[1][i] >= 0) {
-			TEST_ASSERT_EQUAL_INT8(1, rm_can_ux.motor_index[rm_can_ux.can_motor_index[1][i]].can_bus);
+		if (rm_can_ux.can_motor_arr[1][i] >= 0) {
+			TEST_ASSERT_EQUAL_INT8(1, rm_can_ux.motor_arr[rm_can_ux.can_motor_arr[1][i]].can_bus);
 		}
 	}
 }
@@ -135,7 +135,7 @@ void test_can_bus_read() {
 	/*
 			Helper to test the can things ability to read the can bus.
 		@param
-			motor_index: index of the motor
+			motor_arr: index of the motor
 			expected: value to compare to
 		@return
 			None
@@ -169,31 +169,31 @@ void test_set_output() {
 		rm_can_ux.set_output(i, value);    
 		timer_mark(0);
 
-		int can_bus = rm_can_ux.motor_index[i].can_bus;
-		int message_type = rm_can_ux.motor_index[i].message_type;
-		int message_offset = rm_can_ux.motor_index[i].message_offset;
+		int can_bus = rm_can_ux.motor_arr[i].can_bus;
+		int message_type = rm_can_ux.motor_arr[i].message_type;
+		int message_offset = rm_can_ux.motor_arr[i].message_offset;
 
 		if (can_bus < 0) {
-			print_rm_config_struct(&rm_can_ux.motor_index[i]);
+			print_rm_config_struct(&rm_can_ux.motor_arr[i]);
 			continue;
 		}
 
-		else if (rm_can_ux.output[can_bus][message_type].buf[message_offset] != highByte(int16_t(value * rm_can_ux.motor_index[i].output_scale))) {
+		else if (rm_can_ux.output[can_bus][message_type].buf[message_offset] != highByte(int16_t(value * rm_can_ux.motor_arr[i].output_scale))) {
 			Serial.printf("\n\t[%d] failed upper byte check %d != %d\n", i,
-				rm_can_ux.output[can_bus][message_type].buf[message_offset], highByte(int16_t(value * rm_can_ux.motor_index[i].output_scale)));
+				rm_can_ux.output[can_bus][message_type].buf[message_offset], highByte(int16_t(value * rm_can_ux.motor_arr[i].output_scale)));
 
 			Serial.printf("\tbus %d, type %d, offset %d\n", can_bus, message_type, message_offset);
 			print_can_message(&rm_can_ux.output[can_bus][message_type]);
-			TEST_ASSERT_EQUAL_INT8(highByte(int16_t(value * rm_can_ux.motor_index[i].output_scale)), rm_can_ux.output[can_bus][message_type].buf[message_offset]);
+			TEST_ASSERT_EQUAL_INT8(highByte(int16_t(value * rm_can_ux.motor_arr[i].output_scale)), rm_can_ux.output[can_bus][message_type].buf[message_offset]);
 		}
 
-		else if (rm_can_ux.output[can_bus][message_type].buf[message_offset + 1] != lowByte(int16_t(value * rm_can_ux.motor_index[i].output_scale))) {
+		else if (rm_can_ux.output[can_bus][message_type].buf[message_offset + 1] != lowByte(int16_t(value * rm_can_ux.motor_arr[i].output_scale))) {
 			Serial.printf("\n\t[%d] failed lower byte check %d != %d\n", i, 
-				rm_can_ux.output[can_bus][message_type].buf[message_offset + 1], lowByte(int16_t(value * rm_can_ux.motor_index[i].output_scale)));
+				rm_can_ux.output[can_bus][message_type].buf[message_offset + 1], lowByte(int16_t(value * rm_can_ux.motor_arr[i].output_scale)));
 			
 			Serial.printf("\tbus %d, type %d, offset %d\n", can_bus, message_type, message_offset);
 			print_can_message(&rm_can_ux.output[can_bus][message_type]);
-			TEST_ASSERT_EQUAL_INT8(lowByte(int16_t(value * rm_can_ux.motor_index[i].output_scale)), rm_can_ux.output[can_bus][message_type].buf[message_offset + 1]);
+			TEST_ASSERT_EQUAL_INT8(lowByte(int16_t(value * rm_can_ux.motor_arr[i].output_scale)), rm_can_ux.output[can_bus][message_type].buf[message_offset + 1]);
 		} 
 	}
 
@@ -223,7 +223,7 @@ void test_set_feedback() {
 			Helper to test the can things ability to save values.
 		@param
 			can_bus: index of the can bus
-			motor_index: index of the motor
+			motor_arr: index of the motor
 			return_id: value of the return
 		@return
 			None
@@ -235,7 +235,7 @@ void test_set_feedback() {
 	// generate some can messages
 	CAN_message_t tmp[rm_can_ux.num_motors];
 	for (int i = 0; i < rm_can_ux.num_motors; i++){
-		tmp[i].id = 0x201 + rm_can_ux.motor_index[i].return_id;
+		tmp[i].id = 0x201 + rm_can_ux.motor_arr[i].return_id;
 		tmp[i].buf[0] = highByte(value);
 		tmp[i].buf[1] = lowByte(value);
 	}
@@ -243,14 +243,14 @@ void test_set_feedback() {
 	// process the messages
 	timer_set(0);
 	for (int i = 0; i < rm_can_ux.num_motors; i++) {
-		int can_bus = rm_can_ux.motor_index[i].can_bus;
+		int can_bus = rm_can_ux.motor_arr[i].can_bus;
 		rm_can_ux.set_feedback(can_bus, &tmp[i]);  
 	}
 	timer_mark(0);
 
 	for (int i = 0; i < rm_can_ux.num_motors; i++) {
-		int can_bus = rm_can_ux.motor_index[i].can_bus;
-		int motor_id = rm_can_ux.motor_idx_from_return(can_bus, 0x201 + i);
+		int can_bus = rm_can_ux.motor_arr[i].can_bus;
+		int motor_id = rm_can_ux.motor_index_from_return(can_bus, 0x201 + i);
 
 		// motor doesn't exist
 		if (motor_id < 0) {
@@ -258,7 +258,7 @@ void test_set_feedback() {
 		}
 
 		// Confirm angle we passed through the CAN message is in the feedback struct
-		TEST_ASSERT_FLOAT_WITHIN(0.001, PI, rm_can_ux.motor_index[motor_id].data[0]);
+		TEST_ASSERT_FLOAT_WITHIN(0.001, PI, rm_can_ux.motor_arr[motor_id].data[0]);
 	}
 }
 
@@ -273,9 +273,9 @@ void test_get_feedback() {
 
 	Serial.printf("\tTesting get_feedback:...\n");
 		
-	rm_can_ux.motor_index[0].data[0] = PI;
-	rm_can_ux.motor_index[0].data[1] = 10000;
-	rm_can_ux.motor_index[0].timestamp = ARM_DWT_CYCCNT;
+	rm_can_ux.motor_arr[0].data[0] = PI;
+	rm_can_ux.motor_arr[0].data[1] = 10000;
+	rm_can_ux.motor_arr[0].timestamp = ARM_DWT_CYCCNT;
 
 	float tmp[3];
 	timer_set(0);
@@ -299,7 +299,7 @@ void search_for_devices() {
 		CAN_message_t tmp;
 		
 		if (rm_can_ux.can2.read(tmp)) {
-			int8_t motor_id = rm_can_ux.motor_idx_from_return(1, tmp.id);
+			int8_t motor_id = rm_can_ux.motor_index_from_return(1, tmp.id);
 			rm_can_ux.set_feedback(1, &tmp);
 			if (motor_id >= 0) {
 				Serial.printf("\t[%i] Found Device: %X:%i (rid, motor_id)\n", timer_info_us(0), tmp.id, motor_id);
@@ -310,7 +310,7 @@ void search_for_devices() {
 		}
 
 		if (rm_can_ux.can1.read(tmp)) {
-			int8_t motor_id = rm_can_ux.motor_idx_from_return(0, tmp.id);
+			int8_t motor_id = rm_can_ux.motor_index_from_return(0, tmp.id);
 			rm_can_ux.set_feedback(0, &tmp);
 			if (motor_id >= 0) {
 				Serial.printf("\t[%i] Found Device: %X:%i (rid, motor_id)\n", timer_info_us(0), tmp.id, motor_id);
@@ -325,7 +325,7 @@ void search_for_devices() {
 
 	Serial.println("\tMotor Config Dump:");
 	for (int i = 0; i < num_motors; i++) {
-		print_rm_config_struct(&rm_can_ux.motor_index[i]);
+		print_rm_config_struct(&rm_can_ux.motor_arr[i]);
 	}
 }
 
@@ -355,11 +355,11 @@ int run_can_tests() {
 /**
 	* For Arduino framework
 	*/
-void setup() {
+int main() {
 	// Wait ~2 seconds before the Unity test runner
 	// establishes connection with a board Serial interface
 	delay(2000);
 
 	run_can_tests();
+	return 0;
 }
-void loop() {}

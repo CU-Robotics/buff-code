@@ -1,10 +1,18 @@
 #include "unity.h"
-#include "buff_cpp/timing.cpp"
-#include "robot_comms/hid_report.cpp"
+#include "buff_cpp/timing.h"
+#include "robot_comms/hid_report.h"
 
 
 Hid_Report outgoing_report;
 Hid_Report incoming_report;
+
+void setUp() {
+	// set stuff up here
+}
+
+void tearDown() {
+	// clean stuff up here
+}
 
 
 void packet_put_test() {
@@ -136,7 +144,7 @@ int run_hid_report_tests(void) {
 
 
 // Runs once
-void setup() {
+int main() {
 	// Serial.begin(1000000);
 
 	// if (Serial)
@@ -147,9 +155,7 @@ void setup() {
 	delay(2000);
 	run_hid_report_tests();
 	
+	return 0;
 }
-
-// Runs continuously
-void loop() {}
 
 

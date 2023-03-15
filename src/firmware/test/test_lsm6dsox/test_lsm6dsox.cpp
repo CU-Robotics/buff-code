@@ -1,7 +1,7 @@
 #include "unity.h"
-#include "buff_cpp/timing.cpp"
-#include "sensors/lsm6dsox.cpp"
-
+#include <Arduino.h>
+#include "buff_cpp/timing.h"
+#include "sensors/lsm6dsox.h"
 
 int imu_dev_cnt = 0;
 
@@ -126,24 +126,6 @@ void test_imu_bias(void) {
 
 	Serial.println();
 }
-void test_angles(void) {
-Serial.printf("TEST IS STARTING TESTSTSTS \n");
-	for(int i = 0; i < 1000000; i++) {
-		//imu.read_lsm6dsox_accel();
-		//imu.read_lis3mdl();
-		 imu.get_angles();
-		
-		Serial.printf("pitch angle: %f ", imu.pitch);
-		Serial.printf("roll angle: %f " , imu.roll);
-		Serial.printf("yaw angle: %f" , imu.yaw);
-		Serial.printf("\n");
-		timer_wait_us(0, 5000);
-
-
-}
-
-
-}
 
 
 int run_imu_tests(void) {
@@ -155,13 +137,10 @@ int run_imu_tests(void) {
 }
 
 // Runs once
-void setup() {
+int main() {
 	// Wait ~2 seconds before the Unity test runner
 	// establishes connection with a board Serial interface
 	delay(2000);
 
 	run_imu_tests();
 }
-
-// Runs continuously
-void loop() {}

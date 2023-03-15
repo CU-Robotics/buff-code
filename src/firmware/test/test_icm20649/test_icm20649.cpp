@@ -1,6 +1,6 @@
 #include "unity.h"
-#include "buff_cpp/timing.cpp"
-#include "sensors/icm20649.cpp"
+#include "buff_cpp/timing.h"
+#include "sensors/icm20649.h"
 
 ICM20649 imu;
 
@@ -19,7 +19,7 @@ void test_imu_read(void) {
 	imu.readSensor();
 	timer_mark(0);
 	
-    TEST_ASSERT(0.0 < abs(imu.getAccelX));
+    TEST_ASSERT(0.0 < abs(imu.getAccelX()));
     // TEST_ASSERT_FLOAT_IS_NOT_NAN(imu.getAccelX);
     // TEST_ASSERT(0.0 < abs(imu.getAccelY));
     // TEST_ASSERT_FLOAT_IS_NOT_NAN(imu.getAccelY);
@@ -41,9 +41,8 @@ int run_imu_tests(void) {
     return UNITY_END();
 }
 
-void setup() {
+int main() {
     delay(2000);
     run_imu_tests();
+    return 0;
 }
-
-void loop() {}

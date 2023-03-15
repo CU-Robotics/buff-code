@@ -237,7 +237,11 @@ float RM_CAN_Interface::get_motor_angle(int motor_index) {
 
 float RM_CAN_Interface::get_motor_angle(String alias) {
 	int motorID = aliasToMotorID(alias);
-	if (motorID != -1) return get_motor_angle(motorID);
+	if (motorID != -1){
+		return get_motor_angle(motorID);	
+	}
+
+	return 0.0;
 }
 
 float RM_CAN_Interface::get_motor_RPM(int motor_index) {
@@ -246,7 +250,10 @@ float RM_CAN_Interface::get_motor_RPM(int motor_index) {
 
 float RM_CAN_Interface::get_motor_RPM(String alias) {
 	int motorID = aliasToMotorID(alias);
-	if (motorID != -1) return get_motor_RPM(motorID);
+	if (motorID != -1){
+		return get_motor_RPM(motorID);
+	} 
+	return 0.0;
 }
 
 float RM_CAN_Interface::get_motor_torque(int motor_index) {
@@ -255,7 +262,11 @@ float RM_CAN_Interface::get_motor_torque(int motor_index) {
 
 float RM_CAN_Interface::get_motor_torque(String alias) {
 	int motorID = aliasToMotorID(alias);
-	if (motorID != -1) return get_motor_torque(motorID);
+	if (motorID != -1) {
+		return get_motor_torque(motorID);
+	}
+
+	return 0.0;
 }
 
 float RM_CAN_Interface::get_motor_ts(int motor_index) {
@@ -264,7 +275,11 @@ float RM_CAN_Interface::get_motor_ts(int motor_index) {
 
 float RM_CAN_Interface::get_motor_ts(String alias) {
 	int motorID = aliasToMotorID(alias);
-	if (motorID != -1) return get_motor_ts(motorID);
+	if (motorID != -1) {
+		return get_motor_ts(motorID);
+	}
+
+	return -1.0;
 }
 
 int8_t RM_CAN_Interface::motor_index_from_return(int can_bus, int return_id) {
@@ -456,7 +471,7 @@ void RM_CAN_Interface::get_block_feedback(int id, float* data) {
 
 void RM_CAN_Interface::get_block_feedback(String alias, float* data) {
 	int motorID = aliasToMotorID(alias);
-	if (motorID != -1) get_block_feedback(motorID, data);
+	if (motorID != -1) get_block_feedback(motorID, data); // This is not the right usage for block feedback, ID should be divided by 4 (NUM_MOTOR_BLOCKS)
 }
 
 void RM_CAN_Interface::read_can(int bus_num){
@@ -493,18 +508,23 @@ void RM_CAN_Interface::read_can(int bus_num){
 	}
 }
 
-bool RM_CAN_Interface::addMotor(String alias, int motorID, int CANID, int motorType) {
+bool RM_CAN_Interface::addMotor(String alias, byte motorID, byte CANID, byte motorType) {
 	byte config[3] = {CANID, motorType, motorID};
 	int index = motorID + ((CANID - 1) * 8) - 1;
 	set_index(index, config);
 	motorAliases[index] = alias;
-	Serial.println("Error adding motor! All RM device slots are claimed.");
+	// Serial.println("Error adding motor! All RM device slots are claimed.");
 	return false;
 }
 
 // TODO: Optimize (binary insertion + sort?)
 int RM_CAN_Interface::aliasToMotorID(String alias) {
-	for (int i = 0; i < sizeof(motorAliases); i++) if (motorAliases[i] == alias) return i;
+	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
+		if (motorAliases[i] == alias) {
+				return i;
+		}
+	}
+
 	return -1;
 }
 

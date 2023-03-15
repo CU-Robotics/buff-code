@@ -3,13 +3,13 @@
 #ifndef BUFFCAN_H
 #define BUFFCAN_H
 
-#define NUM_CAN_BUSES				    2
+#define NUM_CAN_BUSES				2
 #define MOTOR_FEEDBACK_SIZE 		3
 #define NUM_CAN_MESSAGE_TYPES		3
 #define CAN_MOTOR_BLOCK_SIZE		4
-#define MAX_NUM_RM_MOTORS			  16
+#define MAX_NUM_RM_MOTORS			16
 #define MAX_CAN_RETURN_IDS			12
-#define MOTOR_FEEDBACK_TIMEOUT  100
+#define MOTOR_FEEDBACK_TIMEOUT  	100
 #define ESC_0_OUTPUT_SCALE			10000
 #define ESC_1_OUTPUT_SCALE			16384
 #define ESC_2_OUTPUT_SCALE			30000
@@ -113,7 +113,7 @@ struct RM_CAN_Interface {
 
 	RM_CAN_Device motor_arr[MAX_NUM_RM_MOTORS];               // support for 16 motors total (max 12 per bus)
 	
-	int can_motor_arr[NUM_CAN_BUSES][MAX_CAN_RETURN_IDS];  	// 2 can busses, 11 possible return values
+	int can_motor_arr[NUM_CAN_BUSES][MAX_CAN_RETURN_IDS];  	  // 2 can busses, 11 possible return values
 
 	// CAN info https://github.com/tonton81/FlexCAN_T4/blob/master/FlexCAN_T4.h
 	FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
@@ -125,8 +125,8 @@ struct RM_CAN_Interface {
 
 	// Motor Aliasing
 	String motorAliases[MAX_NUM_RM_MOTORS];
-	bool addMotor(String alias, int motorID, int CANID, int motorType);
-	int aliasToMotorID(String alias);
+	bool addMotor(String alias, byte, byte, byte);
+	int aliasToMotorID(String);
 };
 
 #endif

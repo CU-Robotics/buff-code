@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "unity.h"
-#include "motor_drivers/rm_can_interface.cpp"
+#include "motor_drivers/rm_can_interface.h"
 
 
 RM_CAN_Interface rm_can_ux;
@@ -24,11 +24,11 @@ int run_can_test() {
     while(1) {
         if (rm_can_ux.can2.read(tmp)) {
             // Serial.println(tmp.id);
-			int8_t motor_id = rm_can_ux.motor_idx_from_return(1, tmp.id);
+			int8_t motor_id = rm_can_ux.motor_index_from_return(1, tmp.id);
             // Serial.println(motor_id);
 			rm_can_ux.set_feedback(1, &tmp);
 			if (motor_id == 0) {
-                Serial.println(rm_can_ux.motor_index[0].data[0]);
+                Serial.println(rm_can_ux.motor_arr[0].data[0]);
 				// Serial.printf("\t[%i] Found Device: %X:%i (rid, motor_id)\n", timer_info_us(0), tmp.id, motor_id);
 			}
 		}
@@ -37,11 +37,11 @@ int run_can_test() {
     return UNITY_END();
 }
 
-void setup() {
+int main() {
 	// Wait ~2 seconds before the Unity test runner
 	// establishes connection with a board Serial interface
 	delay(2000);
 
 	run_can_test();
+	return 0;
 }
-void loop() {}
