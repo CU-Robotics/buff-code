@@ -26,6 +26,7 @@
 # ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+OS=$(shell uname -s)
 
 #We try to detect the OS we are running on, and adjust commands as needed
 ifeq ($(OS),Windows_NT)
@@ -47,7 +48,12 @@ else
 	LOGSTRING = echo
 	TARGET_EXTENSION=.out
 	EXECUTABLE = chmod +x
-	ARDUINO_PATH = $(abspath $(HOME)/Library/Arduino15)
+	ifeq ($(OS),Darwin)
+		ARDUINO_PATH = $(abspath $(HOME)/Library/Arduino15)
+	endif
+	ifeq ($(OS),Linux)
+		ARDUINO_PATH = $(abspath $(HOME)/.arduino15)
+	endif
 endif
 
 # Use these lines for Teensy 4.1
