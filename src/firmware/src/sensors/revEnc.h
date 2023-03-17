@@ -4,13 +4,13 @@
 #define RevEnc_H
 
 class RevEnc {
-  private:
-    uint8_t inPin;
-    FreqMeasureMulti freq;
-  public:
-    RevEnc(uint8_t encPin);
-    int getAngleRaw();
-    float getAngle();
+	private:
+		uint8_t inPin;
+		FreqMeasureMulti freq;
+	public:
+		RevEnc(uint8_t encPin);
+		int getAngleRaw();
+		float getAngle();
 };
 
 #endif

@@ -36,6 +36,7 @@ int main() {										// Basically a schudeling algorithm
 		device_manager.push_can();						// push data on and off the can bus
 
 		timer_wait_us(0, cycle_time_us);				// normalize master loop cycle time to cycle_time_us
+		// blink();										// helpful if you think the loop is crashing (light will pause)
 	}
 	
 	return 0;

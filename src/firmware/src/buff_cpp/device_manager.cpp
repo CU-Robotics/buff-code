@@ -19,20 +19,17 @@ Device_Manager::Device_Manager(){
 	Author: Mitchell Scott
 */
 void Device_Manager::initializer_report_handle() {
-	int chunk_offset;
 	int limit_offset;
-	int chunk_size = 4 * MOTOR_FEEDBACK_SIZE;
+	int controller_type;
 	int controller_id = input_report.get(2);
-	int block_offset = CAN_MOTOR_BLOCK_SIZE * input_report.get(2);
 
 	float limits[4];
 	float gains[MOTOR_FEEDBACK_SIZE];
+	byte tmp[3];
 
 	switch (input_report.get(1))	{
 		case 0:
 			for (size_t i = 0; i < MAX_NUM_RM_MOTORS; i++) {
-				byte tmp[3];
-
 				input_report.rgets(tmp, (3 * i) + 2, 3);
 				rm_can_ux.set_index(i, tmp);
 				// Serial.printf("New CAN device %i: [%i %i %i]\n", i, tmp[0], tmp[1], tmp[2]);
@@ -45,12 +42,13 @@ void Device_Manager::initializer_report_handle() {
 		case 1:
 			// set the local controllers gains, and limits
 			// Serial.printf("controller %i\ngains: ", controller_id);
+			controller_type = input_report.get(3);
 			for (int i = 0; i < MOTOR_FEEDBACK_SIZE; i++) {
-				gains[i] = input_report.get_float((4 * i) + 3);
+				gains[i] = input_report.get_float((4 * i) + 4);
 				// Serial.printf("%f, ", gains[i]);
 			}
 
-			limit_offset = (4 * MOTOR_FEEDBACK_SIZE) + 3;
+			limit_offset = (4 * MOTOR_FEEDBACK_SIZE) + 4;
 
 			for (int i = 0; i < 2; i++) {
 				limits[i] = input_report.get_float((4 * i) + limit_offset);
@@ -58,30 +56,16 @@ void Device_Manager::initializer_report_handle() {
 			}
 			// Serial.printf("\nlimits: %f, %f, %f, %f\n", limits[0], limits[1], limits[2], limits[3]);
 
-			controller_manager.init_controller(controller_id, gains, limits);
+			controller_manager.init_controller(controller_id, controller_type, gains, limits);
 			controller_switch = 1;												// enable local control
 			break;
 
 		case 2:
-
-			chunk_size = 4 * REMOTE_CONTROL_LEN;
-			block_offset = 2 * input_report.get(2);							// kinematic matrix comes in rows of two
-
-			// if (block_offset == 0) {
-			// 	Serial.println("Chassis Invers Kinematics");
-			// }
-			// set the local chassis model
-			for (int i = 0; i < 2; i++) { 
-				// Serial.printf("%i: ", block_offset + i);
-				chunk_offset = (chunk_size * i) + 3;		
-				for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
-					// Serial.printf("%f, ", input_report.get_float(chunk_offset + (4 * j)));
-					controller_manager.chassis_inverse_kinematics[block_offset + i][j] = input_report.get_float(chunk_offset + (4 * j));					
-				}
-				// Serial.println();
+			for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
+				// Serial.printf("%f, ", input_report.get_float(chunk_offset + (4 * j)));
+				controller_manager.chassis_inverse_kinematics[controller_id][j] = input_report.get_float(j + 3);					
+				controller_manager.chassis_kinematics[controller_id][j] = input_report.get_float(REMOTE_CONTROL_LEN + j + 3);					
 			}
-
-			controller_switch = 1;												// enable local control
 			break;
 
 		default:
@@ -146,16 +130,46 @@ void Device_Manager::control_input_handle() {
 			break;
 
 		case 1:
-			output_report.put(2, input_report.get(2));
-			output_report.put(3, input_report.get(3));
-			controller_manager.get_control_report(input_report.get(2), tmp);
-			controller_manager.get_control_report(input_report.get(3), &tmp[6]);
-			for (int i = 0; i < 12; i++) {
-				output_report.put_float((4 * i) + 4, tmp[i]);
+			switch (input_report.get(2)) {
+				case 0:
+					output_report.put(2, input_report.get(2));
+					output_report.put(3, input_report.get(3));
+					controller_manager.get_control_report(input_report.get(2), tmp);
+					controller_manager.get_control_report(input_report.get(3), &tmp[6]);
+
+					for (int i = 0; i < 12; i++) {
+						output_report.put_float((4 * i) + 4, tmp[i]);
+					}
+					break;
+
+				case 1:
+					output_report.put(2, input_report.get(2));
+					output_report.put(3, input_report.get(3));
+					controller_manager.get_vel_est_report(tmp);
+
+					for (int i = 0; i < 12; i++) {
+						output_report.put_float((4 * i) + 4, tmp[i]);
+					}
+					break;
+
+				case 2:
+					output_report.put(2, input_report.get(2));
+					output_report.put(3, input_report.get(3));
+					controller_manager.get_pos_est_report(tmp);
+					
+					for (int i = 0; i < 12; i++) {
+						output_report.put_float((4 * i) + 4, tmp[i]);
+					}
+					break;
+
 			}
 			break;
 
 		case 2:
+			if (controller_switch == 1) {	// Only user can put the bot in auto aim
+				break;
+			}
+
 			// set the gimbal input from ros control
 			controller_manager.input[3] = input_report.get_float(2);
 			controller_manager.input[4] = input_report.get_float(6);
@@ -202,11 +216,17 @@ void Device_Manager::sensor_request_handle() {
 	switch (sensor) {
 		case 0:
 			for (int i = 0; i < IMU_DOF; i++){
-				output_report.put_float((4 * i) + 2, imu.data[i]);
+				output_report.put_float((4 * i) + 2, chassis_imu.data[i]);
 			}
 			break;
 
 		case 1:
+			// for (int i = 0; i < IMU_DOF; i++){
+			// 	output_report.put_float((4 * i) + 2, gimbal_imu.data[i]);
+			// }
+			break;
+
+		case 2:
 			// DR16 data is float[7]
 			for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 				output_report.put_float((4 * i) + 2, receiver.data[i]);
@@ -330,24 +350,37 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
+	controller_manager.gimbal_enc[0] = yawEncoder.getAngle();
+	controller_manager.gimbal_enc[1] = pitchEncoder.getAngle();
+
 	switch (sensor_switch) {
 		case 0:
-			imu.read_lsm6dsox_accel();
+			chassis_imu.read_lsm6dsox_accel();
 			sensor_switch += 1;
 			break;
 
 		case 1:
-			imu.read_lsm6dsox_gyro();
+			chassis_imu.read_lsm6dsox_gyro();
 			sensor_switch += 1;
 			break;
 
 		case 2:
-			imu.read_lis3mdl();
+			chassis_imu.read_lis3mdl();
 			sensor_switch += 1;
 			break;
 
 		case 3:
+			ref.read_serial();
+			controller_manager.power_buffer = ref.data.power_buffer;
+			sensor_switch += 1;
+			break;
+
+		case 4:
 			receiver.read();
+			sensor_switch = 0;
+			break;
+
+		default:
 			sensor_switch = 0;
 			break;
 	}
@@ -385,6 +418,8 @@ void Device_Manager::read_sensors() {
 void Device_Manager::step_controllers(float dt) {
 	bool new_references = timer_info_us(2) >= 10;
 
+	controller_manager.estimate_state(chassis_imu.data, chassis_imu.yaw, dt);
+
 	if (controller_switch == 1) {								// Use DR16 control input
 		controller_manager.set_input(receiver.data);
 	}
@@ -401,6 +436,7 @@ void Device_Manager::step_controllers(float dt) {
 			controller_manager.set_reference(i);			
 			timer_set(2);
 		}
+
 		controller_manager.set_feedback(i, rm_can_ux.motor_arr[i].data, rm_can_ux.motor_arr[i].roll_over);
 	}
 

@@ -3,7 +3,7 @@
 #ifndef BUFF_DR16_H
 #define BUFF_DR16_H
 
-#define REMOTE_CONTROL_LEN 6
+#define REMOTE_CONTROL_LEN 7
 #define JOYSTICK_X_SENSITIVITY 1.5
 #define JOYSTICK_Y_SENSITIVITY 1.5
 #define JOYSTICK_PAN_SENSITIVITY 0.01
@@ -20,6 +20,7 @@
 			4: dpitch
 			5: dyaw
 			6: dfeeder
+			7: const
 		*/
 
 float normalize_channel(int16_t);

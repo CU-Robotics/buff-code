@@ -47,6 +47,7 @@ else
 	LOGSTRING = echo
 	TARGET_EXTENSION=.out
 	EXECUTABLE = chmod +x
+	ARDUINO_PATH = $(abspath $(HOME)/Library/Arduino15)
 endif
 
 # Use these lines for Teensy 4.1
@@ -61,7 +62,6 @@ TARGET=src/main
 
 # configurable options
 OPTIONS=-DF_CPU=$(F_CPU) -D$(USB_MODE) -DLAYOUT_US_ENGLISH -DUSING_MAKEFILE
-
 
 # options needed by many Arduino libraries to configure for Teensy model
 OPTIONS+=-D__$(MCU)__ -DTEENSYDUINO=157 -D$(MCU_DEF)
@@ -96,17 +96,17 @@ LIBRARY_DIR=libraries
 BUILD_PATH=$(abspath $(CURDIR)/build)
 
 # path location for Teensy Loader, teensy_post_compile and teensy_reboot (on Linux)
-TOOLS_PATH=$(abspath $(CURDIR)/tools/teensy-tools/1.57.2)
+TOOLS_PATH=$(abspath $(ARDUINO_PATH)/packages/teensy/tools/teensy-tools/1.57.2)
 
 # path location for the arm-none-eabi compiler
-COMPILER_PATH=$(abspath $(CURDIR)/tools/teensy-compile/5.4.1/arm/bin)
+COMPILER_PATH=$(abspath $(ARDUINO_PATH)/packages/teensy/tools/teensy-compile/5.4.1/arm/bin)
 
 #************************************************************************
 # Settings below this point usually do not need to be edited
 #************************************************************************
 
 # CPP_FLAGS = compiler options for C and C++
-CPP_FLAGS=-Wall -g -O2 $(CPU_OPTIONS) -MMD $(OPTIONS) -Isrc -Itest -I$(CORE_DIR) -ffunction-sections -fdata-sections
+CPP_FLAGS=-Wall -g -O2 $(CPU_OPTIONS) -MMD $(OPTIONS) -Isrc -Iexamples -I$(CORE_DIR) -ffunction-sections -fdata-sections
 
 # compiler options for C++ only
 CXX_FLAGS=-std=gnu++14 -felide-constructors -fno-exceptions -fpermissive -fno-rtti -Wno-error=narrowing
@@ -156,24 +156,25 @@ obj: $(OBJS) $(BIN_OBJS) $(MCU_LD)
 build: obj $(TARGETS)
 
 main: obj $(BUILD_PATH)/$(TARGET).hex
-	@$(LOGSTRING) "[MAKE] Done with\t$(word 2,$^)"
+	@$(LOGSTRING) "[MAKE]\tDone with\t$(word 2,$^)"
 
 post_compile: obj $(BUILD_PATH)/$(TARGET).hex
-	@$(LOGSTRING) "[MAKE] Running post compile for\t$(basename $(word 2,$^))"
-	@$(TOOLS_PATH)/teensy_post_compile -file=$(basename $(word 2,$^)) -path=$(BUILD_PATH) -tools="$(TOOLS_PATH)"
+	@$(LOGSTRING) "[MAKE]\tUploading\t$(basename $(word 2,$^)).hex"
+	@-$(abspath $(TOOLS_PATH))/teensy_post_compile -file=$(notdir $(TARGET)) -path=$(BUILD_PATH)/$(dir $(TARGET)) -tools="$(TOOLS_PATH)"
 
 reboot:
 	@-$(abspath $(TOOLS_PATH))/teensy_reboot
 
-upload: post_compile reboot
+upload: clean_hex post_compile reboot
+	@$(LOGSTRING) "[MAKE]\tDone"
 
 $(BUILD_PATH)/%.o: %.c
-	@$(LOGSTRING) "[CC] \t$^"
+	@$(LOGSTRING) "[CC] \t$<"
 	@$(MKDIR) "$(dir $@)"
 	@$(CC) $(CPP_FLAGS) $(C_FLAGS) $(L_INC) -o "$@" -c "$<"
 
 $(BUILD_PATH)/%.o: %.cpp
-	@$(LOGSTRING) "[CXX]\t$^"
+	@$(LOGSTRING) "[CXX]\t$<"
 	@$(MKDIR) "$(dir $@)"
 	@$(CXX) $(CPP_FLAGS) $(CXX_FLAGS) $(L_INC) -o "$@" -c "$<"
 
@@ -191,13 +192,28 @@ $(BUILD_PATH)/%.o: %.cpp
 %.hex: %.elf 
 	@$(LOGSTRING) "[HEX]\t$@"
 	@$(OBJCOPY) -O ihex -R .eeprom "$<" "$@"
-	@$(EXECUTABLE) $@ 
+	@$(EXECUTABLE) $@
+	
 	@$(SIZE) "$<"
-	@$(LOGSTRING) " "
 
 # compiler generated dependency info
 -include $(OBJS:.o=.d) 
 
 clean:
-	@$(LOGSTRING) "Cleaning build/"
-	@$(CLEANDIR) "$(BUILD_PATH)"
+	@$(LOGSTRING) "[MAKE]\tCleaning build/"
+	@$(CLEANDIR) "$(BUILD_PATH)/$(dir $(TARGET))"
+
+clean_hex:
+	@$(LOGSTRING) "[MAKE]\tCleaning hex"
+	@$(CLEANUP) "$(BUILD_PATH)/$(TARGET).hex"
+
+
+
+
+
+
+
+
+
+
+

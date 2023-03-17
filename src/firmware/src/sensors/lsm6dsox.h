@@ -104,7 +104,7 @@ class LSM6DSOX{
 		void read_lsm6dsox_accel();
 		void read_lsm6dsox_gyro();
 		void pretty_print_data();
-		void get_angles();
+		void update_eulers();
 
 		float data[9];
 

@@ -1,5 +1,7 @@
 #include "sensors/dr16.h"
+#include "sensors/revEnc.h"
 #include "sensors/lsm6dsox.h"
+#include "sensors/refSystem.h"
 #include "buff_cpp/controllers.h"
 #include "robot_comms/hid_report.h"
 #include "motor_drivers/rm_can_interface.h"
@@ -42,8 +44,14 @@ struct Device_Manager {
 
 	// ADD new IMU here, also make sure the 
 	// senor pipeline and dev manager constructors knows about it!!
-	LSM6DSOX imu;
+	LSM6DSOX chassis_imu;
 	DR16 receiver;
+	RefSystem ref;
+	RevEnc yawEncoder = RevEnc(1);
+	RevEnc pitchEncoder = RevEnc(2);
+	RevEnc xOdometryEncoder = RevEnc(3);
+	RevEnc yOdometryEncoder = RevEnc(4);
+
 	RM_CAN_Interface rm_can_ux;
 	Controller_Manager controller_manager;
 
