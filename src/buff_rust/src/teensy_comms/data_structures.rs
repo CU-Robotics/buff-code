@@ -10,7 +10,7 @@ use std::sync::{Arc, RwLock};
 pub struct BuffBotSensorReport {
     pub id: u8,
     pub data: Vec<f64>,
-    pub timestamp: u32,
+    pub timestamp: f64,
 }
 
 impl BuffBotSensorReport {
@@ -18,7 +18,7 @@ impl BuffBotSensorReport {
         BuffBotSensorReport {
             id: u8::MAX,
             data: vec![0.0; 24],
-            timestamp: 0,
+            timestamp: 0.0,
         }
     }
 
@@ -26,11 +26,11 @@ impl BuffBotSensorReport {
         BuffBotSensorReport {
             id: id,
             data: data,
-            timestamp: 0,
+            timestamp: 0.0,
         }
     }
 
-    pub fn write(&mut self, data: Vec<f64>, time: u32) {
+    pub fn write(&mut self, data: Vec<f64>, time: f64) {
         self.data = data[0..self.data.len()].to_vec();
         self.timestamp = time;
     }
@@ -58,7 +58,7 @@ pub struct BuffBotCANMotorReport {
     pub motor_type: u8,
     pub esc_id: u8,
     pub feedback: Vec<f64>,
-    pub timestamp: u32,
+    pub timestamp: f64,
 }
 
 impl BuffBotCANMotorReport {
@@ -70,7 +70,7 @@ impl BuffBotCANMotorReport {
             motor_type: u8::MAX,
             esc_id: u8::MAX,
             feedback: vec![0.0; 3],
-            timestamp: 0,
+            timestamp: 0.0,
         }
     }
 
@@ -88,11 +88,11 @@ impl BuffBotCANMotorReport {
             motor_type: motor_type,
             esc_id: esc_id,
             feedback: vec![0.0; 3],
-            timestamp: 0,
+            timestamp: 0.0,
         }
     }
 
-    pub fn write(&mut self, data: Vec<f64>, time: u32) {
+    pub fn write(&mut self, data: Vec<f64>, time: f64) {
         self.feedback = data;
         self.timestamp = time;
     }
@@ -120,11 +120,13 @@ impl BuffBotCANMotorReport {
 pub struct BuffBotControllerReport {
     pub gains: Vec<f64>,
     pub limits: Vec<f64>,
+    pub feedback: Vec<f64>,
+    pub reference: Vec<f64>,
 
     pub output: f64,
-    pub reference: Vec<f64>,
-    pub feedback: Vec<f64>,
-    pub timestamp: u32,
+    pub control_type: u8,
+
+    pub timestamp: f64,
 }
 
 impl BuffBotControllerReport {
@@ -132,39 +134,46 @@ impl BuffBotControllerReport {
         BuffBotControllerReport {
             gains: vec![0.0; 3],
             limits: vec![0.0; 4],
-            output: 0.0,
             reference: vec![0.0; 2],
             feedback: vec![0.0; 3],
-            timestamp: 0,
+            output: 0.0,
+            control_type: 0,
+            timestamp: 0.0,
         }
     }
 
-    pub fn new(gains: Vec<f64>, limits: Vec<f64>) -> BuffBotControllerReport {
+    pub fn new(control_type: u8, gains: Vec<f64>, limits: Vec<f64>) -> BuffBotControllerReport {
         BuffBotControllerReport {
             gains: gains,
             limits: limits,
-            output: 0.0,
             reference: vec![0.0; 2],
             feedback: vec![0.0; 3],
-            timestamp: 0,
+            output: 0.0,
+            control_type: control_type,
+            timestamp: 0.0,
         }
     }
 
     pub fn init_bytes(&self) -> Vec<u8> {
-        self.gains
-            .iter()
-            .map(|k| (*k as f32).to_be_bytes())
-            .flatten()
+        vec![self.control_type]
+            .into_iter()
             .chain(
-                self.limits
+                self.gains
                     .iter()
-                    .map(|l| (*l as f32).to_be_bytes())
-                    .flatten(),
+                    .map(|k| (*k as f32).to_be_bytes())
+                    .flatten()
+                    .chain(
+                        self.limits
+                            .iter()
+                            .map(|l| (*l as f32).to_be_bytes())
+                            .flatten(),
+                    )
+                    .collect::<Vec<u8>>(),
             )
             .collect()
     }
 
-    pub fn write(&mut self, feedback: Vec<f64>, time: u32) {
+    pub fn write(&mut self, feedback: Vec<f64>, time: f64) {
         self.output = feedback[0];
         self.reference = feedback[1..3].to_vec();
         self.feedback = feedback[3..].to_vec();
@@ -180,7 +189,16 @@ pub struct BuffBotStatusReport {
     pub motors: Vec<Arc<RwLock<BuffBotCANMotorReport>>>,
     pub sensors: Vec<Arc<RwLock<BuffBotSensorReport>>>,
     pub controllers: Vec<Arc<RwLock<BuffBotControllerReport>>>,
-    pub chassis_inverse_kinematics: Vec<Vec<f64>>,
+    pub control_input: Arc<RwLock<Vec<f64>>>,
+    pub kee_vel_est: Arc<RwLock<Vec<f64>>>,
+    pub imu_vel_est: Arc<RwLock<Vec<f64>>>,
+    pub kee_imu_pos: Arc<RwLock<Vec<f64>>>,
+    pub enc_mag_pos: Arc<RwLock<Vec<f64>>>,
+    pub power_buffer: Arc<RwLock<f64>>,
+    pub control_mode: Arc<RwLock<f64>>,
+
+    pub forward_kinematics: Vec<Vec<f64>>,
+    pub inverse_kinematics: Vec<Vec<f64>>,
 }
 
 impl BuffBotStatusReport {
@@ -189,26 +207,66 @@ impl BuffBotStatusReport {
             motors: vec![],
             sensors: vec![
                 Arc::new(RwLock::new(BuffBotSensorReport::new(2, vec![0.0; 9]))),
-                Arc::new(RwLock::new(BuffBotSensorReport::new(1, vec![0.0; 6]))),
+                Arc::new(RwLock::new(BuffBotSensorReport::new(1, vec![0.0; 7]))),
             ],
             controllers: vec![],
-            chassis_inverse_kinematics: vec![vec![]],
+            control_input: Arc::new(RwLock::new(vec![0.0; 7])),
+            kee_vel_est: Arc::new(RwLock::new(vec![0.0; 7])),
+            imu_vel_est: Arc::new(RwLock::new(vec![0.0; 7])),
+            kee_imu_pos: Arc::new(RwLock::new(vec![0.0; 7])),
+            enc_mag_pos: Arc::new(RwLock::new(vec![0.0; 7])),
+            power_buffer: Arc::new(RwLock::new(0.0)),
+            control_mode: Arc::new(RwLock::new(0.0)),
+            forward_kinematics: vec![vec![]],
+            inverse_kinematics: vec![vec![]],
         }
     }
 
     pub fn from_byu(byu: BuffYamlUtil) -> BuffBotStatusReport {
         let motor_index = byu.load_string_list("motor_index");
-        let motor_can_index = byu.load_integer_matrix("motor_can_index");
         let motor_gains = byu.load_float_matrix("motor_gains");
         let motor_limits = byu.load_float_matrix("motor_limits");
+        let motor_can_index = byu.load_integer_matrix("motor_can_index");
+        let controller_types = byu.load_integer_matrix("motor_controller_types");
+        let forward_kinematics = byu.load_float_matrix("forward_kinematics");
+        let inverse_kinematics = byu.load_float_matrix("inverse_kinematics");
 
-        let chassis_inverse_kinematics = byu.load_float_matrix("chassis_inverse_kinematics");
+        assert!(
+            controller_types.len() == motor_index.len(),
+            "Number of Controllers and Motors should match"
+        );
+        assert!(
+            motor_can_index.len() == motor_index.len(),
+            "Number of CAN motor configs should match the number of motors"
+        );
+        assert!(
+            inverse_kinematics.len() == motor_index.len()
+                && forward_kinematics[0].len() == motor_index.len(),
+            "Number of rows in the inverse kinematics (cols of forward kinimatics) should match the number of motors"
+        );
+        assert!(
+            inverse_kinematics[0].len() == 7    // INPUT_CONTROL_LEN, maybe correlate these
+                && forward_kinematics.len() == inverse_kinematics[0].len(),
+            "Number of cols in the inverse kinematics (rows of forward kinimatics) should match the number of control inputs"
+        );
+        assert!(
+            motor_gains.len() == motor_index.len(),
+            "Number of motor gains should match the number of motors"
+        );
+        assert!(
+            motor_limits.len() == motor_index.len(),
+            "Number of motor limits should match the number of motors"
+        );
 
-        let controllers: Vec<Arc<RwLock<BuffBotControllerReport>>> = motor_gains
+        let controllers: Vec<Arc<RwLock<BuffBotControllerReport>>> = controller_types
             .into_iter()
+            .flatten()
+            .zip(motor_gains.into_iter())
             .zip(motor_limits.into_iter())
-            .map(|(gains, limits)| {
-                Arc::new(RwLock::new(BuffBotControllerReport::new(gains, limits)))
+            .map(|((cont_type, gains), limits)| {
+                Arc::new(RwLock::new(BuffBotControllerReport::new(
+                    cont_type, gains, limits,
+                )))
             })
             .collect();
 
@@ -223,15 +281,6 @@ impl BuffBotStatusReport {
             })
             .collect();
 
-        assert!(
-            controllers.len() == motors.len(),
-            "Number of Controllers and Motors should match"
-        );
-        assert!(
-            chassis_inverse_kinematics.len() == motors.len(),
-            "Number of rows in the chassis kinematics should match the number of motors"
-        );
-
         BuffBotStatusReport {
             motors: motors,
             sensors: vec![
@@ -239,7 +288,15 @@ impl BuffBotStatusReport {
                 Arc::new(RwLock::new(BuffBotSensorReport::new(1, vec![0.0; 6]))),
             ],
             controllers: controllers,
-            chassis_inverse_kinematics: chassis_inverse_kinematics,
+            control_input: Arc::new(RwLock::new(vec![0.0; 7])),
+            kee_vel_est: Arc::new(RwLock::new(vec![0.0; 7])),
+            imu_vel_est: Arc::new(RwLock::new(vec![0.0; 7])),
+            kee_imu_pos: Arc::new(RwLock::new(vec![0.0; 7])),
+            enc_mag_pos: Arc::new(RwLock::new(vec![0.0; 7])),
+            power_buffer: Arc::new(RwLock::new(0.0)),
+            control_mode: Arc::new(RwLock::new(0.0)),
+            forward_kinematics: forward_kinematics,
+            inverse_kinematics: inverse_kinematics,
         }
     }
 
@@ -262,7 +319,15 @@ impl BuffBotStatusReport {
                 .iter()
                 .map(|controller| controller.clone())
                 .collect(),
-            chassis_inverse_kinematics: self.chassis_inverse_kinematics.clone(),
+            kee_vel_est: self.kee_vel_est.clone(),
+            imu_vel_est: self.imu_vel_est.clone(),
+            kee_imu_pos: self.kee_vel_est.clone(),
+            enc_mag_pos: self.enc_mag_pos.clone(),
+            control_input: self.control_input.clone(),
+            power_buffer: self.power_buffer.clone(),
+            control_mode: self.control_mode.clone(),
+            forward_kinematics: self.forward_kinematics.clone(),
+            inverse_kinematics: self.inverse_kinematics.clone(),
         }
     }
 
@@ -301,19 +366,25 @@ impl BuffBotStatusReport {
 
     pub fn state_control_init_packet(&mut self) -> Vec<Vec<u8>> {
         assert!(
-            self.chassis_inverse_kinematics.len() == self.motors.len(),
+            self.inverse_kinematics.len() == self.motors.len(),
             "Invalid number of parameters, check config"
         );
-        self.chassis_inverse_kinematics
-            .chunks(2)
-            .enumerate()
-            .map(|(i, block)| {
+        // packets have a row of forward and inverse kinimatics,
+        // Done like this so if you don't want to send all of the rows you don't have to
+        (0..self.motors.len())
+            .map(|i| {
                 vec![255, 2, i as u8]
                     .into_iter()
                     .chain(
-                        block
+                        self.inverse_kinematics[i]
                             .iter()
-                            .map(|block| block.iter().map(|x| (*x as f32).to_be_bytes()).flatten())
+                            .map(|x| (*x as f32).to_be_bytes())
+                            .flatten(),
+                    )
+                    .chain(
+                        self.forward_kinematics
+                            .iter()
+                            .map(|x| (x[i] as f32).to_be_bytes())
                             .flatten(),
                     )
                     .collect()
@@ -339,13 +410,17 @@ impl BuffBotStatusReport {
         let mut reports = vec![];
         // (0..self.sensors.len()).for_each(|i| reports.push(vec![3, i as u8]));
         // (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![1, i as u8]));
-        (0..(self.controllers.len() / 2) + 1)
-            .for_each(|i| reports.push(vec![2, 1, (2 * i) as u8, ((2 * i) + 1) as u8]));
+        (0..(self.controllers.len() / 2) + 1) // motor controller reports
+            .for_each(|i| reports.push(vec![2, 1, 0, (2 * i) as u8, ((2 * i) + 1) as u8]));
+
+        reports.push(vec![2, 1, 1]); // vel estimate packet
+        reports.push(vec![2, 1, 2]); // pos estimate packet
+        reports.push(vec![2, 1, 3]); // control manager info packet
 
         reports
     }
 
-    pub fn update_motor_encoder(&mut self, index: usize, feedback: Vec<f64>, timestamp: u32) {
+    pub fn update_motor_encoder(&mut self, index: usize, feedback: Vec<f64>, timestamp: f64) {
         if index < self.motors.len() {
             self.motors[index]
                 .write()
@@ -354,7 +429,7 @@ impl BuffBotStatusReport {
         }
     }
 
-    pub fn update_controller(&mut self, index: usize, feedback: Vec<f64>, timestamp: u32) {
+    pub fn update_controller(&mut self, index: usize, feedback: Vec<f64>, timestamp: f64) {
         if index < self.controllers.len() {
             self.controllers[index]
                 .write()
@@ -363,7 +438,7 @@ impl BuffBotStatusReport {
         }
     }
 
-    pub fn update_sensor(&mut self, index: usize, feedback: Vec<f64>, timestamp: u32) {
+    pub fn update_sensor(&mut self, index: usize, feedback: Vec<f64>, timestamp: f64) {
         self.sensors[index]
             .write()
             .unwrap()

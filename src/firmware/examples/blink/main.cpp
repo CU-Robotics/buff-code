@@ -3,9 +3,9 @@
 #include "buff_cpp/blink.h"
 
 int test_setup_blink(void) {
-  // test stuff
-  setup_blink();
-  return 0;
+	// test stuff
+	setup_blink();
+	return 0;
 }
 
 int test_blink(void) {
@@ -25,7 +25,7 @@ int test_blink(void) {
 		Serial.printf("%i != %i\n", BLINK_RATE_US, timer_info_us(0));
 		return 1;
 	}
-  // TEST_ASSERT_INT32_WITHIN(15, BLINK_RATE_US, timer_info_us(0));
+	// TEST_ASSERT_INT32_WITHIN(15, BLINK_RATE_US, timer_info_us(0));
 	return 0;
 }
 

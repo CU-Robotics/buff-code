@@ -124,24 +124,45 @@ void Controller_Manager::get_control_report(int controller_id, float* data) {
 }
 
 void Controller_Manager::get_vel_est_report(float* data) {
-	for (int i = 0; i < REMOTE_CONTROL_LEN - 1; i++) {
+	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		data[i] = kee_state[i];
-		data[i+REMOTE_CONTROL_LEN-1] = imu_state[i];
+		data[i + REMOTE_CONTROL_LEN] = imu_state[i];
 	}
 }
 
 void Controller_Manager::get_pos_est_report(float* data) {
-	for (int i = 0; i < REMOTE_CONTROL_LEN - 1; i++) {
+	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		data[i] = kee_imu_pos[i];
-		data[i+REMOTE_CONTROL_LEN-1] = enc_mag_pos[i];
+		data[i + REMOTE_CONTROL_LEN] = enc_mag_pos[i];
 	}
 }
 
+void Controller_Manager::get_manager_report(float* data) {
+	for (int i = 0; i < REMOTE_CONTROL_LEN ; i++) {
+		data[i] = input[i];
+	}
+	data[REMOTE_CONTROL_LEN] = power_buffer;
+}
+
 void Controller_Manager::step_motors() {
+	float ratio = 1.0;
+	float power_buffer_limit_thresh = 60.0;
+	float power_buffer_critical_thresh = 30.0;
 	// Set the output to each motor by giving that motors feedback to a controller
 	// Serial.printf("outputs: ");
+
+	if (power_buffer < power_buffer_limit_thresh) {
+		ratio = constrain((power_buffer - power_buffer_critical_thresh) / power_buffer_limit_thresh, 0.0, 1.0);
+	}
+
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
-		output[i] = controllers[i].step(references[i], feedback[i]);
+		switch(controller_types[i]){
+			case 0:
+				output[i] = controllers[i].step(references[i], feedback[i]) * ratio;
+
+			case 1:
+				output[i] = controllers[i].step(references[i], feedback[i]);
+		}
 		// Serial.printf("%.4f, ", output[i]);
 	}
 	// Serial.println();
@@ -170,7 +191,6 @@ void Controller_Manager::set_reference(int controller_id) {
 	// bound the reference state to the defined limits
 	controllers[controller_id].bound_reference(references[controller_id]);
 }
-
 
 void Controller_Manager::set_feedback(int controller_id, float* data, float rollover) {
 	// motor_index[i].data[0] is the motor_angle add 2pi roll over to make an output angle

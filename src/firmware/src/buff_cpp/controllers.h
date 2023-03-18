@@ -41,6 +41,7 @@ struct Controller_Manager {
 	void get_control_report(int, float*);
 	void get_vel_est_report(float*);
 	void get_pos_est_report(float*);
+	void get_manager_report(float*);
 	void step_motors();
 	void set_input(float*);
 	void set_feedback(int, float*, float);

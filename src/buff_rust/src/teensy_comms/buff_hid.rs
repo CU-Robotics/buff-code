@@ -1,6 +1,7 @@
 extern crate hidapi;
 
-use crate::utilities::{buffers::*, data_structures::*, loaders::*};
+use crate::teensy_comms::data_structures::*;
+use crate::utilities::{buffers::*, loaders::*};
 use hidapi::{HidApi, HidDevice};
 use rosrust_msg::std_msgs;
 use std::{
@@ -122,6 +123,7 @@ pub struct HidReader {
     pub input: ByteBuffer,
     pub robot_status: BuffBotStatusReport,
     pub teensy: HidDevice,
+    pub teensy_cyccnt: f64,
 }
 
 impl HidReader {
@@ -133,6 +135,7 @@ impl HidReader {
             input: ByteBuffer::new(64),
             robot_status: BuffBotStatusReport::from_self(),
             teensy: device,
+            teensy_cyccnt: 0.0,
         }
     }
 
@@ -187,9 +190,18 @@ impl HidReader {
                 64 => {
                     if self.input.get(0) == 0 && self.input.get_i32(60) == 0 {
                         continue;
-                    } else if self.input.get_i32(60) > 1000 {
-                        println!("Teensy cycle time is over the limit");
+                    } else if 1.0 / 600000000.0
+                        * (self.input.get_i32(60) as f64 - self.teensy_cyccnt)
+                        > 0.0015
+                    {
+                        println!(
+                            "Teensy cycle time is over the limit {}",
+                            1.0 / 600000000.0
+                                * (self.input.get_i32(60) as f64 - self.teensy_cyccnt)
+                        );
                     }
+
+                    self.teensy_cyccnt = self.input.get_i32(60) as f64;
 
                     if self.input.get(0) == packet_id {
                         println!("Teenys report {} reply received", packet_id);
@@ -219,7 +231,14 @@ impl HidReader {
     /// }
     /// ```
     pub fn parse_report(&mut self) {
-        let teensy_clock = self.input.get_u32(60);
+        if 1.0 / 600000000.0 * (self.input.get_i32(60) as f64 - self.teensy_cyccnt) > 0.0015 {
+            println!(
+                "Teensy cycle time is over the limit {}",
+                1.0 / 600000000.0 * (self.input.get_i32(60) as f64 - self.teensy_cyccnt)
+            );
+        }
+
+        self.teensy_cyccnt = self.input.get_i32(60) as f64;
 
         // match the report number to determine the structure
         match self.input.get(0) {
@@ -228,47 +247,73 @@ impl HidReader {
                 self.robot_status.update_motor_encoder(
                     index_offset,
                     self.input.get_floats(2, 3),
-                    teensy_clock,
+                    self.teensy_cyccnt,
                 );
                 self.robot_status.update_motor_encoder(
                     index_offset + 1,
                     self.input.get_floats(14, 3),
-                    teensy_clock,
+                    self.teensy_cyccnt,
                 );
                 self.robot_status.update_motor_encoder(
                     index_offset + 2,
                     self.input.get_floats(26, 3),
-                    teensy_clock,
+                    self.teensy_cyccnt,
                 );
                 self.robot_status.update_motor_encoder(
                     index_offset + 3,
                     self.input.get_floats(38, 3),
-                    teensy_clock,
+                    self.teensy_cyccnt,
                 );
             }
-            2 => match self.input.get(1) {
-                1 => {
-                    let index1 = self.input.get(2) as usize;
-                    let index2 = self.input.get(3) as usize;
 
-                    self.robot_status.update_controller(
-                        index1,
-                        self.input.get_floats(4, 6),
-                        teensy_clock,
-                    );
-                    self.robot_status.update_controller(
-                        index2,
-                        self.input.get_floats(28, 6),
-                        teensy_clock,
-                    );
-                }
+            2 => match self.input.get(1) {
+                1 => match self.input.get(2) {
+                    0 => {
+                        let index1 = self.input.get(3) as usize;
+                        let index2 = self.input.get(4) as usize;
+
+                        self.robot_status.update_controller(
+                            index1,
+                            self.input.get_floats(5, 6),
+                            self.teensy_cyccnt,
+                        );
+                        self.robot_status.update_controller(
+                            index2,
+                            self.input.get_floats(29, 6),
+                            self.teensy_cyccnt,
+                        );
+                    }
+
+                    1 => {
+                        *self.robot_status.kee_vel_est.write().unwrap() =
+                            self.input.get_floats(3, 7).to_vec();
+                        *self.robot_status.imu_vel_est.write().unwrap() =
+                            self.input.get_floats(31, 7).to_vec();
+                    }
+
+                    2 => {
+                        *self.robot_status.kee_imu_pos.write().unwrap() =
+                            self.input.get_floats(3, 7).to_vec();
+                        *self.robot_status.enc_mag_pos.write().unwrap() =
+                            self.input.get_floats(31, 7).to_vec();
+                    }
+
+                    3 => {
+                        *self.robot_status.control_mode.write().unwrap() = self.input.get(3) as f64;
+                        *self.robot_status.control_input.write().unwrap() =
+                            self.input.get_floats(4, 7).to_vec();
+                        *self.robot_status.power_buffer.write().unwrap() = self.input.get_float(32);
+                    }
+                    _ => {}
+                },
                 _ => {}
             },
+
             3 => {
                 self.robot_status.update_sensor(
                     self.input.get(1) as usize,
                     self.input.get_floats(2, 9),
-                    teensy_clock,
+                    self.teensy_cyccnt,
                 );
             }
             u8::MAX => {}
@@ -339,6 +384,10 @@ pub struct HidROS {
     pub motor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub controller_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub sensor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub estimate_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub control_publisher: rosrust::Publisher<std_msgs::Float64MultiArray>,
+    pub power_buffer_publisher: rosrust::Publisher<std_msgs::Float64>,
+
     pub motor_subscribers: Vec<rosrust::Subscriber>,
 }
 
@@ -368,6 +417,16 @@ impl HidROS {
         let sensor_publishers = (0..robot_status.sensors.len())
             .map(|i| rosrust::publish(format!("sensor_{}_feedback", i).as_str(), 1).unwrap())
             .collect();
+
+        let estimate_publishers = vec![
+            rosrust::publish("kee_vel_est", 1).unwrap(),
+            rosrust::publish("imu_vel_est", 1).unwrap(),
+            rosrust::publish("kee_imu_pos", 1).unwrap(),
+            rosrust::publish("enc_mag_pos", 1).unwrap(),
+        ];
+
+        let control_publisher = rosrust::publish("control_input_echo", 1).unwrap();
+        let power_buffer_publisher = rosrust::publish("power_buffer", 1).unwrap();
 
         let n_motors = robot_status.motors.len();
         let motor_can_output = Arc::new(RwLock::new(vec![0.0; n_motors]));
@@ -432,6 +491,10 @@ impl HidROS {
             motor_publishers: motor_publishers,
             sensor_publishers: sensor_publishers,
             controller_publishers: controller_publishers,
+            control_publisher: control_publisher,
+            estimate_publishers: estimate_publishers,
+            power_buffer_publisher: power_buffer_publisher,
+
             motor_subscribers: motor_subscribers,
         }
     }
@@ -508,6 +571,32 @@ impl HidROS {
             });
     }
 
+    pub fn publish_controller_manager(&self) {
+        let mut msg = std_msgs::Float64::default();
+        msg.data = self.robot_status.power_buffer.read().unwrap().clone();
+        self.power_buffer_publisher.send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.control_input.read().unwrap().clone();
+        self.control_publisher.send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.kee_vel_est.read().unwrap().clone();
+        self.estimate_publishers[0].send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.imu_vel_est.read().unwrap().clone();
+        self.estimate_publishers[1].send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.kee_imu_pos.read().unwrap().clone();
+        self.estimate_publishers[2].send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.enc_mag_pos.read().unwrap().clone();
+        self.estimate_publishers[3].send(msg).unwrap();
+    }
+
     /// Publish sensor data to ROS
     pub fn publish_sensors(&self) {
         self.sensor_publishers
@@ -577,15 +666,23 @@ impl HidROS {
             let loopt = Instant::now();
 
             // don't publish every cycle
-            if publish_timer.elapsed().as_millis() > 5 {
+            if publish_timer.elapsed().as_millis() > (reports.len() / 2) as u128 {
                 publish_timer = Instant::now();
                 // self.publish_motors();
-                if pub_switch == 0 {
-                    self.publish_controllers();
-                    pub_switch = 1;
-                } else {
-                    self.publish_sensors();
-                    pub_switch = 0;
+                match pub_switch {
+                    0 => {
+                        self.publish_controllers();
+                        pub_switch += 1;
+                    }
+                    1 => {
+                        self.publish_controller_manager();
+                        pub_switch = 0;
+                    }
+                    2 => {
+                        self.publish_sensors();
+                        pub_switch = 0;
+                    }
+                    _ => {}
                 }
             }
 

@@ -3,8 +3,8 @@ extern crate hidapi;
 use hidapi::{HidApi, HidDevice};
 
 use crate::{
-    teensy_comms::buff_hid::*,
-    utilities::{data_structures::*, loaders::*},
+    teensy_comms::{buff_hid::*, data_structures::*},
+    utilities::loaders::*,
 };
 
 use std::{
@@ -13,6 +13,9 @@ use std::{
     thread::sleep,
     time::{Duration, Instant},
 };
+
+#[allow(dead_code)]
+const VERBOSITY: usize = 1;
 
 #[cfg(test)]
 pub mod comms_tests {
@@ -49,21 +52,21 @@ pub mod comms_tests {
         let mode = reader.input.get(0);
         let timer = reader.input.get_i32(60);
 
-        if mode == 255 {
+        if mode == 255 && VERBOSITY > 0 {
             println!(
                 "\t[{}] Config Packet detected: <{}, {} us>",
                 sys_time.elapsed().as_millis(),
                 reader.input.get(0),
                 timer
             );
-        } else if mode == 0 {
+        } else if mode == 0 && VERBOSITY > 0 {
             println!(
                 "\t[{}] Idle Packet detected: <{}, {} us>",
                 sys_time.elapsed().as_millis(),
                 reader.input.get(0),
                 timer
             );
-        } else {
+        } else if VERBOSITY > 0 {
             println!(
                 "\t[{}] Data Packet detected: <{}, {} us>",
                 sys_time.elapsed().as_millis(),
@@ -72,36 +75,56 @@ pub mod comms_tests {
             );
         }
 
-        if timer == 0 {
+        if timer == 0 && VERBOSITY > 0 {
             println!("\tTeensy does not recognize the connection!");
         }
 
         return mode;
     }
 
-    pub fn watch_for_packet(reader: &mut HidReader, packet_id: u8, timeout: u128) {
+    pub fn watch_for_packet(
+        reader: &mut HidReader,
+        packet_id: u8,
+        timeout: u128,
+        mut teensy_cyccnt: f64,
+    ) -> f64 {
         let mut loopt;
         let mode = 0;
+        let teensy_f = 1.0 / 600000000.0;
         let t = Instant::now();
+        let mut teensy_elapsed_time;
 
         while t.elapsed().as_millis() < timeout {
             loopt = Instant::now();
 
             match reader.read() {
                 64 => {
-                    if reader.input.get(0) == 0 && reader.input.get_i32(60) == 0 {
+                    teensy_elapsed_time =
+                        teensy_f * (reader.input.get_i32(60) as f64 - teensy_cyccnt);
+                    teensy_cyccnt = reader.input.get_i32(60) as f64;
+
+                    if reader.input.get(0) == 0 && teensy_cyccnt == 0.0 {
                         continue;
-                    } else if reader.input.get_i32(60) > 1000 {
-                        println!("\tTeensy cycle time is over the limit");
+                    } else if teensy_elapsed_time > 0.001 {
+                        if VERBOSITY > 0 {
+                            println!(
+                                "\tTeensy cycle time is over the limit {}",
+                                teensy_elapsed_time
+                            );
+                        }
                     }
 
                     if reader.input.get(0) == packet_id {
-                        println!("\tTeenys report {} reply received", packet_id);
-                        return;
+                        if VERBOSITY > 1 {
+                            println!("\tTeenys report {} reply received", packet_id);
+                        }
+                        return teensy_cyccnt;
                     }
                 }
                 0 => {
-                    println!("\tNo Packet available");
+                    if VERBOSITY > 0 {
+                        println!("\tNo Packet available");
+                    }
                 }
                 _ => {
                     panic!("\tCorrupt packet!");
@@ -118,10 +141,8 @@ pub mod comms_tests {
             "\t[{}] Requested Teensy Packet not found\n\n",
             t.elapsed().as_millis()
         );
-        println!(
-            "\t[{}] Requested Teensy Packet found\n\n",
-            t.elapsed().as_millis()
-        )
+
+        return teensy_cyccnt;
     }
 
     pub fn watch_for_packet_data(
@@ -130,43 +151,20 @@ pub mod comms_tests {
         timeout: u128,
         index: usize,
         n: usize,
-    ) {
-        let mut loopt;
+        mut teensy_cyccnt: f64,
+    ) -> f64 {
         let mut sum = -1.0;
         let t = Instant::now();
 
-        while t.elapsed().as_millis() < timeout {
-            loopt = Instant::now();
+        teensy_cyccnt = watch_for_packet(reader, packet_id, timeout, teensy_cyccnt);
 
-            match reader.read() {
-                64 => {
-                    if reader.input.get(0) == 0 && reader.input.get_i32(60) == 0 {
-                        continue;
-                    } else if reader.input.get_i32(60) > 1000 {
-                        println!("\tTeensy cycle time is over the limit");
-                    }
-
-                    if validate_input_packet(reader, t) == packet_id {
-                        sum = reader
-                            .input
-                            .gets(index, n)
-                            .into_iter()
-                            .map(|x| x as f64)
-                            .sum::<f64>();
-                        // reader.input.print_data();
-                        break;
-                    }
-                }
-                0 => {
-                    println!("\tNo Packet available");
-                }
-                _ => {
-                    panic!("\tCorrupt packet!");
-                }
-            }
-
-            // writer.write();
-            while loopt.elapsed().as_micros() < 1000 {}
+        if validate_input_packet(reader, t) == packet_id {
+            sum = reader
+                .input
+                .gets(index, n)
+                .into_iter()
+                .map(|x| x as f64)
+                .sum::<f64>();
         }
 
         assert!(
@@ -179,10 +177,38 @@ pub mod comms_tests {
             "\t[{}] Requested Teensy Data Empty\n\n",
             t.elapsed().as_millis()
         );
-        println!(
-            "\t[{}] Requested Teensy Data found\n\n",
+        return teensy_cyccnt;
+    }
+
+    pub fn watch_for_report(
+        reader: &mut HidReader,
+        packet_id: u8,
+        timeout: u128,
+        report: Vec<u8>,
+        mut teensy_cyccnt: f64,
+    ) -> f64 {
+        let mut sum = -1.0;
+        let t = Instant::now();
+
+        teensy_cyccnt = watch_for_packet(reader, packet_id, timeout, teensy_cyccnt);
+
+        if validate_input_packet(reader, t) == packet_id {
+            sum = reader
+                .input
+                .data
+                .iter()
+                .zip(report.iter())
+                .map(|(x, r)| (*x - *r) as f64)
+                .sum::<f64>();
+        }
+
+        assert!(
+            sum >= 0.0,
+            "\t[{}] Requested Teensy Packet does not match\n\n",
             t.elapsed().as_millis()
-        )
+        );
+
+        return teensy_cyccnt;
     }
 
     pub fn watch_for_no_packet_data(
@@ -191,96 +217,79 @@ pub mod comms_tests {
         timeout: u128,
         index: usize,
         n: usize,
-    ) {
-        let mut loopt;
+        mut teensy_cyccnt: f64,
+    ) -> f64 {
         let mut sum = -1.0;
         let t = Instant::now();
 
-        while t.elapsed().as_millis() < timeout {
-            loopt = Instant::now();
+        teensy_cyccnt = watch_for_packet(reader, packet_id, timeout, teensy_cyccnt);
 
-            match reader.read() {
-                64 => {
-                    if reader.input.get(0) == 0 && reader.input.get_i32(60) == 0 {
-                        continue;
-                    } else if reader.input.get_i32(60) > 1000 {
-                        println!("\tTeensy cycle time is over the limit");
-                    }
-
-                    if validate_input_packet(reader, t) == packet_id {
-                        sum = reader
-                            .input
-                            .gets(index, n)
-                            .into_iter()
-                            .map(|x| x as f64)
-                            .sum::<f64>();
-                        // reader.input.print_data();
-                        break;
-                    }
-                }
-                0 => {
-                    println!("\tNo Packet available");
-                }
-                _ => {
-                    panic!("\tCorrupt packet!");
-                }
-            }
-
-            // writer.write();
-            while loopt.elapsed().as_micros() < 1000 {}
+        if validate_input_packet(reader, t) == packet_id {
+            sum = reader
+                .input
+                .gets(index, n)
+                .into_iter()
+                .map(|x| x as f64)
+                .sum::<f64>();
         }
 
         assert!(
-            sum >= 0.0,
-            "\t[{}] Requested Teensy Packet not found\n\n",
+            sum == 0.0,
+            "\t[{}] Requested Teensy Packet was empty\n\n",
             t.elapsed().as_millis()
         );
         assert!(
-            sum == 0.0,
-            "\t[{}] Requested Teensy Data not empty\n\n",
+            sum != 0.0,
+            "\t[{}] Requested  Packet was not empty\n\n",
             t.elapsed().as_millis()
         );
-        println!(
-            "\t[{}] Requested Teensy Data empty\n\n",
-            t.elapsed().as_millis()
-        )
+
+        return teensy_cyccnt;
     }
 
-    pub fn packet_request_test(reader: &mut HidReader, writer: &mut HidWriter, packet_id: u8) {
-        println!("Testing packet request {}:...", packet_id);
-        writer.send_report(packet_id, vec![0]);
-        watch_for_packet(reader, packet_id, 5);
+    pub fn packet_request_test(
+        reader: &mut HidReader,
+        writer: &mut HidWriter,
+        packet_id: u8,
+        data: Vec<u8>,
+        teensy_cyccnt: f64,
+    ) -> f64 {
+        if VERBOSITY > 1 {
+            println!("Testing packet request {}:...", packet_id);
+        }
+        writer.send_report(packet_id, data);
+        return watch_for_packet(reader, packet_id, 5, teensy_cyccnt);
     }
 
     pub fn initializer_test(reader: &mut HidReader, writer: &mut HidWriter) {
         let mut robot_status = BuffBotStatusReport::new("penguin");
         let initializers = robot_status.load_initializers();
+        let mut teensy_cyccnt = 0.0;
         println!("\nTesting initializers:...");
         initializers.iter().for_each(|init| {
-            // println!("{:?}", init);
             writer.send_report(255, init[1..].to_vec());
-            watch_for_packet(reader, 255, 5);
+            teensy_cyccnt = watch_for_report(reader, 255, 5, init[..3].to_vec(), teensy_cyccnt);
         });
     }
 
     pub fn imu_connection_test(reader: &mut HidReader, writer: &mut HidWriter) {
         println!("\nTesting imu access:...\n");
         writer.send_report(3, vec![0]);
-        watch_for_packet_data(reader, 3, 5, 2, 36);
+        watch_for_packet_data(reader, 3, 5, 2, 36, 0.0);
         println!("IMU data: {:?}", reader.input.get_floats(2, 9));
     }
 
     pub fn dr16_connection_test(reader: &mut HidReader, writer: &mut HidWriter) {
         println!("\nTesting dr16 access:...\n");
-        writer.send_report(3, vec![1]);
-        watch_for_packet_data(reader, 3, 5, 2, 24);
+        writer.send_report(3, vec![2]);
+        watch_for_packet_data(reader, 3, 5, 2, 24, 0.0);
         println!("DR16 data {:?}", reader.input.get_floats(2, 6));
     }
 
     pub fn motor_feedback_test(reader: &mut HidReader, writer: &mut HidWriter) {
         println!("\nTesting motor feedback:...\n");
         writer.send_report(1, vec![1]);
-        watch_for_packet_data(reader, 1, 10, 2, 49);
+        watch_for_packet_data(reader, 1, 10, 2, 49, 0.0);
         println!("Motor 5 data: {:?}", reader.input.get_floats(14, 3));
     }
 
@@ -295,7 +304,7 @@ pub mod comms_tests {
                 bytes[3],
             ],
         );
-        watch_for_packet(reader, 2, 5);
+        watch_for_packet(reader, 2, 5, 0.0);
 
         let t = Instant::now();
         while t.elapsed().as_secs() < 1 {}
@@ -307,6 +316,7 @@ pub mod comms_tests {
     pub fn gimbal_input_control_test(reader: &mut HidReader, writer: &mut HidWriter) {
         println!("\nTesting gimbal input control:...\n");
         let mut t = Instant::now();
+        let mut teensy_cyccnt = 0.0;
         while t.elapsed().as_secs() < 3 {}
         // set up control output for motor 4, 5 & 6
         writer.output.puts(0, vec![2, 2]);
@@ -314,22 +324,36 @@ pub mod comms_tests {
         writer.output.put_float(7, 1.0);
         writer.output.put_float(11, 1.0);
         writer.write();
-        watch_for_packet(reader, 2, 5);
+        teensy_cyccnt = watch_for_packet(reader, 2, 5, teensy_cyccnt);
 
         t = Instant::now();
         while t.elapsed().as_secs() < 3 {}
 
         // check chassis controllers
         writer.send_report(2, vec![1]);
-        watch_for_no_packet_data(reader, 2, 5, 3, 48);
+        teensy_cyccnt = watch_for_no_packet_data(reader, 2, 5, 3, 48, teensy_cyccnt);
 
         // check gimbal controllers
         writer.send_report(2, vec![1, 1]);
-        watch_for_packet_data(reader, 2, 5, 15, 12);
+        teensy_cyccnt = watch_for_packet_data(reader, 2, 5, 15, 12, teensy_cyccnt);
 
         // zero things out
         writer.send_report(2, vec![2]);
-        watch_for_packet(reader, 2, 5);
+        watch_for_packet(reader, 2, 5, teensy_cyccnt);
+    }
+
+    pub fn latency_test(reader: &mut HidReader, writer: &mut HidWriter) {
+        println!("\nTesting latency alignment:...\n");
+        let t = Instant::now();
+        // mock request for controller 0 & 1 status
+        let mut teensy_cyccnt = 0.0;
+        while t.elapsed().as_millis() < 900 {
+            teensy_cyccnt = packet_request_test(reader, writer, 2, vec![1, 0, 0, 1], teensy_cyccnt)
+        }
+
+        while t.elapsed().as_millis() < 900 {
+            teensy_cyccnt = packet_request_test(reader, writer, 2, vec![1, 0, 2, 3], teensy_cyccnt)
+        }
     }
 
     #[test]
@@ -349,11 +373,11 @@ pub mod comms_tests {
 
         initializer_test(&mut reader, &mut writer);
 
-        packet_request_test(&mut reader, &mut writer, 1);
+        latency_test(&mut reader, &mut writer);
         // imu_connection_test(&mut reader, &mut writer);
         // dr16_connection_test(&mut reader, &mut writer);
-        motor_feedback_test(&mut reader, &mut writer);
+        // motor_feedback_test(&mut reader, &mut writer);
         // can_control_test(&mut reader, &mut writer);
-        gimbal_input_control_test(&mut reader, &mut writer);
+        // gimbal_input_control_test(&mut reader, &mut writer);
     }
 }

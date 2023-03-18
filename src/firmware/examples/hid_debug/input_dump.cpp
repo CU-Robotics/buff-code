@@ -1,3 +1,4 @@
+// #include "unity.h"
 #include "buff_cpp/blink.h"
 #include "buff_cpp/timing.h"
 #include "buff_cpp/device_manager.h"
@@ -11,7 +12,6 @@ Device_Manager device_manager;						// all firmware pipelines are implemented in
 													// Device Manager provides a single function call for each of the pipelines
 													// with unit tests we can analyze the execution time and complexity of each
 													// pipeline. Then organize them into the master loop accordingly
-
 // Runs once
 void setup() {
 	Serial.begin(1000000);							// the serial monitor is actually always active (for debug use Serial.println & tycmd)
@@ -32,8 +32,33 @@ int main() {											// Basically a schudeling algorithm
 		// handle any hid input output
 		device_manager.read_sensors();					// read a single sensor each call (increments the sensor id automatically)
 		device_manager.step_controllers(cycle_time_s);	// given the current inputs and feedback compute a control
-		device_manager.hid_input_switch();				// check for an input packet (data request/control input) handle accordingly
-		device_manager.push_can();						// push data on and off the can bus
+		// device_manager.hid_input_switch();				// check for an input packet (data request/control input) handle accordingly
+		switch (device_manager.input_report.read()) {
+			case 64:
+				device_manager.input_report.print();
+
+				blink();										// only blink when connected to a robot
+				if (device_manager.input_report.get(0) == 2){
+					return 0;
+				}
+				device_manager.report_switch();
+				device_manager.output_report.put_int32(60, ARM_DWT_CYCCNT);
+
+				break;
+			
+			default:
+				break;
+		}
+
+		device_manager.output_report.write();
+		device_manager.output_report.clear();
+
+		// device_manager.push_can();						// push data on and off the can bus
+		device_manager.rm_can_ux.zero_can();					// Shutdown motors if can disconnects
+
+		for (int i = 0; i < NUM_CAN_BUSES; i++) {
+			device_manager.rm_can_ux.read_can(i);		
+		}
 
 		timer_wait_us(0, cycle_time_us);				// normalize master loop cycle time to cycle_time_us
 		// blink();										// helpful if you think the loop is crashing (light will pause)

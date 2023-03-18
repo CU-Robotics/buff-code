@@ -27,6 +27,9 @@ void Device_Manager::initializer_report_handle() {
 	float gains[MOTOR_FEEDBACK_SIZE];
 	byte tmp[3];
 
+	output_report.put(1, input_report.get(1));
+	output_report.put(2, input_report.get(2));
+
 	switch (input_report.get(1))	{
 		case 0:
 			for (size_t i = 0; i < MAX_NUM_RM_MOTORS; i++) {
@@ -60,11 +63,11 @@ void Device_Manager::initializer_report_handle() {
 			controller_switch = 1;												// enable local control
 			break;
 
-		case 2:
+		case 2:	// Use the assumption IK.shape = K.T.shape
 			for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
 				// Serial.printf("%f, ", input_report.get_float(chunk_offset + (4 * j)));
 				controller_manager.chassis_inverse_kinematics[controller_id][j] = input_report.get_float(j + 3);					
-				controller_manager.chassis_kinematics[controller_id][j] = input_report.get_float(REMOTE_CONTROL_LEN + j + 3);					
+				controller_manager.chassis_kinematics[j][controller_id] = input_report.get_float(REMOTE_CONTROL_LEN + j + 3);					
 			}
 			break;
 
@@ -116,14 +119,19 @@ void Device_Manager::feedback_request_handle() {
 void Device_Manager::control_input_handle() {
 	output_report.put(1, input_report.get(1));
 
+	int data_offset = 3;
 	int block_offset = CAN_MOTOR_BLOCK_SIZE * input_report.get(2);
-	float tmp[12];
+	float tmp[2 * REMOTE_CONTROL_LEN];
+
+	output_report.put(2, input_report.get(2));
+	output_report.put(3, input_report.get(3));
+	output_report.put(4, input_report.get(4));
 
 	switch (input_report.get(1)) {
 		case 0:
 			for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
 				// set the control from the robot "robot control"
-				controller_manager.output[block_offset + i] = input_report.get_float((4 * i) + 3);
+				controller_manager.output[block_offset + i] = input_report.get_float((4 * i) + data_offset);
 			}
 
 			controller_switch = 0;												// block "local control"
@@ -132,37 +140,33 @@ void Device_Manager::control_input_handle() {
 		case 1:
 			switch (input_report.get(2)) {
 				case 0:
-					output_report.put(2, input_report.get(2));
-					output_report.put(3, input_report.get(3));
-					controller_manager.get_control_report(input_report.get(2), tmp);
-					controller_manager.get_control_report(input_report.get(3), &tmp[6]);
-
-					for (int i = 0; i < 12; i++) {
-						output_report.put_float((4 * i) + 4, tmp[i]);
-					}
+					data_offset = 5;
+					controller_manager.get_control_report(input_report.get(3), tmp);
+					controller_manager.get_control_report(input_report.get(4), &tmp[6]);
 					break;
 
 				case 1:
-					output_report.put(2, input_report.get(2));
-					output_report.put(3, input_report.get(3));
 					controller_manager.get_vel_est_report(tmp);
-
-					for (int i = 0; i < 12; i++) {
-						output_report.put_float((4 * i) + 4, tmp[i]);
-					}
 					break;
 
 				case 2:
-					output_report.put(2, input_report.get(2));
-					output_report.put(3, input_report.get(3));
 					controller_manager.get_pos_est_report(tmp);
-					
-					for (int i = 0; i < 12; i++) {
-						output_report.put_float((4 * i) + 4, tmp[i]);
-					}
 					break;
 
+				case 3:
+					data_offset = 4;
+					controller_manager.get_manager_report(tmp);
+					output_report.put(5, controller_switch);
+					break;
+
+				default:
+					break;
 			}
+
+			for (int i = 0; i < 2 * REMOTE_CONTROL_LEN; i++) {
+				output_report.put_float((4 * i) + data_offset, tmp[i]);
+			}
+
 			break;
 
 		case 2:
@@ -415,7 +419,7 @@ void Device_Manager::read_sensors() {
 
 	Author: Mitchell Scott
 */
-void Device_Manager::step_controllers(float dt) {
+void Device_Manager::step_controllers(float dt) {	
 	bool new_references = timer_info_us(2) >= 10;
 
 	controller_manager.estimate_state(chassis_imu.data, chassis_imu.yaw, dt);
@@ -443,6 +447,7 @@ void Device_Manager::step_controllers(float dt) {
 	if (controller_switch != 0) {								// Use the HIDLayers CAN output values or the controllers
 		controller_manager.step_motors();
 	}
+
 
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {				// Send the controllers output to the can interface
 		// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);
