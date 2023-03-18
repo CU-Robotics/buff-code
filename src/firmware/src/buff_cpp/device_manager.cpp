@@ -155,8 +155,8 @@ void Device_Manager::control_input_handle() {
 
 				case 3:
 					data_offset = 4;
+					output_report.put(3, controller_switch);
 					controller_manager.get_manager_report(tmp);
-					output_report.put(5, controller_switch);
 					break;
 
 				default:
