@@ -79,6 +79,7 @@ struct RM_CAN_Interface {
 
 	// initializer
 	void set_index(int, byte[3]);
+	bool set_index_with_alias(String alias, byte, byte, byte);
 
 	// motor getters and setters
 	float get_motor_angle(int);
@@ -92,6 +93,7 @@ struct RM_CAN_Interface {
 
 	// Get the motors ID from a can msg return ID
 	int8_t motor_index_from_return(int, int);
+	int motor_index_from_alias(String);
 
 	// Disabler
 	void zero_can();
@@ -122,11 +124,7 @@ struct RM_CAN_Interface {
 	CAN_message_t output[NUM_CAN_BUSES][NUM_CAN_MESSAGE_TYPES];  // 2 can busses with 3 messages types, each message type has up to 4 motors.
 
 	int num_motors;
-
-	// Motor Aliasing
 	String motorAliases[MAX_NUM_RM_MOTORS];
-	bool addMotor(String alias, byte, byte, byte);
-	int aliasToMotorID(String);
 };
 
 #endif

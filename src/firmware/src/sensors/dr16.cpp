@@ -196,22 +196,23 @@ void DR16::control_test() {
 }
 
 bool DR16::read() {
-    if (serial->available() > numBytes) {     				// if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
-        numBytes = serial->available();
-        lastTime = micros();
-    }
+    // if (serial->available() > numBytes) {     				// if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
+    //     numBytes = serial->available();
+    //     lastTime = micros();
+    // }
 
-    if (micros() - lastTime > 150) {  						// if more than 150 microseconds has passed since the last byte recieved then frame has probably ended
-        if (serial->available() % 18 != 0) {  				// if the number of bytes is not divisible by 18 then there is a mangled frame and all data should be thrown out
-            while (serial->available()) serial->read();     // Why not Serial.clear(), This seems complicated it was working fine with a if bytes available == 18 read; else clear();
-            numBytes = 0;
-        }
-    }
+    // if (micros() - lastTime > 150) {  						// if more than 150 microseconds has passed since the last byte recieved then frame has probably ended
+    //     if (serial->available() % 18 != 0) {  				// if the number of bytes is not divisible by 18 then there is a mangled frame and all data should be thrown out
+    //         while (serial->available()) serial->read();     // Why not Serial.clear(), This seems complicated it was working fine with a if bytes available == 18 read; else clear();
+    //         numBytes = 0;
+    //     }
+    // }
 
-	if (serial->available() >= 18) {
-		generate_output();
+	if (serial->available() == 18) {
+		generate_control_from_joysticks();
 		return true;
 	}
 
+	serial->clear();
 	return false;
 }
