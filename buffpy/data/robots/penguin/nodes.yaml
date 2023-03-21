@@ -139,7 +139,7 @@ motor_controller_types:
 #     ui = K[i] * ([ref_angle; ref_speed; 0] - [angle_fb; speed_fb; Fpow/pend])
 #
 # where K[i] is the ith row (1x3) and '*' is a vector inner product ((1x3)(3x1)).
-#         Kp,      Kd, (Kpow/Kpend) # Motor the output is routed to
+#         Kp,         Kd,   (Kpow/Kpend) # Motor the output is routed to
 motor_gains: 
   - [  0.05139133,  0.00053797, 0.     ] # x pos
   - [  0.00000,     0.00000,    0.00000] # y neg
