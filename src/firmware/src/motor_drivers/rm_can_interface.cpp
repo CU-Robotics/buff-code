@@ -106,19 +106,17 @@ void prettyprint_can_message(CAN_message_t* msg) {
 
 RM_CAN_Device::RM_CAN_Device() {
 	can_bus = -1;				// index of the bus the device is connected to (0 = 1, 1 = 2)
-	message_type = -1;			// 0: 0x200, 1: 0x1FF, 2: 0x2FF
-	message_offset = -1;		// 0-6 (always even)
+	message_type = 0;			// 0: 0x200, 1: 0x1FF, 2: 0x2FF
+	message_offset = 0;			// 0-6 (always even)
 
 	esc_id = -1;				// 0-8 the blinking light
+	esc_type = -1;				// 0: C610, 1: C620, 2: GM6020
 	motor_index = -1;				// index of motor in the serialized motor structure
-	esc_type = -1;				// 0: C6XX, 1: GM6020
 
 	roll_over = 0;				// roll over of motor
 
-	return_id = -1;				// actual return code
+	return_id = -1;				// CAN return id - 0x201
 	output_scale = 0;
-
-	motor_index = -1;				// index of device in motor_arr
 
 	data[0] = 0;				// Feedback data (position, rpm, torque)
 	data[1] = 0;
@@ -128,42 +126,65 @@ RM_CAN_Device::RM_CAN_Device() {
 }
 
 RM_CAN_Device::RM_CAN_Device(int id, byte* config) {
-	can_bus = config[0];
-	esc_type = config[1];
-	esc_id = config[2];
+	if (config[0] != 0 || config[2] != 0) {
+		can_bus = config[0];
+		esc_type = config[1];
+		esc_id = config[2];
 
-	roll_over = 0;											// roll over of motor
+		roll_over = 0;											// roll over of motor
 
-	message_type = int(config[2] / 4);						// message type = (esc ID / 4) ( + 1, if GM6020), [0x200, 0x1FF, 0x2FF]
-	message_offset = (2 * ((config[2] - 1) % 4));			// message offset = ((esc ID - 1) % 4) * 2, (% 4 gets the message postion, * 2 because theres two bytes)
-	return_id = (config[2] - 1);							// 0x200 + esc ID + esc_type_offset = rid (store as -0x201 to be more readable)
+		return_id = esc_id - 1;								// 0x200 + esc ID + esc_type_offset = rid (store as -0x201 to be more readable)
+		message_type = int(return_id / 4);					// message type = (esc ID / 4) ( + 1, if GM6020), [0x200, 0x1FF, 0x2FF]
+		message_offset = 2 * (return_id % 4);				// message offset = ((esc ID - 1) % 4) * 2, (% 4 gets the message postion, * 2 because theres two bytes)
 
-	switch (esc_type) {										// different ESCs have different setup
-		case 0:
-			output_scale = ESC_0_OUTPUT_SCALE;
-			break;
+		switch (esc_type) {										// different ESCs have different setup
+			case 0:
+				output_scale = ESC_0_OUTPUT_SCALE;
+				break;
 
-		case 1:
-			output_scale = ESC_1_OUTPUT_SCALE;
-			break;
+			case 1:
+				output_scale = ESC_1_OUTPUT_SCALE;
+				break;
 
-		case 2:
-			message_type += 1;								// return ID for GM6020 is 0x205:0x20B
-			return_id += 4;
-			output_scale = ESC_2_OUTPUT_SCALE;
-			break;
+			case 2:
+				message_type += 1;								// return ID for GM6020 is 0x205:0x20B
+				return_id += 4;
+				output_scale = ESC_2_OUTPUT_SCALE;
+				break;
 
-		default:
-			break;
+			default:
+				break;
+		}
+
+		motor_index = id;
+
+		data[0] = 0;
+		data[1] = 0;
+		data[2] = 0;
+
+		timestamp = ARM_DWT_CYCCNT;
+	}
+	else {
+		can_bus = 0;				// index of the bus the device is connected to (0 = 1, 1 = 2)
+		message_type = 0;			// 0: 0x200, 1: 0x1FF, 2: 0x2FF
+		message_offset = 0;			// 0-6 (always even)
+
+		esc_id = 0;					// 0-8 the blinking light
+		esc_type = 0;				// 0: C610, 1: C620, 2: GM6020
+		motor_index = -1;			// index of motor in the serialized motor structure
+
+		roll_over = 0;				// roll over of motor
+
+		return_id = -1;				// CAN return id - 0x201
+		output_scale = 0;
+
+		data[0] = 0;				// Feedback data (position, rpm, torque)
+		data[1] = 0;
+		data[2] = 0;
+
+		timestamp = ARM_DWT_CYCCNT;
 	}
 
-	motor_index = id;
-
-	data[0] = 0;
-	data[1] = 0;
-	data[2] = 0;
-
-	timestamp = ARM_DWT_CYCCNT;
 }
 
 RM_CAN_Interface::RM_CAN_Interface(){
@@ -411,9 +432,8 @@ void RM_CAN_Interface::set_feedback(int can_bus, CAN_message_t* msg){
 	*/
 
 	int motor_index = motor_index_from_return(can_bus, msg->id);
-
+	
 	if (motor_index >= 0) {
-		// Serial.printf("Received data from %X, %i\n", msg->id - 0x201, motor_index);
 		float current_angle = motor_arr[motor_index].data[0];
 		float feedback_angle = ang_from_can_bytes(msg->buf[0], msg->buf[1]);
 		float feedback_rpm = bytes_to_int16_t(msg->buf[2], msg->buf[3]);
@@ -505,7 +525,7 @@ void RM_CAN_Interface::read_can(int bus_num){
 		@return
 			None
 	*/
-	timer_set(3);
+	// timer_set(3);
 	CAN_message_t tmp;
 	switch (bus_num) {
 		case CANBUS_1:

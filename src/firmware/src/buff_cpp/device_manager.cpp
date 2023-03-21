@@ -36,10 +36,6 @@ void Device_Manager::initializer_report_handle() {
 				input_report.rgets(tmp, (3 * i) + 2, 3);
 				rm_can_ux.set_index(i, tmp);
 				// Serial.printf("New CAN device %i: [%i %i %i]\n", i, tmp[0], tmp[1], tmp[2]);
-
-				if (rm_can_ux.motor_arr[i].can_bus > 0) {
-					output_report.rputs(tmp, (3 * i) + 2, 3);
-				}
 			}
 
 		case 1:
@@ -338,7 +334,7 @@ void Device_Manager::push_can(){
 	rm_can_ux.write_can();
 
 	for (int i = 0; i < NUM_CAN_BUSES; i++) {
-		rm_can_ux.read_can(i);		
+		rm_can_ux.read_can(i + 1);		
 	}
 }
 

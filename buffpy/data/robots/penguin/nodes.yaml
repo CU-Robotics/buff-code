@@ -11,7 +11,7 @@ robot_type: standard
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
 buff_rust:
-  files: [comms_node]
+  files: [comms_node, motor_identification.py]
 
 # Maybe some kind of option to shut this down via cmdline
 # rqt_plot:
@@ -56,13 +56,13 @@ motor_index:
 # this behavior will be available system wide.
 # [can bus, esc type, esc id] see datasheets if you don't understand
 motor_can_index:
-  - [2, 1, 5]
+  - [2, 1, 4]
   - [2, 1, 6]
   - [2, 1, 1]
   - [2, 1, 3]
   - [2, 1, 2]
   - [0, 0, 0]
-  - [2, 1, 4]
+  - [2, 1, 5]
   - [2, 0, 3]
   - [2, 1, 7]
 
@@ -141,15 +141,15 @@ motor_controller_types:
 # where K[i] is the ith row (1x3) and '*' is a vector inner product ((1x3)(3x1)).
 #         Kp,      Kd, (Kpow/Kpend) # Motor the output is routed to
 motor_gains: 
-  - [  0.00000,  0.00500,  0.00000] # x pos
-  - [  0.00000,  0.00500,  0.00000] # y neg
-  - [  0.00000,  0.00500,  0.00000] # x neg
-  - [  0.00000,  0.00500,  0.00000] # y pos
-  - [  0.20000,  0.00000,  0.00000] # pitch
-  - [  0.00000,  0.00000,  0.00000] # yaw1
-  - [  0.00000,  0.00000,  0.00000] # yaw2
-  - [  0.10000,  0.00000,  0.10000] # feeder
-  - [  0.00000,  0.00000,  0.00000] # shooter v = 0.015s
+  - [  0.05139133,  0.00053797, 0.     ] # x pos
+  - [  0.00000,     0.00000,    0.00000] # y neg
+  - [  0.00000,     0.00000,    0.00000] # x neg
+  - [  0.00000,     0.00000,    0.00000] # y pos
+  - [  0.00000,     0.00000,    0.00000] # pitch
+  - [  0.00000,     0.00000,    0.00000] # yaw1
+  - [  0.00000,     0.00000,    0.00000] # yaw2
+  - [  0.00000,     0.00000,    0.00000] # feeder
+  - [  0.00000,     0.00000,    0.00000] # shooter v = 0.015s
 
 #    Motor output Limits
 #   All our actuators are continous DC motors. All of the outputs are in terms of radians.

@@ -8,23 +8,36 @@
 
 #define VERBOSITY 1
 
-#define NUM_MOTORS 1
+#define NUM_MOTORS 3
 
 #define TARGET1_CAN_BUS 	2
 #define TARGET1_ESC_TYPE 	1
 #define TARGET1_ESC_ID 		4
+#define TARGET1_MSG_TYPE	0
+#define TARGET1_MSG_OFF		6
+#define TARGET1_RID			3
 
-#define TARGET2_CAN_BUS 	0
-#define TARGET2_ESC_TYPE 	0
-#define TARGET2_ESC_ID 		0
+#define TARGET2_CAN_BUS 	2
+#define TARGET2_ESC_TYPE 	1
+#define TARGET2_ESC_ID 		1
+#define TARGET2_MSG_TYPE	0
+#define TARGET2_MSG_OFF		0
+#define TARGET2_RID			0
 
-#define TARGET3_CAN_BUS 	0
-#define TARGET3_ESC_TYPE 	0
-#define TARGET3_ESC_ID 		0
+
+#define TARGET3_CAN_BUS 	2
+#define TARGET3_ESC_TYPE 	1
+#define TARGET3_ESC_ID 		8
+#define TARGET3_MSG_TYPE	1
+#define TARGET3_MSG_OFF		6
+#define TARGET3_RID			7
 
 #define TARGET4_CAN_BUS 	0
 #define TARGET4_ESC_TYPE 	0
 #define TARGET4_ESC_ID 		0
+#define TARGET4_MSG_TYPE	0
+#define TARGET4_MSG_OFF		0
+#define TARGET4_RID			-1
 
 
 RM_CAN_Interface rm_can_ux;
@@ -38,15 +51,29 @@ byte input_motor_arr[16][3] = {{TARGET1_CAN_BUS, TARGET1_ESC_TYPE, TARGET1_ESC_I
 								{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0},
 								{0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}};
 
-int expected_rid[16] = {3, -1, -1, -1, -1, -1, -1, -1,
+int expected_msg_type[16] = {TARGET1_MSG_TYPE, TARGET2_MSG_TYPE, TARGET3_MSG_TYPE, TARGET4_MSG_TYPE, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0};
+
+int expected_msg_off[16] = {TARGET1_MSG_OFF, TARGET2_MSG_OFF, TARGET3_MSG_OFF, TARGET4_MSG_OFF, 0, 0, 0, 0,
+						0, 0, 0, 0, 0, 0, 0, 0};
+
+int expected_rid[16] = {TARGET1_RID, TARGET2_RID, TARGET3_RID, TARGET4_RID, -1, -1, -1, -1,
 						-1, -1, -1, -1, -1, -1, -1, -1};
 
 
 int validate_motor(int i) {
-	int n = int_eq(rm_can_ux.motor_arr[i].can_bus, input_motor_arr[i][0], "Can init failed");
+	int n = 0;
+	if (VERBOSITY > 1) {
+		Serial.printf("Validating motor %i\n", i);		
+	}
+
+	n += int_eq(rm_can_ux.motor_arr[i].can_bus, input_motor_arr[i][0], "Can init failed");
 	n += int_eq(rm_can_ux.motor_arr[i].esc_type, input_motor_arr[i][1], "esc init failed");
-	n += int_eq(rm_can_ux.motor_arr[i].esc_id, input_motor_arr[i][2], "id init failed");
+	n += int_eq(rm_can_ux.motor_arr[i].esc_id, input_motor_arr[i][2], "esc init failed");
+	n += int_eq(rm_can_ux.motor_arr[i].message_type, expected_msg_type[i], "message type init failed");
+	n += int_eq(rm_can_ux.motor_arr[i].message_offset, expected_msg_off[i], "message offset init failed");
 	n += int_eq(rm_can_ux.motor_arr[i].return_id, expected_rid[i], "rid init failed");
+
 	return n;
 }
 
@@ -66,11 +93,9 @@ int index_check() {
 	
 
 	int errors = 0;
-	errors += validate_motor(0);
-	errors += validate_motor(1);
-	errors += validate_motor(2);
-	errors += validate_motor(3);
-	errors += validate_motor(4);
+	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
+		errors += validate_motor(i);
+	}
 
 	return errors;
 }
@@ -94,12 +119,12 @@ int test_int16_from_can_bytes() {
 	int16_t value = 8000;
 
 	if (VERBOSITY) {
-		Serial.printf("Testing int16_t from bytes with %d itertions:...\n", iters);		
+		Serial.printf("Testing int16_t from bytes with %d itertions:...", iters);		
 	}
 
 	timer_set(0);
 	for (int i = 0; i < iters; i++) {
-		ints[i] = bytes_to_int16_t(highByte(value), lowByte(value));  
+		ints[i] = bytes_to_int16_t(highByte(value * i / iters), lowByte(value * i / iters));  
 	}
 
 	if (VERBOSITY > 1)
@@ -108,7 +133,7 @@ int test_int16_from_can_bytes() {
 	int errors = 0;
 	for (int i = 0; i < iters; i++) {
 		// TEST_ASSERT_EQ_INT16(ints[i], value);
-		errors += int_eq(ints[i], value, "Failed to convert bytes to value");
+		errors += int_eq(ints[i], value * i / iters, "Failed to convert bytes to value");
 	}
 	return errors;
 }
@@ -198,7 +223,7 @@ void test_can_bus_read() {
 		timer_set(0);
 	}
 	
-	rm_can_ux.read_can(0);
+	rm_can_ux.read_can(1);
 
 	if (VERBOSITY > 1) {
 		timer_mark(0);
@@ -210,7 +235,7 @@ void test_can_bus_read() {
 		timer_set(0);
 	}
 	
-	rm_can_ux.read_can(1);
+	rm_can_ux.read_can(2);
 
 	if (VERBOSITY > 1) {
 		timer_mark(0);
@@ -230,7 +255,7 @@ int test_set_output() {
 		Serial.println("Testing set_output:...");
 	}
 
-	float value = 0.1;	
+	float value = -0.05;	
 	int errors = 0;
 
 	for (int i = 0; i < rm_can_ux.num_motors; i++) {
@@ -244,12 +269,12 @@ int test_set_output() {
 		int message_type = rm_can_ux.motor_arr[i].message_type;
 		int message_offset = rm_can_ux.motor_arr[i].message_offset;
 
-		if (can_bus < 1) {
+		if (can_bus < 1 && VERBOSITY > 1) {
 			print_rm_config_struct(&rm_can_ux.motor_arr[i]);
 			continue;
 		}
 
-		if (VERBOSITY) {
+		if (VERBOSITY > 1) {
 			Serial.printf("\tbus %d, type %d, offset %d\n", can_bus, message_type, message_offset);
 			print_can_message(&rm_can_ux.output[can_bus - 1][message_type]);
 		}
@@ -271,7 +296,7 @@ int test_set_output() {
 	}
 
 	timer_set(0);
-	while (timer_info_ms(0) < 500) {
+	while (timer_info_ms(0) < 100) {
 		timer_set(1);
 		rm_can_ux.write_can();
 		rm_can_ux.read_can(1);

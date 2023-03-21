@@ -35,6 +35,8 @@ int main() {											// Basically a schudeling algorithm
 		device_manager.hid_input_switch();				// check for an input packet (data request/control input) handle accordingly
 		device_manager.push_can();						// push data on and off the can bus
 
+		// print_rm_config_struct(&device_manager.rm_can_ux.motor_arr[0]);
+
 		timer_wait_us(0, cycle_time_us);				// normalize master loop cycle time to cycle_time_us
 		// blink();										// helpful if you think the loop is crashing (light will pause)
 	}
