@@ -104,8 +104,21 @@ class LSM6DSOX{
 		void read_lsm6dsox_accel();
 		void read_lsm6dsox_gyro();
 		void pretty_print_data();
+		void update_eulers();
 
 		float data[9];
+
+		//rad angles, theta(pitch), phi(roll), psi(yaw)
+		float theta;
+		float phi;
+		float psi;
+
+		//degree angles
+		float pitch;
+		float roll;
+		float yaw;
+
+
 
 	private:
 		// Adafruit_I2CDevice *i2c_dev = NULL; ///< Pointer to I2C bus interface
