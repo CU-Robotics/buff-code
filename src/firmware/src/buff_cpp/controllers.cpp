@@ -190,26 +190,32 @@ void Controller_Manager::set_reference(int controller_id) {
 
 	// bound the reference state to the defined limits
 	controllers[controller_id].bound_reference(references[controller_id]);
+
+	// if (controller_id == 0) {
+		// Serial.printf("input %f %f: %f %f\n", input[0], input[1], rotated_input[0], rotated_input[1]);
+		// Serial.printf("controller reference %f %f %f\n", references[0][0], references[0][1], speed);
+	// }
 }
 
 void Controller_Manager::set_feedback(int controller_id, float* data, float rollover) {
 	// motor_index[i].data[0] is the motor_angle add 2pi roll over to make an output angle
 	// leave tmp[1] 0 to allow velocity control (doesn't use error like position)
 	// set tmp[2] to the sum of the change in input (make gain 3 act as a damper)
+	float feedback_gain = 0.1;
 	if (biases[controller_id] == 0){
 		biases[controller_id] = data[0] + (2 * PI * rollover);
 	}
 
 	feedback[controller_id][0] = data[0] + (2 * PI * rollover) - biases[controller_id];
-	feedback[controller_id][1] = data[1];
+	feedback[controller_id][1] = (feedback_gain * feedback[controller_id][1]) + ((1 - feedback_gain) * data[1] * 2 * PI / 60);
 
 	switch(controller_types[controller_id]) {
 		case 0:
-			feedback[controller_id][2] = output[controller_id]; // voltage times current
+			feedback[controller_id][2] = output[controller_id] * feedback[controller_id][1]; // voltage times current
 			break;
 
 		case 1:
-			feedback[controller_id][2] = sin(pitch_angle + pitch_offset);
+			feedback[controller_id][2] = sin(feedback[controller_id][0]);
 			break;
 
 		default:
@@ -224,6 +230,7 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	// compute the kee velocity estimate
 	// turn motor speed feedback to robot speed feedback
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+		kee_state[i] = 0;
 		for (int j = 0; j < MAX_NUM_RM_MOTORS; j++) {
 			kee_state[i] += chassis_kinematics[i][j] * feedback[j][1];
 		}

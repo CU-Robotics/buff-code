@@ -29,7 +29,7 @@ struct Device_Manager {
 
 	// More HID report handlers
 	void report_switch();
-	void hid_input_switch();
+	void hid_input_switch(uint32_t);
 
 	// Non-HID related pipelines
 	void push_can();
@@ -54,6 +54,9 @@ struct Device_Manager {
 
 	RM_CAN_Interface rm_can_ux;
 	Controller_Manager controller_manager;
+
+	// track the time since a connection was made
+	float lifetime;
 
 	// Logic for state machines (literally which case to run)
 	// see implementation for more details

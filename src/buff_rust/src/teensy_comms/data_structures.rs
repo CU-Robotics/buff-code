@@ -7,154 +7,156 @@ use std::io::Write;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
 
-pub struct BuffBotSensorReport {
-    pub id: u8,
-    pub data: Vec<f64>,
-    pub timestamp: f64,
+pub struct EmbeddedDevice {
+    name: String,
+    timestamp: f64,
+    data: Vec<f64>,
+    config: Vec<u8>,
 }
 
-impl BuffBotSensorReport {
-    pub fn default() -> BuffBotSensorReport {
-        BuffBotSensorReport {
-            id: u8::MAX,
-            data: vec![0.0; 24],
+impl EmbeddedDevice {
+    pub fn default() -> EmbeddedDevice {
+        EmbeddedDevice {
+            name: "UED".to_string(),
             timestamp: 0.0,
+            data: vec![],
+            config: vec![],
         }
     }
 
-    pub fn new(id: u8, data: Vec<f64>) -> BuffBotSensorReport {
-        BuffBotSensorReport {
-            id: id,
-            data: data,
+    pub fn anonymous(id: u8, data_size: usize, config: Vec<u8>) -> EmbeddedDevice {
+        EmbeddedDevice {
+            name: format!("embedded_device_{}", id),
             timestamp: 0.0,
+            data: vec![0.0; data_size],
+            config: config,
         }
     }
 
-    pub fn write(&mut self, data: Vec<f64>, time: f64) {
+    pub fn named(name: String, data_size: usize, config: Vec<u8>) -> EmbeddedDevice {
+        EmbeddedDevice {
+            name: name,
+            timestamp: 0.0,
+            data: vec![0.0; data_size],
+            config: config,
+        }
+    }
+
+    pub fn update(&mut self, data: Vec<f64>, time: f64) {
         self.data = data[0..self.data.len()].to_vec();
         self.timestamp = time;
     }
 
     pub fn print(&self) {
         println!(
-            "\t\tSensor {} Data:\t{}\n\t\t{:?}",
-            self.id, self.timestamp, self.data
+            "{}\n\tconfig:\t{:?}\n\tData:\t{}\n\t\t{:?}",
+            self.name, self.config, self.timestamp, self.data
         );
     }
 
     pub fn as_string_vec(&self) -> Vec<String> {
-        let mut result = vec![self.timestamp.to_string()];
-        for i in &self.data {
-            result.push(i.to_string());
-        }
-        return result;
+        vec![self.timestamp.to_string()]
+            .into_iter()
+            .chain(
+                self.data
+                    .iter()
+                    .map(|x| x.to_string())
+                    .collect::<Vec<String>>(),
+            )
+            .collect()
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn data(&self) -> Vec<f64> {
+        self.data.clone()
+    }
+
+    pub fn config(&self) -> Vec<u8> {
+        self.config.clone()
+    }
+
+    pub fn timestamp(&self) -> f64 {
+        self.timestamp.clone()
     }
 }
 
-pub struct BuffBotCANMotorReport {
-    pub name: String,
-    pub index: u8,
-    pub can_bus: u8,
-    pub motor_type: u8,
-    pub esc_id: u8,
-    pub feedback: Vec<f64>,
-    pub timestamp: f64,
+pub struct EmbeddedController {
+    name: String,
+    limits: Vec<f64>,
+    gains: Vec<f64>,
+    feedback: Vec<f64>,
+    reference: Vec<f64>,
+
+    output: f64,
+    timestamp: f64,
+
+    control_type: u8,
 }
 
-impl BuffBotCANMotorReport {
-    pub fn default() -> BuffBotCANMotorReport {
-        BuffBotCANMotorReport {
-            name: "Mort Motorson".to_string(),
-            index: u8::MAX,
-            can_bus: 0,
-            motor_type: u8::MAX,
-            esc_id: u8::MAX,
-            feedback: vec![0.0; 3],
-            timestamp: 0.0,
-        }
-    }
-
-    pub fn new(
-        name: String,
-        index: u8,
-        can_bus: u8,
-        motor_type: u8,
-        esc_id: u8,
-    ) -> BuffBotCANMotorReport {
-        BuffBotCANMotorReport {
-            name: name,
-            index: index,
-            can_bus: can_bus,
-            motor_type: motor_type,
-            esc_id: esc_id,
-            feedback: vec![0.0; 3],
-            timestamp: 0.0,
-        }
-    }
-
-    pub fn write(&mut self, data: Vec<f64>, time: f64) {
-        self.feedback = data;
-        self.timestamp = time;
-    }
-
-    pub fn init_bytes(&self) -> Vec<u8> {
-        vec![self.can_bus, self.motor_type, self.esc_id]
-    }
-
-    pub fn print(&self) {
-        println!(
-            "\t\tMotor {} Data:\t{}\n\t\t{:?}",
-            self.index, self.timestamp, self.feedback
-        );
-    }
-
-    pub fn as_string_vec(&self) -> Vec<String> {
-        let mut result: Vec<String> = vec![self.index.to_string(), self.timestamp.to_string()];
-        for i in &self.feedback {
-            result.push(i.to_string());
-        }
-        return result;
-    }
-}
-
-pub struct BuffBotControllerReport {
-    pub gains: Vec<f64>,
-    pub limits: Vec<f64>,
-    pub feedback: Vec<f64>,
-    pub reference: Vec<f64>,
-
-    pub output: f64,
-    pub control_type: u8,
-
-    pub timestamp: f64,
-}
-
-impl BuffBotControllerReport {
-    pub fn default() -> BuffBotControllerReport {
-        BuffBotControllerReport {
-            gains: vec![0.0; 3],
+impl EmbeddedController {
+    pub fn default() -> EmbeddedController {
+        EmbeddedController {
+            name: "UEC".to_string(),
             limits: vec![0.0; 4],
-            reference: vec![0.0; 2],
-            feedback: vec![0.0; 3],
+            gains: vec![],
+            feedback: vec![],
+            reference: vec![],
             output: 0.0,
-            control_type: 0,
             timestamp: 0.0,
+            control_type: u8::MAX,
         }
     }
 
-    pub fn new(control_type: u8, gains: Vec<f64>, limits: Vec<f64>) -> BuffBotControllerReport {
-        BuffBotControllerReport {
-            gains: gains,
+    pub fn anonymous(id: u8, state_size: usize) -> EmbeddedController {
+        EmbeddedController {
+            name: format!("embedded_controller_{}", id),
+            limits: vec![0.0; 4],
+            gains: vec![0.0; state_size],
+            feedback: vec![0.0; state_size],
+            reference: vec![0.0; state_size],
+            output: 0.0,
+            timestamp: 0.0,
+            control_type: u8::MAX,
+        }
+    }
+
+    pub fn named(name: String, state_size: usize, mode: u8) -> EmbeddedController {
+        EmbeddedController {
+            name: name,
+            limits: vec![0.0; 4],
+            gains: vec![0.0; state_size],
+            feedback: vec![0.0; state_size],
+            reference: vec![0.0; state_size],
+            output: 0.0,
+            timestamp: 0.0,
+            control_type: mode,
+        }
+    }
+
+    pub fn set_config(&mut self, gains: Vec<f64>, limits: Vec<f64>) {
+        self.limits = limits;
+        self.gains = gains;
+    }
+
+    pub fn new(name: String, mode: u8, gains: Vec<f64>, limits: Vec<f64>) -> EmbeddedController {
+        let motor_state_len = gains.len();
+
+        EmbeddedController {
+            name: name,
             limits: limits,
-            reference: vec![0.0; 2],
-            feedback: vec![0.0; 3],
+            gains: gains,
+            feedback: vec![0.0; motor_state_len],
+            reference: vec![0.0; motor_state_len],
             output: 0.0,
-            control_type: control_type,
             timestamp: 0.0,
+            control_type: mode,
         }
     }
 
-    pub fn init_bytes(&self) -> Vec<u8> {
+    pub fn config(&self) -> Vec<u8> {
         vec![self.control_type]
             .into_iter()
             .chain(
@@ -173,23 +175,47 @@ impl BuffBotControllerReport {
             .collect()
     }
 
-    pub fn write(&mut self, feedback: Vec<f64>, time: f64) {
+    pub fn update(&mut self, feedback: Vec<f64>, time: f64) {
         self.output = feedback[0];
-        self.reference = feedback[1..3].to_vec();
-        self.feedback = feedback[3..].to_vec();
+        self.reference = feedback[1..self.gains.len()].to_vec();
+        self.feedback = feedback[self.gains.len()..].to_vec();
         self.timestamp = time;
     }
 
-    pub fn print(&self, id: usize) {
-        println!("Controller {}\t\n\tReference\tFeedback\tOutput\n\t{:?} {:?} {}\n\tGains\t\tLimits\n\t{:?} {:?}", id, self.reference, self.feedback, self.output, self.gains, self.limits);
+    pub fn print(&self) {
+        println!(
+            "{}\t\n\tReference\tFeedback\tOutput\n\t{:?} {:?} {}\n\tGains\t\tLimits\n\t{:?} {:?}",
+            self.name, self.reference, self.feedback, self.output, self.gains, self.limits
+        );
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn output(&self) -> f64 {
+        self.output
+    }
+
+    pub fn feedback(&self) -> Vec<f64> {
+        self.feedback.clone()
+    }
+
+    pub fn reference(&self) -> Vec<f64> {
+        self.reference.clone()
+    }
+
+    pub fn timestamp(&self) -> f64 {
+        self.timestamp
     }
 }
 
-pub struct BuffBotStatusReport {
-    pub motors: Vec<Arc<RwLock<BuffBotCANMotorReport>>>,
-    pub sensors: Vec<Arc<RwLock<BuffBotSensorReport>>>,
-    pub controllers: Vec<Arc<RwLock<BuffBotControllerReport>>>,
+pub struct RobotStatus {
+    pub motors: Vec<Arc<RwLock<EmbeddedDevice>>>,
+    pub sensors: Vec<Arc<RwLock<EmbeddedDevice>>>,
+    pub controllers: Vec<Arc<RwLock<EmbeddedController>>>,
     pub control_input: Arc<RwLock<Vec<f64>>>,
+    pub control_output: Arc<RwLock<Vec<f64>>>,
     pub kee_vel_est: Arc<RwLock<Vec<f64>>>,
     pub imu_vel_est: Arc<RwLock<Vec<f64>>>,
     pub kee_imu_pos: Arc<RwLock<Vec<f64>>>,
@@ -201,20 +227,18 @@ pub struct BuffBotStatusReport {
     pub inverse_kinematics: Vec<Vec<f64>>,
 }
 
-impl BuffBotStatusReport {
-    pub fn default() -> BuffBotStatusReport {
-        BuffBotStatusReport {
+impl RobotStatus {
+    pub fn default() -> RobotStatus {
+        RobotStatus {
             motors: vec![],
-            sensors: vec![
-                Arc::new(RwLock::new(BuffBotSensorReport::new(2, vec![0.0; 9]))),
-                Arc::new(RwLock::new(BuffBotSensorReport::new(1, vec![0.0; 7]))),
-            ],
+            sensors: vec![],
             controllers: vec![],
-            control_input: Arc::new(RwLock::new(vec![0.0; 7])),
-            kee_vel_est: Arc::new(RwLock::new(vec![0.0; 7])),
-            imu_vel_est: Arc::new(RwLock::new(vec![0.0; 7])),
-            kee_imu_pos: Arc::new(RwLock::new(vec![0.0; 7])),
-            enc_mag_pos: Arc::new(RwLock::new(vec![0.0; 7])),
+            control_input: Arc::new(RwLock::new(vec![])),
+            control_output: Arc::new(RwLock::new(vec![])),
+            kee_vel_est: Arc::new(RwLock::new(vec![])),
+            imu_vel_est: Arc::new(RwLock::new(vec![])),
+            kee_imu_pos: Arc::new(RwLock::new(vec![])),
+            enc_mag_pos: Arc::new(RwLock::new(vec![])),
             power_buffer: Arc::new(RwLock::new(0.0)),
             control_mode: Arc::new(RwLock::new(0.0)),
             forward_kinematics: vec![vec![]],
@@ -222,14 +246,20 @@ impl BuffBotStatusReport {
         }
     }
 
-    pub fn from_byu(byu: BuffYamlUtil) -> BuffBotStatusReport {
+    pub fn from_byu(byu: BuffYamlUtil) -> RobotStatus {
+        let sensor_index = byu.load_string_list("sensor_index");
+        let sensor_buffers = byu.load_u8_list("sensor_buffers");
+
         let motor_index = byu.load_string_list("motor_index");
         let motor_gains = byu.load_float_matrix("motor_gains");
         let motor_limits = byu.load_float_matrix("motor_limits");
         let motor_can_index = byu.load_integer_matrix("motor_can_index");
+        let motor_state_len = motor_gains[0].len();
+
         let controller_types = byu.load_integer_matrix("motor_controller_types");
         let forward_kinematics = byu.load_float_matrix("forward_kinematics");
         let inverse_kinematics = byu.load_float_matrix("inverse_kinematics");
+        let robot_state_len = forward_kinematics.len();
 
         assert!(
             controller_types.len() == motor_index.len(),
@@ -245,8 +275,7 @@ impl BuffBotStatusReport {
             "Number of rows in the inverse kinematics (cols of forward kinimatics) should match the number of motors"
         );
         assert!(
-            inverse_kinematics[0].len() == 7    // INPUT_CONTROL_LEN, maybe correlate these
-                && forward_kinematics.len() == inverse_kinematics[0].len(),
+            forward_kinematics.len() == inverse_kinematics[0].len(),
             "Number of cols in the inverse kinematics (rows of forward kinimatics) should match the number of control inputs"
         );
         assert!(
@@ -258,41 +287,54 @@ impl BuffBotStatusReport {
             "Number of motor limits should match the number of motors"
         );
 
-        let controllers: Vec<Arc<RwLock<BuffBotControllerReport>>> = controller_types
+        let sensors: Vec<Arc<RwLock<EmbeddedDevice>>> = sensor_index
+            .into_iter()
+            .zip(sensor_buffers.iter())
+            .map(|(name, buffer)| {
+                Arc::new(RwLock::new(EmbeddedDevice::named(
+                    name,
+                    *buffer as usize,
+                    vec![],
+                )))
+            })
+            .collect();
+
+        let motors: Vec<Arc<RwLock<EmbeddedDevice>>> = motor_index
+            .clone()
+            .into_iter()
+            .zip(motor_can_index.iter())
+            .map(|(name, index)| {
+                Arc::new(RwLock::new(EmbeddedDevice::named(
+                    name,
+                    motor_state_len,
+                    index.to_vec(),
+                )))
+            })
+            .collect();
+
+        let controllers: Vec<Arc<RwLock<EmbeddedController>>> = controller_types
             .into_iter()
             .flatten()
             .zip(motor_gains.into_iter())
             .zip(motor_limits.into_iter())
-            .map(|((cont_type, gains), limits)| {
-                Arc::new(RwLock::new(BuffBotControllerReport::new(
-                    cont_type, gains, limits,
+            .zip(motor_index.into_iter())
+            .map(|(((cont_type, gains), limits), name)| {
+                Arc::new(RwLock::new(EmbeddedController::new(
+                    name, cont_type, gains, limits,
                 )))
             })
             .collect();
 
-        let motors: Vec<Arc<RwLock<BuffBotCANMotorReport>>> = motor_index
-            .into_iter()
-            .zip(motor_can_index.iter())
-            .enumerate()
-            .map(|(i, (name, index))| {
-                Arc::new(RwLock::new(BuffBotCANMotorReport::new(
-                    name, i as u8, index[0], index[1], index[2],
-                )))
-            })
-            .collect();
-
-        BuffBotStatusReport {
+        RobotStatus {
             motors: motors,
-            sensors: vec![
-                Arc::new(RwLock::new(BuffBotSensorReport::new(2, vec![0.0; 9]))),
-                Arc::new(RwLock::new(BuffBotSensorReport::new(1, vec![0.0; 6]))),
-            ],
+            sensors: sensors,
             controllers: controllers,
-            control_input: Arc::new(RwLock::new(vec![0.0; 7])),
-            kee_vel_est: Arc::new(RwLock::new(vec![0.0; 7])),
-            imu_vel_est: Arc::new(RwLock::new(vec![0.0; 7])),
-            kee_imu_pos: Arc::new(RwLock::new(vec![0.0; 7])),
-            enc_mag_pos: Arc::new(RwLock::new(vec![0.0; 7])),
+            control_input: Arc::new(RwLock::new(vec![0.0; robot_state_len])),
+            control_output: Arc::new(RwLock::new(vec![0.0; robot_state_len])),
+            kee_vel_est: Arc::new(RwLock::new(vec![0.0; robot_state_len])),
+            imu_vel_est: Arc::new(RwLock::new(vec![0.0; robot_state_len])),
+            kee_imu_pos: Arc::new(RwLock::new(vec![0.0; robot_state_len])),
+            enc_mag_pos: Arc::new(RwLock::new(vec![0.0; robot_state_len])),
             power_buffer: Arc::new(RwLock::new(0.0)),
             control_mode: Arc::new(RwLock::new(0.0)),
             forward_kinematics: forward_kinematics,
@@ -300,18 +342,18 @@ impl BuffBotStatusReport {
         }
     }
 
-    pub fn new(robot_name: &str) -> BuffBotStatusReport {
+    pub fn new(robot_name: &str) -> RobotStatus {
         let byu = BuffYamlUtil::new(robot_name);
-        BuffBotStatusReport::from_byu(byu)
+        RobotStatus::from_byu(byu)
     }
 
-    pub fn from_self() -> BuffBotStatusReport {
+    pub fn from_self() -> RobotStatus {
         let byu = BuffYamlUtil::from_self();
-        BuffBotStatusReport::from_byu(byu)
+        RobotStatus::from_byu(byu)
     }
 
-    pub fn clone(&self) -> BuffBotStatusReport {
-        BuffBotStatusReport {
+    pub fn clone(&self) -> RobotStatus {
+        RobotStatus {
             motors: self.motors.iter().map(|motor| motor.clone()).collect(),
             sensors: self.sensors.iter().map(|sensor| sensor.clone()).collect(),
             controllers: self
@@ -324,6 +366,7 @@ impl BuffBotStatusReport {
             kee_imu_pos: self.kee_vel_est.clone(),
             enc_mag_pos: self.enc_mag_pos.clone(),
             control_input: self.control_input.clone(),
+            control_output: self.control_output.clone(),
             power_buffer: self.power_buffer.clone(),
             control_mode: self.control_mode.clone(),
             forward_kinematics: self.forward_kinematics.clone(),
@@ -341,34 +384,26 @@ impl BuffBotStatusReport {
             .chain(
                 self.motors
                     .iter()
-                    .map(|motor| motor.read().unwrap().init_bytes())
+                    .map(|motor| motor.read().unwrap().config())
                     .flatten(),
             )
             .collect()
     }
 
     pub fn motor_control_init_packet(&mut self) -> Vec<Vec<u8>> {
-        assert!(
-            self.controllers.len() <= self.motors.len(),
-            "Invalid number of controllers, check config"
-        );
         self.controllers
             .iter()
             .enumerate()
             .map(|(i, controller)| {
                 vec![255, 1, i as u8]
                     .into_iter()
-                    .chain(controller.read().unwrap().init_bytes())
+                    .chain(controller.read().unwrap().config())
                     .collect()
             })
             .collect()
     }
 
     pub fn state_control_init_packet(&mut self) -> Vec<Vec<u8>> {
-        assert!(
-            self.inverse_kinematics.len() == self.motors.len(),
-            "Invalid number of parameters, check config"
-        );
         // packets have a row of forward and inverse kinimatics,
         // Done like this so if you don't want to send all of the rows you don't have to
         (0..self.motors.len())
@@ -425,7 +460,7 @@ impl BuffBotStatusReport {
             self.motors[index]
                 .write()
                 .unwrap()
-                .write(feedback, timestamp);
+                .update(feedback, timestamp);
         }
     }
 
@@ -434,7 +469,7 @@ impl BuffBotStatusReport {
             self.controllers[index]
                 .write()
                 .unwrap()
-                .write(feedback, timestamp);
+                .update(feedback, timestamp);
         }
     }
 
@@ -442,14 +477,14 @@ impl BuffBotStatusReport {
         self.sensors[index]
             .write()
             .unwrap()
-            .write(feedback, timestamp);
+            .update(feedback, timestamp);
     }
 
     pub fn print(&self) {
         println!("\n\tRobot Status Report:");
         (0..self.motors.len()).for_each(|i| self.motors[i].read().unwrap().print());
         (0..self.sensors.len()).for_each(|i| self.sensors[i].read().unwrap().print());
-        (0..self.controllers.len()).for_each(|i| self.controllers[i].read().unwrap().print(i));
+        (0..self.controllers.len()).for_each(|i| self.controllers[i].read().unwrap().print());
         println!();
     }
 
