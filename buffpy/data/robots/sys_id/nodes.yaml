@@ -108,7 +108,7 @@ forward_kinematics:
 # power sensitive actuation and inverse pendulum like linkages.
 # 0 = power, 1 = pendulum (more coming soon...)
 motor_controller_types:
-  - [0]
+  - [1]
 
 
 #    Motor Controller Gains

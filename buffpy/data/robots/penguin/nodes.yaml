@@ -15,9 +15,9 @@ buff_rust:
 
 # Examle of includig ros
 # Maybe some kind of option to shut this down via cmdline
-# rqt_plot:
-#   files: [rqt_plot]
-#   package: rqt_plot
+rqt_plot:
+  files: [rqt_plot]
+  package: rqt_plot
 
 
 # The Teensy... Ti-ta-ti-ti-ta-ti-ti-ta-ta-ta-la-ba-ba-ba-ba-ba-da-la-ba-ba-ba-ba-da-la-ba-ba-baa, Ti-ta-ti-li-ta-ti-li-ti-taa, Ti-ta-ti-li... /*o*)/ (gasps) Ti-ta-ti-li-ta-ti-li-ta-ti-li-ta-ti-li-ta-ti-li-ti-ta-ti-ti-ta-ti-ti-taaaaa♪ PEPARING THE KRABBY PATTY!
@@ -108,7 +108,7 @@ forward_kinematics:
 # power sensitive actuation and inverse pendulum like linkages.
 # 0 = power, 1 = pendulum (more coming soon...)
 motor_controller_types:
-  - [0]
+  - [1]
 
 
 #    Motor Controller Gains
@@ -119,7 +119,7 @@ motor_controller_types:
 # where K[i] is the ith row (1x3) and '*' is a vector inner product ((1x3)(3x1)).
 #         Kp,         Kd,   (Kpow/Kpend) # Motor the output is routed to
 motor_gains: 
-  - [0.000295, 0.008949, 0.000745] # motor 0
+  - [0.0, 0.104052, -0.08] # motor 0
 
 #    Motor output Limits
 #   All our actuators are continous DC motors. All of the outputs are in terms of radians.
