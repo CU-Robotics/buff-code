@@ -158,8 +158,8 @@ def send_inputs(hz, control, target_motor):
 		exit(0)
 
 	print(f"Duration: {len(control) / hz} secs")
-	# print(f"Teensy Motor Duration: {(motor_time[-1] - motor_time[0]) / 600000000}")
-	# print(f"Teensy Control Duration: {(controller_time[-1] - controller_time[0]) / 600000000}")
+	print(f"Teensy Motor Duration: {(motor_time[-1] - motor_time[0])}")
+	print(f"Teensy Control Duration: {(controller_time[-1] - controller_time[0])}")
 	print(f"Feedback packets: {motor_positions.shape} {motor_speeds.shape} {motor_dampers.shape}")
 	print(f"Control packets: {controller_outputs.shape} {controller_positions.shape} {controller_speeds.shape}")
 	return control
@@ -170,8 +170,8 @@ def least_squares_solver(motor, control):
 		print("No samples exiting")
 		exit(0)
 
-	A = np.vstack([motor_positions[:-1], motor_speeds[:-1], np.zeros((samples-1)), controller_outputs[:-1]])
-	B = np.vstack([motor_positions[1:], motor_speeds[1:], np.zeros((samples-1))])
+	A = np.vstack([motor_positions[:-1], motor_speeds[:-1], motor_dampers[:-1], controller_outputs[:-1]])
+	B = np.vstack([motor_positions[1:], motor_speeds[1:], motor_dampers[1:]])
 
 	print(f"Solving {(B.shape[0], A.shape[0])} @ {A.shape} = {B.shape}")
 	X = B @ la.pinv(A)
@@ -216,7 +216,7 @@ def validate_system(A, B):
 def lqr(Q, R, A, B):
 	P = la.solve_discrete_are(A, B, Q, R)
 
-	return la.solve(R + B.T.dot(P).dot(B), B.T.dot(P).dot(A))
+	return la.solve(R + B.T.dot(P).dot(B), B.T.dot(P).dot(A)).reshape(3)
 	#np.linalg.pinv(R + B.T @ Q @ B) @ B.T @ Q @ A
 
 def find_edge(arr, threashold):
@@ -243,7 +243,7 @@ def find_control_delay(duration, control):
 	p_control_shift = (pos_edge / len(motor_positions)) - (out_edge / len(controller_outputs))
 	v_control_shift = (rpm_edge / len(motor_speeds)) - (out_edge / len(controller_outputs))
 
-	fusion = ((0.55 * control_shift) + (0.225 * p_control_shift) + (0.225 * v_control_shift)) * duration
+	fusion = control_shift * duration
 
 	print(f"Control to Output latency: {control_shift * duration}")
 	print(f"Position Motor latency: {p_control_shift * duration}")
@@ -306,14 +306,15 @@ if __name__ == '__main__':
 		sys_A, sys_B = least_squares_solver(target_motor, control)
 
 		p, v = validate_system(sys_A, sys_B)
-		Q = np.array([[1.0,  0.0,  0.0], 
-					 [0.0, 0.0001,  0.0],
-					 [0.0,  0.0, 0.0001]])
-		R = np.array([0.05])
+		Q = np.array([[0.001,  0.0,  0.0], 
+					 [0.0, 1.0,  0.0],
+					 [0.0,  0.0, 0.000001]])
 
-		k = lqr(Q, R, sys_A, sys_B)
+		R = np.array([0.00001])
 
-		print(f"LQR solver feedback gains: {k}")
+		K = lqr(Q, R, sys_A, sys_B)
+
+		print(f"LQR solver feedback gains: [{K[0]:.6f}, {K[1]:.6f}, {K[2]:.6f}]")
 
 		display_data(target_motor, duration, control, p, v)
 

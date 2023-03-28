@@ -140,14 +140,6 @@ int run_hid_report_tests(void) {
 	errors += packet_float_test();
 
 	return errors;
-	// UNITY_BEGIN();
-	// RUN_TEST(packet_put_test);
-	// RUN_TEST(packet_get_test);
-	// RUN_TEST(packet_puts_gets_test);
-	// RUN_TEST(packet_int32_test);
-	// RUN_TEST(packet_float_test);
-
-	// return UNITY_END();
 }
 
 
@@ -158,11 +150,8 @@ int main() {
 	// if (Serial)
 	// Serial.println("-- TEENSY SERIAL START --");
 
-	// Wait ~2 seconds before the Unity test runner
-	// establishes connection with a board Serial interface
 	while (!Serial) {};
 	Serial.println("Start comms tests");
-	delay(2000);
 
 	int errors = run_hid_report_tests();
 

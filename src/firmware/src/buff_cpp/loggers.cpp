@@ -156,6 +156,13 @@ int float_geq(float a, float b, String message){
 }
 
 
+void timer_print(uint32_t time, String message) {
+	Serial.print("[BUFF_TIMER]\t");
+		Serial.print(message);
+		Serial.printf("\t%i\n", time);
+}
+
+
 
 
 

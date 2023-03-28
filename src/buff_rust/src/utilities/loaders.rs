@@ -79,6 +79,15 @@ impl BuffYamlUtil {
             .collect()
     }
 
+    pub fn load_u8_list(&self, item: &str) -> Vec<u8> {
+        self.yaml_data[item]
+            .as_vec()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_i64().unwrap() as u8)
+            .collect()
+    }
+
     pub fn load_integer_matrix(&self, item: &str) -> Vec<Vec<u8>> {
         self.yaml_data[item]
             .as_vec()

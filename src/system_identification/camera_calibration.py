@@ -32,7 +32,7 @@ def hold_pose(hz, duration):
 
 	pub = rospy.Publisher('control_input', Float64MultiArray, queue_size=10)
 
-	rospy.Subscriber(f"controller_5_report", Float64MultiArray, controller)
+	rospy.Subscriber(f"controller_0_report", Float64MultiArray, controller)
 
 	print(f"Calibrator taking robot control: ...")
 	ctr = 0

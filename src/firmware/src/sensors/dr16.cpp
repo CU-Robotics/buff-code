@@ -153,6 +153,7 @@ void DR16::generate_control_from_joysticks() {
 	else {
 		data[5] = 0.0;
 	}
+	// Serial.println(data[0]);
 }
 
 void DR16::generate_output() {
@@ -213,6 +214,9 @@ bool DR16::read() {
 		return true;
 	}
 
-	serial->clear();
+	if (serial->available() > 18) {
+		serial->clear();
+	}
+
 	return false;
 }

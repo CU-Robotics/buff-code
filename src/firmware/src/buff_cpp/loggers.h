@@ -34,4 +34,6 @@ int float_nan(float);
 int float_leq(float, float, String);
 int float_geq(float, float, String);
 
+void timer_print(uint32_t, String);
+
 #endif

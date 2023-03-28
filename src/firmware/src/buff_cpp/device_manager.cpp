@@ -53,7 +53,7 @@ void Device_Manager::initializer_report_handle() {
 				limits[i] = input_report.get_float((4 * i) + limit_offset);
 				limits[i + 2] = input_report.get_float((4 * (i + 2)) + limit_offset);
 			}
-			// Serial.printf("\nlimits: %f, %f, %f, %f\n", limits[0], limits[1], limits[2], limits[3]);
+			// Serial.printf("\nlimits %i: %f, %f, %f, %f\n", controller_id, limits[0], limits[1], limits[2], limits[3]);
 
 			controller_manager.init_controller(controller_id, controller_type, gains, limits);
 			controller_switch = 1;												// enable local control
@@ -62,9 +62,11 @@ void Device_Manager::initializer_report_handle() {
 		case 2:	// Use the assumption IK.shape = K.T.shape
 			for (int j = 0; j < REMOTE_CONTROL_LEN; j++) {
 				// Serial.printf("%f, ", input_report.get_float(chunk_offset + (4 * j)));
-				controller_manager.chassis_inverse_kinematics[controller_id][j] = input_report.get_float(j + 3);					
-				controller_manager.chassis_kinematics[j][controller_id] = input_report.get_float(REMOTE_CONTROL_LEN + j + 3);					
+				controller_manager.chassis_inverse_kinematics[controller_id][j] = input_report.get_float((4 * j) + 3);					
+				controller_manager.chassis_kinematics[j][controller_id] = input_report.get_float(4 * (REMOTE_CONTROL_LEN + j) + 3);
+				// Serial.printf("%f ", controller_manager.chassis_inverse_kinematics[controller_id][j]);	
 			}
+			// Serial.println();
 			break;
 
 		default:
@@ -255,6 +257,7 @@ void Device_Manager::report_switch() {
 		case 255:
 			// configuration / initializers
 			initializer_report_handle();
+			lifetime = 0;
 			// Serial.println("initializer received");
 			break;
 
@@ -289,7 +292,7 @@ void Device_Manager::report_switch() {
 
 	Author: Mitchell Scott
 */
-void Device_Manager::hid_input_switch(){
+void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 	/*
 		Check if there is an HID input packet, 
 		if there is one check the packet request
@@ -299,19 +302,20 @@ void Device_Manager::hid_input_switch(){
 		@return:
 		  If a packet was read or not
 	*/
+	// assure good timing
+	timer_wait_us(8, cycle_time_us);
+	lifetime += cycle_time_us / 1e6;
+
 	switch (input_report.read()) {
 		case 64:
 			blink();										// only blink when connected to a robot
 			report_switch();
-			output_report.put_int32(60, ARM_DWT_CYCCNT);
-			break;
-
-		case 0:
-			// controller_switch = 1;
-			rm_can_ux.zero_can();							// Shutdown motors if can disconnects
+			output_report.put_float(60, lifetime);
+			timer_set(8);
 			break;
 		
 		default:
+			rm_can_ux.zero_can();
 			break;
 	}
 
@@ -352,6 +356,9 @@ void Device_Manager::push_can(){
 void Device_Manager::read_sensors() {
 	controller_manager.gimbal_enc[0] = yawEncoder.getAngle();
 	controller_manager.gimbal_enc[1] = pitchEncoder.getAngle();
+	receiver.read();
+	ref.read_serial();
+	controller_manager.power_buffer = ref.data.power_buffer;
 
 	switch (sensor_switch) {
 		case 0:
@@ -366,17 +373,6 @@ void Device_Manager::read_sensors() {
 
 		case 2:
 			chassis_imu.read_lis3mdl();
-			sensor_switch += 1;
-			break;
-
-		case 3:
-			ref.read_serial();
-			controller_manager.power_buffer = ref.data.power_buffer;
-			sensor_switch += 1;
-			break;
-
-		case 4:
-			receiver.read();
 			sensor_switch = 0;
 			break;
 
@@ -416,8 +412,6 @@ void Device_Manager::read_sensors() {
 	Author: Mitchell Scott
 */
 void Device_Manager::step_controllers(float dt) {	
-	bool new_references = timer_info_us(2) >= 10;
-
 	controller_manager.estimate_state(chassis_imu.data, chassis_imu.yaw, dt);
 
 	if (controller_switch == 1) {								// Use DR16 control input
@@ -428,8 +422,8 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.input[1] = receiver.data[1];
 		controller_manager.input[2] = receiver.data[2];
 	}
-		
 
+	bool new_references = timer_info_ms(2) >= 10;
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
 		// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);
 		if (new_references) {
