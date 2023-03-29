@@ -292,7 +292,7 @@ if __name__ == '__main__':
 	try:
 		rospy.init_node('motor_identifier', anonymous=True)
 
-		target_motor = 0
+		target_motor = 3
 		# control = freq_sweep_sinusiod()
 		# control = discrete_impulse()
 		control = discrete_impulses(magnitude=0.1, length=100)

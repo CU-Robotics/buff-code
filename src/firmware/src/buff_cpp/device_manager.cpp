@@ -125,6 +125,8 @@ void Device_Manager::control_input_handle() {
 	output_report.put(3, input_report.get(3));
 	output_report.put(4, input_report.get(4));
 
+	// Serial.printf("init %i\n", input_report.get(0));
+
 	switch (input_report.get(1)) {
 		case 0:
 			for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
@@ -235,6 +237,19 @@ void Device_Manager::sensor_request_handle() {
 			}
 			break;
 
+		case 3:
+			// REF 
+			
+			break;
+
+		case 4:
+			// RevEncoders
+			for (int i = 0; i < MAX_REV_ENCODERS; i++) {
+				controller_manager.encoder_bias[i] = input_report.get_float((4 * i) + 2);
+			} 
+			
+			break;
+
 		default:
 			break;
 	}
@@ -258,7 +273,8 @@ void Device_Manager::report_switch() {
 			// configuration / initializers
 			initializer_report_handle();
 			lifetime = 0;
-			// Serial.println("initializer received");
+			// Serial.println("Initializer received");
+
 			break;
 
 		case 1:
@@ -315,7 +331,7 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 			break;
 		
 		default:
-			rm_can_ux.zero_can();
+			// rm_can_ux.zero_can();
 			break;
 	}
 
@@ -354,10 +370,10 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
-	controller_manager.gimbal_enc[0] = yawEncoder.getAngle();
-	controller_manager.gimbal_enc[1] = pitchEncoder.getAngle();
 	receiver.read();
 	ref.read_serial();
+	controller_manager.encoders[1] = yawEncoder.getAngle();
+	// controller_manager.encoders[0] = pitchEncoder.getAngle();
 	controller_manager.power_buffer = ref.data.power_buffer;
 
 	switch (sensor_switch) {

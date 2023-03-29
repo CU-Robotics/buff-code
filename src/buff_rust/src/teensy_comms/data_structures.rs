@@ -246,60 +246,58 @@ impl RobotStatus {
         }
     }
 
-    pub fn from_byu(byu: BuffYamlUtil) -> RobotStatus {
+    pub fn load_sensors(byu: &BuffYamlUtil) -> Vec<Arc<RwLock<EmbeddedDevice>>> {
         let sensor_index = byu.load_string_list("sensor_index");
         let sensor_buffers = byu.load_u8_list("sensor_buffers");
-
-        let motor_index = byu.load_string_list("motor_index");
-        let motor_gains = byu.load_float_matrix("motor_gains");
-        let motor_limits = byu.load_float_matrix("motor_limits");
-        let motor_can_index = byu.load_integer_matrix("motor_can_index");
-        let motor_state_len = motor_gains[0].len();
-
-        let controller_types = byu.load_integer_matrix("motor_controller_types");
-        let forward_kinematics = byu.load_float_matrix("forward_kinematics");
-        let inverse_kinematics = byu.load_float_matrix("inverse_kinematics");
-        let robot_state_len = forward_kinematics.len();
+        let sensor_configs = byu.load_float_matrix("sensor_config");
 
         assert!(
-            controller_types.len() == motor_index.len(),
-            "Number of Controllers and Motors should match"
+            sensor_index.len() == sensor_buffers.len(),
+            "Number of Sensors and Sensor buffers should match"
         );
+        assert!(
+            sensor_index.len() == sensor_configs.len(),
+            "Number of Sensors and Sensor configs should match"
+        );
+
+        let sensor_bytes: Vec<Vec<u8>> = sensor_configs
+            .into_iter()
+            .map(|config| {
+                config
+                    .iter()
+                    .map(|c| (*c as f32).to_be_bytes().to_vec())
+                    .flatten()
+                    .collect()
+            })
+            .collect();
+
+        sensor_index
+            .into_iter()
+            .zip(sensor_buffers.iter())
+            .zip(sensor_bytes.iter())
+            .map(|((name, buffer), config)| {
+                Arc::new(RwLock::new(EmbeddedDevice::named(
+                    name,
+                    *buffer as usize,
+                    config.to_vec(),
+                )))
+            })
+            .collect()
+    }
+
+    pub fn load_motors(
+        byu: &BuffYamlUtil,
+        motor_state_len: usize,
+    ) -> Vec<Arc<RwLock<EmbeddedDevice>>> {
+        let motor_index = byu.load_string_list("motor_index");
+        let motor_can_index = byu.load_integer_matrix("motor_can_index");
+
         assert!(
             motor_can_index.len() == motor_index.len(),
             "Number of CAN motor configs should match the number of motors"
         );
-        assert!(
-            inverse_kinematics.len() == motor_index.len()
-                && forward_kinematics[0].len() == motor_index.len(),
-            "Number of rows in the inverse kinematics (cols of forward kinimatics) should match the number of motors"
-        );
-        assert!(
-            forward_kinematics.len() == inverse_kinematics[0].len(),
-            "Number of cols in the inverse kinematics (rows of forward kinimatics) should match the number of control inputs"
-        );
-        assert!(
-            motor_gains.len() == motor_index.len(),
-            "Number of motor gains should match the number of motors"
-        );
-        assert!(
-            motor_limits.len() == motor_index.len(),
-            "Number of motor limits should match the number of motors"
-        );
 
-        let sensors: Vec<Arc<RwLock<EmbeddedDevice>>> = sensor_index
-            .into_iter()
-            .zip(sensor_buffers.iter())
-            .map(|(name, buffer)| {
-                Arc::new(RwLock::new(EmbeddedDevice::named(
-                    name,
-                    *buffer as usize,
-                    vec![],
-                )))
-            })
-            .collect();
-
-        let motors: Vec<Arc<RwLock<EmbeddedDevice>>> = motor_index
+        motor_index
             .clone()
             .into_iter()
             .zip(motor_can_index.iter())
@@ -310,20 +308,74 @@ impl RobotStatus {
                     index.to_vec(),
                 )))
             })
-            .collect();
+            .collect()
+    }
 
-        let controllers: Vec<Arc<RwLock<EmbeddedController>>> = controller_types
-            .into_iter()
-            .flatten()
-            .zip(motor_gains.into_iter())
-            .zip(motor_limits.into_iter())
-            .zip(motor_index.into_iter())
-            .map(|(((cont_type, gains), limits), name)| {
-                Arc::new(RwLock::new(EmbeddedController::new(
-                    name, cont_type, gains, limits,
-                )))
-            })
-            .collect();
+    pub fn load_controllers(byu: &BuffYamlUtil) -> (usize, Vec<Arc<RwLock<EmbeddedController>>>) {
+        let motor_index = byu.load_string_list("motor_index");
+        let motor_gains = byu.load_float_matrix("motor_gains");
+        let motor_limits = byu.load_float_matrix("motor_limits");
+        let controller_types = byu.load_integer_matrix("motor_controller_types");
+
+        assert!(
+            motor_gains.len() == motor_index.len(),
+            "Number of motor gains should match the number of motors"
+        );
+        assert!(
+            motor_limits.len() == motor_index.len(),
+            "Number of motor limits should match the number of motors"
+        );
+
+        assert!(
+            controller_types.len() == motor_index.len(),
+            "Number of Controllers and Motors should match"
+        );
+
+        (
+            motor_gains[0].len(),
+            controller_types
+                .into_iter()
+                .flatten()
+                .zip(motor_gains.into_iter())
+                .zip(motor_limits.into_iter())
+                .zip(motor_index.into_iter())
+                .map(|(((cont_type, gains), limits), name)| {
+                    Arc::new(RwLock::new(EmbeddedController::new(
+                        name, cont_type, gains, limits,
+                    )))
+                })
+                .collect(),
+        )
+    }
+
+    pub fn load_kinematics(byu: &BuffYamlUtil) -> (usize, Vec<Vec<f64>>, Vec<Vec<f64>>) {
+        let motor_index = byu.load_string_list("motor_index");
+        let forward_kinematics = byu.load_float_matrix("forward_kinematics");
+        let inverse_kinematics = byu.load_float_matrix("inverse_kinematics");
+
+        assert!(
+            inverse_kinematics.len() == motor_index.len()
+                && forward_kinematics[0].len() == motor_index.len(),
+            "Number of rows in the inverse kinematics (cols of forward kinimatics) should match the number of motors"
+        );
+        assert!(
+            forward_kinematics.len() == inverse_kinematics[0].len(),
+            "Number of cols in the inverse kinematics (rows of forward kinimatics) should match the number of control inputs"
+        );
+
+        (
+            forward_kinematics.len(),
+            forward_kinematics,
+            inverse_kinematics,
+        )
+    }
+
+    pub fn from_byu(byu: BuffYamlUtil) -> RobotStatus {
+        let sensors = RobotStatus::load_sensors(&byu);
+        let (motor_state_len, controllers) = RobotStatus::load_controllers(&byu);
+        let motors = RobotStatus::load_motors(&byu, motor_state_len);
+        let (robot_state_len, forward_kinematics, inverse_kinematics) =
+            RobotStatus::load_kinematics(&byu);
 
         RobotStatus {
             motors: motors,
@@ -390,6 +442,19 @@ impl RobotStatus {
             .collect()
     }
 
+    pub fn sensor_init_packet(&mut self) -> Vec<Vec<u8>> {
+        self.sensors
+            .iter()
+            .enumerate()
+            .map(|(i, sensor)| {
+                vec![3, i as u8]
+                    .into_iter()
+                    .chain(sensor.read().unwrap().config())
+                    .collect()
+            })
+            .collect()
+    }
+
     pub fn motor_control_init_packet(&mut self) -> Vec<Vec<u8>> {
         self.controllers
             .iter()
@@ -438,12 +503,16 @@ impl RobotStatus {
             .into_iter()
             .for_each(|packet| initializers.push(packet));
 
+        self.sensor_init_packet()
+            .into_iter()
+            .for_each(|packet| initializers.push(packet));
+
         initializers
     }
 
     pub fn get_reports(&mut self) -> Vec<Vec<u8>> {
         let mut reports = vec![];
-        // (0..self.sensors.len()).for_each(|i| reports.push(vec![3, i as u8]));
+        // self.sensors.iter().for_each(|s| reports.push(vec![3, i as u8] + s.config()));
         // (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![1, i as u8]));
         (0..(self.controllers.len() / 2) + 1) // motor controller reports
             .for_each(|i| reports.push(vec![2, 1, 0, (2 * i) as u8, ((2 * i) + 1) as u8]));

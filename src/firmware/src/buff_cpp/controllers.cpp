@@ -1,5 +1,5 @@
 #include "timing.h"
-#include "controllers.h"
+#include "buff_cpp/controllers.h"
 
 void rotate2D(float* v, float* v_tf, float angle) {
 	v_tf[0] = (v[0] * cos(angle)) - (v[1] * sin(angle));
@@ -88,6 +88,12 @@ Controller_Manager::Controller_Manager() {
 
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		input[i] = 0;			
+	}
+
+	for (int i = 0; i < MAX_REV_ENCODERS; i++) {
+		if (encoder_bias[i] == 0) {
+			encoder_bias[i] = encoders[i];
+		}
 	}
 }
 
@@ -260,16 +266,12 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 		kee_imu_pos[i] += kee_imu_state[i] * dt;
 	}
 
-	float x_enc_vel = 0;
-	float y_enc_vel = 0;
-	float raw_enc_heading[2] = {x_enc_vel, y_enc_vel};
-	float enc_heading[2];
+	// get the encoder angles as radians
+	gimbal_pitch_angle = (encoders[0] - encoder_bias[0]) * PI / 180;
+	gimbal_yaw_angle = (encoders[1] - encoder_bias[1]) * PI / 180;
 
-	rotate2D(raw_enc_heading, enc_heading, chassis_yaw);
-	enc_mag_pos[0] += enc_heading[0] * dt;
-	enc_mag_pos[1] += enc_heading[1] * dt;
 	enc_mag_pos[2] = chassis_yaw;
-	enc_mag_pos[3] = pitch_angle;
+	enc_mag_pos[3] = gimbal_pitch_angle;
 	enc_mag_pos[4] = gimbal_yaw_angle;
 	
 	// fuse position estimates (kinda pointless just use one or the other)

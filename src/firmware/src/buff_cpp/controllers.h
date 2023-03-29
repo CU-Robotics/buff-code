@@ -1,4 +1,5 @@
 #include "sensors/dr16.h"
+#include "sensors/revEnc.h"
 #include "motor_drivers/rm_can_interface.h"
 
 #ifndef BUFF_CONTROLLERS_H
@@ -52,12 +53,13 @@ struct Controller_Manager {
 
 	float pitch_angle;
 	float pitch_offset;
+	float gimbal_pitch_angle;
 	float gimbal_yaw_angle;
 
 	float imu_offset_angle;
 
-	float xy_odom_enc[2];
-	float gimbal_enc[2];
+	float encoders[MAX_REV_ENCODERS];
+	float encoder_bias[MAX_REV_ENCODERS];
 
 	float input[REMOTE_CONTROL_LEN];
 	float output[MAX_NUM_RM_MOTORS];

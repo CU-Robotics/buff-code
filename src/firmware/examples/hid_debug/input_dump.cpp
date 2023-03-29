@@ -38,9 +38,7 @@ int main() {											// Basically a schudeling algorithm
 				device_manager.input_report.print();
 
 				blink();										// only blink when connected to a robot
-				if (device_manager.input_report.get(0) == 2){
-					return 0;
-				}
+				
 				device_manager.report_switch();
 				device_manager.output_report.put_int32(60, ARM_DWT_CYCCNT);
 

@@ -31,9 +31,9 @@ int main() {											// Basically a schudeling algorithm
 		timer_set(0);
 
 		// handle any hid input output
-		device_manager.read_sensors();					// read a single sensor each call (increments the sensor id automatically)
-		device_manager.step_controllers(cycle_time_s);	// given the current inputs and feedback compute a control
-		device_manager.hid_input_switch(cycle_time_us);				// check for an input packet (data request/control input) handle accordingly
+		device_manager.read_sensors();					// read a single sensor each call (increments the sensor id automatically)		
+		device_manager.step_controllers(cycle_time_s);	// given the current inputs and feedback compute a control	
+		device_manager.hid_input_switch(cycle_time_us);	// check for an input packet (data request/control input) handle accordingly
 		device_manager.push_can();						// push data on and off the can bus
 
 		timer_wait_us(0, cycle_time_us);				// normalize master loop cycle time to cycle_time_u
