@@ -20,7 +20,6 @@ Device_Manager::Device_Manager(){
 */
 void Device_Manager::initializer_report_handle() {
 	int limit_offset;
-	int controller_type;
 	int controller_id = input_report.get(2);
 
 	float limits[4];
@@ -41,21 +40,22 @@ void Device_Manager::initializer_report_handle() {
 		case 1:
 			// set the local controllers gains, and limits
 			// Serial.printf("controller %i\ngains: ", controller_id);
-			controller_type = input_report.get(3);
+
 			for (int i = 0; i < MOTOR_FEEDBACK_SIZE; i++) {
-				gains[i] = input_report.get_float((4 * i) + 4);
+				gains[i] = input_report.get_float((4 * i) + 8);
 				// Serial.printf("%f, ", gains[i]);
 			}
 
-			limit_offset = (4 * MOTOR_FEEDBACK_SIZE) + 4;
+			limit_offset = (4 * MOTOR_FEEDBACK_SIZE) + 8;
 
 			for (int i = 0; i < 2; i++) {
 				limits[i] = input_report.get_float((4 * i) + limit_offset);
 				limits[i + 2] = input_report.get_float((4 * (i + 2)) + limit_offset);
 			}
 			// Serial.printf("\nlimits %i: %f, %f, %f, %f\n", controller_id, limits[0], limits[1], limits[2], limits[3]);
-
-			controller_manager.init_controller(controller_id, controller_type, gains, limits);
+			// Serial.printf("%i %f\n", controller_id, input_report.get_float(4));
+			// Serial.printf("%f %f %f\n", gains[0], gains[1], gains[2]);
+			controller_manager.init_controller(controller_id, input_report.get(3), gains, limits, input_report.get_float(4));
 			controller_switch = 1;												// enable local control
 			break;
 
@@ -245,8 +245,11 @@ void Device_Manager::sensor_request_handle() {
 		case 4:
 			// RevEncoders
 			for (int i = 0; i < MAX_REV_ENCODERS; i++) {
-				controller_manager.encoder_bias[i] = input_report.get_float((4 * i) + 2);
+				// Serial.printf("%i %i %i %f %f\n", i, (4 * (2 * i)) + 2, (4 * ((2 * i) + 1)) + 2, input_report.get_float((4 * (2 * i)) + 2), input_report.get_float((4 * ((2 * i) + 1)) + 2));
+				controller_manager.encoder_bias[i] = input_report.get_float((4 * (2 * i)) + 2);
+				controller_manager.enc_filters[i].set_gain(input_report.get_float((4 * ((2 * i) + 1)) + 2));
 			} 
+			// controller_manager.encoder_bias[sensor] = 
 			
 			break;
 

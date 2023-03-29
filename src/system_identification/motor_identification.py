@@ -107,7 +107,7 @@ def send_inputs(hz, control, target_motor):
 	global controller_positions
 	global controller_speeds
 
-	pub = rospy.Publisher('motor_can_output', Float64MultiArray, queue_size=10)
+	pub = rospy.Publisher('motor_can_output', Float64MultiArray, queue_size=1)
 	rate = rospy.Rate(hz) # 10hz
 	msg = Float64MultiArray()
 
@@ -292,10 +292,10 @@ if __name__ == '__main__':
 	try:
 		rospy.init_node('motor_identifier', anonymous=True)
 
-		target_motor = 3
+		target_motor = 0
 		# control = freq_sweep_sinusiod()
 		# control = discrete_impulse()
-		control = discrete_impulses(magnitude=0.1, length=100)
+		control = discrete_impulses(magnitude=0.4, length=100)
 
 		time.sleep(2)
 		print(f"Starting system identification for motor {target_motor}")
@@ -306,11 +306,11 @@ if __name__ == '__main__':
 		sys_A, sys_B = least_squares_solver(target_motor, control)
 
 		p, v = validate_system(sys_A, sys_B)
-		Q = np.array([[0.0,  0.0,  0.0], 
-					 [0.0, 1.0,  0.0],
-					 [0.0,  0.0, 0.0]])
+		Q = np.array([[1.0,  0.0,  0.0], 
+					  [0.0,  1.0,  0.0],
+					  [0.0,  0.0,  0.0]])
 
-		R = np.array([0.00001])
+		R = np.array([0.0])
 
 		K = lqr(Q, R, sys_A, sys_B)
 

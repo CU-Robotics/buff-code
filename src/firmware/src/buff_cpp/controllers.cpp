@@ -1,5 +1,17 @@
-#include "timing.h"
+#include "buff_cpp/timing.h"
 #include "buff_cpp/controllers.h"
+
+float wrap_angle(float angle) {
+	while (angle >= PI) {
+		angle -= 2 * PI;
+	}
+
+	while (angle < -PI) {
+		angle += 2 * PI;
+	}
+
+	return angle;
+}
 
 void rotate2D(float* v, float* v_tf, float angle) {
 	v_tf[0] = (v[0] * cos(angle)) - (v[1] * sin(angle));
@@ -107,6 +119,7 @@ void Controller_Manager::reset_controller(int controller_id) {
 	references[controller_id][0] = 0;
 	references[controller_id][1] = 0;
 	references[controller_id][2] = 0;
+	motor_filters[controller_id].set_gain(0.0);
 }
 
 void Controller_Manager::set_gain(int controller_id, int gain_id, float data){
@@ -114,10 +127,11 @@ void Controller_Manager::set_gain(int controller_id, int gain_id, float data){
 	controllers[controller_id].gains[gain_id] = data;
 }
 
-void Controller_Manager::init_controller(int controller_id, int type, float* gains, float* limits){
+void Controller_Manager::init_controller(int controller_id, int type, float* gains, float* limits, float filter_gain){
 	reset_controller(controller_id);
 	controllers[controller_id].init(gains, limits);
 	controller_types[controller_id] = type;
+	motor_filters[controller_id].set_gain(filter_gain);
 }
 
 void Controller_Manager::get_control_report(int controller_id, float* data) {
@@ -198,8 +212,7 @@ void Controller_Manager::set_reference(int controller_id) {
 	controllers[controller_id].bound_reference(references[controller_id]);
 
 	// if (controller_id == 0) {
-		// Serial.printf("input %f %f: %f %f\n", input[0], input[1], rotated_input[0], rotated_input[1]);
-		// Serial.printf("controller reference %f %f %f\n", references[0][0], references[0][1], speed);
+	// 	Serial.printf("%f %f %f\n", gimbal_yaw_angle, rotated_input[0], speed);
 	// }
 }
 
@@ -207,13 +220,12 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	// motor_index[i].data[0] is the motor_angle add 2pi roll over to make an output angle
 	// leave tmp[1] 0 to allow velocity control (doesn't use error like position)
 	// set tmp[2] to the sum of the change in input (make gain 3 act as a damper)
-	float feedback_gain = 0.1;
 	if (biases[controller_id] == 0){
 		biases[controller_id] = data[0] + (2 * PI * rollover);
 	}
 
 	feedback[controller_id][0] = data[0] + (2 * PI * rollover) - biases[controller_id];
-	feedback[controller_id][1] = (feedback_gain * feedback[controller_id][1]) + ((1 - feedback_gain) * data[1] * 2 * PI / 60);
+	feedback[controller_id][1] = motor_filters[controller_id].filter(data[1] * 2 * PI / 60);
 
 	switch(controller_types[controller_id]) {
 		case 0:
@@ -267,8 +279,9 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	}
 
 	// get the encoder angles as radians
-	gimbal_pitch_angle = (encoders[0] - encoder_bias[0]) * PI / 180;
-	gimbal_yaw_angle = (encoders[1] - encoder_bias[1]) * PI / 180;
+	gimbal_pitch_angle = enc_filters[0].filter(wrap_angle((encoders[0] - encoder_bias[0]) * PI / 180));
+	gimbal_yaw_angle = enc_filters[1].filter(wrap_angle((encoders[1] - encoder_bias[1]) * PI / 180));
+	// Serial.printf("%f %f\n", (encoders[1] - encoder_bias[1]) * PI / 180, gimbal_yaw_angle);
 
 	enc_mag_pos[2] = chassis_yaw;
 	enc_mag_pos[3] = gimbal_pitch_angle;

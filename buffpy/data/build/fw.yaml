@@ -1,0 +1,7 @@
+project: 'firmware'
+build: 'make upload'
+bin: ['build/src/main.hex']
+
+
+
+

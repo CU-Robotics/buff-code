@@ -1,5 +1,6 @@
 #include "sensors/dr16.h"
 #include "sensors/revEnc.h"
+#include "algorithms/lp_filter.h"
 #include "motor_drivers/rm_can_interface.h"
 
 #ifndef BUFF_CONTROLLERS_H
@@ -38,7 +39,7 @@ struct Controller_Manager {
 	Controller_Manager();
 	void set_gain(int, int, float);
 	void reset_controller(int);
-	void init_controller(int, int, float*, float*);
+	void init_controller(int, int, float*, float*, float);
 	void get_control_report(int, float*);
 	void get_vel_est_report(float*);
 	void get_pos_est_report(float*);
@@ -85,6 +86,9 @@ struct Controller_Manager {
 	float position_est[REMOTE_CONTROL_LEN];
 
 	int controller_types[MAX_NUM_RM_MOTORS];
+
+	LPFilter enc_filters[MAX_REV_ENCODERS];
+	LPFilter motor_filters[MAX_NUM_RM_MOTORS];
 	
 	Feedback_Controller controllers[MAX_NUM_RM_MOTORS];
 };

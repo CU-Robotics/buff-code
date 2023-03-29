@@ -91,6 +91,7 @@ pub struct EmbeddedController {
     reference: Vec<f64>,
 
     output: f64,
+    filter_gain: f64,
     timestamp: f64,
 
     control_type: u8,
@@ -105,6 +106,7 @@ impl EmbeddedController {
             feedback: vec![],
             reference: vec![],
             output: 0.0,
+            filter_gain: 0.0,
             timestamp: 0.0,
             control_type: u8::MAX,
         }
@@ -118,6 +120,7 @@ impl EmbeddedController {
             feedback: vec![0.0; state_size],
             reference: vec![0.0; state_size],
             output: 0.0,
+            filter_gain: 0.0,
             timestamp: 0.0,
             control_type: u8::MAX,
         }
@@ -131,17 +134,25 @@ impl EmbeddedController {
             feedback: vec![0.0; state_size],
             reference: vec![0.0; state_size],
             output: 0.0,
+            filter_gain: 0.0,
             timestamp: 0.0,
             control_type: mode,
         }
     }
 
-    pub fn set_config(&mut self, gains: Vec<f64>, limits: Vec<f64>) {
+    pub fn set_config(&mut self, gains: Vec<f64>, limits: Vec<f64>, filter: f64) {
         self.limits = limits;
         self.gains = gains;
+        self.filter_gain = filter;
     }
 
-    pub fn new(name: String, mode: u8, gains: Vec<f64>, limits: Vec<f64>) -> EmbeddedController {
+    pub fn new(
+        name: String,
+        mode: u8,
+        gains: Vec<f64>,
+        limits: Vec<f64>,
+        filter: f64,
+    ) -> EmbeddedController {
         let motor_state_len = gains.len();
 
         EmbeddedController {
@@ -151,6 +162,7 @@ impl EmbeddedController {
             feedback: vec![0.0; motor_state_len],
             reference: vec![0.0; motor_state_len],
             output: 0.0,
+            filter_gain: filter,
             timestamp: 0.0,
             control_type: mode,
         }
@@ -159,6 +171,7 @@ impl EmbeddedController {
     pub fn config(&self) -> Vec<u8> {
         vec![self.control_type]
             .into_iter()
+            .chain((self.filter_gain as f32).to_be_bytes().to_vec())
             .chain(
                 self.gains
                     .iter()
@@ -315,6 +328,7 @@ impl RobotStatus {
         let motor_index = byu.load_string_list("motor_index");
         let motor_gains = byu.load_float_matrix("motor_gains");
         let motor_limits = byu.load_float_matrix("motor_limits");
+        let motor_filters = byu.load_float_matrix("motor_filters");
         let controller_types = byu.load_integer_matrix("motor_controller_types");
 
         assert!(
@@ -338,10 +352,11 @@ impl RobotStatus {
                 .flatten()
                 .zip(motor_gains.into_iter())
                 .zip(motor_limits.into_iter())
+                .zip(motor_filters.into_iter())
                 .zip(motor_index.into_iter())
-                .map(|(((cont_type, gains), limits), name)| {
+                .map(|((((cont_type, gains), limits), filter), name)| {
                     Arc::new(RwLock::new(EmbeddedController::new(
-                        name, cont_type, gains, limits,
+                        name, cont_type, gains, limits, filter[0],
                     )))
                 })
                 .collect(),
