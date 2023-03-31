@@ -1,4 +1,5 @@
 #include "dr16.h"
+#include "buff_cpp/timing.h"
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \
@@ -43,6 +44,7 @@ DR16::DR16()
 
 DR16::DR16(HardwareSerial* serial_port)
 {
+	timer_set(1);
 	serial = serial_port;
 	serial->clear();
 	serial->begin(100000, SERIAL_8E1_RXINV_TXINV);
@@ -105,7 +107,7 @@ void DR16::print_control_data(){
 		6: yaw
 	*/
 
-void DR16::generate_control_from_joysticks() {
+int DR16::generate_control_from_joysticks() {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
 
@@ -120,6 +122,8 @@ void DR16::generate_control_from_joysticks() {
 	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -660, 660);
 	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -660, 660);
 
+
+	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -200, 200) / 1000.0;
 	// Serial.println("\n\t===== Normalized Sticks");
 	// Serial.printf("\t%f\t%f\t%f\t%f\n", 
 	// 	r_stick_x, r_stick_y, l_stick_x, l_stick_y);
@@ -143,15 +147,22 @@ void DR16::generate_control_from_joysticks() {
 	// pan/tilt accumulation 
 	data[3] = r_stick_y * JOYSTICK_PITCH_SENSITIVITY;
 	data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
+	data[5] = wheel;
 
 	if ((tmp[5] & 0xC0) >> 6 == 1.0) {						// feeder speed
-		data[5] = -900.0;
+		data[6] = 0.0;
+		return USER_SHUTDOWN;
 	} 
 	else if ((tmp[5] & 0xC0) >> 6 == 2.0) {
-		data[5] = 900.0;
+		data[6] = 50.0;
+		if (l_stick_y == -660) {
+			return AUTONOMY_MODE;
+		}
+		return USER_DRIVE_MODE;
 	} 
 	else {
-		data[5] = 0.0;
+		data[6] = 0.0;
+		return ROBOT_DEMO_MODE;
 	}
 	// Serial.println(data[0]);
 }
@@ -196,7 +207,7 @@ void DR16::control_test() {
 	Serial.println();
 }
 
-bool DR16::read() {
+int DR16::read() {
     // if (serial->available() > numBytes) {     				// if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
     //     numBytes = serial->available();
     //     lastTime = micros();
@@ -210,13 +221,19 @@ bool DR16::read() {
     // }
 
 	if (serial->available() == 18) {
-		generate_control_from_joysticks();
-		return true;
+		timer_set(1);
+		return generate_control_from_joysticks();
 	}
 
 	if (serial->available() > 18) {
 		serial->clear();
 	}
 
-	return false;
+	if (timer_info_ms(1) > 50){
+		data[6] = 0;
+		return USER_SHUTDOWN;
+	}
+	else {
+		return NO_DR16_PACKET;
+	}
 }

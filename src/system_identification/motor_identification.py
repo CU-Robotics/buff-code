@@ -72,6 +72,21 @@ def discrete_impulses(magnitude=0.05, length=100):
 
 	return control
 
+def pos_discrete_impulses(magnitude=0.05, length=100):
+	ctr = 0
+	control = []
+	for i in range(length):
+		if i % (length / 10) == 0:
+			ctr = 0
+			mag = magnitude
+		else:
+			mag = 0.0
+
+		control.append(mag)
+		ctr += 1
+
+	return control
+
 def sinusiod(length=100, start=10, stop=60):
 	control = []
 	amplitudes = 0.2
@@ -295,11 +310,11 @@ if __name__ == '__main__':
 		target_motor = 0
 		# control = freq_sweep_sinusiod()
 		# control = discrete_impulse()
-		control = discrete_impulses(magnitude=0.4, length=100)
+		control = pos_discrete_impulses(magnitude=0.25, length=100)
 
 		time.sleep(2)
 		print(f"Starting system identification for motor {target_motor}")
-		hz = 10
+		hz = 50
 		duration = len(control) / hz
 		control = send_inputs(hz, control, target_motor)
 

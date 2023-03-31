@@ -233,7 +233,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 			break;
 
 		case 1:
-			feedback[controller_id][2] = sin(feedback[controller_id][0]);
+			feedback[controller_id][2] = sin((feedback[controller_id][0] / 12) - (PI / 2));
 			break;
 
 		default:

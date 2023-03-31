@@ -3,11 +3,16 @@
 #ifndef BUFF_DR16_H
 #define BUFF_DR16_H
 
-#define REMOTE_CONTROL_LEN 7
-#define JOYSTICK_X_SENSITIVITY 1.5
-#define JOYSTICK_Y_SENSITIVITY 1.5
-#define JOYSTICK_PAN_SENSITIVITY 0.3
-#define JOYSTICK_PITCH_SENSITIVITY 0.01
+#define USER_SHUTDOWN					0
+#define ROBOT_DEMO_MODE					1
+#define USER_DRIVE_MODE					2
+#define AUTONOMY_MODE					3
+#define NO_DR16_PACKET					4
+#define REMOTE_CONTROL_LEN 				7
+#define JOYSTICK_X_SENSITIVITY 			1.5
+#define JOYSTICK_Y_SENSITIVITY 			1.5
+#define JOYSTICK_PAN_SENSITIVITY 		0.3
+#define JOYSTICK_PITCH_SENSITIVITY 		0.15
 
 /*
 	 Driver software for the dr16 receiver.
@@ -41,13 +46,14 @@ struct DR16 {
 		DR16(HardwareSerial*);
 		void print_receiver_input(byte*);
 		void print_control_data();
-		void generate_control_from_joysticks();
+		int generate_control_from_joysticks();
 		void generate_output();
 		void control_test();
-		bool read();
+		int read(); 	// return the user mode input (different from the control mode)
 
 		float numBytes;
 		unsigned long lastTime;
+		uint32_t timestamp;
 
 		float data[7];
 		DR16_DATA out;

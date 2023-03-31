@@ -5,6 +5,7 @@
 // Uses builtin LED to show when HID is connected
 Device_Manager::Device_Manager(){
 	setup_blink();
+	controller_switch = -1;
 }
 
 /*
@@ -126,9 +127,15 @@ void Device_Manager::control_input_handle() {
 	output_report.put(4, input_report.get(4));
 
 	// Serial.printf("init %i\n", input_report.get(0));
+	if (controller_switch == -1) {
+		return;
+	}
 
 	switch (input_report.get(1)) {
 		case 0:
+			if (controller_switch == 1) {	// Only user can put the bot in auto aim
+				break;
+			}
 			for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
 				// set the control from the robot "robot control"
 				controller_manager.output[block_offset + i] = input_report.get_float((4 * i) + data_offset);
@@ -184,6 +191,9 @@ void Device_Manager::control_input_handle() {
 			break;
 
 		case 3:
+			if (controller_switch == 1) {	// Only user can put the bot in auto aim
+				break;
+			}
 			// set the input from ros control
 			controller_manager.input[0] = input_report.get_float(2);
 			controller_manager.input[1] = input_report.get_float(6);
@@ -276,8 +286,6 @@ void Device_Manager::report_switch() {
 			// configuration / initializers
 			initializer_report_handle();
 			lifetime = 0;
-			// Serial.println("Initializer received");
-
 			break;
 
 		case 1:
@@ -289,7 +297,6 @@ void Device_Manager::report_switch() {
 		case 2:
 			// controls reports
 			control_input_handle();
-			// Serial.println("Control input");
 			break;
 
 		case 3:
@@ -354,6 +361,10 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 	Author: Mitchell Scott
 */
 void Device_Manager::push_can(){
+	if (controller_switch == -1) {
+		rm_can_ux.zero_can();
+	}
+	
 	rm_can_ux.write_can();
 
 	for (int i = 0; i < NUM_CAN_BUSES; i++) {
@@ -373,8 +384,26 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
-	receiver.read();
 	ref.read_serial();
+	switch (receiver.read()) {
+		case USER_SHUTDOWN:
+			controller_switch = -1;
+
+			break;
+
+		case ROBOT_DEMO_MODE:
+		case USER_DRIVE_MODE:
+			controller_switch = 1;
+			break;
+
+		case AUTONOMY_MODE:
+			controller_switch = 2;
+			break;
+
+		default:
+			break;
+	}
+
 	controller_manager.encoders[1] = yawEncoder.getAngle();
 	// controller_manager.encoders[0] = pitchEncoder.getAngle();
 	controller_manager.power_buffer = ref.data.power_buffer;
@@ -453,10 +482,9 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.set_feedback(i, rm_can_ux.motor_arr[i].data, rm_can_ux.motor_arr[i].roll_over);
 	}
 
-	if (controller_switch != 0) {								// Use the HIDLayers CAN output values or the controllers
+	if (controller_switch > 0) {								// Use the HIDLayers CAN output values or the controllers
 		controller_manager.step_motors();
 	}
-
 
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {				// Send the controllers output to the can interface
 		// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);

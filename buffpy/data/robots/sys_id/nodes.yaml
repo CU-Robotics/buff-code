@@ -67,7 +67,7 @@ motor_index:
 # this behavior will be available system wide.
 # [can bus, esc type, esc id] see datasheets if you don't understand
 motor_can_index:
-  - [1, 1, 6]
+  - [2, 1, 1]
   # - [1, 1, 3]
   # - [1, 1, 2]
   # - [1, 1, 1]
@@ -132,7 +132,7 @@ motor_controller_types:
 # where K[i] is the ith row (1x3) and '*' is a vector inner product ((1x3)(3x1)).
 #         Kp,         Kd,   (Kpow/Kpend) # Motor the output is routed to
 motor_gains: 
-  - [0.0, 0.0, 0.0] # motor 0 
+  - [0.0, 0.0, 0.08] # motor 0 
 
 motor_filters:
   - [0.5]
