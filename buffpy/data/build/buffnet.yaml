@@ -1,0 +1,3 @@
+project: 'rknn_buffnet'
+build: './build.sh'
+install: ['install/buffnet/buffnet']

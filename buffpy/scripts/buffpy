@@ -223,8 +223,7 @@ def build_buffpy(build, v):
 
 			if 'build' in build:
 				build_cmd += f"&& {build['build']}"
-
-			result = subprocess.run(build_cmd, shell=True)
+				result = subprocess.run(build_cmd, shell=True)
 		
 			copy_packages(build, 'install', src_path, lib_path)
 			copy_packages(build, 'bin', src_path, bin_path)

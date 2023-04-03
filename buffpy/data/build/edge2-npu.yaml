@@ -1,2 +1,0 @@
-project: 'edge2-npu'
-install: ['Python/ssd', 'Python/inceptionv3']

@@ -1,4 +1,0 @@
-project: 'system_identification'
-install: ['motor_identification.py']
-
-
