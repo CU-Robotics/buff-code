@@ -15,7 +15,7 @@ uint32_t loopFrequency = 2000; // in microseconds
 uint32_t programTime; // stores the system time at the start of every loop
 
 float energyBuffer = 0;
-RollingAverageFilter IMUFilter(10);
+RollingAverageFilter IMUFilter(3);
 
 void setup() {
   delay(500); // Half-second startup delay
@@ -29,6 +29,10 @@ void setup() {
   //   delay(100);
   // }
   // Serial.print("Complete!\n");
+
+  float rawYaw = state.yawEncoder.getAngle() - state.yawOffset;
+  if (rawYaw < 0) rawYaw += 360;
+  state.rawYaw = rawYaw;
 
   programTime = micros();
 }
@@ -61,7 +65,7 @@ void demoLoop() {
     speed_br /= max_speed;
   }
 
-  float energyBufferCritThreshold = 30.0;
+  float energyBufferCritThreshold = 20.0;
   float energyBufferLimitThreshold = 60.0;
   energyBuffer = state.ref.data.power_buffer;
   float ratio = 1.0;
@@ -69,8 +73,6 @@ void demoLoop() {
     ratio = constrain((energyBuffer - energyBufferCritThreshold) / energyBufferLimitThreshold, 0.0, 1.0);
   }
 
-  float powerDraw = state.ref.data.chassis_current * state.ref.data.chassis_voltage / 1000000.0;
-  float powerLimit = state.ref.data.robot_power_lim;
   float raw_fr = state.generateMotorRPMOutput(1, speed_fr * DEMO_CHASSIS_MAX_RPM) * ratio;
   float raw_fl = state.generateMotorRPMOutput(2, speed_fl * DEMO_CHASSIS_MAX_RPM) * ratio;
   float raw_bl = state.generateMotorRPMOutput(3, speed_bl * DEMO_CHASSIS_MAX_RPM) * ratio;
@@ -81,14 +83,29 @@ void demoLoop() {
   state.rmCAN.set_output(3, raw_bl);
   state.rmCAN.set_output(7, raw_br);
 
-  // /* Gimbal */
+  /* Gimbal */
   if (state.receiver.out.l_stick_y != -1.0) {
     // Manual control
     float ratio = 17.0 / 246.0;
     IMUFilter.addMeasurement(state.imu.data[5]);
-    float rpm = IMUFilter.getMean() / 6.0 / ratio;
+    float rpm = state.imu.data[5] / 6.0 / ratio;
 
-    rpm += state.receiver.out.l_stick_x * DEMO_GIMBAL_YAW_MAX_RPM;
+    float rawYaw = state.yawEncoder.getAngle() - state.yawOffset;
+    if (rawYaw < 0) rawYaw += 360;
+    if (state.rawYaw - rawYaw > 180) state.yawRevs++;
+    else if (state.rawYaw - rawYaw < -180) state.yawRevs--;
+    state.rawYaw = rawYaw;
+    float yawAngle = rawYaw + 360 * state.yawRevs;
+
+    state.desiredYawAngle += DEMO_GIMBAL_YAW_MAX_RPM / 60.0 * state.receiver.out.l_stick_x * state.deltaTime / 100.0;
+
+    state.yawPosPID.K[0] = 0.1;
+    state.yawPosPID.measurement = yawAngle;
+    state.yawPosPID.setpoint = state.desiredYawAngle;
+    //rpm += -state.yawPosPID.filter(state.deltaTime) * DEMO_GIMBAL_YAW_MAX_RPM;
+
+    Serial.println("hey!");
+    Serial.println(rpm);
 
     state.setMotorRPM(5, rpm);
     state.setMotorRPM(6, rpm);
@@ -97,15 +114,15 @@ void demoLoop() {
     state.setMotorRPM(6, 0);
   }
 
-  // /* Shooter */
+  /* Shooter */
   if (state.receiver.out.r_switch == 1) {
-    state.setMotorRPM(11, 8500.0);
-    state.setMotorRPM(12, -8500.0);
-    state.setMotorRPM(13, -150.0 * 36);
-    state.setMotorRPM(14, 150.0 * 36);
+    state.setMotorRPM(11, 6500.0);
+    state.setMotorRPM(12, -6500.0);
+    state.setMotorRPM(13, 150.0 * 36);
+    state.setMotorRPM(14, -150.0 * 36);
   } else if (state.receiver.out.r_switch == 3) {
-    state.setMotorRPM(11, 8500.0);
-    state.setMotorRPM(12, -8500.0);
+    state.setMotorRPM(11, 6500.0);
+    state.setMotorRPM(12, -6500.0);
     state.setMotorRPM(13, 0);
     state.setMotorRPM(14, 0);
   } else {
@@ -144,14 +161,6 @@ void loop() {
     state.robotMode = OFF;
     state.motorMap.allOff();
   }
-
-  int index = 11;
-	int can_bus = state.rmCAN.motor_arr[index].can_bus;
-	int msg_type = state.rmCAN.motor_arr[index].message_type;
-	int msg_offset = state.rmCAN.motor_arr[index].message_offset;
-	Serial.print(state.rmCAN.output[can_bus][msg_type].buf[msg_offset], BIN);
-  Serial.print(" ");
-  Serial.println(state.rmCAN.output[can_bus][msg_type].buf[msg_offset + 1], BIN);
 
   /* Send CAN output */
   state.rmCAN.write_can();

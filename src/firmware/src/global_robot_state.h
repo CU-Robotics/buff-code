@@ -11,7 +11,7 @@
 #define DEMO_CHASSIS_MAX_RPM 8500
 #define MATCH_CHASSIS_MAX_RPM 8500
 #define DEMO_GIMBAL_YAW_MAX_RPM 2000
-#define DEMO_GIMBAL_PITCH_MAX_RPM 200
+#define DEMO_GIMBAL_PITCH_MAX_RPM 2000
 
 enum RobotMode {
   OFF,
@@ -38,14 +38,20 @@ struct MotorMap {
 struct GlobalRobotState {
   RM_CAN_Interface rmCAN;
 
+  PIDFilter yawPosPID;
+  float desiredYawAngle = 0;
+  float yawOffset = 76.72;
+  float rawYaw = 0;
+  int yawRevs = 0;
+
   DR16 receiver;
   LSM6DSOX imu;
   RefSystem ref;
-  RevEnc yawEncoder       = RevEnc(1);
-  RevEnc pitchEncoder     = RevEnc(2);
-  RevEnc xOdometryEncoder = RevEnc(3);
-  RevEnc yOdometryEncoder = RevEnc(4);
-
+  RevEnc xOdometryEncoder = RevEnc(2);
+  RevEnc yOdometryEncoder = RevEnc(3);
+  RevEnc yawEncoder       = RevEnc(4);
+  RevEnc pitchEncoder     = RevEnc(5);
+  
   MotorMap motorMap = MotorMap(&rmCAN);
   void setMotorRPM(int idx, float rpm) { motorMap.setMotorRPM(idx, rpm, deltaTime); }
   float generateMotorRPMOutput(int idx, float rpm) { return motorMap.generateMotorRPMOutput(idx, rpm, deltaTime); }
