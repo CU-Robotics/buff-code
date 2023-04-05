@@ -241,6 +241,18 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	}
 }
 
+/*
+
+		Estimation
+	The goal is to build four estimates of the robots state.
+	kee_state: kinematic encoder estimate, found using motor feedback speeds (filtered) and kinematics (scaled measurements)
+	imu_state: integration of IMU accel + gyro (chassis + gimbal)	(integrated measurements)
+	kee_imu_pos: integration of a fusion (k * a) + ((1-k) * b), k < 1. of the two velocity states (kee_state, imu_state) (integrated estimates)
+	enc_mag_pos: position of the robot based on an integration of encoders and the imu mag data (independant wrt the other estimate, doesnt use same measurements) (integrated & scaled measurements)
+
+	Using independant measurement values to build kee_state, imu_state and enc_mag_pos will help us reduce noise and improve estimates.
+	kee_imu_pos is the most unreliable as it is an integrated estimate (can amplify errors in the estimate).
+*/
 void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, float dt) {
 
 	float imu_accel_state[2];
