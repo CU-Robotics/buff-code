@@ -10,14 +10,16 @@ robot_type: demo
 
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
-buff_rust:
-  files: [comms_node]
+buff_nodes:
+  buff_rust:
+    files: [comms_node]
 
 # Examle of includig ros
 # Maybe some kind of option to shut this down via cmdline
-# rqt_plot:
-#   files: [rqt_plot]
-#   package: rqt_plot
+#ros_nodes:
+#   rqt_plot:
+#     files: [rqt_plot]
+#     package: rqt_plot
 
 
 # The Teensy... Ti-ta-ti-ti-ta-ti-ti-ta-ta-ta-la-ba-ba-ba-ba-ba-da-la-ba-ba-ba-ba-da-la-ba-ba-baa, Ti-ta-ti-li-ta-ti-li-ti-taa, Ti-ta-ti-li... /*o*)/ (gasps) Ti-ta-ti-li-ta-ti-li-ta-ti-li-ta-ti-li-ta-ti-li-ti-ta-ti-ti-ta-ti-ti-taaaaa♪ PEPARING THE KRABBY PATTY!

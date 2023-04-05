@@ -77,7 +77,8 @@ fi
 # the status of this issue needs to be double checked
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
-	export USER_IP= # Should find a way to get the users IP from the robot, ssh env variable?
+	export ROS_IP=$(/sbin/ip -o -4 addr list wlan0 | awk '{print $4}' | cut -d/ -f1)
+	export ROS_MASTER_URI=http://${ROS_IP}:11311
 else
 	# if not on jetson set the user IP
 	# should figure out how to set it if it is on the jetson
@@ -86,11 +87,14 @@ else
 	alias bc="cd ${PROJECT_ROOT}"
 	alias br="cd ${PROJECT_ROOT}/src/buff_rust"
 	alias fw="cd ${PROJECT_ROOT}/src/firmware"
-	alias buildr="buffpy --build rust"
-	alias buildf="buffpy --build firmware"
-	alias builda="buffpy --build all"
-	alias tnsy-upload="buffpy --upload"
-	alias setup-live-tests="roscore & sleep 2 && rosparam set /buffbot/robot_name penguin"
+	alias buildr="buffpy -b rust-debug"
+	alias buildf="buffpy -b fw"
+	alias builda="buffpy -b all"
 	alias buff-test="br && cargo test"
+	alias sshbot="ssh -X cu-robotics@edgek.local"
+	alias scp-src="scp -r ~/buff-code/src cu-robotics@edgek.local:/home/cu-robotics/buff-code"
+	set-ros-master () {
+		export ROS_MASTER_URI=http://$1:11311
+	}
 fi
 

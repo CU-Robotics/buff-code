@@ -16,7 +16,7 @@
                 Includes
 -------------------------------------------*/
 #include "ros/ros.h"
-#include "std_msgs/String.h"
+#include <cv_bridge/cv_bridge.h>
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/time.h>
 
 #include <fstream>
@@ -37,16 +38,38 @@ using namespace std::chrono;
 using namespace std;
 using namespace cv;
 
+
+const int MODEL_IN_WIDTH    = 224;
+const int MODEL_IN_HEIGHT   = 224;
+const int MODEL_IN_CHANNELS = 3;
+  
+cv::Mat image;
+cv::Mat image_rgb;
+cv::Mat current_frame;
+
+bool new_frame_available = false;
+
 /*-------------------------------------------
                   Functions
 -------------------------------------------*/
 
+
 void imageCallback(const sensor_msgs::CompressedImageConstPtr& msg)
 {
+  ROS_INFO("Frame aquired");
+
   try
   {
     cv::Mat image = cv::imdecode(cv::Mat(msg->data),1);//convert compressed image data to cv::Mat
-    
+    // cv::Mat image = cv_bridge::toCvShare(msg, "bgr8")->image;
+    cv::cvtColor(image, image_rgb, cv::COLOR_BGR2RGB); // convert to rgb
+
+    cv::Mat current_frame = image_rgb.clone();
+    if (image.cols != MODEL_IN_WIDTH || image.rows != MODEL_IN_HEIGHT) {
+      printf("resize %d %d to %d %d\n", image.cols, image.rows, MODEL_IN_WIDTH, MODEL_IN_HEIGHT);
+      cv::resize(image, current_frame, cv::Size(MODEL_IN_WIDTH, MODEL_IN_HEIGHT), (0, 0), (0, 0), cv::INTER_LINEAR);
+    }
+    new_frame_available = true;
   }
   catch (cv_bridge::Exception& e)
   {
@@ -119,9 +142,6 @@ static int rknn_GetTop(float* pfProb, float* pfMaxProb, uint32_t* pMaxClass, uin
 -------------------------------------------*/
 int main(int argc, char** argv)
 {
-  const int MODEL_IN_WIDTH    = 224;
-  const int MODEL_IN_HEIGHT   = 224;
-  const int MODEL_IN_CHANNELS = 3;
 
   rknn_context   ctx;
   int            ret;
@@ -135,11 +155,6 @@ int main(int argc, char** argv)
   const char* img_path   = "/home/cu-robotics/buff-code/data/dog_224x224.jpg";
   // strcat(model_path, "/buffpy/data/models/mobilenet_v1.rknn");
   // strcat(img_path, "/data/dog_244x244.jpg");
-
-  ros::init(argc, argv, "buffnet");
-  ros::NodeHandle n;
-
-  ros::Rate loop_rate(30);
 
   // Load RKNN Model
   model = load_model(model_path, &model_len);
@@ -183,15 +198,14 @@ int main(int argc, char** argv)
     }
     dump_tensor_attr(&(output_attrs[i]));
   }
-
-
     
+
   // Set Input Data
   rknn_input inputs[1];
   memset(inputs, 0, sizeof(inputs));
   inputs[0].index = 0;
   inputs[0].type  = RKNN_TENSOR_UINT8;
-  inputs[0].size  = img.cols * img.rows * img.channels() * sizeof(uint8_t);
+  inputs[0].size  = MODEL_IN_HEIGHT * MODEL_IN_WIDTH * MODEL_IN_CHANNELS * sizeof(uint8_t);
   inputs[0].fmt   = RKNN_TENSOR_NHWC;
 
 
@@ -200,11 +214,29 @@ int main(int argc, char** argv)
   memset(outputs, 0, sizeof(outputs));
   outputs[0].want_float = 0;
 
+  // ROS setup
+  ros::init(argc, argv, "buffnet");
+  ros::NodeHandle n;
+  ros::spinOnce();
+  ros::Rate loop_rate(40);
+  sleep(4);
+  ros::Subscriber sub = n.subscribe("/image_raw/compressed", 1, imageCallback);
+
   int frames = 1000;
-  auto start = high_resolution_clock::now();
   while (ros::ok()) {
+
     // Set image data
-    inputs[0].buf = img.data;
+    if (!new_frame_available) {
+      continue;
+    }
+    ROS_INFO("frame!\n");
+    // auto stop = high_resolution_clock::now();
+    // auto duration = duration_cast<microseconds>(stop - start);
+    // printf("Frames: %i\nElapsed time (microseconds): %f\n", frames, 1e-5 * duration.count());
+    // printf("Average FPS: %f\n", 1e5 * frames / duration.count());
+    // auto new_frame = high_resolution_clock::now();
+    new_frame_available = false;
+    inputs[0].buf = current_frame.data;
 
     ret = rknn_inputs_set(ctx, io_num.n_input, inputs);
     if (ret < 0) {
@@ -228,25 +260,22 @@ int main(int argc, char** argv)
 
 
     // Post Process
-    // for (int i = 0; i < io_num.n_output; i++) {
-    //   uint32_t MaxClass[5];
-    //   float    fMaxProb[5];
-    //   float*   buffer = (float*)outputs[i].buf;
-    //   uint32_t sz     = outputs[i].size / 4;
+    for (int i = 0; i < io_num.n_output; i++) {
+      uint32_t MaxClass[5];
+      float    fMaxProb[5];
+      float*   buffer = (float*)outputs[i].buf;
+      uint32_t sz     = outputs[i].size / 4;
 
-    //   rknn_GetTop(buffer, fMaxProb, MaxClass, sz, 5);
+      rknn_GetTop(buffer, fMaxProb, MaxClass, sz, 5);
 
-    //   printf(" --- Top5 ---\n");
-    //   for (int i = 0; i < 5; i++) {
-    //     printf("%3d: %8.6f\n", MaxClass[i], fMaxProb[i]);
-    //   }
-    // }
+      printf(" --- Top5 ---\n");
+      for (int i = 0; i < 5; i++) {
+        printf("%3d: %8.6f\n", MaxClass[i], fMaxProb[i]);
+      }
+    }
+    rknn_outputs_release(ctx, 1, outputs);
     loop_rate.sleep();
   }
-  auto stop = high_resolution_clock::now();
-  auto duration = duration_cast<microseconds>(stop - start);
-  printf("Elapsed time (microseconds): %f\n", 1e-5 * duration.count());
-  printf("Average FPS: %f\n", 1e5 * frames / duration.count());
 
   // Release rknn_outputs
   rknn_outputs_release(ctx, 1, outputs);

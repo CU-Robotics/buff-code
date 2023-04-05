@@ -500,10 +500,6 @@ def parse_arguments():
 	parser.add_argument('-i', '--initialize', 
 		action='store_true',
 		help='Initializes registered devices')
-	parser.add_argument('-u', '--upload', 
-		nargs='?',
-		const='main',
-		help='Uploads firmware with PIO')
 	parser.add_argument('--dig', 
 		action='store_true',
 		help='Builds the docker images')
@@ -545,10 +541,6 @@ def main(ap):
 	if ap.dig:
 		path = os.path.join(os.getenv('PROJECT_ROOT'), 'containers')
 		dig(path)
-
-	if ap.upload:
-		cmd = generate_pio_command(ap.upload, ap.verbose)
-		result = subprocess.run(cmd, shell=True)
 		
 
 	if ap.botPull:

@@ -10,6 +10,7 @@ from sensor_msgs.msg import CompressedImage
 
 def main():
 	rospy.init_node('image_stream', anonymous=True)
+	image_pub = rospy.Publisher("/image_raw/compressed", CompressedImage, queue_size=1)
 
 	project_root = os.getenv("PROJECT_ROOT")
 	data_file = os.path.join(project_root, 'data', 'sample_competition.avi')
@@ -19,10 +20,10 @@ def main():
 
 	cap = cv2.VideoCapture(data_file)
 
-	image_pub = rospy.Publisher("/image_raw/compressed", CompressedImage, queue_size=1)
 
 	rate = rospy.Rate(30)
 
+	print("Stream starting")
 	while not rospy.is_shutdown() and cap.isOpened():
 
 		ret, frame = cap.read()

@@ -23,6 +23,22 @@ set(RKNN_RT_LIB ${RKNN_API_PATH}/${LIB_ARCH}/librknnrt.so)
 include_directories(${RKNN_API_PATH}/include)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 
+# Catkin
+find_package(catkin REQUIRED)
+
+## System dependencies are found with CMake's conventions
+# find_package(Boost REQUIRED COMPONENTS system)
+find_package(catkin REQUIRED COMPONENTS 
+  roscpp
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+  cv_bridge
+  message_generation
+)
+
+include_directories(${catkin_INCLUDE_DIRS})
+
 # opencv
 find_package(OpenCV REQUIRED)
 
@@ -48,6 +64,7 @@ add_executable(${TARGET_NAME}
 
 target_link_libraries(${TARGET_NAME}
   ${RKNN_RT_LIB}
+  ${catkin_LIBRARIES}
   ${RGA_LIB}
   ${OpenCV_LIBS}
 )

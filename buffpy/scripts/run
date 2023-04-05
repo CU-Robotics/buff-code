@@ -27,15 +27,6 @@ def load_config(target_path):
 	with open(os.path.join(target_path, 'nodes.yaml'), 'r') as f:
 		data = yaml.safe_load(f)
 
-	# if 'FROM' in data:
-	# 	parent = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'system', data['FROM'])
-	# 	if not os.path.exists(parent):
-	# 		parent = os.path.join(os.getenv('PROJECT_ROOT'), 'buffpy', 'config', 'robots', data['FROM'])
-
-	# 	parentData = load_config(file=parent)
-
-	# 	data = overwrite_conf(data, parentData)
-
 	if not data is None:
 		data['self'] = target_path
 		os.environ['ROBOT_NAME'] = target_path
@@ -72,6 +63,121 @@ def parse_target(robot):
 
 	return target_path, target_args, config
 
+def launch_ros_core():
+	# launch core
+	ros_core = sb.Popen('roscore', stdout=sb.PIPE, stderr=sb.PIPE)
+
+	launch = roslaunch.scriptapi.ROSLaunch()
+	launch.start()
+	return launch, ros_core
+
+def set_ros_params(path, robot, with_xacro=False):
+	namespace = '/buffbot'
+	params = {'robot_name': robot}
+	if (with_xacro):
+		command_string = f"rosrun xacro xacro {os.path.join(path, f'buffpy/data/robots/{robot}/buffbot.xacro')}"
+		robot_description = sb.check_output(command_string, shell=True, stderr=sb.STDOUT)
+		params['robot_description'] = robot_description.decode()
+
+	rospy.set_param(f'{namespace}', params)
+
+def get_args(node_args):
+	# can use args tag to send args to nodes
+	args = []
+	for arg in node_args:
+
+		# find any env vars
+		split1 = arg.split('{')
+
+		n = len(split1) // 2
+
+		if n == 0:
+			args.append(arg)
+			continue
+
+		split = ''
+
+		for i in range(n):
+			split2 = split1[(2 * i) + 1].split('}')
+			split += split1[2 * i][:-1] + os.getenv(split2[0]) + split2[1]
+
+		args.append(split)
+
+	return args
+
+def ros_node_commands(robot, nodes, project_root):
+	respawn = []
+	commands = []
+
+	# load and launch each node in the config
+	for name in nodes:
+		args = []
+		required = False
+		node = nodes[name]
+
+		if 'package' in node:
+			package = node['package']
+		else:
+			print(f"{name} does not specify a package")
+			continue
+
+		if 'args' in node:
+			args = get_args(node['args'])
+
+		if 'required' in node:
+			required = node['required']
+
+		# launch the process and add it to the pool
+		if 'files' in node:
+			for program in node['files']:
+				cmd = ['rosrun', package, program] + args
+				respawn.append(required)
+				commands.append(cmd)
+
+	return commands, respawn
+
+def buff_node_commands(robot, nodes, project_root):
+	respawn = []
+	commands = []
+
+	# load and launch each node in the config
+	for name in nodes:
+		args = []
+		node = nodes[name]
+
+		if 'args' in node:
+			args = get_args(node['args'])
+
+		if 'required' in node:
+			required = node['required']
+		else:
+			required = False
+
+		# launch the process and add it to the pool
+		if 'files' in node:
+			for program in node['files']:
+				file_path = os.path.join(project_root, 'buffpy', 'lib', program)
+				if '.py' == program[-3:]:
+					cmd = ['python3', file_path]
+				else:
+					cmd = [file_path]
+	
+				respawn.append(required)
+				commands.append(cmd + args)
+
+	return commands, respawn
+
+def spawn_nodes(commands):
+	pool = []
+
+	for cmd in commands:
+		print(f"Starting {cmd}")
+		process = sb.Popen(cmd)
+
+		pool.append(process)
+
+	return pool
+
 def launch_system(robot, target_path, nodes):
 	"""
 		This wil launch all nodes and roscore. 
@@ -85,90 +191,33 @@ def launch_system(robot, target_path, nodes):
 			core_process: subprocess obj, the core process
 			pool: list of roslaunch processes
 	"""
-	
-	args = []
 	pool = []
-	params = {}
-	respawn = []
-	commands = []
-	cmd = 'roscore'
-	core_process = None
+	ros_core = None
+	ros_respawn = []
+	buff_respawn = []
+	ros_node_cmds = []
+	buff_node_cmds = []
 
 	project_root = os.getenv('PROJECT_ROOT')
-		
-	# Set nodes and package
-
-	print(f'System Definition:\n{yaml.dump(nodes, allow_unicode=True, default_flow_style=False)}\n')
+	print(f'System Definition:\n{yaml.dump(nodes, allow_unicode=True)}\n')
 
 	# Cant spawn pool without nodes
 	if nodes is None:
 		print(f'Missing NODES in config file {target_path}')
 
 	else:
-		namespace = '/buffbot'
-		params['robot_name'] = robot
+		if 'ros-nodes' in nodes:
+			ros_node_cmds, ros_respawn = ros_node_commands(robot, nodes['ros-nodes'], project_root)
 
-		command_string = f"rosrun xacro xacro {os.path.join(project_root, f'buffpy/data/robots/{robot}/buffbot.xacro')}"
-		robot_description = sb.check_output(command_string, shell=True, stderr=sb.STDOUT)
-		params['robot_description'] = robot_description.decode()
+		if 'buff-nodes' in nodes:	
+			buff_node_cmds, buff_respawn = buff_node_commands(robot, nodes['buff-nodes'], project_root)
 
-		# launch core
-		core_process = sb.Popen(cmd, stdout=sb.PIPE, stderr=sb.PIPE)
+		launch, ros_core = launch_ros_core()
+		set_ros_params(project_root, robot, with_xacro=('with_xacro' in nodes))
+		pool = spawn_nodes(buff_node_cmds + ros_node_cmds)
+		
 
-		launch = roslaunch.scriptapi.ROSLaunch()
-		launch.start()
-
-		rospy.set_param(f'{namespace}', params)
-
-		# load and launch each node in the config
-		for name in nodes:
-			node = nodes[name]
-			if isinstance(node, str) or isinstance(node, int):
-				continue
-
-			if 'package' in node:
-				package = node['package']
-			else:
-				package = 'buffpy'
-
-			if 'args' in node:
-				# can use args tag to send args to nodes
-				args = []
-				for arg in node['args']:
-
-					# find any env vars
-					split1 = arg.split('{')
-
-					n = len(split1) // 2
-
-					if n == 0:
-						args.append(arg)
-						continue
-
-					split = ''
-
-					for i in range(n):
-						split2 = split1[(i * 2) + 1].split('}')
-						split += split1[2 * i][:-1] + os.getenv(split2[0]) + split2[1]
-
-					args.append(split)
-
-			if 'required' in node:
-				required = node['required']
-			else:
-				required = False
-
-			# launch the process and add it to the pool
-			if 'files' in node:
-				for program in node['files']:
-					cmd = ['rosrun', package, program] + args
-					process = sb.Popen(cmd)
-					commands.append(cmd)
-					pool.append(process)
-					respawn.append(required)
-
-
-	return core_process, pool, respawn, commands
+	return ros_core, pool, buff_respawn + ros_respawn, buff_node_cmds + ros_node_cmds
 
 def spin(robot, config, target_path, target_args):
 	"""
@@ -211,10 +260,10 @@ def spin(robot, config, target_path, target_args):
 			# restart processes with the respawn flag
 			if not pool is None:
 				for i, proc in enumerate(pool):
-					if not proc.poll() is None and proc.returncode != 0 and respawn[i]:
-						print(f'{commands[i]} died: {proc.returncode}')
-						print(f'restarting {commands[i]}')
-						pool[i] = sb.Popen(commands[i])
+					if not proc is None and not proc.poll() is None:
+						if proc.returncode != 0 and respawn[i]:
+							print(f'{commands[i]} died: {proc.returncode}')
+							spawn_nodes(commands[i], root_shell)
 
 	except KeyboardInterrupt as e:
 		print(e)
@@ -226,7 +275,8 @@ def spin(robot, config, target_path, target_args):
 
 	if not pool is None:
 		for i,proc in enumerate(pool):
-			proc.terminate()
+			if not proc is None:
+				proc.terminate()
 
 	if not core_process is None:
 		core_process.terminate()

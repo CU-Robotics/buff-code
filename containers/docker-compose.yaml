@@ -47,3 +47,17 @@ services:
     image: curobotics/buffbox:x86_64-dev
 
 
+  khadas-dev:
+    build: 
+      context: ../
+      dockerfile: containers/dev/Dockerfile
+      args:
+        IMAGE_NAME: curobotics/buffbox:aarch64-base
+    network_mode: host
+    volumes: 
+      - ../:/home/cu-robotics/buff-code
+      - /tmp/.X11-unix
+    environment: 
+      - DISPLAY
+    image: curobotics/buffbox:aarch64-dev
+    command: buffpy -b arch-build
