@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4.1)
 project(${TARGET_NAME})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wl,--allow-shlib-undefined")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wl,--allow-shlib-undefined")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wl,--allow-shlib-undefined")
 
 # install target and libraries
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install/${TARGET_NAME})
@@ -34,10 +34,14 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   cv_bridge
+  image_transport
   message_generation
 )
 
 include_directories(${catkin_INCLUDE_DIRS})
+
+# Find librealsense2 installed package
+find_package(realsense2 REQUIRED)
 
 # opencv
 find_package(OpenCV REQUIRED)
@@ -60,6 +64,8 @@ include_directories( ${CMAKE_SOURCE_DIR}/include)
 
 add_executable(${TARGET_NAME}
         src/main.cc
+        src/buffnet.cpp
+        src/buff_realsense.cpp
 )
 
 target_link_libraries(${TARGET_NAME}
@@ -67,11 +73,11 @@ target_link_libraries(${TARGET_NAME}
   ${catkin_LIBRARIES}
   ${RGA_LIB}
   ${OpenCV_LIBS}
+  ${realsense2_LIBRARY}
 )
 
 # install target and libraries
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install/${TARGET_NAME})
 install(TARGETS ${TARGET_NAME} DESTINATION ./)
-
 install(PROGRAMS ${RKNN_RT_LIB} DESTINATION lib)
 install(PROGRAMS ${RGA_LIB} DESTINATION lib)

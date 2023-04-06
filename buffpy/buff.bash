@@ -75,6 +75,11 @@ fi
 # illegal instruction error with rospy.
 # Only for Jetson
 # the status of this issue needs to be double checked
+alias bc="cd ${PROJECT_ROOT}"
+alias br="cd ${PROJECT_ROOT}/src/buff_rust"
+alias fw="cd ${PROJECT_ROOT}/src/firmware"
+alias bn="cd ${PROJECT_ROOT}/src/rknn_buffnet"
+
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
 	export ROS_IP=$(/sbin/ip -o -4 addr list wlan0 | awk '{print $4}' | cut -d/ -f1)
@@ -84,15 +89,13 @@ else
 	# should figure out how to set it if it is on the jetson
 	# export USER_IP=$(/sbin/ip -o -4 addr list wlp3s0 | awk '{print $4}' | cut -d/ -f1) # Needs testing
 
-	alias bc="cd ${PROJECT_ROOT}"
-	alias br="cd ${PROJECT_ROOT}/src/buff_rust"
-	alias fw="cd ${PROJECT_ROOT}/src/firmware"
 	alias buildr="buffpy -b rust-debug"
 	alias buildf="buffpy -b fw"
 	alias builda="buffpy -b all"
 	alias buff-test="br && cargo test"
 	alias sshbot="ssh -X cu-robotics@edgek.local"
-	alias scp-src="scp -r ~/buff-code/src cu-robotics@edgek.local:/home/cu-robotics/buff-code"
+	alias scp-src="scp -r ~/buff-code/src/rknn_buffnet/src cu-robotics@edgek.local:/home/cu-robotics/buff-code/src/rknn_buffnet"
+	alias scp-h="scp -r ~/buff-code/src/rknn_buffnet/include cu-robotics@edgek.local:/home/cu-robotics/buff-code/src/rknn_buffnet"
 	set-ros-master () {
 		export ROS_MASTER_URI=http://$1:11311
 	}
