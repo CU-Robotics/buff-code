@@ -31,9 +31,9 @@ find_package(catkin REQUIRED)
 find_package(catkin REQUIRED COMPONENTS 
   roscpp
   std_msgs
+  cv_bridge
   sensor_msgs
   geometry_msgs
-  cv_bridge
   image_transport
   message_generation
 )

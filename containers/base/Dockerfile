@@ -1,6 +1,6 @@
 #
-# this dockerfile roughly follows the 'Ubuntu install of ROS Melodic' from:
-#   http://wiki.ros.org/melodic/Installation/Ubuntu
+# this dockerfile roughly follows the 'Ubuntu install of ROS noetic' from:
+#   http://wiki.ros.org/noetic/Installation/Ubuntu
 #
 
 ARG IMAGE_NAME
@@ -14,11 +14,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
 ENV PROJECT_ROOT=/home/cu-robotics/buff-code
 
+
 #
 # Create a new user
 #
 
 RUN useradd -ms /bin/bash cu-robotics
+
 
 #
 # Install Dependencies
@@ -26,6 +28,7 @@ RUN useradd -ms /bin/bash cu-robotics
 
 USER cu-robotics
 COPY buffpy/ /home/cu-robotics/buff-code/buffpy
+
 
 #
 # Install Buffpy
@@ -38,6 +41,7 @@ RUN apt update && \
 	python3 get-pip.py && rm -rf get-pip.py && \
 	pip install -r ${PROJECT_ROOT}/buffpy/data/install/python3_requirements.txt
 
+
 #
 # Install ROS Noetic
 #
@@ -45,7 +49,8 @@ RUN apt update && \
 RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list' && \
 	curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
 	apt update && \
-	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin ros-${ROS_DISTRO}-xacro ros-${ROS_DISTRO}-rqt-robot-plugins
+	apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-roslaunch ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin ros-${ROS_DISTRO}-xacro ros-${ROS_DISTRO}-rqt-robot-plugins
+
 
 #
 # Install Rosdep
@@ -53,12 +58,22 @@ RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main"
 
 RUN apt update && apt install -y python3-rosdep && cd /opt/ros/${ROS_DISTRO} && rosdep init && rosdep update
 
+
 #
 # Install Rust
 #
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
 
+#
+# Install RealSense SDK 2.0
+#
+RUN apt update && apt upgrade -y && apt dist-upgrade -y
+RUN cd /home/cu-robotics && \
+	git clone https://github.com/IntelRealSense/librealsense.git && \
+	cd librealsense && mkdir -p build && cd build && \
+	cmake ../ -DBUILD_PYTHON_BINDINGS:bool=true -DFORCE_RSUSB_BACKEND:bool=true -DBUILD_WITH_CUDA:bool=false -DBUILD_GRAPHICAL_EXAMPLES:bool=false -DCMAKE_BUILD_TYPE=release && \
+	make uninstall && make clean && make && make install
 
 # 
 # Clean apt
