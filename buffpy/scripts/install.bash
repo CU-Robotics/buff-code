@@ -21,7 +21,9 @@ if [[ -f /.dockerenv ]]; then
 fi
 
 if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
-	export ROS_DISTRO=humble
+    echo "WARNING: You are using Ubuntu 22.04. ros noetic is not supported, but we will attempt installation from source anyway... (^C to cancel)"
+    sleep 10
+	export ROS_DISTRO=noetic
 elif [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
 	export ROS_DISTRO=noetic				# ROS for Ubuntu18
 elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
@@ -63,7 +65,8 @@ $SUDO apt update
 
 if [[ ! -d /opt/ros/${ROS_DISTRO} ]]; then
 	if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
-		source ${PROJECT_ROOT}/buffpy/scripts/install_ros2.bash
+		# source ${PROJECT_ROOT}/buffpy/scripts/install_ros2.bash
+        source ${PROJECT_ROOT}/buffpy/scripts/install_ros_source.bash
 	else
 		source ${PROJECT_ROOT}/buffpy/scripts/install_ros.bash
 	fi
