@@ -1,6 +1,7 @@
 extern crate hidapi;
 
-use crate::utilities::{buffers::*, data_structures::*, loaders::*};
+use crate::teensy_comms::data_structures::*;
+use crate::utilities::{buffers::*, loaders::*};
 use hidapi::{HidApi, HidDevice};
 use rosrust_msg::std_msgs;
 use std::{
@@ -12,6 +13,10 @@ use std::{
     thread::spawn,
     time::Instant,
 };
+
+static TEENSY_CYCLE_TIME_S: f64 = 0.001;
+static TEENSY_CYCLE_TIME_MS: f64 = TEENSY_CYCLE_TIME_S * 1000.0;
+static TEENSY_CYCLE_TIME_US: f64 = TEENSY_CYCLE_TIME_MS * 1000.0;
 
 pub fn init_hid_device(hidapi: &mut HidApi, vid: u16, pid: u16) -> HidDevice {
     let dev = hidapi.open(vid, pid).unwrap();
@@ -83,10 +88,10 @@ impl HidWriter {
             self.output.puts(0, reports[report_request].clone());
             self.write();
             report_request = (report_request + 1) % reports.len();
-            if loopt.elapsed().as_micros() > 1000 {
+            if loopt.elapsed().as_micros() > TEENSY_CYCLE_TIME_US as u128 {
                 println!("HID writer over cycled {}", loopt.elapsed().as_micros());
             }
-            while loopt.elapsed().as_micros() < 1000 {}
+            while loopt.elapsed().as_micros() < TEENSY_CYCLE_TIME_US as u128 {}
         }
         *self.shutdown.write().unwrap() = true;
     }
@@ -102,7 +107,7 @@ impl HidWriter {
     pub fn pipeline(&mut self, shutdown: Arc<RwLock<bool>>, control_rx: Receiver<Vec<u8>>) {
         self.shutdown = shutdown;
 
-        // let mut status = BuffBotStatusReport::load_robot();
+        // let mut status = RobotStatus::load_robot();
 
         // self.send_report(255, status.load_initializers()[0].clone());
 
@@ -115,13 +120,15 @@ impl HidWriter {
     }
 }
 
-/// Responsible for initializing [BuffBotStatusReport] and continuously
+/// Responsible for initializing [RobotStatus] and continuously
 /// sending status reports
 pub struct HidReader {
     pub shutdown: Arc<RwLock<bool>>,
     pub input: ByteBuffer,
-    pub robot_status: BuffBotStatusReport,
+    pub robot_status: RobotStatus,
     pub teensy: HidDevice,
+    pub teensy_lifetime: f64,
+    pub rust_lifetime: f64,
 }
 
 impl HidReader {
@@ -131,8 +138,10 @@ impl HidReader {
         HidReader {
             shutdown: Arc::new(RwLock::new(false)),
             input: ByteBuffer::new(64),
-            robot_status: BuffBotStatusReport::from_self(),
+            robot_status: RobotStatus::from_self(),
             teensy: device,
+            teensy_lifetime: 0.0,
+            rust_lifetime: 0.0,
         }
     }
 
@@ -185,11 +194,17 @@ impl HidReader {
 
             match self.read() {
                 64 => {
-                    if self.input.get(0) == 0 && self.input.get_i32(60) == 0 {
+                    if self.input.get(0) == 0 && self.input.get_float(60) == 0.0 {
                         continue;
-                    } else if self.input.get_i32(60) > 1000 {
-                        println!("Teensy cycle time is over the limit");
+                    } else if self.input.get_float(60) > TEENSY_CYCLE_TIME_US {
+                        println!(
+                            "Teensy cycle time is over the limit {}",
+                            self.input.get_float(60)
+                        );
                     }
+
+                    self.teensy_lifetime = 0.0;
+                    self.rust_lifetime = 0.0;
 
                     if self.input.get(0) == packet_id {
                         println!("Teenys report {} reply received", packet_id);
@@ -200,7 +215,7 @@ impl HidReader {
             }
 
             // HID runs at 1 ms
-            while loopt.elapsed().as_micros() < 1000 {}
+            while loopt.elapsed().as_micros() < TEENSY_CYCLE_TIME_US as u128 {}
         }
 
         // If packet never arrives
@@ -219,7 +234,21 @@ impl HidReader {
     /// }
     /// ```
     pub fn parse_report(&mut self) {
-        let teensy_clock = self.input.get_u32(60);
+        // println!(
+        //     "Lifetime relations {} - {} = {}",
+        //     self.teensy_lifetime,
+        //     self.rust_lifetime,
+        //     self.teensy_lifetime - self.rust_lifetime
+        // );
+
+        if self.input.get_float(60) - self.teensy_lifetime > TEENSY_CYCLE_TIME_S + 1e-5 {
+            println!(
+                "Teensy cycle time is over the limit {}",
+                self.input.get_float(60) - self.teensy_lifetime
+            );
+        }
+
+        self.teensy_lifetime = self.input.get_float(60);
 
         // match the report number to determine the structure
         match self.input.get(0) {
@@ -228,47 +257,73 @@ impl HidReader {
                 self.robot_status.update_motor_encoder(
                     index_offset,
                     self.input.get_floats(2, 3),
-                    teensy_clock,
+                    self.teensy_lifetime,
                 );
                 self.robot_status.update_motor_encoder(
                     index_offset + 1,
                     self.input.get_floats(14, 3),
-                    teensy_clock,
+                    self.teensy_lifetime,
                 );
                 self.robot_status.update_motor_encoder(
                     index_offset + 2,
                     self.input.get_floats(26, 3),
-                    teensy_clock,
+                    self.teensy_lifetime,
                 );
                 self.robot_status.update_motor_encoder(
                     index_offset + 3,
                     self.input.get_floats(38, 3),
-                    teensy_clock,
+                    self.teensy_lifetime,
                 );
             }
-            2 => match self.input.get(1) {
-                1 => {
-                    let index1 = self.input.get(2) as usize;
-                    let index2 = self.input.get(3) as usize;
 
-                    self.robot_status.update_controller(
-                        index1,
-                        self.input.get_floats(4, 6),
-                        teensy_clock,
-                    );
-                    self.robot_status.update_controller(
-                        index2,
-                        self.input.get_floats(28, 6),
-                        teensy_clock,
-                    );
-                }
+            2 => match self.input.get(1) {
+                1 => match self.input.get(2) {
+                    0 => {
+                        let index1 = self.input.get(3) as usize;
+                        let index2 = self.input.get(4) as usize;
+
+                        self.robot_status.update_controller(
+                            index1,
+                            self.input.get_floats(5, 6),
+                            self.teensy_lifetime,
+                        );
+                        self.robot_status.update_controller(
+                            index2,
+                            self.input.get_floats(29, 6),
+                            self.teensy_lifetime,
+                        );
+                    }
+
+                    1 => {
+                        *self.robot_status.kee_vel_est.write().unwrap() =
+                            self.input.get_floats(3, 7).to_vec();
+                        *self.robot_status.imu_vel_est.write().unwrap() =
+                            self.input.get_floats(31, 7).to_vec();
+                    }
+
+                    2 => {
+                        *self.robot_status.kee_imu_pos.write().unwrap() =
+                            self.input.get_floats(3, 7).to_vec();
+                        *self.robot_status.enc_mag_pos.write().unwrap() =
+                            self.input.get_floats(31, 7).to_vec();
+                    }
+
+                    3 => {
+                        *self.robot_status.control_mode.write().unwrap() = self.input.get(3) as f64;
+                        *self.robot_status.control_input.write().unwrap() =
+                            self.input.get_floats(4, 7).to_vec();
+                        *self.robot_status.power_buffer.write().unwrap() = self.input.get_float(32);
+                    }
+                    _ => {}
+                },
                 _ => {}
             },
+
             3 => {
                 self.robot_status.update_sensor(
                     self.input.get(1) as usize,
                     self.input.get_floats(2, 9),
-                    teensy_clock,
+                    self.teensy_lifetime,
                 );
             }
             u8::MAX => {}
@@ -290,18 +345,32 @@ impl HidReader {
     /// reader.spin();       // runs until watchdog times out
     /// ```
     pub fn spin(&mut self) {
+        let mut readt = Instant::now();
+
         while !*self.shutdown.read().unwrap() {
             let loopt = Instant::now();
 
             match self.read() {
-                64 => self.parse_report(),
-                _ => {}
+                64 => {
+                    self.parse_report();
+                    readt = Instant::now();
+                }
+
+                _ => {
+                    if readt.elapsed().as_millis() > 10 && readt.elapsed().as_millis() % 10 == 0 {
+                        println!(
+                            "HID Reader: No reply from Teensy for {}",
+                            readt.elapsed().as_millis()
+                        );
+                    }
+                }
             }
 
-            if loopt.elapsed().as_micros() > 1000 {
+            self.rust_lifetime += TEENSY_CYCLE_TIME_S;
+            if loopt.elapsed().as_micros() > TEENSY_CYCLE_TIME_US as u128 {
                 println!("HID reader over cycled {}", loopt.elapsed().as_micros());
             }
-            while loopt.elapsed().as_micros() < 1000 {}
+            while loopt.elapsed().as_micros() < TEENSY_CYCLE_TIME_US as u128 {}
         }
     }
 
@@ -311,11 +380,7 @@ impl HidReader {
     /// # Example
     ///
     /// see [HidLayer::pipeline()]
-    pub fn pipeline(
-        &mut self,
-        shutdown: Arc<RwLock<bool>>,
-        feedback_tx: Sender<BuffBotStatusReport>,
-    ) {
+    pub fn pipeline(&mut self, shutdown: Arc<RwLock<bool>>, feedback_tx: Sender<RobotStatus>) {
         self.shutdown = shutdown;
 
         feedback_tx.send(self.robot_status.clone()).unwrap();
@@ -330,7 +395,7 @@ impl HidReader {
 
 pub struct HidROS {
     pub shutdown: Arc<RwLock<bool>>,
-    pub robot_status: BuffBotStatusReport,
+    pub robot_status: RobotStatus,
     pub control_flag: Arc<RwLock<i32>>,
     pub gimbal_control: Arc<RwLock<Vec<f64>>>,
     pub control_input: Arc<RwLock<Vec<f64>>>,
@@ -339,6 +404,10 @@ pub struct HidROS {
     pub motor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub controller_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub sensor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub estimate_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
+    pub control_publisher: rosrust::Publisher<std_msgs::Float64MultiArray>,
+    pub power_buffer_publisher: rosrust::Publisher<std_msgs::Float64>,
+
     pub motor_subscribers: Vec<rosrust::Subscriber>,
 }
 
@@ -352,7 +421,7 @@ impl HidROS {
     /// let hidros = HidROS::new();
     /// ```
     pub fn new() -> HidROS {
-        let robot_status = BuffBotStatusReport::from_self();
+        let robot_status = RobotStatus::from_self();
 
         env_logger::init();
         rosrust::init("buffpy_hid");
@@ -368,6 +437,16 @@ impl HidROS {
         let sensor_publishers = (0..robot_status.sensors.len())
             .map(|i| rosrust::publish(format!("sensor_{}_feedback", i).as_str(), 1).unwrap())
             .collect();
+
+        let estimate_publishers = vec![
+            rosrust::publish("kee_vel_est", 1).unwrap(),
+            rosrust::publish("imu_vel_est", 1).unwrap(),
+            rosrust::publish("kee_imu_pos", 1).unwrap(),
+            rosrust::publish("enc_mag_pos", 1).unwrap(),
+        ];
+
+        let control_publisher = rosrust::publish("control_input_echo", 1).unwrap();
+        let power_buffer_publisher = rosrust::publish("power_buffer", 1).unwrap();
 
         let n_motors = robot_status.motors.len();
         let motor_can_output = Arc::new(RwLock::new(vec![0.0; n_motors]));
@@ -432,11 +511,15 @@ impl HidROS {
             motor_publishers: motor_publishers,
             sensor_publishers: sensor_publishers,
             controller_publishers: controller_publishers,
+            control_publisher: control_publisher,
+            estimate_publishers: estimate_publishers,
+            power_buffer_publisher: power_buffer_publisher,
+
             motor_subscribers: motor_subscribers,
         }
     }
 
-    /// Create a new HidROS from an existing BuffBotStatusReport
+    /// Create a new HidROS from an existing RobotStatus
     ///
     /// # Usage
     ///
@@ -445,10 +528,7 @@ impl HidROS {
     ///
     /// let hidros = HidROS::from_robot_status(shutdown, robotstatus);
     /// ```
-    pub fn from_robot_status(
-        shutdown: Arc<RwLock<bool>>,
-        robot_status: BuffBotStatusReport,
-    ) -> HidROS {
+    pub fn from_robot_status(shutdown: Arc<RwLock<bool>>, robot_status: RobotStatus) -> HidROS {
         env_logger::init();
         rosrust::init("buffpy_hid");
 
@@ -466,14 +546,10 @@ impl HidROS {
             .enumerate()
             .for_each(|(i, motor_pub)| {
                 let mut msg = std_msgs::Float64MultiArray::default();
-                msg.data = self.robot_status.controllers[i]
-                    .read()
-                    .unwrap()
-                    .feedback
-                    .clone();
+                msg.data = self.robot_status.controllers[i].read().unwrap().feedback();
 
                 msg.data
-                    .push(self.robot_status.controllers[i].read().unwrap().timestamp as f64);
+                    .push(self.robot_status.controllers[i].read().unwrap().timestamp());
 
                 motor_pub.send(msg).unwrap();
             });
@@ -489,23 +565,51 @@ impl HidROS {
                 let controller = self.robot_status.controllers[i].read().unwrap();
 
                 {
+                    let reference = controller.reference();
+
                     let mut msg = std_msgs::Float64MultiArray::default();
                     msg.data = vec![
-                        controller.output.clone(),
-                        controller.reference[0].clone(),
-                        controller.reference[1].clone(),
-                        controller.timestamp as f64,
+                        controller.output(),
+                        reference[0],
+                        reference[1],
+                        controller.timestamp(),
                     ];
                     control_pub.send(msg).unwrap();
                 }
 
                 {
                     let mut msg = std_msgs::Float64MultiArray::default();
-                    msg.data = controller.feedback.clone();
-                    msg.data.push(controller.timestamp as f64);
+                    msg.data = controller.feedback();
+                    msg.data.push(controller.timestamp());
                     motor_pub.send(msg).unwrap();
                 }
             });
+    }
+
+    pub fn publish_controller_manager(&self) {
+        let mut msg = std_msgs::Float64::default();
+        msg.data = self.robot_status.power_buffer.read().unwrap().clone();
+        self.power_buffer_publisher.send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.control_input.read().unwrap().clone();
+        self.control_publisher.send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.kee_vel_est.read().unwrap().clone();
+        self.estimate_publishers[0].send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.imu_vel_est.read().unwrap().clone();
+        self.estimate_publishers[1].send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.kee_imu_pos.read().unwrap().clone();
+        self.estimate_publishers[2].send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.enc_mag_pos.read().unwrap().clone();
+        self.estimate_publishers[3].send(msg).unwrap();
     }
 
     /// Publish sensor data to ROS
@@ -515,9 +619,9 @@ impl HidROS {
             .enumerate()
             .for_each(|(i, sensor_pub)| {
                 let mut msg = std_msgs::Float64MultiArray::default();
-                msg.data = self.robot_status.sensors[i].read().unwrap().data.clone();
+                msg.data = self.robot_status.sensors[i].read().unwrap().data();
                 msg.data
-                    .push(self.robot_status.sensors[i].read().unwrap().timestamp as f64);
+                    .push(self.robot_status.sensors[i].read().unwrap().timestamp());
                 sensor_pub.send(msg).unwrap();
             });
     }
@@ -551,13 +655,11 @@ impl HidROS {
         &mut self,
         shutdown: Arc<RwLock<bool>>,
         control_tx: Sender<Vec<u8>>,
-        feedback_rx: Receiver<BuffBotStatusReport>,
+        feedback_rx: Receiver<RobotStatus>,
     ) {
         self.shutdown = shutdown;
 
-        self.robot_status = feedback_rx
-            .recv()
-            .unwrap_or(BuffBotStatusReport::from_self());
+        self.robot_status = feedback_rx.recv().unwrap_or(RobotStatus::from_self());
 
         let initializers = self.robot_status.load_initializers();
 
@@ -577,15 +679,23 @@ impl HidROS {
             let loopt = Instant::now();
 
             // don't publish every cycle
-            if publish_timer.elapsed().as_millis() > 5 {
+            if publish_timer.elapsed().as_millis() > (reports.len() / 2) as u128 {
                 publish_timer = Instant::now();
                 // self.publish_motors();
-                if pub_switch == 0 {
-                    self.publish_controllers();
-                    pub_switch = 1;
-                } else {
-                    self.publish_sensors();
-                    pub_switch = 0;
+                match pub_switch {
+                    0 => {
+                        self.publish_controllers();
+                        pub_switch += 1;
+                    }
+                    1 => {
+                        self.publish_controller_manager();
+                        pub_switch = 0;
+                    }
+                    2 => {
+                        self.publish_sensors();
+                        pub_switch = 0;
+                    }
+                    _ => {}
                 }
             }
 
@@ -638,7 +748,7 @@ impl HidROS {
             // if loopt.elapsed().as_micros() > 1000 {
             //     println!("HID ROS over cycled {}", loopt.elapsed().as_micros());
             // }
-            while loopt.elapsed().as_micros() < 1000 {}
+            while loopt.elapsed().as_micros() < TEENSY_CYCLE_TIME_US as u128 {}
         }
 
         // buffpy RUN relies on ros to shutdown
@@ -656,6 +766,43 @@ pub struct HidLayer;
 impl HidLayer {
     /// careful hard to shutdown...
 
+    pub fn rospipeline() {
+        let byu = BuffYamlUtil::from_self();
+
+        let vid = byu.load_u16("teensy_vid");
+        let pid = byu.load_u16("teensy_pid");
+
+        let shutdown = Arc::new(RwLock::new(false));
+        let shdn1 = shutdown.clone();
+        let shdn2 = shutdown.clone();
+
+        let mut hidapi = HidApi::new().expect("Failed to create API instance");
+        let mut hidreader = HidReader::new(&mut hidapi, vid, pid);
+        let mut hidwriter = HidWriter::new(&mut hidapi, vid, pid);
+        let mut hidros = HidROS::new();
+
+        // create the rust channels
+        let (feedback_tx, feedback_rx): (Sender<RobotStatus>, Receiver<RobotStatus>) =
+            mpsc::channel();
+        let (control_tx, control_rx): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = mpsc::channel();
+
+        let hidwriter_handle = spawn(move || {
+            hidwriter.pipeline(shutdown, control_rx);
+        });
+
+        let hidros_handle = spawn(move || {
+            hidros.pipeline(shdn2, control_tx, feedback_rx);
+        });
+
+        let hidreader_handle = spawn(move || {
+            hidreader.pipeline(shdn1, feedback_tx);
+        });
+
+        hidreader_handle.join().expect("HID Reader failed");
+        hidros_handle.join().expect("HID ROS failed");
+        hidwriter_handle.join().expect("HID Writer failed");
+    }
+
     pub fn pipeline() {
         let byu = BuffYamlUtil::from_self();
 
@@ -672,10 +819,8 @@ impl HidLayer {
         let mut hidros = HidROS::new();
 
         // create the rust channels
-        let (feedback_tx, feedback_rx): (
-            Sender<BuffBotStatusReport>,
-            Receiver<BuffBotStatusReport>,
-        ) = mpsc::channel();
+        let (feedback_tx, feedback_rx): (Sender<RobotStatus>, Receiver<RobotStatus>) =
+            mpsc::channel();
         let (control_tx, control_rx): (Sender<Vec<u8>>, Receiver<Vec<u8>>) = mpsc::channel();
 
         let hidwriter_handle = spawn(move || {

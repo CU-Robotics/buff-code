@@ -13,7 +13,6 @@ buffpy/lib/*
 documentation
 buffpy/bin/tycmd
 buffpy/data/models/*
+src/firmware/build/*
 src/buff_rust/target/*
-buffpy/bin/firmware.hex
-buffpy/config/sensitive/*
 src/efficientdet-d0-trainer/*

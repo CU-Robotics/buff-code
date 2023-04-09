@@ -55,6 +55,23 @@ def discrete_impulse(magnitude=0.1, length=100, start=10, stop=25):
 
 	return control
 
+def discrete_impulses(magnitude=0.05, length=100):
+	ctr = 0
+	sign = 1
+	control = []
+	for i in range(length):
+		if ctr > length / 10 :
+			ctr = 0
+			mag = magnitude * sign
+			sign *= -1
+		else:
+			mag = 0.0
+
+		control.append(mag)
+		ctr += 1
+
+	return control
+
 def sinusiod(length=100, start=10, stop=60):
 	control = []
 	amplitudes = 0.2
@@ -102,7 +119,7 @@ def send_inputs(hz, control, target_motor):
 		collect_samples = True
 
 		msg.data = np.zeros(n_motors)
-		msg.data[target_motor] = abs(u)
+		msg.data[target_motor] = u
 		pub.publish(msg)
 		rate.sleep()
 
@@ -141,8 +158,8 @@ def send_inputs(hz, control, target_motor):
 		exit(0)
 
 	print(f"Duration: {len(control) / hz} secs")
-	# print(f"Teensy Motor Duration: {(motor_time[-1] - motor_time[0]) / 600000000}")
-	# print(f"Teensy Control Duration: {(controller_time[-1] - controller_time[0]) / 600000000}")
+	print(f"Teensy Motor Duration: {(motor_time[-1] - motor_time[0])}")
+	print(f"Teensy Control Duration: {(controller_time[-1] - controller_time[0])}")
 	print(f"Feedback packets: {motor_positions.shape} {motor_speeds.shape} {motor_dampers.shape}")
 	print(f"Control packets: {controller_outputs.shape} {controller_positions.shape} {controller_speeds.shape}")
 	return control
@@ -153,18 +170,18 @@ def least_squares_solver(motor, control):
 		print("No samples exiting")
 		exit(0)
 
-	A = np.vstack([motor_positions[:-1], motor_speeds[:-1], motor_dampers[:-1], controller_outputs[:-1]]).T
-	B = np.vstack([motor_positions[1:], motor_speeds[1:], motor_dampers[1:]]).T
+	A = np.vstack([motor_positions[:-1], motor_speeds[:-1], motor_dampers[:-1], controller_outputs[:-1]])
+	B = np.vstack([motor_positions[1:], motor_speeds[1:], motor_dampers[1:]])
 
-	print(f"Solving {A.shape} @ {(A.shape[1], B.shape[1])} = {B.shape}")
-	X = la.inv(A.T @ A) @ A.T @ B
+	print(f"Solving {(B.shape[0], A.shape[0])} @ {A.shape} = {B.shape}")
+	X = B @ la.pinv(A)
 
 	print(f"Found {X.shape}")
 
-	sys_A = X.T[:,:-1].T
-	sys_B = np.array([X.T[:,-1]]).T
+	sys_A = X[:,:-1]
+	sys_B = np.array([X[:,-1]]).T
 
-	print(f"Modeled system:\n{sys_A}\n{sys_B}")
+	print(f"Modeled system: ({sys_A.shape} {sys_B.shape})\n{sys_A}\n{sys_B}")
 	return sys_A, sys_B
 
 
@@ -197,7 +214,10 @@ def validate_system(A, B):
 
 
 def lqr(Q, R, A, B):
-	return -np.linalg.pinv(R + B.T @ Q @ B) @ B.T @ Q @ A
+	P = la.solve_discrete_are(A, B, Q, R)
+
+	return la.solve(R + B.T.dot(P).dot(B), B.T.dot(P).dot(A)).reshape(3)
+	#np.linalg.pinv(R + B.T @ Q @ B) @ B.T @ Q @ A
 
 def find_edge(arr, threashold):
 	prev = arr[0]
@@ -218,12 +238,12 @@ def find_control_delay(duration, control):
 		(ctrl_edge / ctrl_len) + delay = (pos_edge / pos_len)
 		delay = (pos_edge / pos_len) - (ctrl_edge / ctrl_len)
 	"""
-	teensy_shift = 
+	# teensy_shift = 
 	control_shift = (out_edge / len(controller_outputs)) - (ctrl_edge / len(control))
 	p_control_shift = (pos_edge / len(motor_positions)) - (out_edge / len(controller_outputs))
 	v_control_shift = (rpm_edge / len(motor_speeds)) - (out_edge / len(controller_outputs))
 
-	fusion = ((0.55 * control_shift) + (0.225 * p_control_shift) + (0.225 * v_control_shift)) * duration
+	fusion = control_shift * duration
 
 	print(f"Control to Output latency: {control_shift * duration}")
 	print(f"Position Motor latency: {p_control_shift * duration}")
@@ -272,27 +292,29 @@ if __name__ == '__main__':
 	try:
 		rospy.init_node('motor_identifier', anonymous=True)
 
-		target_motor = 6
+		target_motor = 0
 		# control = freq_sweep_sinusiod()
-		control = discrete_impulse()
+		# control = discrete_impulse()
+		control = discrete_impulses(magnitude=0.1, length=100)
 
 		time.sleep(2)
 		print(f"Starting system identification for motor {target_motor}")
-		hz = 100
+		hz = 10
 		duration = len(control) / hz
 		control = send_inputs(hz, control, target_motor)
 
 		sys_A, sys_B = least_squares_solver(target_motor, control)
 
 		p, v = validate_system(sys_A, sys_B)
-		# Q = np.array([[1.0,  0.0,  0.0], 
-		# 			 [0.0, 0.001,  0.0],
-		# 			 [0.0,  0.0, 0.001]])
-		# R = np.array([0.005])
+		Q = np.array([[0.0,  0.0,  0.0], 
+					 [0.0, 1.0,  0.0],
+					 [0.0,  0.0, 0.0]])
 
-		# k = lqr(Q, R, sys_A, sys_B)
+		R = np.array([0.00001])
 
-		# print(f"LQR solver feedback gains: {k}")
+		K = lqr(Q, R, sys_A, sys_B)
+
+		print(f"LQR solver feedback gains: [{K[0]:.6f}, {K[1]:.6f}, {K[2]:.6f}]")
 
 		display_data(target_motor, duration, control, p, v)
 

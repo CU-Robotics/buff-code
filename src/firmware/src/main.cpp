@@ -1,5 +1,6 @@
 #include "buff_cpp/blink.h"
 #include "buff_cpp/timing.h"
+#include "buff_cpp/loggers.h"
 #include "buff_cpp/device_manager.h"
 
 uint32_t cycle_time_us = 1000;
@@ -18,20 +19,26 @@ void setup() {
 
 	if (Serial) {
 		Serial.println("-- TEENSY SERIAL START --");
+		Serial.println("-- new build... who dis? --");
 	}
 }
 
 // Master loop
-// Lets ditch the arduino framework
-// it feels immature, or maybe thats dumb
-void loop() {										// Basically a schudeling algorithm
-	timer_set(0);
+int main() {											// Basically a schudeling algorithm
+	setup();
 
-	// handle any hid input output
-	device_manager.read_sensors();					// read a single sensor each call (increments the sensor id automatically)
-	device_manager.step_controllers(cycle_time_s);		// given the current inputs and feedback compute a control
-	device_manager.hid_input_switch();				// check for an input packet (data request/control input) handle accordingly
-	device_manager.push_can();						// push data on and off the can bus
+	while(1) {
+		timer_set(0);
 
-	timer_wait_us(0, cycle_time_us);				// normalize master loop cycle time to cycle_time_us
+		// handle any hid input output
+		device_manager.read_sensors();					// read a single sensor each call (increments the sensor id automatically)
+		device_manager.step_controllers(cycle_time_s);	// given the current inputs and feedback compute a control
+		device_manager.hid_input_switch(cycle_time_us);				// check for an input packet (data request/control input) handle accordingly
+		device_manager.push_can();						// push data on and off the can bus
+
+		timer_wait_us(0, cycle_time_us);				// normalize master loop cycle time to cycle_time_u
+		// blink();										// helpful if you think the loop is crashing (light will pause)
+	}
+	
+	return 0;
 }

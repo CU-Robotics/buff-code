@@ -79,6 +79,26 @@ void LSM6DSOX::read_lis3mdl(){
 	// Serial.print("LIS3MDL mag read time: "); Serial.println(micros() - read_start);
 }
 
+//doing xyz things
+void LSM6DSOX::update_eulers() {
+	//normalizing mag stuff
+	float mag_norm = sqrt((data[6]*data[6]) + (data[7]*data[7]) + (data[8]*data[8]));
+	data[6] = data[6]/mag_norm;
+	data[7] = data[7]/mag_norm;
+	data[8] = data[8]/mag_norm;
+
+	//getting the angles
+	//pitch in degrees
+	phi = atan2(data[0], sqrt(data[1]*data[1] + data[2]*data[2]));
+	theta = atan2(data[1], data[2]);
+	pitch = phi;
+
+	//roll in degrees
+	
+	roll = theta;
+	psi = atan2((data[8])*(sin(phi)) - (data[7])*(cos(phi)), data[6]*cos(theta) + data[7]*sin(theta)*sin(phi)+data[8]*sin(theta)*cos(phi));
+	yaw = psi;
+}
 
 // typedef union
 // {

@@ -240,7 +240,7 @@ def main(args):
 		project_root = os.getenv("PROJECT_ROOT")
 		with open(os.path.join(project_root, 'buffpy', 'data', 'robots', 'self.txt'), 'r') as f:
 			robot = f.read()
-	else:
+	else: # become the thing you want to run, sometimes I hate this
 		robot = args[1]
 		project_root = os.getenv("PROJECT_ROOT")
 		with open(os.path.join(project_root, 'buffpy', 'data', 'robots', 'self.txt'), 'w') as f:
