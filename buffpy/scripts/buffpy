@@ -36,6 +36,7 @@ import os
 import sys
 import yaml
 import glob
+import stat
 import shutil
 import argparse
 import subprocess
@@ -197,7 +198,7 @@ def copy_packages(dictionary, item, src_path, target_path):
 			# 	src = os.path.join(src_path, file)
 			# 	copy_file_from_profile(src, target_path)
 
-def build_buffpy(build, v):
+def build_buffpy(build):
 	"""
 		Builds the current workspace locally.
 		PARAMS:
@@ -230,9 +231,7 @@ def build_buffpy(build, v):
 			copy_packages(build, 'docs', src_path, doc_dir)
 
 	for file in glob.glob(os.path.join(lib_path, '*')):
-		result = subprocess.run(f'chmod +x {file}', shell=True)
-
-
+		os.chmod(file, os.stat(file).st_mode | stat.S_IEXEC)
 
 def get_devices():
 	"""
@@ -428,24 +427,30 @@ def diagnostic():
 		print(e)
 
 def train_model(model):
+
+	project_root = os.getenv('PROJECT_ROOT')
+	setup_script = os.path.join(project_root, 'buffpy', 'scripts', 'yolov5_setup.bash')
+	subprocess.run([setup_script])
 	
 	if model == 'new' or model == 'scratch':
 		project_root = os.getenv('PROJECT_ROOT')
-		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
-		shutil.rmtree(output_dir)
+		output_dir = os.path.join(project_root, 'buffpy', 'data', 'models', 'runs')
+		if os.path.exists(output_dir):
+			shutil.rmtree(output_dir)
 		os.mkdir(output_dir)
 
-		model = 'fake-model-file.gotcha'
+		model = 'buffnet'
 
 	if model == 'clean':
 		project_root = os.getenv('PROJECT_ROOT')
-		output_dir = os.path.join(project_root, 'buffpy', 'models', 'runs')
-		shutil.rmtree(output_dir)
+		output_dir = os.path.join(project_root, 'buffpy', 'data', 'models', 'runs')
+		if os.path.exists(output_dir):
+			shutil.rmtree(output_dir)
 		os.mkdir(output_dir)
 		return
 
-	build_buffpy('python3')
-	subprocess.run(['python3', 'buffpy/lib/trainer.py', model])
+	build_buffpy('ptools')
+	subprocess.run(['python3', os.path.join(project_root, 'buffpy', 'lib', 'model_trainer.py'), model])
 
 def docker_build_and_push(path, image):
 	subprocess.run(f'cd {path} && \
@@ -530,7 +535,7 @@ def main(ap):
 		initialize_devices()
 
 	if ap.build:
-		build_buffpy(ap.build, ap.verbose)
+		build_buffpy(ap.build)
 
 	if ap.train:
 		train_model(ap.train)

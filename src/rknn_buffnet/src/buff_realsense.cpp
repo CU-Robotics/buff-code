@@ -14,7 +14,7 @@ static cv::Mat frame_to_mat(const rs2::frame& f)
     }
     else if (f.get_profile().format() == RS2_FORMAT_RGB8)
     {
-        auto r_rgb = cv::Mat(cv::Size(w, h), CV_8UC3, (void*)f.get_data(), cv::Mat::AUTO_STEP);
+        cv::Mat r_rgb = cv::Mat(cv::Size(w, h), CV_8UC3, (void*)f.get_data(), cv::Mat::AUTO_STEP);
         cv::Mat r_bgr;
         cv::cvtColor(r_rgb, r_bgr, cv::COLOR_RGB2BGR);
         return r_bgr;
@@ -84,9 +84,13 @@ rs2::frame Buff_RealSense::get_color() {
 cv::Mat Buff_RealSense::get_depth_cv() {
 	return depth_frame_to_meters(depth_image);
 }
+
 cv::Mat Buff_RealSense::get_color_cv() {
 	return frame_to_mat(color_image);
 }
 
-
-
+cv::Mat Buff_RealSense::get_color_cv_resized(int w, int h) {
+    cv::Mat resized;
+    cv::resize(frame_to_mat(color_image), resized, cv::Size(w, h), 0, 0, CV_INTER_LINEAR);
+    return resized;
+}

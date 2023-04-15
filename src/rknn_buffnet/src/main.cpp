@@ -43,8 +43,12 @@ int main(int argc, char** argv)
 
 	while (ros::ok()) {
 		buffnet.spin_realsense();
-	    sensor_msgs::ImagePtr depth_msg = cv_bridge::CvImage(std_msgs::Header(), "16UC1", buffnet.rs.get_depth_cv()).toImageMsg();
-	    sensor_msgs::ImagePtr color_msg = cv_bridge::CvImage(std_msgs::Header(), "BGR8", buffnet.rs.get_color_cv()).toImageMsg();
+		if (!buffnet.spin_model()) {
+			ROS_ERROR("Model failed to process image");
+		}
+
+	    sensor_msgs::ImagePtr depth_msg = cv_bridge::CvImage(std_msgs::Header(), "16UC1", buffnet.get_depth()).toImageMsg();
+	    sensor_msgs::ImagePtr color_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", buffnet.get_color()).toImageMsg();
 	    depth_pub.publish(depth_msg);
 	    color_pub.publish(color_msg);
 		loop_rate.sleep();

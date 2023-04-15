@@ -63,7 +63,7 @@ set(CMAKE_INSTALL_RPATH "lib")
 include_directories( ${CMAKE_SOURCE_DIR}/include)
 
 add_executable(${TARGET_NAME}
-        src/main.cc
+        src/main.cpp
         src/buffnet.cpp
         src/buff_realsense.cpp
 )

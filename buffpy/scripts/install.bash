@@ -22,8 +22,10 @@ fi
 
 if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
 	export ROS_DISTRO=humble
+
 elif [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
 	export ROS_DISTRO=noetic				# ROS for Ubuntu18
+
 elif [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
 	export ROS_DISTRO=melodic
 fi
@@ -64,6 +66,7 @@ $SUDO apt update
 if [[ ! -d /opt/ros/${ROS_DISTRO} ]]; then
 	if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
 		source ${PROJECT_ROOT}/buffpy/scripts/install_ros2.bash
+	
 	else
 		source ${PROJECT_ROOT}/buffpy/scripts/install_ros.bash
 	fi
@@ -84,10 +87,25 @@ source ${PROJECT_ROOT}/buffpy/scripts/install_tytools.bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- -y
 
 if [[ "${HOSTNAME}" == "edge"* ]]; then
+	#	install startup script
 	$SUDO cp ${PROJECT_ROOT}/buffpy/scripts/buffbot.service /etc/systemd/system
+
+	# 	install realsense
+	source ${PROJECT_ROOT}/buffpy/scripts/install_realsense_source.bash
+
 elif [[ "${DOCKER}" == "False" ]]; then
+	#	install docker
 	source ${PROJECT_ROOT}/buffpy/scripts/install_docker.bash
+
+	#	install gazebo
 	curl -sSL http://get.gazebosim.org | sh
+
+	#	install realsense
+	sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
+	sudo add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" -u
+	sudo apt install librealsense2-dkms
+	sudo apt install librealsense2-utils
+	sudo apt install librealsense2-dev
 fi
 
 

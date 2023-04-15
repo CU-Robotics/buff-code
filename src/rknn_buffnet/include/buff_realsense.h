@@ -58,6 +58,7 @@ public:
     // Convert RealSense frame to OpenCV matrix:
     cv::Mat get_depth_cv();
     cv::Mat get_color_cv();
+    cv::Mat get_color_cv_resized(int, int);
 };
 
 #endif
