@@ -12,6 +12,7 @@ import yaml
 import glob
 import shutil
 import argparse
+from PIL import Image
 import subprocess as sb
 
 def get_current_exp(output_dir):
@@ -65,6 +66,27 @@ def unzip_dataset(data_dir, datazip):
 
 	return data_path
 
+def zip_dataset(data_dir):
+	dataset = data_dir.split('/')[-1]
+	print(f'ziping {data_di}')
+	data_path = os.path.join(data_dir, dataset)
+	write_data_yaml(data_path)
+	os.remove(os.path.join(dataset, 'README.dataset.txt'))
+	os.remove(os.path.join(dataset, 'README.roboflow.txt'))
+
+	shutil.make_archive(data_dir + '.zip', 'zip', data_dir)
+
+def resize_dataset(datadir, w, h):
+	rezip = False
+	for filename in glob.iglob(datadir + '**/**/*.jpg', recursive=True):
+		im = Image.open(filename)
+		if not im.size == (h,w):
+			imResize = im.resize((h,w), Image.ANTIALIAS)
+			imResize.save(filename , 'JPEG', quality=90)
+			rezip = True
+
+	rzip_dataset(datadir)
+
 def train_model(model):
 
 	project_root = os.getenv('PROJECT_ROOT')
@@ -80,7 +102,7 @@ def train_model(model):
 	exp = get_current_exp(output_dir)
 	model_path = os.path.join(model_dir, model)
 
-	default_args = ['--img', '320','--batch', '64', '--epochs', '50', '--cache', '--project', output_dir]
+	default_args = ['--img', '640','--batch', '64', '--epochs', '50', '--cache', '--project', output_dir]
 
 	if not os.path.exists(data_dir):
 		print('No training Data')
@@ -102,6 +124,8 @@ def train_model(model):
 				print(f'Dataset {data_file} data.yaml does not exist')
 				continue
 
+			resize_dataset(data_dir, 640, 640)
+
 			if not os.path.exists(model_path):
 				args += ['--weights', '""']
 				args += ['--cfg', 'yolov5s.yaml']
@@ -118,9 +142,9 @@ def train_model(model):
 			shutil.copy(os.path.join(output_dir, 'exp' + exp, 'weights', 'best.pt'), os.path.join(model_dir, 'buffnet.pt'))
 			shutil.rmtree(data_path)
 
-			cmd = ['python', 'export.py', '--weights', os.path.join(model_dir, 'buffnet.pt'), '--include', 'torchscript', 'onnx']
+			cmd = ['python3', 'export.py', '--weights', os.path.join(model_dir, 'buffnet.pt'), '--include', 'torchscript', 'onnx']
 			sb.run(cmd)
-			
+
 			exp = get_current_exp(output_dir)
 
 			model_path = os.path.join(model_dir, 'buffnet.pt')
