@@ -1,0 +1,2 @@
+## Build firmware
+        make
