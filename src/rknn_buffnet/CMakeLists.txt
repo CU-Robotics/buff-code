@@ -21,7 +21,6 @@ else()
 endif()
 set(RKNN_RT_LIB ${RKNN_API_PATH}/${LIB_ARCH}/librknnrt.so)
 include_directories(${RKNN_API_PATH}/include)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 
 # Catkin
 find_package(catkin REQUIRED)
@@ -46,32 +45,19 @@ find_package(realsense2 REQUIRED)
 # opencv
 find_package(OpenCV REQUIRED)
 
-#rga
-set(RGA_PATH ${CMAKE_SOURCE_DIR}/3rdparty/rga/)
-
-if (CMAKE_C_COMPILER MATCHES "aarch64")
-  set(LIB_ARCH aarch64)
-else()
-  set(LIB_ARCH armhf)
-endif()
-set(RGA_LIB ${RGA_PATH}/lib/Linux/${LIB_ARCH}/librga.so)
-include_directories( ${RGA_PATH}/include)
-
-set(CMAKE_INSTALL_RPATH "lib")
-
 # demo
-include_directories( ${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_executable(${TARGET_NAME}
         src/main.cpp
         src/buffnet.cpp
+        src/postprocess.cc
         src/buff_realsense.cpp
 )
 
 target_link_libraries(${TARGET_NAME}
   ${RKNN_RT_LIB}
   ${catkin_LIBRARIES}
-  ${RGA_LIB}
   ${OpenCV_LIBS}
   ${realsense2_LIBRARY}
 )
@@ -80,4 +66,3 @@ target_link_libraries(${TARGET_NAME}
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install/${TARGET_NAME})
 install(TARGETS ${TARGET_NAME} DESTINATION ./)
 install(PROGRAMS ${RKNN_RT_LIB} DESTINATION lib)
-install(PROGRAMS ${RGA_LIB} DESTINATION lib)

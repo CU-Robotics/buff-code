@@ -36,6 +36,7 @@ int main(int argc, char** argv)
 
 	image_transport::Publisher depth_pub = it.advertise("/realsense/depth", 1);
     image_transport::Publisher color_pub = it.advertise("/realsense/color", 1);
+    image_transport::Publisher annot_pub = it.advertise("/buffnet/annotated", 1);
 
 	Buffnet buffnet;
 
@@ -49,8 +50,10 @@ int main(int argc, char** argv)
 
 	    sensor_msgs::ImagePtr depth_msg = cv_bridge::CvImage(std_msgs::Header(), "16UC1", buffnet.get_depth()).toImageMsg();
 	    sensor_msgs::ImagePtr color_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", buffnet.get_color()).toImageMsg();
+	    sensor_msgs::ImagePtr annot_msg = cv_bridge::CvImage(std_msgs::Header(), "rgb8", buffnet.get_annot()).toImageMsg();
 	    depth_pub.publish(depth_msg);
 	    color_pub.publish(color_msg);
+	    annot_pub.publish(annot_msg);
 		loop_rate.sleep();
 	}
 
