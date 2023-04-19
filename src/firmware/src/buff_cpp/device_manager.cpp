@@ -182,9 +182,9 @@ void Device_Manager::control_input_handle() {
 			}
 
 			// set the gimbal input from ros control
-			controller_manager.input[3] = input_report.get_float(2);
-			controller_manager.input[4] = input_report.get_float(6);
-			controller_manager.input[5] = input_report.get_float(10);
+			controller_manager.autonomy_input[3] = input_report.get_float(2);
+			controller_manager.autonomy_input[4] = input_report.get_float(6);
+			controller_manager.autonomy_input[5] = input_report.get_float(10);
 			// Serial.printf("Reference set to %f %f %f\n", controller_manager.input[3], controller_manager.input[4], controller_manager.input[5]);
 			
 			controller_switch = 2;												// block local gimbal input
@@ -469,6 +469,9 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.input[0] = receiver.data[0];
 		controller_manager.input[1] = receiver.data[1];
 		controller_manager.input[2] = receiver.data[2];
+        controller_manager.input[3] = (0.5 / 0.174533) * (controller_manager.autonomy_input[3] - enc_mag_pos[3]);
+        controller_manager.input[4] = (0.5 / 0.174533) * (controller_manager.autonomy_input[4] - enc_mag_pos[4]);
+        controller_manager.input[5] = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - enc_mag_pos[5]);
 	}
 
 	bool new_references = timer_info_ms(2) >= 10;
