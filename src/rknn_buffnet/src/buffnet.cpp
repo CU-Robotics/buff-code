@@ -2,6 +2,8 @@
 #include "postprocess.h"
 #include "buff_realsense.h"
 
+#include "rknn_api.h"
+
 static void dump_tensor_attr_ros(rknn_tensor_attr* attr) {
 	ROS_INFO("index=%d, name=%s, n_dims=%d, dims=[%d, %d, %d, %d], n_elems=%d, size=%d, fmt=%s, type=%s, qnt_type=%s, "
 		"zp=%d, scale=%f",
@@ -153,6 +155,8 @@ void Buffnet::init_model() {
 		height  = input_attrs[0].dims[2];
 		channel = input_attrs[0].dims[3];
   	}
+
+	printf("model input height=%d, width=%d, channel=%d\n", height, width, channel);
 
 	// Set Input Data
 	memset(inputs, 0, sizeof(inputs));

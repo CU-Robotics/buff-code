@@ -84,6 +84,8 @@ struct Controller_Manager {
 	float kee_imu_pos[REMOTE_CONTROL_LEN];
 	float enc_mag_pos[REMOTE_CONTROL_LEN];
 	float position_est[REMOTE_CONTROL_LEN];
+	
+	float autonomy_input[REMOTE_CONTROL_LEN];
 
 	int controller_types[MAX_NUM_RM_MOTORS];
 

@@ -4,7 +4,9 @@ Buffpy is two things:
 ## Development Tool
 Scripts directory contains build tools.
 
-Run them with `buffpy -b <build_profile>`
+Run them with 
+
+        buffpy -b <build_profile>
 
 where a build build profile is a yaml file (filename without .yaml) under buffpy/data/build.
 
@@ -27,4 +29,10 @@ A `node` is a process or thread in the software pipeline.
 `buffpy/` is a directory containing configuration and programs to run the robot.
 
 The buffpy python tool deploys this package to robots registered in `buffpy/data/robots/robots.yaml`
+
+Deploy your builds (that you make using `buffpy -b <build_profile>`) to the khadas using
+
+        buffpy -d
+
+(`-d` is short for deploy)
 
