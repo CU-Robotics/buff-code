@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 """
 	Project: trainer (Crosshair)
 	Author: Mitchell D Scott
@@ -49,8 +49,6 @@ def clear_dataset(dataset):
 	shutil.rmtree(os.path.join(dataset, 'valid'))
 	shutil.rmtree(os.path.join(dataset, 'test'))
 	os.remove(os.path.join(dataset, 'data.yaml'))
-	os.remove(os.path.join(dataset, 'README.dataset.txt'))
-	os.remove(os.path.join(dataset, 'README.roboflow.txt'))
 
 def unzip_dataset(data_dir, datazip):
 	dataset = datazip[:-4]
@@ -66,15 +64,16 @@ def unzip_dataset(data_dir, datazip):
 
 	return data_path
 
-def zip_dataset(data_dir):
-	dataset = data_dir.split('/')[-1]
-	print(f'ziping {data_di}')
-	data_path = os.path.join(data_dir, dataset)
-	write_data_yaml(data_path)
-	os.remove(os.path.join(dataset, 'README.dataset.txt'))
-	os.remove(os.path.join(dataset, 'README.roboflow.txt'))
+def zip_dataset(dataset_path):
+	print(f'ziping {dataset_path}.zip')
+	write_data_yaml(dataset_path)
 
-	shutil.make_archive(data_dir + '.zip', 'zip', data_dir)
+	if os.file.exists(os.path.join(dataset_path, 'README.dataset.txt')):
+		os.remove(os.path.join(dataset_path, 'README.dataset.txt'))
+	if os.file.exists(os.path.join(dataset_path, 'README.roboflow.txt')):
+		os.remove(os.path.join(dataset_path, 'README.roboflow.txt'))
+
+	shutil.make_archive(dataset_path, 'zip', dataset_path)
 
 def resize_dataset(datadir, w, h):
 	rezip = False
@@ -85,24 +84,28 @@ def resize_dataset(datadir, w, h):
 			imResize.save(filename , 'JPEG', quality=90)
 			rezip = True
 
-	rzip_dataset(datadir)
+	if rezip:
+		zip_dataset(datadir)
 
 def train_model(model):
 
+	runs = 0
 	project_root = os.getenv('PROJECT_ROOT')
 
 	model_dir = os.path.join(project_root, 'buffpy', 'data', 'models')
 	yolo_dir = os.path.join(project_root, '..', 'yolov5')
 	data_dir = os.path.join(project_root, 'data')
-	output_dir = os.path.join(model_dir, 'runs')
+	output_dir = os.path.join(data_dir, 'runs')
 
-	if not os.path.exists(output_dir):
-		os.mkdir(output_dir)
+	if os.path.exists(output_dir):
+		shutil.rmtree(output_dir)
+
+	os.mkdir(output_dir)
 
 	exp = get_current_exp(output_dir)
 	model_path = os.path.join(model_dir, model)
 
-	default_args = ['--img', '640','--batch', '64', '--epochs', '50', '--cache', '--project', output_dir]
+	default_args = ['--img', '640','--batch', '32', '--epochs', '50', '--project', output_dir]
 
 	if not os.path.exists(data_dir):
 		print('No training Data')
@@ -124,10 +127,11 @@ def train_model(model):
 				print(f'Dataset {data_file} data.yaml does not exist')
 				continue
 
-			resize_dataset(data_dir, 640, 640)
+			if runs == 0:
+				resize_dataset(data_path, 640, 640)
 
 			if not os.path.exists(model_path):
-				args += ['--weights', '""']
+				# args += ['--weights', '""']
 				args += ['--cfg', 'yolov5s.yaml']
 			
 			else:
@@ -139,19 +143,19 @@ def train_model(model):
 			print(f'Executing {cmd}')
 			sb.run(cmd)
 
-			shutil.copy(os.path.join(output_dir, 'exp' + exp, 'weights', 'best.pt'), os.path.join(model_dir, 'buffnet.pt'))
+			shutil.copy(os.path.join(output_dir, 'exp' + exp, 'weights', 'best.pt'), os.path.join(model_dir, f'{model}.pt'))
 			shutil.rmtree(data_path)
 
-			cmd = ['python3', 'export.py', '--weights', os.path.join(model_dir, 'buffnet.pt'), '--include', 'torchscript', 'onnx']
+			cmd = ['python3', os.path.join(yolo_dir, 'export.py'), '--rknpu', 'RK3588', '--weights', os.path.join(model_dir, f'{model}.pt'),  '--include', 'onnx']
 			sb.run(cmd)
 
 			exp = get_current_exp(output_dir)
 
-			model_path = os.path.join(model_dir, 'buffnet.pt')
+			model_path = os.path.join(model_dir, f'{model}.pt')
 
 
 if __name__ == '__main__':
 	if len(sys.argv) > 1:
 		train_model(sys.argv[1])
 	else:
-		train_model("new")
+		train_model("buffnet")

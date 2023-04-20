@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 """
 	Project: BuffPy
 	Author: Mitchell D Scott
@@ -67,49 +67,16 @@ def clear_directory(path):
 
 
 def clean_buffpy(clean):
-	"""
-		Removes the data folder, and when it becomes necesary
-		will also remove any generated binaries and configs.
-		This is an end-all clean up. It will clean everything.
-
-
-		Deprecated and possibly dangerous
-	"""
-
-	# project_root = os.getenv('PROJECT_ROOT')
-	# data_path = os.path.join(project_root, 'data')
-	# lib_path = os.path.join(project_root, 'buffpy', 'lib')
-	# cargo_config = os.path.join(project_root, 'buffpy', 'data', 'build', 'rust.yaml')
-	# firmware_config = os.path.join(project_root, 'buffpy', 'data', 'build', 'firmware.yaml')
 	
-	# if not os.path.exists(firmware_config) and not os.path.exists(cargo_config):
-	# 	print('No build specified exiting:...')
-	# 	return
 
-	# if clean == 'full':
-	# 	subprocess.run(f'sudo apt clean && sudo apt autoremove && sudo apt update', shell=True)
-	# 	subprocess.run(f'docker system prune -a -f', shell=True)
+	project_root = os.getenv('PROJECT_ROOT')
+	data_path = os.path.join(project_root, 'data')
+	lib_path = os.path.join(project_root, 'buffpy', 'lib')
+	model_path = os.path.join(project_root, 'buffpy', 'data', 'models')
 
-	# with open(firmware_config, 'r') as f:
-	# 	data = yaml.safe_load(f)
-
-	# with open(cargo_config, 'r') as f:
-	# 	data.update(yaml.safe_load(f))
-
-	# if not 'edge' in os.getenv('HOSTNAME'):
-	# 	clear_directory(lib_path)
-
-	# 	for cargo_toml in data['CARGO_TOML']:
-	# 		cargo_path = os.path.join(project_root, 'src', cargo_toml)
-	# 		result = subprocess.run(f'cd {cargo_path} && cargo clean', shell=True)
-
-	# 	for firmware_pkg in data['FIRMWARE_INI']:
-	# 		firmware_path = os.path.join(project_root, 'src', firmware_pkg)
-	# 		result = subprocess.run(f'cd /{firmware_path} && \
-	# 			pio run -t clean', shell=True)
-
-
-	# clear_directory(data_path)
+	clear_directory(data_path)
+	clear_directory(lib_path)
+	clear_directory(model_path)
 	
 def load_build_config(build):
 
@@ -450,7 +417,13 @@ def train_model(model):
 		return
 
 	build_buffpy('ptools')
-	subprocess.run(['python3', os.path.join(project_root, 'buffpy', 'lib', 'model_trainer.py'), model])
+	try:
+		subprocess.run(['python3', os.path.join(project_root, 'buffpy', 'lib', 'model_trainer.py'), model])
+
+	except KeyboardInterrupt:
+		print("user stopped training session")
+
+	subprocess.run(['python3', os.path.join(project_root, 'buffpy', 'lib', 'model_convert.py'), model])
 
 def docker_build_and_push(path, image):
 	subprocess.run(f'cd {path} && \

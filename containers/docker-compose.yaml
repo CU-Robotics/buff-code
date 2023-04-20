@@ -60,4 +60,4 @@ services:
     environment: 
       - DISPLAY
     image: curobotics/buffbox:aarch64-dev
-    command: buffpy -b arch-build
+    command: buffpy -b buffnet
