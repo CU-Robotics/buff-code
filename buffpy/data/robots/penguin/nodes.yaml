@@ -35,7 +35,7 @@ sensor_index:
   - refsys
   - revEnc
 
-# So HID knows what size buffer
+# So HID knows what size buffer, the row corresponds to the rows in sensor index
 sensor_buffers:
   - 9
   - 6
@@ -62,11 +62,11 @@ sensor_config:
 # This defines the indices of all the motors
 # on the CAN bus (index = row, starts at zero)
 motor_index:
-  - yp_drive    # V0
-  - xp_drive    # V1
-  - yn_drive    # V2
-  - xn_drive    # V3
-  - pitch       # V4
+  - yp_drive    # V0 chassis motor in the positive y axis
+  - xp_drive    # V1 chassis motor in the positive x axis
+  - yn_drive    # V2 chassis motor in the negative y axis
+  - xn_drive    # V3 chassis motor in the negative x axis
+  - pitch       # V4 pitch
   - yaw_1
 
 #   Uses the motor indices to determine a can output packet index and device return value.

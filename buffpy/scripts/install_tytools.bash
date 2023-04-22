@@ -38,4 +38,5 @@ $SUDO make install
 
 cd "${PROJECT_ROOT}"
 
-rm -rf ../tytools-0.9.8
+rm -rf /v0.9.8.tar.gz
+rm -rf /tytools-0.9.8
