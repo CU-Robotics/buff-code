@@ -44,12 +44,44 @@ Deploy your builds (that you make using `buffpy -b <build_profile>`) to a robot 
 
 This will send the contents of `buffpy/` to what ever IPs are listed in  `buffpy/data/robots/robots.yaml`, the robot registry.
 
+
+### SSH
+
+<details>
+<summary>Instructions to generate an SSH key to work with our robot deployment </summary>
+
+#### Generate SSH Key
+        ssh-keygen -t ed25519 -C "your_email@example.com"
+##### If you set a custom name for your key, configure `~/.ssh/config` to recognize it. More info: https://www.howtogeek.com/devops/how-to-manage-an-ssh-config-file-in-windows-linux/
+For a custom named key to work with our scripts, add the below within `~/.ssh/config`. (edgek.local is the current robot ip when connected to its hotspot.)
+
+        Host edgek.local
+                HostName edgek.local
+                <recommend adding "PreferredAuthentications publickey" here after completing ssh-copy-id>
+                IdentityFile ~/.ssh/<your_private_key_file>
+
+Start your ssh-agent:
+
+        eval "$(ssh-agent -s)"
+
+Add your private ssh key to your ssh-agent:
+
+        ssh-add ~/.ssh/<your_private_key_file>
+#### Install SSH Key to Robot
 You can install your ssh key to the robot so it doesn't require a password when deploying and sshing.
 
         buffpy --installKeys
 
-Use the default setup options (or set it up manually, it's not hard).
+or manually with:
 
+        ssh-copy-id -i ~/.ssh/<your_public_key_file> cu-robotics@edgek.local
+
+#### Connect to Robot
+While on its hotspot, you can use any ssh-related commands.
+
+        ssh cu-robotics@edgek.local
+
+</details>
 
 ## Project Clean up 
 
