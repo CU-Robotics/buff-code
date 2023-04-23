@@ -12,5 +12,7 @@ Refer to google drive `software/documentation` for more info.
 
 ## Uses
 This is meant to be a standard environment for building (and possibly deploying in the future.)
+### Setup
+        source buffpy/buff.bash
 ### Building
         buffpy -b <project>
