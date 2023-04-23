@@ -1,4 +1,4 @@
-## Build rknn_buffnet
+## Build buffnet
         ./build.sh
 ### buffpy
         buffpy -b buffnet
