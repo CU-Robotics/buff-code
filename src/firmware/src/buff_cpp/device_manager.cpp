@@ -126,14 +126,11 @@ void Device_Manager::control_input_handle() {
 	output_report.put(3, input_report.get(3));
 	output_report.put(4, input_report.get(4));
 
-	// Serial.printf("init %i\n", input_report.get(0));
-	if (controller_switch == -1) {
-		return;
-	}
+	// Serial.printf("init %i\n", input_report.get(0))
 
 	switch (input_report.get(1)) {
 		case 0:
-			if (controller_switch == 1) {	// Only user can put the bot in auto aim
+			if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
 				break;
 			}
 			for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
@@ -144,7 +141,7 @@ void Device_Manager::control_input_handle() {
 			controller_switch = 0;												// block "local control"
 			break;
 
-		case 1:
+		case 1:	// data requests (don't turn off when motors are off)
 			switch (input_report.get(2)) {
 				case 0:
 					data_offset = 5;
@@ -177,7 +174,7 @@ void Device_Manager::control_input_handle() {
 			break;
 
 		case 2:
-			if (controller_switch == 1) {	// Only user can put the bot in auto aim
+			if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
 				break;
 			}
 
@@ -191,7 +188,7 @@ void Device_Manager::control_input_handle() {
 			break;
 
 		case 3:
-			if (controller_switch == 1) {	// Only user can put the bot in auto aim
+			if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
 				break;
 			}
 			// set the input from ros control
@@ -469,9 +466,9 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.input[0] = receiver.data[0];
 		controller_manager.input[1] = receiver.data[1];
 		controller_manager.input[2] = receiver.data[2];
-        controller_manager.input[3] = (0.5 / 0.174533) * (controller_manager.autonomy_input[3] - enc_mag_pos[3]);
-        controller_manager.input[4] = (0.5 / 0.174533) * (controller_manager.autonomy_input[4] - enc_mag_pos[4]);
-        controller_manager.input[5] = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - enc_mag_pos[5]);
+        controller_manager.input[3] = (0.5 / 0.174533) * (controller_manager.autonomy_input[3] - controller_manager.enc_mag_pos[3]);
+        controller_manager.input[4] = (0.5 / 0.174533) * (controller_manager.autonomy_input[4] - controller_manager.enc_mag_pos[4]);
+        controller_manager.input[5] = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_mag_pos[5]);
 	}
 
 	bool new_references = timer_info_ms(2) >= 10;

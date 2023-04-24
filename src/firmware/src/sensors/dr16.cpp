@@ -123,14 +123,14 @@ int DR16::generate_control_from_joysticks() {
 	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -660, 660);
 
 
-	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -200, 200) / 1000.0;
+	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -400, 400);
 	// Serial.println("\n\t===== Normalized Sticks");
 	// Serial.printf("\t%f\t%f\t%f\t%f\n", 
 	// 	r_stick_x, r_stick_y, l_stick_x, l_stick_y);
 
 	// data[0] = (tmp[5] & 0x30) >> 4;				// switch 1
 	// data[1] = (tmp[5] & 0xC0) >> 6;				// switch 2
-	data[0] = l_stick_x * JOYSTICK_X_SENSITIVITY;						// X & Y velocity (read directly)
+	data[0] = l_stick_x * JOYSTICK_X_SENSITIVITY;	// X & Y velocity (read directly)
 	data[1] = l_stick_y * JOYSTICK_Y_SENSITIVITY;
 
 	if ((tmp[5] & 0x30) >> 4 == 1.0) {						// angular velocity (theta)
@@ -154,8 +154,8 @@ int DR16::generate_control_from_joysticks() {
 		return USER_SHUTDOWN;
 	} 
 	else if ((tmp[5] & 0xC0) >> 6 == 2.0) {
-		data[6] = 50.0;
-		if (l_stick_y == -660) {
+		data[6] = FLYWHEEL_SPEED;
+		if (l_stick_y <= -650  * JOYSTICK_Y_SENSITIVITY) {
 			return AUTONOMY_MODE;
 		}
 		return USER_DRIVE_MODE;

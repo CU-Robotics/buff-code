@@ -5,7 +5,7 @@
 
 #define TARGET_CAN_BUS 	2
 #define TARGET_ESC_TYPE 1
-#define TARGET_ESC_ID 	4
+#define TARGET_ESC_ID 	3
 
 #define VERBOSITY 		2
 

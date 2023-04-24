@@ -13,6 +13,7 @@
 #define JOYSTICK_Y_SENSITIVITY 			1.5
 #define JOYSTICK_PAN_SENSITIVITY 		0.3
 #define JOYSTICK_PITCH_SENSITIVITY 		0.15
+#define FLYWHEEL_SPEED					900
 
 /*
 	 Driver software for the dr16 receiver.

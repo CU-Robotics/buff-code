@@ -178,7 +178,7 @@ void Controller_Manager::step_motors() {
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
 		switch(controller_types[i]){
 			case 0:
-				output[i] = controllers[i].step(references[i], feedback[i]) * ratio;
+				output[i] = controllers[i].step(references[i], feedback[i])* ratio;
 
 			case 1:
 				output[i] = controllers[i].step(references[i], feedback[i]);
