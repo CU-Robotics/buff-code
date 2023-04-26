@@ -116,7 +116,7 @@ int DR16::generate_control_from_joysticks() {
 
 	// Normalize the joystick values
 	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -660, 660);
-	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
+	float r_stick_y = bounded_map(((tmp[2] & 0x3F) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
 	// Set the left stick to [-1:1]
 	// 1 / 660.0 = 0.00151515 (avoids an unnecesarry division)
 	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -660, 660);
@@ -148,20 +148,23 @@ int DR16::generate_control_from_joysticks() {
 	data[3] = r_stick_y * JOYSTICK_PITCH_SENSITIVITY;
 	data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
 	data[5] = wheel;
-
-	if ((tmp[5] & 0xC0) >> 6 == 1.0) {						// feeder speed
-		data[6] = 0.0;
-		return USER_SHUTDOWN;
-	} 
-	else if ((tmp[5] & 0xC0) >> 6 == 2.0) {
+	data[6] = 0.0;
+	
+	
+	if ((tmp[5] & 0xC0) >> 6 == 2.0) {
 		data[6] = FLYWHEEL_SPEED;
-		if (l_stick_y <= -650  * JOYSTICK_Y_SENSITIVITY) {
+		if (l_stick_y <= -650  * JOYSTICK_Y_SENSITIVITY) { // autonomy mode at 95% of min pitch
 			return AUTONOMY_MODE;
 		}
 		return USER_DRIVE_MODE;
 	} 
+	else if ((tmp[5] & 0xC0) >> 6 == 1.0) {	
+		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+			data[i] = 0;
+		}
+		return USER_SHUTDOWN;
+	} 
 	else {
-		data[6] = 0.0;
 		return ROBOT_DEMO_MODE;
 	}
 	// Serial.println(data[0]);
@@ -198,14 +201,14 @@ void DR16::generate_output() {
 	// Serial.println();
 }
 
-void DR16::control_test() {
-	byte tmp[18];
-	serial->readBytes(tmp, 18);
-	for (size_t i = 0; i < sizeof(tmp); i++) {
-		Serial.printf(" ", BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
-	}
-	Serial.println();
-}
+// void DR16::control_test() {
+// 	byte tmp[18];
+// 	serial->readBytes(tmp, 18);
+// 	for (size_t i = 0; i < sizeof(tmp); i++) {
+// 		Serial.printf(" ", BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
+// 	}
+// 	Serial.println();
+// }
 
 int DR16::read() {
     // if (serial->available() > numBytes) {     				// if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
@@ -230,7 +233,9 @@ int DR16::read() {
 	}
 
 	if (timer_info_ms(1) > 50){
-		data[6] = 0;
+		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+			data[i] = 0;
+		}
 		return USER_SHUTDOWN;
 	}
 	else {

@@ -12,11 +12,6 @@ float vector_product(float*, float*, int);
 float cross_product2D(float*, float*);
 void weighted_vector_addition(float*, float*, float, float, int, float*);
 
-/*
-	Break this out into two controllers
-	- Gravity compensated
-	- Power Limited
-*/
 
 struct Feedback_Controller {
 	Feedback_Controller();

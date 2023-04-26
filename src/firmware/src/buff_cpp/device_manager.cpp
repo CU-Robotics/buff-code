@@ -385,7 +385,6 @@ void Device_Manager::read_sensors() {
 	switch (receiver.read()) {
 		case USER_SHUTDOWN:
 			controller_switch = -1;
-
 			break;
 
 		case ROBOT_DEMO_MODE:
@@ -480,6 +479,11 @@ void Device_Manager::step_controllers(float dt) {
 		}
 
 		controller_manager.set_feedback(i, rm_can_ux.motor_arr[i].data, rm_can_ux.motor_arr[i].roll_over);
+		if (controller_switch == -1) {
+			controller_manager.output[i] = 0;
+			controller_manager.biases[i] = 0;
+			controller_manager.references[i][0] = controller_manager.feedback[i][0];
+		}
 	}
 
 	if (controller_switch > 0) {								// Use the HIDLayers CAN output values or the controllers
