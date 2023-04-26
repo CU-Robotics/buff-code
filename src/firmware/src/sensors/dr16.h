@@ -58,6 +58,7 @@ struct DR16 {
 
 		float data[7];
 		DR16_DATA out;
+		int safety_shutdown;
 
 		float demo[];
 		

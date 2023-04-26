@@ -184,7 +184,7 @@ void Device_Manager::control_input_handle() {
 			controller_manager.autonomy_input[5] = input_report.get_float(10);
 			// Serial.printf("Reference set to %f %f %f\n", controller_manager.input[3], controller_manager.input[4], controller_manager.input[5]);
 			
-			controller_switch = 2;												// block local gimbal input
+			controller_switch = 2;											// block local gimbal input
 			break;
 
 		case 3:
@@ -358,7 +358,7 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 	Author: Mitchell Scott
 */
 void Device_Manager::push_can(){
-	if (controller_switch == -1) {
+	if (receiver.safety_shutdown) {
 		rm_can_ux.zero_can();
 	}
 	

@@ -149,7 +149,7 @@ int DR16::generate_control_from_joysticks() {
 	data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
 	data[5] = wheel;
 	data[6] = 0.0;
-	
+	safety_shutdown = 0;
 	
 	if ((tmp[5] & 0xC0) >> 6 == 2.0) {
 		data[6] = FLYWHEEL_SPEED;
@@ -162,6 +162,7 @@ int DR16::generate_control_from_joysticks() {
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 			data[i] = 0;
 		}
+		safety_shutdown = 1;
 		return USER_SHUTDOWN;
 	} 
 	else {
@@ -236,6 +237,8 @@ int DR16::read() {
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 			data[i] = 0;
 		}
+		
+		safety_shutdown = 1;
 		return USER_SHUTDOWN;
 	}
 	else {
