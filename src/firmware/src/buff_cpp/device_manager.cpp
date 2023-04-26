@@ -341,7 +341,7 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 			break;
 		
 		default:
-			// rm_can_ux.zero_can();
+			rm_can_ux.zero_can();
 			break;
 	}
 
@@ -364,8 +364,9 @@ void Device_Manager::push_can(){
 	if (controller_switch == -1) {
 		rm_can_ux.zero_can();
 	}
-	
-	rm_can_ux.write_can();
+	else {
+		rm_can_ux.write_can();
+	}
 
 	for (int i = 0; i < NUM_CAN_BUSES; i++) {
 		rm_can_ux.read_can(i + 1);		
@@ -385,24 +386,6 @@ void Device_Manager::push_can(){
 */
 void Device_Manager::read_sensors() {
 	ref.read_serial();
-	switch (receiver.read()) {
-		case USER_SHUTDOWN:
-			controller_switch = -1;
-
-			break;
-
-		case ROBOT_DEMO_MODE:
-		case USER_DRIVE_MODE:
-			controller_switch = 1;
-			break;
-
-		case AUTONOMY_MODE:
-			controller_switch = 2;
-			break;
-
-		default:
-			break;
-	}
 
 	controller_manager.encoders[1] = yawEncoder.getAngle();
 	// controller_manager.encoders[0] = pitchEncoder.getAngle();
@@ -421,10 +404,28 @@ void Device_Manager::read_sensors() {
 
 		case 2:
 			chassis_imu.read_lis3mdl();
-			sensor_switch = 0;
+			sensor_switch += 1;
 			break;
 
 		default:
+			switch (receiver.read()) {
+				case USER_SHUTDOWN:
+					controller_switch = -1;
+					break;
+
+				case ROBOT_DEMO_MODE:
+				case USER_DRIVE_MODE:
+					controller_switch = 1;
+					break;
+
+				case AUTONOMY_MODE:
+					controller_switch = 2;
+					break;
+
+				default:
+					controller_switch = -1;
+					break;
+			}
 			sensor_switch = 0;
 			break;
 	}
@@ -469,9 +470,9 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.input[0] = receiver.data[0];
 		controller_manager.input[1] = receiver.data[1];
 		controller_manager.input[2] = receiver.data[2];
-        controller_manager.input[3] = (0.5 / 0.174533) * (controller_manager.autonomy_input[3] - enc_mag_pos[3]);
-        controller_manager.input[4] = (0.5 / 0.174533) * (controller_manager.autonomy_input[4] - enc_mag_pos[4]);
-        controller_manager.input[5] = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - enc_mag_pos[5]);
+        controller_manager.input[3] = (0.5 / 0.174533) * (controller_manager.autonomy_input[3] - controller_manager.enc_mag_pos[3]);
+        controller_manager.input[4] = (0.5 / 0.174533) * (controller_manager.autonomy_input[4] - controller_manager.enc_mag_pos[4]);
+        controller_manager.input[5] = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_mag_pos[5]);
 	}
 
 	bool new_references = timer_info_ms(2) >= 10;

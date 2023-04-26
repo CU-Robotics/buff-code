@@ -134,10 +134,10 @@ int DR16::generate_control_from_joysticks() {
 	data[1] = l_stick_y * JOYSTICK_Y_SENSITIVITY;
 
 	if ((tmp[5] & 0x30) >> 4 == 1.0) {						// angular velocity (theta)
-		data[2] = 300.0;
+		data[2] = 900.0;
 	} 
 	else if ((tmp[5] & 0x30) >> 4 == 2.0) {
-		data[2] = -300.0;
+		data[2] = -900.0;
 	} 
 	else {
 		data[2] = 0.0;

@@ -11,11 +11,11 @@ robot_type: standard
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
 buff-nodes:
-  # buff_rust:
-  #   files: [comms_node]
-  buffnet:
+  buff_rust:
+    files: [comms_node]
+  # buffnet:
     # sudo: True
-    files: [demo_ros_stream.py, buffnet]
+    # files: []
 
 # Examle of includig ros
 # Maybe some kind of option to shut this down via cmdline
@@ -69,7 +69,8 @@ motor_index:
   - yn_drive    # V2
   - xn_drive    # V3
   - pitch       # V4
-  - yaw_1
+  - yaw_1       # V5
+  - yaw_2       # V6
 
 #   Uses the motor indices to determine a can output packet index and device return value.
 # Once this is configured properly CAN protocol should be abstracted into motor_<op>(index, *args),
@@ -81,10 +82,11 @@ motor_can_index:
   - [1, 1, 2]
   - [1, 1, 1]
   - [2, 1, 1]
+  - [2, 1, 5]
   - [1, 1, 6]
 
 ##############################
-#
+#uh 
 #
 #         Controllers
 #
@@ -109,19 +111,20 @@ inverse_kinematics:
   - [  1.0,    0.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V2 =  Vx - omega
   - [  0.0,   -1.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V3 = -Vy - omega
   - [  0.0,    0.0,    0.0,   -1.0,    0.0,    0.0,    0.0] # V4 = dPhi
-  - [  0.0,    0.0,  -0.24,    0.0,    1.0,    0.0,    0.0] # V4 = dPsi - omega
+  - [  0.0,    0.0,  -0.24,    0.0,    1.0,    0.0,    0.0] # V5 = dPsi - omega
+  - [  0.0,    0.0,  -0.24,    0.0,    1.0,    0.0,    0.0] # V6 = dPsi - omega
 
 #   Forward
 # Used by encoder estimator (kee)
 # [V0, V1, V2, V3, V4, V5, V6, V7, V8] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma, dShooter]
 forward_kinematics: 
-  - [ -0.5,    0.0,    0.5,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
-  - [  0.0,    0.5,    0.0,   -0.5,    0.0,    0.0]  # Vy = (V1 - V3) / 2
-  - [-0.25,  -0.25,  -0.25,  -0.25,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
-  - [  0.0,    0.0,    0.0,    0.0,   -1.0,    0.0]  # dPhi = V4
-  - [ -0.6,   -0.6,   -0.6,   -0.6,    0.0,    1.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
+  - [ -0.5,    0.0,    0.5,    0.0,    0.0,    0.0,     0.0]  # Vx = (-V0 + V2) / 2 # average X speed
+  - [  0.0,    0.5,    0.0,   -0.5,    0.0,    0.0,     0.0]  # Vy = (V1 - V3) / 2
+  - [-0.25,  -0.25,  -0.25,  -0.25,    0.0,    0.0,     0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
+  - [  0.0,    0.0,    0.0,    0.0,   -1.0,    0.0,     0.0]  # dPhi = V4
+  - [ -0.6,   -0.6,   -0.6,   -0.6,    0.0,    1.0,     0.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the second motor is on
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     1.0]  # dGgamma = 0
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0]  # dShooter = 0
 
 #
 #     Motor Controllers
@@ -142,6 +145,7 @@ motor_controller_types:
   - [0]
   - [0]
   - [1]
+  - [0]
   - [0]
 
 
@@ -170,20 +174,28 @@ motor_controller_types:
   # [0.000029, 0.007231, 0.000348] (less position) <mds>
   # [-0.000541, 0.006742, -0.001930] (grounded) <mds>
 motor_gains: 
-  - [0.0, 0.005, 0.0]       # motor 0 
-  - [0.0, 0.005, 0.0]       # motor 1 
-  - [0.0, 0.005, 0.0]       # motor 2 
-  - [0.0, 0.005, 0.0]       # motor 3 
-  - [0.3, 0.015, 0.05]        # motor 4 
-  - [0.0, 0.002, 0.0]        # motor 5
-
+  # - [0.0, 0.005, 0.0]       # motor 0 
+  # - [0.0, 0.005, 0.0]       # motor 1 
+  # - [0.0, 0.005, 0.0]       # motor 2 
+  # - [0.0, 0.005, 0.0]       # motor 3 
+  # - [0.3, 0.015, 0.05]       # motor 4 
+  # - [0.0, 0.002, 0.0]        # motor 5
+  # - [0.0, 0.002, 0.0]        # motor 6
+  - [0.0, 0.0, 0.0]       # motor 0 
+  - [0.0, 0.0, 0.0]       # motor 1 
+  - [0.0, 0.0, 0.0]       # motor 2 
+  - [0.0, 0.0, 0.0]       # motor 3 
+  - [0.0, 0.0, 0.0]       # motor 4 
+  - [0.0, 0.0, 0.0]        # motor 5
+  - [0.0, 0.0, 0.0]  
 motor_filters:
   - [0.5]
   - [0.5]
   - [0.5]
   - [0.5]
   - [0.8]
-  - [0.5]
+  - [0.7]
+  - [0.7]
 
 #    Motor output Limits
 #   All our actuators are continous DC motors. All of the outputs are in terms of radians.
@@ -198,4 +210,5 @@ motor_limits:
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.1, 0.8, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
