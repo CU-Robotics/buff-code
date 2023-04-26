@@ -241,12 +241,12 @@ impl HidReader {
         //     self.teensy_lifetime - self.rust_lifetime
         // );
 
-        if self.input.get_float(60) - self.teensy_lifetime > TEENSY_CYCLE_TIME_S + 1e-5 {
-            println!(
-                "Teensy cycle time is over the limit {}",
-                self.input.get_float(60) - self.teensy_lifetime
-            );
-        }
+        // if self.input.get_float(60) - self.teensy_lifetime > TEENSY_CYCLE_TIME_S + 1e-2 {
+        //     println!(
+        //         "Teensy cycle time is over the limit {}",
+        //         self.input.get_float(60) - self.teensy_lifetime
+        //     );
+        // }
 
         self.teensy_lifetime = self.input.get_float(60);
 

@@ -12,25 +12,25 @@
 
 #define TARGET1_CAN_BUS 	2
 #define TARGET1_ESC_TYPE 	1
-#define TARGET1_ESC_ID 		4
-#define TARGET1_MSG_TYPE	0
+#define TARGET1_ESC_ID 		8
+#define TARGET1_MSG_TYPE	1
 #define TARGET1_MSG_OFF		6
-#define TARGET1_RID			3
+#define TARGET1_RID			7
 
 #define TARGET2_CAN_BUS 	2
 #define TARGET2_ESC_TYPE 	1
-#define TARGET2_ESC_ID 		1
+#define TARGET2_ESC_ID 		3
 #define TARGET2_MSG_TYPE	0
-#define TARGET2_MSG_OFF		0
-#define TARGET2_RID			0
+#define TARGET2_MSG_OFF		2
+#define TARGET2_RID			2
 
 
 #define TARGET3_CAN_BUS 	2
-#define TARGET3_ESC_TYPE 	1
-#define TARGET3_ESC_ID 		8
+#define TARGET3_ESC_TYPE 	0
+#define TARGET3_ESC_ID 		6
 #define TARGET3_MSG_TYPE	1
-#define TARGET3_MSG_OFF		6
-#define TARGET3_RID			7
+#define TARGET3_MSG_OFF		4
+#define TARGET3_RID			5
 
 #define TARGET4_CAN_BUS 	0
 #define TARGET4_ESC_TYPE 	0

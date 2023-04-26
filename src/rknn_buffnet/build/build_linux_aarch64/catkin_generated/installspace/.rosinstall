@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/cu-robotics/buff-code/src/rknn_buffnet/install/buffnet/setup.sh

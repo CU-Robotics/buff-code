@@ -15,6 +15,6 @@ buffpy/bin/*.hex
 buffpy/data/models/*
 src/firmware/build/*
 src/buff_rust/target/*
-src/rknn_buffnet/build/*
-src/rknn_buffnet/install/*
+src/buffnet/build/*
+src/buffnet/install/*
 src/efficientdet-d0-trainer/*

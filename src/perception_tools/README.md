@@ -10,3 +10,8 @@
         buffpy --train buffnet
 
 ## Run Models TODO
+Models located in `buff-code/data/models`
+
+Reference in robot located in `~/edge2-npu/C++/yolov5/install/yolov5`
+
+        sudo ./yolov5 data/models/<model>.rknn data/img/<img_name>.jpg

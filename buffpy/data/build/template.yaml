@@ -1,0 +1,5 @@
+# project: 'template'                                       # path to project relative to buf-code/src
+# build: ['build cool robot stuff']                         # bash command to build the project, keep it simple if possible
+# install: ['fake_build_dir/node1', 'scripts/node2.py']     # the exectuables to install relative to projects path, installed to buffpy/lib
+# docs: ['target/document']                                 # docs, installed to buff-code/documentation
+# bin: ['build/target.hex']                                 # binaries, installed to buffpy/bin

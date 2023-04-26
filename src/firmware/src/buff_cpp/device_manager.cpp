@@ -126,14 +126,11 @@ void Device_Manager::control_input_handle() {
 	output_report.put(3, input_report.get(3));
 	output_report.put(4, input_report.get(4));
 
-	// Serial.printf("init %i\n", input_report.get(0));
-	if (controller_switch == -1) {
-		return;
-	}
+	// Serial.printf("init %i\n", input_report.get(0))
 
 	switch (input_report.get(1)) {
 		case 0:
-			if (controller_switch == 1) {	// Only user can put the bot in auto aim
+			if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
 				break;
 			}
 			for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
@@ -144,7 +141,7 @@ void Device_Manager::control_input_handle() {
 			controller_switch = 0;												// block "local control"
 			break;
 
-		case 1:
+		case 1:	// data requests (don't turn off when motors are off)
 			switch (input_report.get(2)) {
 				case 0:
 					data_offset = 5;
@@ -177,7 +174,7 @@ void Device_Manager::control_input_handle() {
 			break;
 
 		case 2:
-			if (controller_switch == 1) {	// Only user can put the bot in auto aim
+			if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
 				break;
 			}
 
@@ -187,11 +184,11 @@ void Device_Manager::control_input_handle() {
 			controller_manager.autonomy_input[5] = input_report.get_float(10);
 			// Serial.printf("Reference set to %f %f %f\n", controller_manager.input[3], controller_manager.input[4], controller_manager.input[5]);
 			
-			controller_switch = 2;												// block local gimbal input
+			controller_switch = 2;											// block local gimbal input
 			break;
 
 		case 3:
-			if (controller_switch == 1) {	// Only user can put the bot in auto aim
+			if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
 				break;
 			}
 			// set the input from ros control
@@ -361,7 +358,7 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 	Author: Mitchell Scott
 */
 void Device_Manager::push_can(){
-	if (controller_switch == -1) {
+	if (receiver.safety_shutdown) {
 		rm_can_ux.zero_can();
 	}
 	else {
@@ -386,7 +383,6 @@ void Device_Manager::push_can(){
 */
 void Device_Manager::read_sensors() {
 	ref.read_serial();
-
 	controller_manager.encoders[1] = yawEncoder.getAngle();
 	// controller_manager.encoders[0] = pitchEncoder.getAngle();
 	controller_manager.power_buffer = ref.data.power_buffer;
@@ -484,6 +480,11 @@ void Device_Manager::step_controllers(float dt) {
 		}
 
 		controller_manager.set_feedback(i, rm_can_ux.motor_arr[i].data, rm_can_ux.motor_arr[i].roll_over);
+		if (controller_switch == -1) {
+			controller_manager.output[i] = 0;
+			controller_manager.biases[i] = 0;
+			controller_manager.references[i][0] = controller_manager.feedback[i][0];
+		}
 	}
 
 	if (controller_switch > 0) {								// Use the HIDLayers CAN output values or the controllers

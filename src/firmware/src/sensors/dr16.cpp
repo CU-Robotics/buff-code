@@ -116,21 +116,21 @@ int DR16::generate_control_from_joysticks() {
 
 	// Normalize the joystick values
 	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -660, 660);
-	float r_stick_y = bounded_map(((tmp[2] & 0xFC) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
+	float r_stick_y = bounded_map(((tmp[2] & 0x3F) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
 	// Set the left stick to [-1:1]
 	// 1 / 660.0 = 0.00151515 (avoids an unnecesarry division)
 	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -660, 660);
 	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -660, 660);
 
 
-	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -200, 200) / 1000.0;
+	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -400, 400);
 	// Serial.println("\n\t===== Normalized Sticks");
 	// Serial.printf("\t%f\t%f\t%f\t%f\n", 
 	// 	r_stick_x, r_stick_y, l_stick_x, l_stick_y);
 
 	// data[0] = (tmp[5] & 0x30) >> 4;				// switch 1
 	// data[1] = (tmp[5] & 0xC0) >> 6;				// switch 2
-	data[0] = l_stick_x * JOYSTICK_X_SENSITIVITY;						// X & Y velocity (read directly)
+	data[0] = l_stick_x * JOYSTICK_X_SENSITIVITY;	// X & Y velocity (read directly)
 	data[1] = l_stick_y * JOYSTICK_Y_SENSITIVITY;
 
 	if ((tmp[5] & 0x30) >> 4 == 1.0) {						// angular velocity (theta)
@@ -148,20 +148,24 @@ int DR16::generate_control_from_joysticks() {
 	data[3] = r_stick_y * JOYSTICK_PITCH_SENSITIVITY;
 	data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
 	data[5] = wheel;
-
-	if ((tmp[5] & 0xC0) >> 6 == 1.0) {						// feeder speed
-		data[6] = 0.0;
-		return USER_SHUTDOWN;
-	} 
-	else if ((tmp[5] & 0xC0) >> 6 == 2.0) {
-		data[6] = 50.0;
-		if (l_stick_y == -660) {
+	data[6] = 0.0;
+	safety_shutdown = 0;
+	
+	if ((tmp[5] & 0xC0) >> 6 == 2.0) {
+		data[6] = FLYWHEEL_SPEED;
+		if (l_stick_y <= -650  * JOYSTICK_Y_SENSITIVITY) { // autonomy mode at 95% of min pitch
 			return AUTONOMY_MODE;
 		}
 		return USER_DRIVE_MODE;
 	} 
+	else if ((tmp[5] & 0xC0) >> 6 == 1.0) {	
+		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+			data[i] = 0;
+		}
+		safety_shutdown = 1;
+		return USER_SHUTDOWN;
+	} 
 	else {
-		data[6] = 0.0;
 		return ROBOT_DEMO_MODE;
 	}
 	// Serial.println(data[0]);
@@ -198,14 +202,14 @@ void DR16::generate_output() {
 	// Serial.println();
 }
 
-void DR16::control_test() {
-	byte tmp[18];
-	serial->readBytes(tmp, 18);
-	for (size_t i = 0; i < sizeof(tmp); i++) {
-		Serial.printf(" ", BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
-	}
-	Serial.println();
-}
+// void DR16::control_test() {
+// 	byte tmp[18];
+// 	serial->readBytes(tmp, 18);
+// 	for (size_t i = 0; i < sizeof(tmp); i++) {
+// 		Serial.printf(" ", BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
+// 	}
+// 	Serial.println();
+// }
 
 int DR16::read() {
     // if (serial->available() > numBytes) {     				// if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
@@ -230,7 +234,11 @@ int DR16::read() {
 	}
 
 	if (timer_info_ms(1) > 50){
-		data[6] = 0;
+		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
+			data[i] = 0;
+		}
+		
+		safety_shutdown = 1;
 		return USER_SHUTDOWN;
 	}
 	else {

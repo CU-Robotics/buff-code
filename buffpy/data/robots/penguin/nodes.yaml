@@ -10,13 +10,13 @@ robot_type: demo
 
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
-buff_nodes:
+buff-nodes:
   buff_rust:
     files: [comms_node]
 
 # Examle of includig ros
 # Maybe some kind of option to shut this down via cmdline
-#ros_nodes:
+#ros-nodes:
 #   rqt_plot:
 #     files: [rqt_plot]
 #     package: rqt_plot
@@ -35,7 +35,7 @@ sensor_index:
   - refsys
   - revEnc
 
-# So HID knows what size buffer
+# So HID knows what size buffer, the row corresponds to the rows in sensor index
 sensor_buffers:
   - 9
   - 6
@@ -62,24 +62,19 @@ sensor_config:
 # This defines the indices of all the motors
 # on the CAN bus (index = row, starts at zero)
 motor_index:
-  - yp_drive    # V0
-  - xp_drive    # V1
-  - yn_drive    # V2
-  - xn_drive    # V3
-  - pitch       # V4
-  - yaw_1
+  - fly_wheel1    # V0 
+  - fly_wheel1    # V1
+  - feeder        # V2
 
 #   Uses the motor indices to determine a can output packet index and device return value.
 # Once this is configured properly CAN protocol should be abstracted into motor_<op>(index, *args),
 # this behavior will be available system wide.
 # [can bus, esc type, esc id] see datasheets if you don't understand
 motor_can_index:
-  - [1, 1, 7]
-  - [1, 1, 3]
-  - [1, 1, 2]
-  - [1, 1, 1]
-  - [2, 1, 1]
-  - [1, 1, 6]
+  - [2, 1, 8]
+  - [2, 1, 3]
+  - [2, 0, 1]
+
 
 ##############################
 #
@@ -102,24 +97,21 @@ motor_can_index:
 #  least squares kinematic gains
 # [Vx, Vy, Omega, dPhi, dPsi1, dPsi2, dGamma, dShooter] -> [V0, V1, V2, V3, V4, V5, V6, V7, V8]
 inverse_kinematics: 
-  - [ -1.0,    0.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V0 = -Vx - omega
-  - [  0.0,    1.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V1 =  Vy - omega
-  - [  1.0,    0.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V2 =  Vx - omega
-  - [  0.0,   -1.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V3 = -Vy - omega
-  - [  0.0,    0.0,    0.0,    1.0,    0.0,    0.0,    0.0] # V4 = dPhi
-  - [  0.0,    0.0,  -0.24,    0.0,    1.0,    0.0,    0.0] # V4 = dPsi - omega
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   -1.0] # V0 = -Vx - omega
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0] # V1 =  Vy - omega
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,   -1.0,    0.0] # V2 =  Vx - omega
 
 #   Forward
 # Used by encoder estimator (kee)
 # [V0, V1, V2, V3, V4, V5, V6, V7, V8] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma, dShooter]
 forward_kinematics: 
-  - [ -0.5,    0.0,    0.5,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
-  - [  0.0,    0.5,    0.0,   -0.5,    0.0,    0.0]  # Vy = (V1 - V3) / 2
-  - [-0.25,  -0.25,  -0.25,  -0.25,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
-  - [  0.0,    0.0,    0.0,    0.0,    1.0,    0.0]  # dPhi = V4
-  - [ -0.6,   -0.6,   -0.6,   -0.6,    0.0,    1.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
+  - [  0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
+  - [  0.0,    0.0,    0.0]  # Vy = (V1 - V3) / 2
+  - [  0.0,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
+  - [  0.0,    0.0,    0.0]  # dPhi = V4
+  - [  0.0,    0.0,    1.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
+  - [  0.0,    0.0,   -1.0]  # dGgamma = 0
+  - [  0.0,    1.0,    0.0]  # dShooter = 0
 
 #
 #     Motor Controllers
@@ -138,9 +130,6 @@ motor_controller_types:
   - [0]
   - [0]
   - [0]
-  - [0]
-  - [1]
-  - [0]
 
 
 #    Motor Controller Gains
@@ -151,20 +140,14 @@ motor_controller_types:
 # where K[i] is the ith row (1x3) and '*' is a vector inner product ((1x3)(3x1)).
 #         Kp,         Kd,   (Kpow/Kpend) # Motor the output is routed to
 motor_gains: 
-  - [0.0, 0.0, 0.0]       # motor 0 
-  - [0.0, 0.0, 0.0]       # motor 1 
-  - [0.0, 0.0, 0.0]       # motor 2 
-  - [0.0, 0.0, 0.0]       # motor 3 
-  - [0.0, 0.0, 0.0]       # motor 4 
-  - [0.0, 0.0, 0.0]       # motor 5
+  - [0.0, 0.01, 0.0]       # motor 0 
+  - [0.0, 0.01, 0.0]       # motor 1 
+  - [0.0, 0.01, 0.0]       # motor 2
 
 motor_filters:
-  - [0.0]
-  - [0.0]
-  - [0.0]
-  - [0.0]
-  - [0.0]
-  - [0.0]
+  - [0.5]
+  - [0.5]
+  - [0.5]
 
 #    Motor output Limits
 #   All our actuators are continous DC motors. All of the outputs are in terms of radians.
@@ -174,9 +157,6 @@ motor_filters:
 # Set the low boundary greater or equal to the high boundary to disable the limit check.
 #   [ low roll over limit, high roll over limit, low angle, high angle]
 motor_limits:
-  - [0.0, 0.0, 0.0, 0.0]
-  - [0.0, 0.0, 0.0, 0.0]
-  - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]

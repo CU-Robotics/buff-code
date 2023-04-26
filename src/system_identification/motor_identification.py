@@ -321,7 +321,7 @@ if __name__ == '__main__':
 		sys_A, sys_B = least_squares_solver(target_motor, control)
 
 		p, v = validate_system(sys_A, sys_B)
-		Q = np.array([[1.0,  0.0,  0.0], 
+		Q = np.array([[0.0,  0.0,  0.0], 
 					  [0.0,  1.0,  0.0],
 					  [0.0,  0.0,  0.0]])
 

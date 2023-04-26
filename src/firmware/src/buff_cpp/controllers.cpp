@@ -247,7 +247,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	The goal is to build four estimates of the robots state.
 	kee_state: kinematic encoder estimate, found using motor feedback speeds (filtered) and kinematics (scaled measurements)
 	imu_state: integration of IMU accel + gyro (chassis + gimbal)	(integrated measurements)
-	kee_imu_pos: integration of a fusion (k * a) + ((1-k) * b), k < 1. of the two velocity states (kee_state, imu_state) (integrated estimates)
+	kee_imu_pos: integration of a fusion (k * a) + ((1-k) * b), w/ k <= 1. of the two velocity states (kee_state, imu_state) (integrated estimates)
 	enc_mag_pos: position of the robot based on an integration of encoders and the imu mag data (independant wrt the other estimate, doesnt use same measurements) (integrated & scaled measurements)
 
 	Using independant measurement values to build kee_state, imu_state and enc_mag_pos will help us reduce noise and improve estimates.
@@ -262,7 +262,7 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		kee_state[i] = 0;
 		for (int j = 0; j < MAX_NUM_RM_MOTORS; j++) {
-			kee_state[i] += chassis_kinematics[i][j] * feedback[j][1];
+			kee_state[i] += chassis_kinematics[i][j] * feedback[j][1]; // speed of motor j * forward_kinematics[i][j]
 		}
 	}
 
@@ -280,7 +280,7 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	// imu_state[5] = ; // feeder (can leave zero)
 	// imu_state[6] = ; // constant (can leave zero)
 
-	// fuse velocity estimates (increase k1 + k2 < 1 to 'add gain')
+	// fuse velocity estimates (increase k to 'add gain')
 	// float weights[REMOTE_CONTROL_LEN] = {(r * chassis_imu[5]), (r * chassis_imu[5]), 0, 0, 0, 0, 0};
 	// float compensated_imu_state[REMOTE_CONTROL_LEN];
 	// weighted_vector_addition(imu_state, weights, 1, -1, REMOTE_CONTROL_LEN, compensated_imu_state);
@@ -297,7 +297,7 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 
 	enc_mag_pos[2] = chassis_yaw;
 	enc_mag_pos[3] = gimbal_pitch_angle;
-	enc_mag_pos[4] = gimbal_yaw_angle;
+	enc_mag_pos[4] = gimbal_yaw_angle + chassis_yaw;
 	
 	// fuse position estimates (kinda pointless just use one or the other)
 	weighted_vector_addition(enc_mag_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);

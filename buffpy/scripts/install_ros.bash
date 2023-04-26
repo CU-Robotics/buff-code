@@ -25,8 +25,20 @@ $SUDO apt update
 
 echo -e "\n\tInstalling ros-${ROS_DISTRO}-${ROS_PKG}\n"
 
-$SUDO apt install -y --no-install-recommends ros-${ROS_DISTRO}-${ROS_PKG} ros-${ROS_DISTRO}-rqt ros-${ROS_DISTRO}-rqt-common-plugins ros-${ROS_DISTRO}-catkin ros-${ROS_DISTRO}-xacro ros-${ROS_DISTRO}-rqt-robot-plugins python3-catkin-tools
+$SUDO apt install -y --no-install-recommends \
+	ros-${ROS_DISTRO}-${ROS_PKG} \
+	ros-${ROS_DISTRO}-tf \
+	ros-${ROS_DISTRO}-rqt \
+	ros-${ROS_DISTRO}-rospy \
+	ros-${ROS_DISTRO}-xacro \
+	ros-${ROS_DISTRO}-roscpp \
+	ros-${ROS_DISTRO}-catkin \
+	ros-${ROS_DISTRO}-rosbash \
+	ros-${ROS_DISTRO}-roslaunch \
+	ros-${ROS_DISTRO}-rqt-robot-plugins \
+	ros-${ROS_DISTRO}-rqt-common-plugins
 
+$SUDO apt-mark manual ros-noetic*
 $SUDO apt update
 
 
