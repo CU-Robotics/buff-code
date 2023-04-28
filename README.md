@@ -2,7 +2,7 @@
 
 ### CU Robotics' Code Repository
 
-Buff-Code is used to build, install and debug code across a team of robots. Each robot will have a buffpy package that contains all the programs and data the system requires. The package is installed to the robot from another machine connected over ethernet. The platforms Buff-Code supports installing from are Ubuntu and sometimes other Unix/Linux will also work. If you don't have one of these platforms or have issues using buff-code natively we also offer a Docker image that can install to the robots. Buff-Code's source contains rust, cpp, python3 and bash, buffpy provides a python commandline tool to help you build the various systems.
+Buff-code is a workspace manager for software systems, it is a minimalized implementation of some ROS features. Buff-Code's purpose is to provide development tools to engineers building and designing perception systems, firmware drivers, interdevice communications and control algorithms. Given a set of projects Buff-Code will build an installable package of executables and configurations. Buff-Code will also remotely deploy the pakcages to any number of robots with any number of robot types. While Buff-Code replaces some ROS features, it relies heavily on others. Once a system is built and deployed engineers use standard rosbash tools to connect to a roscore (on a robot) and visualize different aspects of the system.
 
 ## Quick start
 checkout the [Getting started wiki](https://github.com/CU-Robotics/buff-code/wiki/Getting-Started) for more details.
@@ -27,7 +27,7 @@ The majority of functionality is based in the buffpy package. This package is se
 
         CU-Robotics Multi-Agent Deployment Manager
 
-        optional arguments:
+        optional arguments:     Deprecated
           -h, --help         show this help message and exit
           --installKeys      Push local sshkeys to the robots
           --launch LOCATION  Launch the robots software on robots
@@ -44,7 +44,7 @@ To launch a system use the run command:
   
 run will spawn all of the nodes defined in the config as well as uploading any config files to the rosparam server. The robots are all defined in buffpy/config/robots
 
-## Architecture
+## Architecture Deprecated (someone should fix this)
 buff-code
   - buffpy: A python package to handle the ugly backend
     - bin: binaries (buffpy, teensy, run)
@@ -83,7 +83,7 @@ When working on this project
 
 Version info
   - Major number: increments when large dependency changes occur (eg python3.6 -> python3.9, or Melodic -> Noetic)
-  - Minor number: increments with patches and edits to workspace tools
+  - Minor number: increments with patches and edits to workspace tools (first digit increments for incompatibilities)
 
 ## CHANGES
 *Changes include all PRs that modify the directory structure, the installed binaries and any changes that will effect workspace usage*
@@ -92,9 +92,12 @@ Version info
    - Editor: Mitchell D Scott
    - Status: back to unstable (due to the incident)
    - Description: 
+      - Firmware uses a makefile and arduino2 install to build/upload
       - Updates to controls and hid
       - moved safety switch to dr16 (cause of the incident) NEEDS TESTING ASAP
       - progress on perception, blocked by npu issue, quadtree put on hold (but still exists, please someone do something with it)
+      - Updated docker containers ~recently
+      - removed lots of deprecated things
  - Version 2.00
    - Date: Decemberish, 2022
    - Editor: Mitchell D Scott
@@ -105,6 +108,8 @@ Version info
       - Major changes to the yaml configurations that make buffpy
       - Corresponding updates to buffpy scripts to reflect config changes
       - demos for unit testing in fw, still leaves something to be desired
+      - Major dependencies update (phasing out melodic and python3.6, mostly gone)
+      - Docker containers are old and need an update
  - Version 1.00
    - Date: August 26, 2022
    - Editor: Mitchell D Scott
