@@ -87,6 +87,24 @@ Version info
 
 ## CHANGES
 *Changes include all PRs that modify the directory structure, the installed binaries and any changes that will effect workspace usage*
+ - Version 2.10
+   - Date: April, 2023
+   - Editor: Mitchell D Scott
+   - Status: back to unstable (due to the incident)
+   - Description: 
+      - Updates to controls and hid
+      - moved safety switch to dr16 (cause of the incident) NEEDS TESTING ASAP
+      - progress on perception, blocked by npu issue, quadtree put on hold (but still exists, please someone do something with it)
+ - Version 2.00
+   - Date: Decemberish, 2022
+   - Editor: Mitchell D Scott
+   - Status: Arguably stable
+   - Description: 
+      - Controls back to firmware, though hid initializes all gains, control types, motor configurations etc
+      - PC side HID was split into 3 threads, one for reading, one for writing 
+      - Major changes to the yaml configurations that make buffpy
+      - Corresponding updates to buffpy scripts to reflect config changes
+      - demos for unit testing in fw, still leaves something to be desired
  - Version 1.00
    - Date: August 26, 2022
    - Editor: Mitchell D Scott
