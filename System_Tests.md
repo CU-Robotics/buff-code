@@ -44,12 +44,13 @@
 
 ### MVP
  - Modify standard/nodes.yaml
-   - set the appropriate CAN config (should only need to check gimbal and feeder shooter, but chassis won't hurt)
-   - set the kinematics that reflect the newly added motors
+   - Update the motor_index with any missing motors
+   - Update the appropriate CAN config (should only need to check gimbal and feeder shooter, but chassis won't hurt)
+   - Update the kinematics that reflect the newly added motors
  - Connect to Active robot
- - Run the system without zero'd motor gains and validate all motor feedback and controller inputs (from autonomy and DR16)
+ - Run the system with zero'd motor gains and validate all motor feedback and controller inputs (from autonomy and DR16)
    - confirm that kinematics produce good motor references and somewhat valid state estimates (Do not proceed until done)
-   - similar to the steps in the critical safety test
+   - similar to the steps in the critical safety test (use rosbash)
    - Determine safe limits for motors with limited motion
  - Modify standard/nodes.yaml
    - set the motor gains and limits you want
@@ -58,7 +59,7 @@
    - This step is complete when the system demonstrates gimbal control (ie gimbal can track pregenerated waypoints on the PC)
  - Put it all together
    - Add ballistics scripts to perception_tools and add files to install section of buffpy/data/build/ptools.yaml
-      - or create a new project under src and a new build profile
       - `buffpy -b ptools` will then install the ballistics nodes to buffpy/lib (the location that run will look for executables)
+      - or create a new project under src and a new build profile then build with `buffpy -b <profile_name>`
    - Add the ballistics nodes, a detector node and any other exectuables to buff-nodes in standard/nodes.yaml
 
