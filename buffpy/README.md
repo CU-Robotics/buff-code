@@ -1,7 +1,7 @@
 # Buffpy
 Buffpy is two things:
 
-`buffpy/` is a deployable package that contains all the executables and configurations the robot will need.
+`buffpy/` is a deployable package that contains all the executables and configurations our robots will need.
 `buffpy/scripts` contains tools for setting up, building and installing projects into `buffpy/`.
 
 
@@ -11,14 +11,13 @@ Build projects with
 
         buffpy -b <build_profile>
 
-where a build build profile is a yaml file (filename without .yaml) under `buffpy/data/build`.
+Where a build build profile is a yaml file (filename without .yaml) under `buffpy/data/build`.
 
-These files contains a bash command to build each project and the files that need to be installed. Profiles can also include other profiles (one command to build them all).
+These files contains a bash command to build each project and the files that need to be installed. Profiles can also include other profiles (one profile to build them all).
 
 Then deploy to a robot
 
         buffpy -d
-
 
 
 ### Run Script
@@ -31,7 +30,7 @@ where `robot_name` is a configuration under `buffpy/robots`
 
 Each robot configuration contains the executables that buffpy builds and any other `ros nodes` (TODO link ros wiki) that you want to run.
 
-The configurations also contain program setup data for all `nodes`.
+The configurations also contain program setup data for all `nodes` and firmware.
 
 A `node` is a process or thread in the software pipeline. Projects produce executables, run spawns them. You can remove buffpy from the picture by manually bulding all the necesary projects and copying the products to a location known by some process spawner (could be a simple as a bash script, run `./file_path &` to spawn a process in the background).
 
