@@ -57,7 +57,7 @@
    - set the motor gains and limits you want
  - Use the script camera_calibration.py from sys_id to send a demo input to the controls
    - This script has never been run so some debugging might be needed
-   - not sure what it does atm but assume we need to change it to publish to gimbal_control_input, global heading of [gimbal, pitch, yaw, feeder] positions (note you'll need to update the feeder's position to make the gimbal shoot, flywheels use the constant value in the input)
+   - not sure what it does atm but assume we need to change it to publish to gimbal_control_input, global heading of gimbal: [pitch, yaw, feeder] positions (note you'll need to update the feeder's position to make the gimbal shoot, flywheels use the constant value in the input)
    - This step is complete when the system demonstrates gimbal control (ie gimbal can track pregenerated waypoints on the PC)
  - Put it all together
    - Add ballistics scripts to perception_tools and add files to install section of buffpy/data/build/ptools.yaml
