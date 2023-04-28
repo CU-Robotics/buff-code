@@ -7,4 +7,4 @@ A project is a build system to compile a programs and tools for robotic software
 In each directory, there is a build system and source code. Each produces executable(s) that runs on the robot or helps develop other programs that run on the robot.
 
 ## Buffpy
-Buffpy is a python tool to simplify building and deploying projects.
+Buffpy is a python tool to simplify building and deploying projects. It exists in buff-code/buffpy/scripts though, it can be called from anywhere (because it is on the PATH thanks to buff.bash)
