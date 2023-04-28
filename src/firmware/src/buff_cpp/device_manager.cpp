@@ -57,7 +57,7 @@ void Device_Manager::initializer_report_handle() {
 			// Serial.printf("%i %f\n", controller_id, input_report.get_float(4));
 			// Serial.printf("%f %f %f\n", gains[0], gains[1], gains[2]);
 			controller_manager.init_controller(controller_id, input_report.get(3), gains, limits, input_report.get_float(4));
-			controller_switch = 1;												// enable local control
+			// controller_switch = 1;												// enable local control
 			break;
 
 		case 2:	// Use the assumption IK.shape = K.T.shape
