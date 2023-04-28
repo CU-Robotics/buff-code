@@ -13,7 +13,7 @@ LED blinking = HID connected
 | **Active**   | Yes            | No                | Yes            | No            |
 | **Alive**    | Yes            | Yes               | Yes            | Yes/No        |
 
-  - Modify sys_id/nodes.yaml 
+ - Modify sys_id/nodes.yaml 
    - CAN configuration
    - zero the motor gains
    - zero the motor filters
