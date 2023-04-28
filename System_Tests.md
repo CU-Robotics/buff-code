@@ -65,6 +65,6 @@
       - or create a new project under src and a new build profile then build with `buffpy -b <profile_name>`
    - Add the ballistics nodes, a detector node and any other exectuables to buff-nodes in standard/nodes.yaml
 
-### steps farther
+### Going Further
 - Setup a rosnode that publishes an absolute gimbal control array based on waypoints set through rviz gui `rosrun rviz_gui rviz_gui`
 - Will earn the team a pizza party (with sodas)
