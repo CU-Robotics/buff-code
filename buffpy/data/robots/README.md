@@ -30,5 +30,5 @@
          - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   -1.0] # V0 = -COMP_MODE_CONST
          - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0] # V1 =  COMP_MODE_CONST
          - [  0.0,    0.0,    0.0,    0.0,    0.0,   -1.0,    0.0] # V2 =  -wheel
-    f) Update the motor limits by running the system and vizualizing the feedback (see firmware Safety test)
+    f) Update the motor limits by running the system and vizualizing the feedback (see firmware Safety test) \
     g) Set the gains conservatively and run the system then make them more aggressive to meet performance requirements
