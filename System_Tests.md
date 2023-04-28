@@ -44,7 +44,6 @@
 
 ### MVP
  - Modify standard/nodes.yaml
-   - Add the ballistics nodes, a detector node and any other exectuables to buff-nodes
    - set the appropriate CAN config (should only need to check gimbal and feeder shooter, but chassis won't hurt)
    - set the kinematics that reflect the newly added motors
  - Connect to Active robot
@@ -61,3 +60,5 @@
    - Add ballistics scripts to perception_tools and add files to install section of buffpy/data/build/ptools.yaml
       - or create a new project under src and a new build profile
       - `buffpy -b ptools` will then install the ballistics nodes to buffpy/lib (the location that run will look for executables)
+   - Add the ballistics nodes, a detector node and any other exectuables to buff-nodes in standard/nodes.yaml
+
