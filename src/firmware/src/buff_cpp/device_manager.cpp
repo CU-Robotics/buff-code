@@ -5,6 +5,8 @@
 // Uses builtin LED to show when HID is connected
 Device_Manager::Device_Manager(){
 	setup_blink();
+	timer_set(2);
+	timer_set(3);
 	controller_switch = -1;
 }
 
@@ -191,6 +193,7 @@ void Device_Manager::control_input_handle() {
 			if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
 				break;
 			}
+
 			// set the input from ros control
 			controller_manager.input[0] = input_report.get_float(2);
 			controller_manager.input[1] = input_report.get_float(6);
@@ -325,20 +328,19 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 		@return:
 		  If a packet was read or not
 	*/
-	// assure good timing
-	timer_wait_us(8, cycle_time_us);
+	// assure good timing of hid packets
+	timer_wait_us(3, cycle_time_us);
 	lifetime += cycle_time_us / 1e6;
 
 	switch (input_report.read()) {
 		case 64:
-			blink();										// only blink when connected to a robot
+			blink();										// only blink when connected to hid
 			report_switch();
 			output_report.put_float(60, lifetime);
-			timer_set(8);
+			timer_set(3);
 			break;
 		
 		default:
-			rm_can_ux.zero_can();
 			break;
 	}
 
@@ -456,7 +458,9 @@ void Device_Manager::read_sensors() {
 
 	Author: Mitchell Scott
 */
-void Device_Manager::step_controllers(float dt) {	
+void Device_Manager::step_controllers(float dt) {
+	static prev_shutdown = 1;
+
 	controller_manager.estimate_state(chassis_imu.data, chassis_imu.yaw, dt);
 
 	if (controller_switch == 1) {								// Use DR16 control input
@@ -471,28 +475,33 @@ void Device_Manager::step_controllers(float dt) {
         controller_manager.input[5] = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_mag_pos[5]);
 	}
 
-	bool new_references = timer_info_ms(2) >= 10;
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
-		// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);
-		if (new_references) {
-			controller_manager.set_reference(i);			
-			timer_set(2);
+		if (receiver.safety_shutdown == 0) {
+			if (timer_info_ms(2) >= 10) {	// only update motor references when safety switch is off
+				controller_manager.set_reference(i);			
+				timer_set(2);
+			}
+			if (prev_shutdown == 1) {
+				controller_manager.biases[i] = 0; // when turning off safety mode we want to rebias the motors
+			}
 		}
 
+		// setting feedback with bias = 0 will reset the reference and bias to the current motor pos
 		controller_manager.set_feedback(i, rm_can_ux.motor_arr[i].data, rm_can_ux.motor_arr[i].roll_over);
-		if (controller_switch == -1) {
-			controller_manager.output[i] = 0;
-			controller_manager.biases[i] = 0;
-			controller_manager.references[i][0] = controller_manager.feedback[i][0];
+	}
+
+	// does not write to the motors, only produces an output value
+	// this value will not be passed to CAN if safety switch is on
+	// we want to generate the values anyways so we can see if they
+	// are unreasonable without running the motors (debug feature)
+	controller_manager.step_motors();
+
+	// now use the safety switch to stop from setting output
+	if (receiver.safety_shutdown == 0) {								// Use the HIDLayers CAN output values or the controllers
+		for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {				// Send the controllers output to the can interface
+			// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);
+			rm_can_ux.set_output(i, controller_manager.output[i]);
 		}
 	}
-
-	if (controller_switch > 0) {								// Use the HIDLayers CAN output values or the controllers
-		controller_manager.step_motors();
-	}
-
-	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {				// Send the controllers output to the can interface
-		// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);
-		rm_can_ux.set_output(i, controller_manager.output[i]);
-	}
+	prev_shutdown = receiver.safety_shutdown;
 }
