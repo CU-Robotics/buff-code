@@ -79,14 +79,14 @@ struct Controller_Manager {
 	float kee_imu_pos[REMOTE_CONTROL_LEN];
 	float enc_mag_pos[REMOTE_CONTROL_LEN];
 	float position_est[REMOTE_CONTROL_LEN];
-	
+
 	float autonomy_input[REMOTE_CONTROL_LEN];
 
 	int controller_types[MAX_NUM_RM_MOTORS];
 
 	LPFilter enc_filters[MAX_REV_ENCODERS];
 	LPFilter motor_filters[MAX_NUM_RM_MOTORS];
-	
+
 	Feedback_Controller controllers[MAX_NUM_RM_MOTORS];
 };
 

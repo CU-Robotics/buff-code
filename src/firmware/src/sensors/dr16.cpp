@@ -107,126 +107,136 @@ void DR16::print_control_data(){
 		6: yaw
 	*/
 
-int DR16::generate_control_from_joysticks() {
+int DR16::generate_control() {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
 
 	// debugging (bitwise view)
 	// print_receiver_input(tmp);
 
-	// Normalize the joystick values
-	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -660, 660);
-	float r_stick_y = bounded_map(((tmp[2] & 0x3F) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -660, 660);
-	// Set the left stick to [-1:1]
-	// 1 / 660.0 = 0.00151515 (avoids an unnecesarry division)
-	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -660, 660);
-	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -660, 660);
+	// Normalized Controller Inputs
+	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -1000, 1000) / 1000.0;
+	float r_stick_y = bounded_map(((tmp[2] & 0x3F) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -1000, 1000) / 1000.0;
+	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -1000, 1000) / 1000.0;
+	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -1000, 1000) / 1000.0;
+	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -1000, 1000) / 1000.0;
+	int l_switch = (tmp[5] & 0xC0) >> 6;
+	int r_switch = (tmp[5] & 0x30) >> 4;
+
+	// Keyboard and Mouse Inputs
+	bool key_w = tmp[14] & 0b00000001;
+	bool key_s = tmp[14] & 0b00000010;
+	bool key_a = tmp[14] & 0b00000100;
+	bool key_d = tmp[14] & 0b00001000;
+	bool key_shift = tmp[14] & 0b00010000;
+	bool key_ctrl = tmp[14] & 0b00100000;
+	bool key_q = tmp[14] & 0b01000000;
+	bool key_e = tmp[14] & 0b10000000;
+	bool key_r = tmp[15] & 0b00000001;
+	bool key_f = tmp[15] & 0b00000010;
+	bool key_g = tmp[15] & 0b00000100;
+	bool key_z = tmp[15] & 0b00001000;
+	bool key_x = tmp[15] & 0b00010000;
+	bool key_c = tmp[15] & 0b00100000;
+	bool key_v = tmp[15] & 0b01000000;
+	bool key_b = tmp[15] & 0b10000000;
+
+	int mouse_x = (int16_t)(tmp[6] | (tmp[7] << 8));
+	int mouse_y = (int16_t)(tmp[8] | (tmp[9] << 8));
+	int mouse_z = (int16_t)(tmp[10] | (tmp[11] << 8));
+	bool l_mouse_button = tmp[12];
+	bool r_mouse_button = tmp[13];
 
 
-	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -400, 400);
-	// Serial.println("\n\t===== Normalized Sticks");
-	// Serial.printf("\t%f\t%f\t%f\t%f\n", 
-	// 	r_stick_x, r_stick_y, l_stick_x, l_stick_y);
-
-	// data[0] = (tmp[5] & 0x30) >> 4;				// switch 1
-	// data[1] = (tmp[5] & 0xC0) >> 6;				// switch 2
-	data[0] = l_stick_x * JOYSTICK_X_SENSITIVITY;	// X & Y velocity (read directly)
-	data[1] = l_stick_y * JOYSTICK_Y_SENSITIVITY;
-
-	if ((tmp[5] & 0x30) >> 4 == 1.0) {						// angular velocity (theta)
-		data[2] = 900.0;
-	} 
-	else if ((tmp[5] & 0x30) >> 4 == 2.0) {
-		data[2] = -900.0;
-	} 
-	else {
-		data[2] = 0.0;
-	}
-
-	// wrap the angles
-	// pan/tilt accumulation 
-	data[3] = r_stick_y * JOYSTICK_PITCH_SENSITIVITY;
-	data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
-	data[5] = wheel;
-	data[6] = 0.0;
+	// Safety Switch
 	safety_shutdown = 0;
-	
-	if ((tmp[5] & 0xC0) >> 6 == 2.0) {
-		data[6] = FLYWHEEL_SPEED;
-		if (l_stick_y <= -650  * JOYSTICK_Y_SENSITIVITY) { // autonomy mode at 95% of min pitch
+	if (l_switch == 2.0) {
+		// Toggle Sentry Control HUD
+		if (key_f && !f_prev) sentry_control_hud = !sentry_control_hud;
+		f_prev = key_f;
+
+		// Chassis Translation
+		data[0] = (key_w - key_s) * CHASSIS_SPEED;
+		data[1] = (key_d - key_a) * CHASSIS_SPEED;
+
+		// Chassis Spin
+		if (key_ctrl && !ctrl_prev) beyblade_mode = !beyblade_mode;
+		ctrl_prev = key_ctrl;
+		if (beyblade_mode || key_shift) {
+			if (key_w || key_s || key_d || key_a) data[2] = SPINRATE_TRANSLATE; // Spin slower while translating
+			else data[2] = SPINRATE_STILL; // Spin fast when still
+		} else {
+			data[2] = (key_x - key_z) * SPINRATE_TRANSLATE;
+		}
+
+		// Gimbal
+		if (!sentry_control_hud) {
+			data[3] = mouse_y * MOUSE_SENSITIVITY;
+			data[4] = mouse_x * MOUSE_SENSITIVITY;
+		}
+
+		// Shooter/Feeder
+		if (key_q) shooter_mode = 0;
+		if (key_e) shooter_mode = 1;
+
+		if (l_mouse_button && !sentry_control_hud) {
+			switch (shooter_mode) {
+				case 0:
+					data[5] = FEEDRATE_LOW;
+					break;
+				case 1:
+					data[5] = FEEDRATE_HIGH;
+					break;
+				default:
+					data[5] = 0;
+			}
+		}
+
+		data[6] = FLYWHEEL_SPEED; // Always keep the flywheel on
+
+		if (r_mouse_button) { // Engage autonomous gimbal when right mouse button is pressed
 			return AUTONOMY_MODE;
 		}
+
 		return USER_DRIVE_MODE;
-	} 
-	else if ((tmp[5] & 0xC0) >> 6 == 1.0) {	
+	} else if ((tmp[5] & 0xC0) >> 6 == 3.0) {	
+		// Chassis Translation
+		data[0] = r_stick_x * JOYSTICK_X_SENSITIVITY;
+		data[1] = r_stick_y * JOYSTICK_Y_SENSITIVITY;
+
+		// Chassis Spin
+		data[2] = SPINRATE_STILL * wheel;
+
+		// Gimbal
+		data[3] = l_stick_y * JOYSTICK_PITCH_SENSITIVITY;
+		data[4] = l_stick_x * JOYSTICK_PAN_SENSITIVITY;
+
+		// Shooter/Feeder
+		if (r_switch == 1.0) {
+			data[5] = FEEDRATE_LOW;
+			data[6] = FLYWHEEL_SPEED;
+		} else if (r_switch == 3.0) {
+			data[5] = 0.0;
+			data[6] = FLYWHEEL_SPEED;
+		} else {
+			data[5] = 0.0;
+			data[6] = 0.0;
+		}
+
+		return ROBOT_DEMO_MODE;
+	} else { // Engage SAFETY mode when the switch is in position 1. Also acts as the default.
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 			data[i] = 0;
 		}
 		safety_shutdown = 1;
 		return USER_SHUTDOWN;
-	} 
-	else {
-		return ROBOT_DEMO_MODE;
 	}
-	// Serial.println(data[0]);
 }
-
-void DR16::generate_output() {
-	byte tmp[18];
-	serial->readBytes(tmp, 18);
-
-	float r_stick_x = bounded_map(((tmp[1] & 0x07) << 8) | tmp[0], 364, 1684, -1000, 1000) / 1000.0;
-	float r_stick_y = bounded_map(((tmp[2] & 0x3F) << 5) | ((tmp[1] & 0xF8) >> 3), 364, 1684, -1000, 1000) / 1000.0;
-
-	float l_stick_x = bounded_map((((tmp[4] & 0x01) << 10) | (tmp[3] << 2)) | ((tmp[2] & 0xC0) >> 6), 364, 1684, -1000, 1000) / 1000.0;
-	float l_stick_y = bounded_map(((tmp[5] & 0x0F) << 7) | ((tmp[4] & 0xFE) >> 1), 364, 1684, -1000, 1000) / 1000.0;
-
-	float wheel = bounded_map((tmp[17] << 8) | tmp[16], 364, 1684, -1000, 1000) / 1000.0;
-
-	data[0] = l_stick_x;
-	out.l_stick_x = l_stick_x;
-	data[1] = l_stick_y;
-	out.l_stick_y = l_stick_y;
-	data[2] = r_stick_x;
-	out.r_stick_x = r_stick_x;
-	data[3] = r_stick_y;
-	out.r_stick_y = r_stick_y;
-	data[4] = wheel;
-	out.wheel = wheel;
-	data[5] = (tmp[5] & 0x30) >> 4;				// switch 1
-	out.r_switch = data[5];
-	data[6] = (tmp[5] & 0xC0) >> 6;				// switch 2
-	out.l_switch = data[6];
-
-	// for (float value : data) Serial.printf("%f ", value);
-	// Serial.println();
-}
-
-// void DR16::control_test() {
-// 	byte tmp[18];
-// 	serial->readBytes(tmp, 18);
-// 	for (size_t i = 0; i < sizeof(tmp); i++) {
-// 		Serial.printf(" ", BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(tmp[i]));
-// 	}
-// 	Serial.println();
-// }
 
 int DR16::read() {
-    // if (serial->available() > numBytes) {     				// if there are more bytes in the serial buffer, update the number of bytes and the lastTime variable
-    //     numBytes = serial->available();
-    //     lastTime = micros();
-    // }
-
-    // if (micros() - lastTime > 150) {  						// if more than 150 microseconds has passed since the last byte recieved then frame has probably ended
-    //     if (serial->available() % 18 != 0) {  				// if the number of bytes is not divisible by 18 then there is a mangled frame and all data should be thrown out
-    //         while (serial->available()) serial->read();     // Why not Serial.clear(), This seems complicated it was working fine with a if bytes available == 18 read; else clear();
-    //         numBytes = 0;
-    //     }
-    // }
-
 	if (serial->available() == 18) {
 		timer_set(1);
-		return generate_control_from_joysticks();
+		return generate_control();
 	}
 
 	if (serial->available() > 18) {

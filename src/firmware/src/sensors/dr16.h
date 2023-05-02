@@ -13,7 +13,16 @@
 #define JOYSTICK_Y_SENSITIVITY 			1.5
 #define JOYSTICK_PAN_SENSITIVITY 		0.6
 #define JOYSTICK_PITCH_SENSITIVITY 		0.15
-#define FLYWHEEL_SPEED					900
+#define MOUSE_SENSITIVITY 1.0
+#define CHASSIS_SPEED 900.0
+
+#define SPINRATE_STILL 900.0
+#define SPINRATE_TRANSLATE 450.0
+
+#define FEEDRATE_LOW 200.0
+#define FEEDRATE_HIGH 400.0
+
+#define FLYWHEEL_SPEED					900.0
 
 /*
 	 Driver software for the dr16 receiver.
@@ -32,23 +41,12 @@
 float normalize_channel(int16_t);
 float wrap_radians(float);
 
-struct DR16_DATA {
-	float l_stick_x;
-	float l_stick_y;
-	float r_stick_x;
-	float r_stick_y;
-	float wheel;
-	int l_switch;
-	int r_switch;
-};
-
 struct DR16 {
 		DR16();
 		DR16(HardwareSerial*);
 		void print_receiver_input(byte*);
 		void print_control_data();
-		int generate_control_from_joysticks();
-		void generate_output();
+		int generate_control();
 		void control_test();
 		int read(); 	// return the user mode input (different from the control mode)
 
@@ -57,10 +55,13 @@ struct DR16 {
 		uint32_t timestamp;
 
 		float data[7];
-		DR16_DATA out;
 		int safety_shutdown;
 
-		float demo[];
+		bool beyblade_mode = 0;
+		int shooter_mode = 0;
+		bool sentry_control_hud = 0;
+		bool ctrl_prev = 0;
+		bool f_prev = 0;
 		
 		HardwareSerial* serial;
 };
