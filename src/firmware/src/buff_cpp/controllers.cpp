@@ -274,12 +274,12 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	// velocity of IMU relative to world in the chassis reference frame
 	imu_state[0] += imu_accel_state[0] * dt;
 	imu_state[1] += imu_accel_state[1] * dt;
-	imu_state[2] = chassis_imu[5]; // gyro yaw
+	imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
 	// use other imu for the rest
-	// imu_state[3] = ; // pitch
-	// imu_state[4] = ; // yaw
-	// imu_state[5] = ; // feeder (can leave zero)
-	// imu_state[6] = ; // constant (can leave zero)
+	imu_state[3] = chassis_imu[3] * 0.017453; // pitch
+	imu_state[4] = chassis_imu[4] * 0.017453; // yaw
+	imu_state[5] = 0; // feeder (can leave zero)
+	imu_state[6] = 0; // constant (can leave zero)
 
 	// fuse velocity estimates (increase k to 'add gain')
 	// float weights[REMOTE_CONTROL_LEN] = {(r * chassis_imu[5]), (r * chassis_imu[5]), 0, 0, 0, 0, 0};
