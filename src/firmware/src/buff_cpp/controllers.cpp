@@ -276,8 +276,8 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	imu_state[1] += imu_accel_state[1] * dt;
 	imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
 	// use other imu for the rest
-	imu_state[3] = chassis_imu[3] * 0.017453; // pitch
-	imu_state[4] = chassis_imu[4] * 0.017453; // yaw
+	imu_state[3] = chassis_imu[4] * 0.017453; // pitch
+	imu_state[4] = chassis_imu[5] * 0.017453; // yaw
 	imu_state[5] = 0; // feeder (can leave zero)
 	imu_state[6] = 0; // constant (can leave zero)
 
