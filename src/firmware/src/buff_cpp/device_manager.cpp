@@ -362,10 +362,9 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 void Device_Manager::push_can(){
 	if (receiver.safety_shutdown) {
 		rm_can_ux.zero_can();
+		
 	}
-	else {
-		rm_can_ux.write_can();
-	}
+	rm_can_ux.write_can();
 
 	for (int i = 0; i < NUM_CAN_BUSES; i++) {
 		rm_can_ux.read_can(i + 1);		
@@ -459,7 +458,7 @@ void Device_Manager::read_sensors() {
 	Author: Mitchell Scott
 */
 void Device_Manager::step_controllers(float dt) {
-	static prev_shutdown = 1;
+	static int prev_shutdown = 1;
 
 	controller_manager.estimate_state(chassis_imu.data, chassis_imu.yaw, dt);
 

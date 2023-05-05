@@ -222,7 +222,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	// set tmp[2] to the sum of the change in input (make gain 3 act as a damper)
 	if (biases[controller_id] == 0){
 		biases[controller_id] = data[0] + (2 * PI * rollover);
-		references[i][0] = 0;
+		references[controller_id][0] = 0;
 	}
 
 	feedback[controller_id][0] = data[0] + (2 * PI * rollover) - biases[controller_id];
