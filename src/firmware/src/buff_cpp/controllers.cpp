@@ -178,10 +178,19 @@ void Controller_Manager::step_motors() {
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
 		switch(controller_types[i]){
 			case 0:
-				output[i] = controllers[i].step(references[i], feedback[i]) * ratio;
+				output[i] = controllers[i].step(references[i], feedback[i]);
+				break;
 
 			case 1:
 				output[i] = controllers[i].step(references[i], feedback[i]);
+				break;
+
+			case 2:
+				output[i] = controllers[i].step(references[i], feedback[i]);
+				break;
+
+			default:
+				break;
 		}
 		// Serial.printf("%.4f, ", output[i]);
 	}
@@ -230,10 +239,11 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 
 	switch(controller_types[controller_id]) {
 		case 0:
-			feedback[controller_id][2] = output[controller_id] * feedback[controller_id][1]; // voltage times current
+		case 1:
+			// feedback[controller_id][2] = output[controller_id] * feedback[controller_id][1]; // voltage times current
 			break;
 
-		case 1:
+		case 2:
 			feedback[controller_id][2] = sin((feedback[controller_id][0] / 12) - (PI / 2));
 			break;
 

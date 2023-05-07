@@ -474,11 +474,11 @@ void Device_Manager::step_controllers(float dt) {
         controller_manager.input[5] = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_mag_pos[5]);
 	}
 
+	bool new_reference = timer_info_ms(2) >= 10;
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
 		if (receiver.safety_shutdown == 0) {
-			if (timer_info_ms(2) >= 10) {	// only update motor references when safety switch is off
+			if (new_reference) {	// only update motor references when safety switch is off
 				controller_manager.set_reference(i);			
-				timer_set(2);
 			}
 			if (prev_shutdown == 1) {
 				controller_manager.biases[i] = 0; // when turning off safety mode we want to rebias the motors
@@ -487,6 +487,9 @@ void Device_Manager::step_controllers(float dt) {
 
 		// setting feedback with bias = 0 will reset the reference and bias to the current motor pos
 		controller_manager.set_feedback(i, rm_can_ux.motor_arr[i].data, rm_can_ux.motor_arr[i].roll_over);
+	}
+	if (new_reference) {
+		timer_set(2);
 	}
 
 	// does not write to the motors, only produces an output value

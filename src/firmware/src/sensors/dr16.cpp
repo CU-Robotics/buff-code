@@ -243,7 +243,7 @@ int DR16::read() {
 		serial->clear();
 	}
 
-	if (timer_info_ms(1) > 50){
+	if (timer_info_ms(1) > 200) {
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 			data[i] = 0;
 		}
