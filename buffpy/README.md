@@ -2,27 +2,37 @@
 Buffpy is two things:
 
 `buffpy/` is a deployable package that contains all the executables and configurations our robots will need.
-`buffpy/scripts` contains tools for setting up, building and installing projects into `buffpy/`.
+`buffpy/src` contains tools for setting up, building and installing projects into `buffpy/`.
 
 
 ## Development Tools
 
+Buff-Code uses build profiles to generate executables (nodes). A build build profile is a yaml file (filename without .yaml) under `buffpy/data/build`
+
+Each build profile contains a directory containing source code and bash commands to initialize, build and install the project.
+
 Build projects with 
+
+        buffpy --build <build_profile>
 
         buffpy -b <build_profile>
 
-Where a build build profile is a yaml file (filename without .yaml) under `buffpy/data/build`.
+Clean Projects with
 
-These files contains a bash command to build each project and the files that need to be installed. Profiles can also include other profiles (one profile to build them all).
+        buffpy --clean <build_profile>
 
-Then deploy to a robot
+        buffpy -c <build_profile>
+
+Buffpy can also deploy itself to a robot over WiFi
+
+        buffpy --deploy
 
         buffpy -d
 
 
-### Run Script
+### Run
 
-Another `buffpy/scripts` python tool to launch our robot's software.
+Another `buffpy/src` python tool to launch our robot's software.
 
         run <robot_name>
 
@@ -84,17 +94,9 @@ While on its hotspot, you can use any ssh-related commands.
 
 ## Project Clean up 
 
-sus atm
-
-        buffpy --clean all
-
 TODO: Building
         - build cache (for profiles building multiple projects) 
         - figure out projects that need libs from other projects 
 
 TODO: Deploying
         - deploy cache, if the robot has the files don't send them
-
-TODO: Cleaning
-        - better base clean implementation (removing buffpy installed items based on build profiles)
-        - add project specific clean commands (to clean things in source), these might have to be seperate commands

@@ -1,4 +1,18 @@
-# Adding a robot definition
+# Robot Descriptions
+Yaml files containing the nodes and data that make up a robot. Almost a rip off of roslaunch
+
+## Adding a robot
+
+1. Modify `robots.yaml` to have the IP and type of your robot
+    
+    IP_ADDRESS:
+      'ROBOT_TYPE'
+
+## Setting a machine's default robot
+
+1. Change `self.txt` to have the name of the robot
+
+## Adding a robot definition
 
 1. Copy penguin into a directory with the name of your robot
 2. Swap the urdf for your own
