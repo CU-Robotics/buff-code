@@ -1,7 +1,6 @@
 project: 'firmware'
 build: 'make upload'
-bin: ['build/src/main.hex']
-
-
-
+clean: 'make clean'
+targets: ['build/src/main.hex']
+install: ['bin']
 

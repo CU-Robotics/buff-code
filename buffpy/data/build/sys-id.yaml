@@ -1,4 +1,3 @@
 project: 'system_identification'
-install: ['motor_identification.py']
-
-
+targets: ['motor_identification.py']
+install: ['lib']

@@ -11,17 +11,13 @@ from tools import *
 from build_profile import Build_Profile, Buffpy_Path_LUT
 
 def clean_profile(profile):
-	profile_path = os.path.join(os.getenv("PROJECT_ROOT"), "buffpy", "data", "build", f"{profile}.yaml")
-	buffpy_src = os.path.join(os.getenv("PROJECT_ROOT"), "src")
 	bp = Build_Profile();
-	bp.load_profile(profile_path, buffpy_src)
+	bp.load_profile(profile)
 	bp.run_clean()
 
 def build_profile(profile):
-	profile_path = os.path.join(os.getenv("PROJECT_ROOT"), "buffpy", "data", "build", f"{profile}.yaml")
-	buffpy_src = os.path.join(os.getenv("PROJECT_ROOT"), "src")
 	bp = Build_Profile();
-	bp.load_profile(profile_path, buffpy_src)
+	bp.load_profile(profile)
 	bp.run_build()
 
 def main():
@@ -50,8 +46,9 @@ def main():
 	ap = parser.parse_args(sys.argv[1:])
 
 	if ap.clean:
-		if ap.clean in ['lib', 'bin', 'docs']: # clean the workspace
+		if ap.clean in Buffpy_Path_LUT: # clean the workspace
 			reset_directory(Buffpy_Path_LUT[ap.clean])
+			buff_log(f"Reset directory {Buffpy_Path_LUT[ap.clean]}", 0)
 		else:	# clean a profile
 			clean_profile(ap.clean)
 

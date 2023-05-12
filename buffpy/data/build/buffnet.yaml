@@ -1,3 +1,5 @@
 project: 'buffnet'
 build: './build.sh'
-install: ['install/buffnet/buffnet', 'install/buffnet/lib']
+clean: 'rm -rf build && rm -rf install'
+targets: ['install/buffnet/buffnet', 'install/buffnet/lib']
+install: ['lib', 'lib']

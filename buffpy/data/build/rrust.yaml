@@ -1,6 +1,8 @@
 project: 'buff_rust'
 build: 'cargo build --release && cargo fmt'
-install: ['target/release/comms_node']
+clean: 'cargo clean'
+targets: ['target/release/comms_node']
+install: ['lib']
 
 
 

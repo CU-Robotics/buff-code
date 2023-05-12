@@ -1,2 +1,4 @@
 project: 'perception_tools'
-install: ['demo_ros_stream.py', 'model_convert.py', 'model_trainer.py', 'dataset.txt', 'sample_img.jpg']
+clean: 'rm -rf __pycache__'
+targets: ['demo_ros_stream.py', 'model_convert.py', 'model_trainer.py', 'dataset.txt', 'sample_img.jpg']
+install: ['lib', 'lib', 'lib', 'lib', 'lib']

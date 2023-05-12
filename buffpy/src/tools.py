@@ -3,6 +3,14 @@
 import os
 import shutil
 
+MESSAGE_TYPES = {0: "INFO", 1: "WARNING", 2: "ERROR"}
+
+def buff_log(msg, status):
+	if status is None:
+		status = 2
+
+	print(f"[Buffpy] {MESSAGE_TYPES[status]}: {msg}")
+
 def reset_directory(directory):
 	if os.path.exists(directory):
 		shutil.rmtree(directory)
@@ -28,6 +36,7 @@ def copy_packages(src_path, target_src, dst_path):
 	os.chdir(src_path)
 	for (item, dst) in zip(target_src, dst_path):
 		src = os.path.join(src_path, item)
+		buff_log(f"Installing {src} -> {dst}", not os.path.exists(src))
 		if os.path.isdir(item):
 			copy_dir_from_profile(src, dst)
 		elif os.path.isfile(item):
