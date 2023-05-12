@@ -23,21 +23,18 @@ Now run the install from the root of the project (/home/$USER/buff-code)
 
 The majority of functionality is based in the buffpy package. This package is setup as a command line tool in buff.bash. All you need to utilize this package is call 'buffpy' from the command line.
 
-	usage: /home/m_dyse/buff-code/buffpy/bin/buffpy [-h] [--installKeys] [--launch LOCATION] [--botPull] [--build PROFILE] [--install] [--diagnostic] [--initialize] [--clean]
+    CURO CLI Toolset:
 
-        CU-Robotics Multi-Agent Deployment Manager
+    optional arguments:
+      -h, --help            show this help message and exit
+      -b [PROFILE], --build [PROFILE]
+                            Builds the workspace locally
+      --train MODEL         Trains a Yolov5 model locally
+      -d, --deploy          Deploys build to the registered robots
+      -i, --initialize      Initializes registered devices
+      -c [PROFILE], --clean [PROFILE]
+                            Clean the entire workspace or a project. use profile=(lib,data) to clean workspace
 
-        optional arguments:     Deprecated
-          -h, --help         show this help message and exit
-          --installKeys      Push local sshkeys to the robots
-          --launch LOCATION  Launch the robots software on robots
-          --botPull          Pull data from the robot at ROBOT_IP
-          --build PROFILE    Builds the workspace locally (use profile debug)
-          --install          Installs build to the registered robots
-          --diagnostic       Tests a workspace installation and tools
-          --initialize       Initializes registered devices
-          --clean            Clean the current bin and data, NOT recoverable; only run this if you are sure you want to
-	
 To launch a system use the run command:
 
     run <name_of_robot>
