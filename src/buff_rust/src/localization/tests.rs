@@ -329,4 +329,49 @@ pub mod quadtree_tests {
         //     &mut None => panic!("failed to set head"),
         // }
     }
+
+    #[test]
+    pub fn quadtree_display() {
+        let zero = vec![0.0; 3];
+        let points = vec![
+            vec![0.0, 0.0, 0.0],
+            vec![1.0, 1.0, 0.0],
+            vec![0.05, 10.0, 0.0],
+            vec![10.0, 10.0, 0.0],
+            vec![-10.0, 0.05, 0.0],
+            vec![10.0, 1.0, 0.0],
+            vec![-1.5, 1.0, 0.0],
+            vec![0.25, 0.25, 0.0],
+        ];
+
+        let mut qt = QuadTree::new();
+        // objects[0] is self, make a mock point to account for it
+        // let pose = ArenaObject::new_robot(points[0].clone(), zero.clone());
+        let pose1 = ArenaObject::new_robot(points[1].clone(), zero.clone());
+        let pose2 = ArenaObject::new_tag(points[2].clone(), zero.clone(), 0.0);
+        let pose3 = ArenaObject::new_wall(points[3].clone(), zero.clone(), 5.0, 5.0);
+        let pose4 = ArenaObject::new_wall(points[4].clone(), zero.clone(), 5.0, 5.0);
+        let pose5 = ArenaObject::new_robot(points[5].clone(), zero.clone());
+        let pose6 = ArenaObject::new_robot(points[6].clone(), zero.clone());
+        let pose7 = ArenaObject::new_robot(points[7].clone(), zero.clone());
+
+        // count insertions, the constructor inserts self at 0
+        // self doesn't necesarily stay as the head
+        let mut insertion_count = 1;
+        // insertion_count += if qt.insert(pose) { 1 } else { 0 };
+        insertion_count += insert_with_debug(&mut qt, pose1);
+        insertion_count += insert_with_debug(&mut qt, pose2);
+        insertion_count += insert_with_debug(&mut qt, pose3);
+        insertion_count += insert_with_debug(&mut qt, pose4);
+        insertion_count += insert_with_debug(&mut qt, pose5);
+        insertion_count += insert_with_debug(&mut qt, pose6);
+        insertion_count += insert_with_debug(&mut qt, pose7);
+
+        qt.print();
+
+        let t = Instant::now();
+        while t.elapsed().as_secs() < 5 {
+            qt.display()
+        }
+    }
 }

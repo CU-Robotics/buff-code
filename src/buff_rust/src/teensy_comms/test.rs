@@ -262,34 +262,34 @@ pub mod comms_tests {
     }
 
     pub fn initializer_test(reader: &mut HidReader, writer: &mut HidWriter) {
-        let mut robot_status = BuffBotStatusReport::new("penguin");
+        let mut robot_status = RobotStatus::new("penguin");
         let initializers = robot_status.load_initializers();
         let mut teensy_cyccnt = 0.0;
         println!("\nTesting initializers:...");
         initializers.iter().for_each(|init| {
-            writer.send_report(255, init[1..].to_vec());
-            teensy_cyccnt = watch_for_report(reader, 255, 5, init[..3].to_vec(), teensy_cyccnt);
+            writer.send_report(INITIALIZER_REPORT_ID, init[1..].to_vec());
+            teensy_cyccnt = watch_for_report(reader, INITIALIZER_REPORT_ID, 5, init[..3].to_vec(), teensy_cyccnt);
         });
     }
 
     pub fn imu_connection_test(reader: &mut HidReader, writer: &mut HidWriter) {
         println!("\nTesting imu access:...\n");
-        writer.send_report(3, vec![0]);
-        watch_for_packet_data(reader, 3, 5, 2, 36, 0.0);
+        writer.send_report(SENSOR_REPORT_ID, vec![0]);
+        watch_for_packet_data(reader, SENSOR_REPORT_ID, 5, 2, 36, 0.0);
         println!("IMU data: {:?}", reader.input.get_floats(2, 9));
     }
 
     pub fn dr16_connection_test(reader: &mut HidReader, writer: &mut HidWriter) {
         println!("\nTesting dr16 access:...\n");
-        writer.send_report(3, vec![2]);
-        watch_for_packet_data(reader, 3, 5, 2, 24, 0.0);
+        writer.send_report(SENSOR_REPORT_ID, vec![2]);
+        watch_for_packet_data(reader, SENSOR_REPORT_ID, 5, 2, 24, 0.0);
         println!("DR16 data {:?}", reader.input.get_floats(2, 6));
     }
 
     pub fn motor_feedback_test(reader: &mut HidReader, writer: &mut HidWriter) {
         println!("\nTesting motor feedback:...\n");
-        writer.send_report(1, vec![1]);
-        watch_for_packet_data(reader, 1, 10, 2, 49, 0.0);
+        writer.send_report(MOTOR_REPORT_ID, vec![1]);
+        watch_for_packet_data(reader, MOTOR_REPORT_ID, 10, 2, 49, 0.0);
         println!("Motor 5 data: {:?}", reader.input.get_floats(14, 3));
     }
 
@@ -298,19 +298,19 @@ pub mod comms_tests {
         let bytes = f32::to_be_bytes(0.2).to_vec();
         // set up control output for motor 4 & 5
         writer.send_report(
-            2,
+            CONTROLLER_REPORT_ID,
             vec![
-                0, 1, bytes[0], bytes[1], bytes[2], bytes[3], bytes[0], bytes[1], bytes[2],
+                MOTOR_INIT_SWITCH_MODE, 0, bytes[0], bytes[1], bytes[2], bytes[3], bytes[0], bytes[1], bytes[2],
                 bytes[3],
             ],
         );
-        watch_for_packet(reader, 2, 5, 0.0);
+        watch_for_packet(reader, CONTROLLER_REPORT_ID, 5, 0.0);
 
         let t = Instant::now();
         while t.elapsed().as_secs() < 1 {}
 
         // zero things out
-        writer.send_report(2, vec![0, 1]);
+        writer.send_report(CONTROLLER_REPORT_ID, vec![MOTOR_INIT_SWITCH_MODE, 0]);
     }
 
     pub fn gimbal_input_control_test(reader: &mut HidReader, writer: &mut HidWriter) {
@@ -319,27 +319,27 @@ pub mod comms_tests {
         let mut teensy_cyccnt = 0.0;
         while t.elapsed().as_secs() < 3 {}
         // set up control output for motor 4, 5 & 6
-        writer.output.puts(0, vec![2, 2]);
+        writer.output.puts(0, vec![CONTROLLER_REPORT_ID, 2]);
         writer.output.put_float(3, 1.0);
-        writer.output.put_float(7, 1.0);
-        writer.output.put_float(11, 1.0);
+        writer.output.put_float(7, 0.0);
+        writer.output.put_float(11, 0.0);
         writer.write();
-        teensy_cyccnt = watch_for_packet(reader, 2, 5, teensy_cyccnt);
+        teensy_cyccnt = watch_for_packet(reader, CONTROLLER_REPORT_ID, 5, teensy_cyccnt);
 
         t = Instant::now();
         while t.elapsed().as_secs() < 3 {}
 
         // check chassis controllers
-        writer.send_report(2, vec![1]);
-        teensy_cyccnt = watch_for_no_packet_data(reader, 2, 5, 3, 48, teensy_cyccnt);
+        writer.send_report(CONTROLLER_REPORT_ID, vec![CONTROLLER_REQUEST_SWITCH_MODE]);
+        teensy_cyccnt = watch_for_no_packet_data(reader, CONTROLLER_REPORT_ID, 5, 3, 48, teensy_cyccnt);
 
         // check gimbal controllers
-        writer.send_report(2, vec![1, 1]);
-        teensy_cyccnt = watch_for_packet_data(reader, 2, 5, 15, 12, teensy_cyccnt);
+        writer.send_report(CONTROLLER_REPORT_ID, vec![CONTROLLER_REQUEST_SWITCH_MODE, 1]);
+        teensy_cyccnt = watch_for_packet_data(reader, CONTROLLER_REPORT_ID, 5, 15, 12, teensy_cyccnt);
 
         // zero things out
-        writer.send_report(2, vec![2]);
-        watch_for_packet(reader, 2, 5, teensy_cyccnt);
+        writer.send_report(CONTROLLER_REPORT_ID, vec![2]);
+        watch_for_packet(reader, CONTROLLER_REPORT_ID, 5, teensy_cyccnt);
     }
 
     pub fn latency_test(reader: &mut HidReader, writer: &mut HidWriter) {
@@ -348,11 +348,11 @@ pub mod comms_tests {
         // mock request for controller 0 & 1 status
         let mut teensy_cyccnt = 0.0;
         while t.elapsed().as_millis() < 900 {
-            teensy_cyccnt = packet_request_test(reader, writer, 2, vec![1, 0, 0, 1], teensy_cyccnt)
+            teensy_cyccnt = packet_request_test(reader, writer, CONTROLLER_REPORT_ID, vec![CONTROLLER_REQUEST_SWITCH_MODE, 0, 0, 1], teensy_cyccnt)
         }
-
+        // mock request for controller 2 & 3 status
         while t.elapsed().as_millis() < 900 {
-            teensy_cyccnt = packet_request_test(reader, writer, 2, vec![1, 0, 2, 3], teensy_cyccnt)
+            teensy_cyccnt = packet_request_test(reader, writer, CONTROLLER_REPORT_ID, vec![CONTROLLER_REQUEST_SWITCH_MODE, 0, 2, 3], teensy_cyccnt)
         }
     }
 

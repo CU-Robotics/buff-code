@@ -50,23 +50,27 @@ if [[ "${PATH}" != *"/.cargo"*  && -f ${HOME}/.cargo/env ]]; then
 fi
 
 #		Setup python tools
-
-if [[ "${PATH}" != *"${PROJECT_ROOT}/buffpy/scripts"* ]]; then
-	export PATH="${PROJECT_ROOT}/buffpy/scripts:${PATH}"
+if [[ -n "/usr/local/bin/buffpy" ]]; then
+	${SUDO} touch "/usr/local/bin/buffpy"
+	echo "/usr/bin/env python3 $PROJECT_ROOT/buffpy/src/cli.py \$@" | ${SUDO} tee "/usr/local/bin/buffpy"
+	${SUDO} chmod +x "/usr/local/bin/buffpy"
+fi 
+if [[ -n "/usr/local/bin/run" ]]; then
+	${SUDO} touch "/usr/local/bin/run"
+	echo "/usr/bin/env python3 $PROJECT_ROOT/buffpy/src/robot_spawner.py \$@" | ${SUDO} tee "/usr/local/bin/run"
+	${SUDO} chmod +x "/usr/local/bin/run"
 fi 
 
-# if [[ "${PATH}" != *"/.local/bin:"* ]]; then
-# 	export PATH="${HOME}/.local/bin:${PATH}"
-# fi 
 
 # Only export if if not already in path
-
 if [[ "${PYTHONPATH}" != *"${PROJECT_ROOT}/buffpy/lib:"* ]]; then	
 	export PYTHONPATH="${PROJECT_ROOT}/buffpy/lib:${PYTHONPATH}" 
 fi
+if [[ "${PYTHONPATH}" != *"${PROJECT_ROOT}/buffpy/src:"* ]]; then	
+	export PYTHONPATH="${PROJECT_ROOT}/buffpy/src:${PYTHONPATH}" 
+fi
 
 # set ROS package path to buff-code so it can see buffpy
-
 if [[ "${ROS_PACKAGE_PATH}" != *"buff-code"* ]]; then
 	export ROS_PACKAGE_PATH="${PROJECT_ROOT}:${ROS_PACKAGE_PATH}"
 fi

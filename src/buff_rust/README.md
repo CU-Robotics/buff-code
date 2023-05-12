@@ -4,6 +4,7 @@
 or
 
         cargo build --release && cargo fmt
+
 ### buffpy
         buffpy -b rust-debug 
 or

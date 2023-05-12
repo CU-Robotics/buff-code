@@ -1,5 +1,7 @@
-# project: 'template'                                       # path to project relative to buf-code/src
-# build: ['build cool robot stuff']                         # bash command to build the project, keep it simple if possible
-# install: ['fake_build_dir/node1', 'scripts/node2.py']     # the exectuables to install relative to projects path, installed to buffpy/lib
-# docs: ['target/document']                                 # docs, installed to buff-code/documentation
-# bin: ['build/target.hex']                                 # binaries, installed to buffpy/bin
+project: 'template'                                       # path to project relative to buf-code/src
+setup: 'mkdir template && touch template/status.txt'      # command to setup or fake project
+build: 'echo template project built successfully! > status.txt'    # bash command to build the project, keep it simple if possible
+clean: 'rm -rf status.txt'                                # bash command to clean the project
+
+targets: ['status.txt']                                   # file we want to install
+install: ['docs']                                         # where to install it (docs/lib/bin)

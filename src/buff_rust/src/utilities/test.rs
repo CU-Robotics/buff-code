@@ -189,7 +189,7 @@ pub mod report_tests {
 
     #[test]
     pub fn status_report() {
-        let report = BuffBotStatusReport::from_byu(BuffYamlUtil::new("penguin"));
+        let report = RobotStatus::from_byu(BuffYamlUtil::new("penguin"));
         env::set_var("ROBOT_NAME", "penguin");
         report.save();
     }

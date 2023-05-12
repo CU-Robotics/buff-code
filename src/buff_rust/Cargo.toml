@@ -10,7 +10,9 @@ rand = "0.8.5"
 hidapi = "2.2.0"
 image = "0.24.5"
 chrono = "0.4.23"
+opencv = "0.81.2"
 yaml-rust = "0.4.5"
+
 
 rosrust = "0.9.10"
 env_logger = "0.9.3"

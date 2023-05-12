@@ -7,6 +7,24 @@ use std::io::Write;
 use std::path::Path;
 use std::sync::{Arc, RwLock};
 
+// first HID value
+pub static INITIALIZER_REPORT_ID: u8 = 255;
+pub static MOTOR_REPORT_ID: u8 = 1;
+pub static CONTROLLER_REPORT_ID: u8 = 2;
+pub static SENSOR_REPORT_ID: u8 = 3;
+
+// second HID value
+pub static MOTOR_INIT_SWITCH_MODE: u8 = 0;
+pub static CONTROLLER_INIT_SWITCH_MODE: u8 = 1;
+pub static KINEMATICS_INIT_SWITCH_MODE: u8 = 2;
+pub static CONTROLLER_REQUEST_SWITCH_MODE: u8 = 1;
+
+// third HID value
+pub static CONTROLLER_REPORT_REQUEST: u8 = 0;
+pub static VEL_ESTIMATE_REPORT_REQUEST: u8 = 1;
+pub static POS_ESTIMATE_REPORT_REQUEST: u8 = 2;
+pub static MANAGER_REPORT_REQUEST: u8 = 3;
+
 pub struct EmbeddedDevice {
     name: String,
     timestamp: f64,
@@ -100,7 +118,7 @@ pub struct EmbeddedController {
 impl EmbeddedController {
     pub fn default() -> EmbeddedController {
         EmbeddedController {
-            name: "UEC".to_string(),
+            name: "UED".to_string(),
             limits: vec![0.0; 4],
             gains: vec![],
             feedback: vec![],
@@ -446,7 +464,7 @@ impl RobotStatus {
             self.motors.len() <= 16,
             "Invalid number of motors, check config"
         );
-        vec![255, 0]
+        vec![INITIALIZER_REPORT_ID, MOTOR_INIT_SWITCH_MODE]
             .into_iter()
             .chain(
                 self.motors
@@ -462,7 +480,7 @@ impl RobotStatus {
             .iter()
             .enumerate()
             .map(|(i, sensor)| {
-                vec![3, i as u8]
+                vec![SENSOR_REPORT_ID, i as u8]
                     .into_iter()
                     .chain(sensor.read().unwrap().config())
                     .collect()
@@ -475,7 +493,7 @@ impl RobotStatus {
             .iter()
             .enumerate()
             .map(|(i, controller)| {
-                vec![255, 1, i as u8]
+                vec![INITIALIZER_REPORT_ID, CONTROLLER_INIT_SWITCH_MODE, i as u8]
                     .into_iter()
                     .chain(controller.read().unwrap().config())
                     .collect()
@@ -488,7 +506,7 @@ impl RobotStatus {
         // Done like this so if you don't want to send all of the rows you don't have to
         (0..self.motors.len())
             .map(|i| {
-                vec![255, 2, i as u8]
+                vec![INITIALIZER_REPORT_ID, KINEMATICS_INIT_SWITCH_MODE, i as u8]
                     .into_iter()
                     .chain(
                         self.inverse_kinematics[i]
@@ -527,14 +545,34 @@ impl RobotStatus {
 
     pub fn get_reports(&mut self) -> Vec<Vec<u8>> {
         let mut reports = vec![];
-        // self.sensors.iter().for_each(|s| reports.push(vec![3, i as u8] + s.config()));
-        // (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![1, i as u8]));
+        // self.sensors.iter().for_each(|s| reports.push(vec![SENSOR_REPORT_ID, i as u8] + s.config()));
+        // (0..(self.motors.len() / 4) + 1).for_each(|i| reports.push(vec![MOTOR_REPORT_ID, i as u8]));
         (0..(self.controllers.len() / 2) + 1) // motor controller reports
-            .for_each(|i| reports.push(vec![2, 1, 0, (2 * i) as u8, ((2 * i) + 1) as u8]));
+            .for_each(|i| {
+                reports.push(vec![
+                    CONTROLLER_REPORT_ID,
+                    CONTROLLER_REQUEST_SWITCH_MODE,
+                    CONTROLLER_REPORT_REQUEST,
+                    (2 * i) as u8,
+                    ((2 * i) + 1) as u8,
+                ])
+            });
 
-        reports.push(vec![2, 1, 1]); // vel estimate packet
-        reports.push(vec![2, 1, 2]); // pos estimate packet
-        reports.push(vec![2, 1, 3]); // control manager info packet
+        reports.push(vec![
+            CONTROLLER_REPORT_ID,
+            CONTROLLER_REQUEST_SWITCH_MODE,
+            VEL_ESTIMATE_REPORT_REQUEST,
+        ]); // vel estimate packet
+        reports.push(vec![
+            CONTROLLER_REPORT_ID,
+            CONTROLLER_REQUEST_SWITCH_MODE,
+            POS_ESTIMATE_REPORT_REQUEST,
+        ]); // pos estimate packet
+        reports.push(vec![
+            CONTROLLER_REPORT_ID,
+            CONTROLLER_REQUEST_SWITCH_MODE,
+            MANAGER_REPORT_REQUEST,
+        ]); // control manager info packet
 
         reports
     }
@@ -562,6 +600,20 @@ impl RobotStatus {
             .write()
             .unwrap()
             .update(feedback, timestamp);
+    }
+
+    pub fn get_motor_names(&self) -> Vec<String> {
+        self.motors
+            .iter()
+            .map(|motor| motor.read().unwrap().name())
+            .collect()
+    }
+
+    pub fn get_sensor_names(&self) -> Vec<String> {
+        self.sensors
+            .iter()
+            .map(|sensor| sensor.read().unwrap().name())
+            .collect()
     }
 
     pub fn print(&self) {

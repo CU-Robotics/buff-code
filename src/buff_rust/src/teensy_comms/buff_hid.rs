@@ -422,20 +422,28 @@ impl HidROS {
     /// ```
     pub fn new() -> HidROS {
         let robot_status = RobotStatus::from_self();
+        let mut motor_topics = vec![];
+        let mut controller_topics = vec![];
+        robot_status.get_motor_names().into_iter().for_each(|name| {
+            motor_topics.push(name.clone() + "_feedback");
+            controller_topics.push(name + "_controller");
+        });
+        let sensor_names = robot_status.get_sensor_names();
 
         env_logger::init();
         rosrust::init("buffpy_hid");
 
-        let motor_publishers = (0..robot_status.motors.len())
-            .map(|i| rosrust::publish(format!("motor_{}_feedback", i).as_str(), 1).unwrap())
+        let sensor_publishers = sensor_names
+            .iter()
+            .map(|name| rosrust::publish(name, 1).unwrap())
             .collect();
-
-        let controller_publishers = (0..robot_status.controllers.len())
-            .map(|i| rosrust::publish(format!("controller_{}_report", i).as_str(), 1).unwrap())
+        let motor_publishers = motor_topics
+            .iter()
+            .map(|name| rosrust::publish(name, 1).unwrap())
             .collect();
-
-        let sensor_publishers = (0..robot_status.sensors.len())
-            .map(|i| rosrust::publish(format!("sensor_{}_feedback", i).as_str(), 1).unwrap())
+        let controller_publishers = controller_topics
+            .iter()
+            .map(|name| rosrust::publish(name, 1).unwrap())
             .collect();
 
         let estimate_publishers = vec![

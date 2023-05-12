@@ -1,4 +1,5 @@
 use crate::localization::data_structures::*;
+use opencv::{core::{Mat, CV_64F}, highgui, imgproc::rectangle};
 use image;
 
 const NUM_CHILDREN: usize = 5;
@@ -379,6 +380,17 @@ impl QuadTree {
     //     //     robot.detection_match()
     //     // }).filter_max();
     // }
+
+    pub fn display(&self) {
+        let mut image = Mat::ones(500, 500, CV_64F).unwrap();
+        self.objects.iter().for_each(|obj| match &obj {
+            ArenaObject::Robot(robot) => rectangle(image, obj.position()),
+            _ => {}
+        });
+        highgui::named_window("hello opencv!", 0).unwrap();
+        highgui::imshow("hello opencv!", &image).unwrap();
+        highgui::wait_key(10000).unwrap();
+    }
 
     pub fn print(&self) {
         println!("\t===== Quadtree Dump =====");

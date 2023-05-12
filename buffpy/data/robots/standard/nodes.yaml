@@ -6,7 +6,7 @@
 #
 ##############################
 
-robot_type: standard
+robot-type: standard
 
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
