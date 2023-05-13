@@ -8,7 +8,7 @@ import shutil
 import argparse
 import subprocess
 from tools import *
-from build_profile import Build_Profile, Buffpy_Path_LUT
+from build_profile import Build_Profile
 
 def clean_profile(profile):
 	bp = Build_Profile();

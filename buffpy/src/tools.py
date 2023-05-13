@@ -10,6 +10,8 @@ LOGGER_MESSAGE_TYPES = {0: "INFO", 1: "WARNING", 2: "ERROR"}
 # this file is on the python path and can be used from any other python script
 # TODO: find a way to share this with rust (maybe it needs to be saved as a file)
 BuffPy_Project_Root = os.getenv('PROJECT_ROOT')
+Buffpy_Profile_Path = os.path.join(os.getenv("PROJECT_ROOT"), "buffpy", "data", "build")
+
 BuffPy_LOC_LUT = {  'root': BuffPy_Project_Root,
 					'src': os.path.join(BuffPy_Project_Root, 'src'),
 					'data': os.path.join(BuffPy_Project_Root, 'data'),
@@ -18,7 +20,9 @@ BuffPy_LOC_LUT = {  'root': BuffPy_Project_Root,
 					'bin': os.path.join(BuffPy_Project_Root, 'buffpy', 'bin'),
 					'docker': os.path.join(BuffPy_Project_Root, 'containers'),
 					'docs': os.path.join(BuffPy_Project_Root, 'documentation'),
-					'models': os.path.join(BuffPy_Project_Root, 'buffpy', 'data', 'models')}
+					'models': os.path.join(BuffPy_Project_Root, 'buffpy', 'data', 'models'),
+					'robots': os.path.join(BuffPy_Project_Root, 'buffpy', 'data', 'robots'),
+					'profiles': os.path.join(BuffPy_Project_Root, 'buffpy', 'data', 'build')}
 
 def buff_log(msg, status):
 	"""
@@ -100,7 +104,7 @@ def copy_packages(src_path, item_name, dst_path):
 	for (item, loc) in zip(item_name, dst_path):
 		assert_directory(loc)
 		src = os.path.join(src_path, item)
-		dst = os.path.join(loc, item)
+		dst = os.path.join(loc, item.split('/')[-1])
 		buff_log(f"Installing {src} -> {dst}", not os.path.exists(src))
 
 		if os.path.isdir(item):
