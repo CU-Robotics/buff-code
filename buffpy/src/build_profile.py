@@ -18,6 +18,9 @@ Buffpy_Profile_Path = os.path.join(os.getenv("PROJECT_ROOT"), "buffpy", "data", 
 
 
 class Build_Profile:
+	"""
+
+	"""
 	def __init__(self):
 		self.name = None			# Name/dir of the project (relative to self.path)
 		self.profile = None			# full path to profile, includes filename (absolute)

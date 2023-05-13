@@ -29,6 +29,7 @@ Buffpy can also deploy itself to a robot over WiFi
 
         buffpy -d
 
+> *check out buff.bash to find some nice aliases*
 
 ### Run
 

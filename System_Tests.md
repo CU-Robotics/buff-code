@@ -52,7 +52,7 @@
    - confirm that kinematics produce good motor references and somewhat valid state estimates (Do not proceed until done)
    - similar to the steps in the critical safety test (use rosbash)
    - Determine safe limits for motors with limited motion
-   - Also need to do this while camera_calibration.py is running (to simulate autonomy input)
+   - Also need to do this while camera_calibration.py is running (to simulate autonomy input, also a cargo test to do this)
  - Modify standard/nodes.yaml
    - set the motor gains and limits you want
  - Use the script camera_calibration.py from sys_id to send a demo input to the controls
