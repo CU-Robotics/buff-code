@@ -268,7 +268,13 @@ pub mod comms_tests {
         println!("\nTesting initializers:...");
         initializers.iter().for_each(|init| {
             writer.send_report(INITIALIZER_REPORT_ID, init[1..].to_vec());
-            teensy_cyccnt = watch_for_report(reader, INITIALIZER_REPORT_ID, 5, init[..3].to_vec(), teensy_cyccnt);
+            teensy_cyccnt = watch_for_report(
+                reader,
+                INITIALIZER_REPORT_ID,
+                5,
+                init[..3].to_vec(),
+                teensy_cyccnt,
+            );
         });
     }
 
@@ -300,7 +306,15 @@ pub mod comms_tests {
         writer.send_report(
             CONTROLLER_REPORT_ID,
             vec![
-                MOTOR_INIT_SWITCH_MODE, 0, bytes[0], bytes[1], bytes[2], bytes[3], bytes[0], bytes[1], bytes[2],
+                MOTOR_INIT_SWITCH_MODE,
+                0,
+                bytes[0],
+                bytes[1],
+                bytes[2],
+                bytes[3],
+                bytes[0],
+                bytes[1],
+                bytes[2],
                 bytes[3],
             ],
         );
@@ -331,11 +345,16 @@ pub mod comms_tests {
 
         // check chassis controllers
         writer.send_report(CONTROLLER_REPORT_ID, vec![CONTROLLER_REQUEST_SWITCH_MODE]);
-        teensy_cyccnt = watch_for_no_packet_data(reader, CONTROLLER_REPORT_ID, 5, 3, 48, teensy_cyccnt);
+        teensy_cyccnt =
+            watch_for_no_packet_data(reader, CONTROLLER_REPORT_ID, 5, 3, 48, teensy_cyccnt);
 
         // check gimbal controllers
-        writer.send_report(CONTROLLER_REPORT_ID, vec![CONTROLLER_REQUEST_SWITCH_MODE, 1]);
-        teensy_cyccnt = watch_for_packet_data(reader, CONTROLLER_REPORT_ID, 5, 15, 12, teensy_cyccnt);
+        writer.send_report(
+            CONTROLLER_REPORT_ID,
+            vec![CONTROLLER_REQUEST_SWITCH_MODE, 1],
+        );
+        teensy_cyccnt =
+            watch_for_packet_data(reader, CONTROLLER_REPORT_ID, 5, 15, 12, teensy_cyccnt);
 
         // zero things out
         writer.send_report(CONTROLLER_REPORT_ID, vec![2]);
@@ -348,11 +367,23 @@ pub mod comms_tests {
         // mock request for controller 0 & 1 status
         let mut teensy_cyccnt = 0.0;
         while t.elapsed().as_millis() < 900 {
-            teensy_cyccnt = packet_request_test(reader, writer, CONTROLLER_REPORT_ID, vec![CONTROLLER_REQUEST_SWITCH_MODE, 0, 0, 1], teensy_cyccnt)
+            teensy_cyccnt = packet_request_test(
+                reader,
+                writer,
+                CONTROLLER_REPORT_ID,
+                vec![CONTROLLER_REQUEST_SWITCH_MODE, 0, 0, 1],
+                teensy_cyccnt,
+            )
         }
         // mock request for controller 2 & 3 status
         while t.elapsed().as_millis() < 900 {
-            teensy_cyccnt = packet_request_test(reader, writer, CONTROLLER_REPORT_ID, vec![CONTROLLER_REQUEST_SWITCH_MODE, 0, 2, 3], teensy_cyccnt)
+            teensy_cyccnt = packet_request_test(
+                reader,
+                writer,
+                CONTROLLER_REPORT_ID,
+                vec![CONTROLLER_REQUEST_SWITCH_MODE, 0, 2, 3],
+                teensy_cyccnt,
+            )
         }
     }
 
