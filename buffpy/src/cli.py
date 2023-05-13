@@ -49,9 +49,9 @@ def main():
 	ap = parser.parse_args(sys.argv[1:])
 
 	if ap.clean:
-		if ap.clean in Buffpy_Path_LUT: # clean the workspace
-			reset_directory(Buffpy_Path_LUT[ap.clean])
-			buff_log(f"Reset directory {Buffpy_Path_LUT[ap.clean]}", 0)
+		if ap.clean in BuffPy_LOC_LUT: # clean the workspace
+			reset_directory(BuffPy_LOC_LUT[ap.clean])
+			buff_log(f"Reset directory {BuffPy_LOC_LUT[ap.clean]}", 0)
 		else:	# clean a profile
 			clean_profile(ap.clean)
 
