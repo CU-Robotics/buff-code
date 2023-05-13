@@ -136,6 +136,10 @@ class Robot_Spawner:
 
 
 def main():
+	"""
+		If someone asks where our run script is... here it is
+		  and it's not much of a script anymore
+	"""
 	with open(os.path.join(BuffPy_LOC_LUT['robots'], 'self.txt'), 'r') as f:
 		robot = f.read()
 
