@@ -3,9 +3,8 @@
 import os
 import sys
 import yaml
-import glob
-import shutil
-import subprocess
+import subprocess as sb
+
 from tools import *
 
 Buffpy_Path_LUT = {'data': os.path.join(os.getenv('PROJECT_ROOT'), 'data'),
@@ -108,28 +107,29 @@ class Build_Profile:
 		for target in self.target_src:
 			status |= not os.path.exists(os.path.join(self.project_path(), target))
 
-		buff_log(f"{self.name} Build", 2 * status) # error if True info if False
+		buff_log(f"{self.name} Built", 2 * status) # error if True info if False
 
 	def validate_install(self):
 		status = False
 		for (src, dst) in zip(self.target_src, [Buffpy_Path_LUT[dst] for dst in self.target_dst]):
+			sb.run(['chmod', '+x', os.path.join(dst, src.split('/')[-1])])
 			status |= not os.path.exists(os.path.join(dst, src.split('/')[-1]))
 
-		buff_log(f"{self.name} Install", 2 * status) # error if True info if False
+		buff_log(f"{self.name} Installed", 2 * status) # error if True info if False
 
 	def validate_clean(self):
 		status = False
 		for target in self.target_src:
 			status |= os.path.exists(os.path.join(self.project_path(), target))
 
-		buff_log(f"{self.name} Clean", 2 * status) # error if True info if False
+		buff_log(f"{self.name} Cleaned", 2 * status) # error if True info if False
 
 	def run_job(self, base_cmd, path):
 		"""
 			Convenience function for executing jobs
 			if the base_cmd or profile is None, there
 			is no job. Otherwise return the result
-			of subprocess.run()
+			of sb.run()
 		"""
 		if self.name is None:
 			buff_log(f"Name {self.name} is invalid", 2)
@@ -137,7 +137,7 @@ class Build_Profile:
 
 		if not base_cmd is None:
 			cmd = f'cd {path} && {base_cmd}'
-			subprocess.run(cmd, shell=True)
+			sb.run(cmd, shell=True)
 
 	def run_setup(self):
 		self.run_job(self.setup_cmd, Buffpy_SRC_Path)

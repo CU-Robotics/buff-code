@@ -50,12 +50,12 @@ if [[ "${PATH}" != *"/.cargo"*  && -f ${HOME}/.cargo/env ]]; then
 fi
 
 #		Setup python tools
-if [[ -n "/usr/local/bin/buffpy" ]]; then
+if [[ ! -f "/usr/local/bin/buffpy" ]]; then
 	${SUDO} touch "/usr/local/bin/buffpy"
 	echo "/usr/bin/env python3 $PROJECT_ROOT/buffpy/src/cli.py \$@" | ${SUDO} tee "/usr/local/bin/buffpy"
 	${SUDO} chmod +x "/usr/local/bin/buffpy"
 fi 
-if [[ -n "/usr/local/bin/run" ]]; then
+if [[ ! -f "/usr/local/bin/run" ]]; then
 	${SUDO} touch "/usr/local/bin/run"
 	echo "/usr/bin/env python3 $PROJECT_ROOT/buffpy/src/robot_spawner.py \$@" | ${SUDO} tee "/usr/local/bin/run"
 	${SUDO} chmod +x "/usr/local/bin/run"
