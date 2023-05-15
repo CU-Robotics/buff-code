@@ -383,24 +383,24 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
-	ref.read_serial();
-	controller_manager.encoders[1] = yawEncoder.getAngle();
+	//ref.read_serial();
+	//controller_manager.encoders[1] = yawEncoder.getAngle();
 	// controller_manager.encoders[0] = pitchEncoder.getAngle();
-	controller_manager.power_buffer = ref.data.power_buffer;
+	//controller_manager.power_buffer = ref.data.power_buffer;
 
 	switch (sensor_switch) {
 		case 0:
-			chassis_imu.read_lsm6dsox_accel();
+			//chassis_imu.read_lsm6dsox_accel();
 			sensor_switch += 1;
 			break;
 
 		case 1:
-			chassis_imu.read_lsm6dsox_gyro();
+			//chassis_imu.read_lsm6dsox_gyro();
 			sensor_switch += 1;
 			break;
 
 		case 2:
-			chassis_imu.read_lis3mdl();
+			//chassis_imu.read_lis3mdl();
 			sensor_switch += 1;
 			break;
 
