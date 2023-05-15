@@ -21,7 +21,7 @@ Device_Manager::Device_Manager(){
 
 	Author: Mitchell Scott
 */
-void Device_Manager::initializer_report_handle() {
+void Device_Manager::initializer_report_handle() {	// 255
 	int limit_offset;
 	int controller_id = input_report.get(2);
 
@@ -88,7 +88,7 @@ void Device_Manager::initializer_report_handle() {
 
 	Author: Mitchell Scott
 */
-void Device_Manager::feedback_request_handle() {
+void Device_Manager::feedback_request_handle() {	// 1
 	// use input_report.data[1] as the block ID
 	// sensors are expected to have a 
 	float tmp[12];
@@ -117,7 +117,7 @@ void Device_Manager::feedback_request_handle() {
 
 	Author: Mitchell Scott
 */
-void Device_Manager::control_input_handle() {
+void Device_Manager::control_input_handle() { // 2
 	output_report.put(1, input_report.get(1));
 
 	int data_offset = 3;
@@ -221,7 +221,7 @@ void Device_Manager::control_input_handle() {
 
 	Author: Mitchell Scott
 */
-void Device_Manager::sensor_request_handle() {
+void Device_Manager::sensor_request_handle() {	// 	3
 	// use input_report.data[1] as the sensor to read
 	// imu = 0 (36 bytes = 9 floats), dr16 = 1 (28 bytes = 7 floats)
 	int sensor = input_report.get(1);
