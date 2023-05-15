@@ -24,6 +24,7 @@ Device_Manager::Device_Manager(){
 void Device_Manager::initializer_report_handle() {	// 255
 	int limit_offset;
 	int controller_id = input_report.get(2);
+	int controller_type = input_report.get(3);
 
 	float limits[4];
 	float gains[MOTOR_FEEDBACK_SIZE];
@@ -55,10 +56,13 @@ void Device_Manager::initializer_report_handle() {	// 255
 				limits[i] = input_report.get_float((4 * i) + limit_offset);
 				limits[i + 2] = input_report.get_float((4 * (i + 2)) + limit_offset);
 			}
+			if (controller_type > 200) {
+				controller_type -= 256;
+			}
 			// Serial.printf("\nlimits %i: %f, %f, %f, %f\n", controller_id, limits[0], limits[1], limits[2], limits[3]);
-			// Serial.printf("%i %f\n", controller_id, input_report.get_float(4));
+			// Serial.printf("%i %i\n", controller_id, controller_type);
 			// Serial.printf("%f %f %f\n", gains[0], gains[1], gains[2]);
-			controller_manager.init_controller(controller_id, input_report.get(3), gains, limits, input_report.get_float(4));
+			controller_manager.init_controller(controller_id, controller_type, gains, limits, input_report.get_float(4));
 			// controller_switch = 1;												// enable local control
 			break;
 

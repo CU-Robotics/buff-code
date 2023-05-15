@@ -176,17 +176,20 @@ void Controller_Manager::step_motors() {
 	}
 
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
-		switch(controller_types[i]){
-			case 0:
-				output[i] = controllers[i].step(references[i], feedback[i]);
-				break;
+		int ctrl_type = controller_types[i]; // handle coupled motors
+		if (ctrl_type < 0) {
+			ctrl_type = controller_types[-controller_types[i]];
+		}
 
+		switch(ctrl_type){
+			case 0:
 			case 1:
+			case 3:
 				output[i] = controllers[i].step(references[i], feedback[i]);
 				break;
 
 			case 2:
-				output[i] = controllers[i].step(references[i], feedback[i]);
+				output[i] = controllers[i].step(references[i], feedback[i]);  // * ratio;
 				break;
 
 			default:
@@ -212,10 +215,16 @@ void Controller_Manager::set_reference(int controller_id) {
 		speed += chassis_inverse_kinematics[controller_id][j] * input[j];
 	}
 
+	int ctrl_type = controller_types[controller_id];
+	if (ctrl_type < 0) {		// handle coupled controllers
+		ctrl_type = controller_types[-ctrl_type];
+	}
+
 	// integrate the speed to a postion
 	// can also set reference[x][1] = 0; (2nd gain is then a friction term)
 	references[controller_id][0] += speed * 0.01; // 10ms this can't be hardcoded
-	if (controller_types[controller_id] != 0) {
+
+	if (ctrl_type != 1) {
 		references[controller_id][1] = speed;
 	}
 
@@ -248,14 +257,19 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	switch(controller_types[controller_id]) {
 		case 0:
 		case 1:
+		case 2:
 			// feedback[controller_id][2] = output[controller_id] * feedback[controller_id][1]; // voltage times current
 			break;
 
-		case 2:
+		case 3:
 			feedback[controller_id][2] = sin((feedback[controller_id][0] / 12) - (PI / 2));
 			break;
 
 		default:
+			if (controller_types[controller_id] < 0) {
+				feedback[controller_id][0] = feedback[-controller_types[controller_id]][0];
+				feedback[controller_id][1] = feedback[-controller_types[controller_id]][1];
+			}
 			break;
 	}
 }

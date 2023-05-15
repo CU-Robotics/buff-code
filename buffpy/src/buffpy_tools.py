@@ -182,7 +182,7 @@ def load_install_params():
 
 	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
 		print("Workspace not built, run:\n\t \'buffpy --build <profile>\'")
-		return
+
 
 	# Don't install from edge devices (robot)
 	if 'edge' in os.getenv('HOSTNAME'):
