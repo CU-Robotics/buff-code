@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import yaml
 import shutil
 
 # logger statuses (please add more, or make the logger a whole project)
@@ -154,3 +155,40 @@ def parse_args(args):
 		clean_args.append(split)
 
 	return clean_args
+
+def get_devices():
+	"""
+		Load all registered devices from buffpy/data/robots/robots.yaml
+	"""
+	robots = os.path.join(BuffPy_LOC_LUT['robots'], 'robots.yaml')
+	if os.path.exists(robots):
+		with open(robots, 'r') as f:
+			return yaml.safe_load(f)
+
+def load_install_params():
+	"""
+		Get installation definition
+		RETURNS:
+			source: string or path like object, the target directory to copy
+			target: string or path like object, the destination directory to copy into
+			ID: string or path like object, the identify file of the install (self.yaml)
+	"""
+
+	# Setup Parameters for install
+	project_root = os.getenv('PROJECT_ROOT')
+	source = os.path.join(project_root, 'buffpy')
+	target = os.path.join('/home', 'cu-robotics', 'buff-code')
+	ID = os.path.join(project_root, 'buffpy', 'data', 'robots', 'self.txt')
+
+	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
+		print("Workspace not built, run:\n\t \'buffpy --build <profile>\'")
+		return
+
+	# Don't install from edge devices (robot)
+	if 'edge' in os.getenv('HOSTNAME'):
+		print(f'Can\'t install from device: {os.getenv("HOSTNAME")}')
+		return
+
+	devices = get_devices()
+
+	return source, target, ID, devices

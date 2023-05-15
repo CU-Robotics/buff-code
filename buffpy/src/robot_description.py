@@ -7,7 +7,7 @@ import glob
 import shutil
 import subprocess
 
-from tools import *
+from buffpy_tools import *
 
 class Robot_Description:
 	"""

@@ -1,5 +1,6 @@
 **/.pio
 **/.idea
+**/*.pyc
 **/.piopm
 **/.vscode
 **/.DS_store

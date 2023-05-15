@@ -7,7 +7,8 @@ import glob
 import shutil
 import argparse
 import subprocess
-from tools import *
+from buffpy_tools import *
+from robot_installer import *
 from build_profile import Build_Profile
 
 
@@ -57,6 +58,9 @@ def main():
 
 	if ap.build:
 		build_profile(ap.build)
+
+	if ap.deploy:
+		deploy_all_devices()
 
 
 if __name__ == '__main__':
