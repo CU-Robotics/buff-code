@@ -384,7 +384,7 @@ void Device_Manager::push_can(){
 */
 void Device_Manager::read_sensors() {
 	//ref.read_serial();
-	//controller_manager.encoders[1] = yawEncoder.getAngle();
+	controller_manager.encoders[1] = yawEncoder.getAngle();
 	// controller_manager.encoders[0] = pitchEncoder.getAngle();
 	//controller_manager.power_buffer = ref.data.power_buffer;
 
