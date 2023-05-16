@@ -138,7 +138,7 @@ impl HidReader {
         HidReader {
             shutdown: Arc::new(RwLock::new(false)),
             input: ByteBuffer::new(64),
-            robot_status: RobotStatus::from_self(),
+            robot_status: RobotStatus::new(),
             teensy: device,
             teensy_lifetime: 0.0,
             rust_lifetime: 0.0,
@@ -421,7 +421,7 @@ impl HidROS {
     /// let hidros = HidROS::new();
     /// ```
     pub fn new() -> HidROS {
-        let robot_status = RobotStatus::from_self();
+        let robot_status = RobotStatus::new();
         let mut motor_topics = vec![];
         let mut controller_topics = vec![];
         robot_status.get_motor_names().into_iter().for_each(|name| {
@@ -667,7 +667,7 @@ impl HidROS {
     ) {
         self.shutdown = shutdown;
 
-        self.robot_status = feedback_rx.recv().unwrap_or(RobotStatus::from_self());
+        self.robot_status = feedback_rx.recv().unwrap_or(RobotStatus::new());
 
         let initializers = self.robot_status.load_initializers();
 
@@ -775,7 +775,7 @@ impl HidLayer {
     /// careful hard to shutdown...
 
     pub fn rospipeline() {
-        let byu = BuffYamlUtil::from_self();
+        let byu = BuffYamlUtil::default();
 
         let vid = byu.load_u16("teensy_vid");
         let pid = byu.load_u16("teensy_pid");
@@ -812,7 +812,7 @@ impl HidLayer {
     }
 
     pub fn pipeline() {
-        let byu = BuffYamlUtil::from_self();
+        let byu = BuffYamlUtil::default();
 
         let vid = byu.load_u16("teensy_vid");
         let pid = byu.load_u16("teensy_pid");

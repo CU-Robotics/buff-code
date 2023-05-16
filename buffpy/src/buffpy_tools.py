@@ -23,7 +23,8 @@ BuffPy_LOC_LUT = {  'root': BuffPy_Project_Root,
 					'docs': os.path.join(BuffPy_Project_Root, 'documentation'),
 					'models': os.path.join(BuffPy_Project_Root, 'buffpy', 'data', 'models'),
 					'robots': os.path.join(BuffPy_Project_Root, 'buffpy', 'data', 'robots'),
-					'profiles': os.path.join(BuffPy_Project_Root, 'buffpy', 'data', 'build')}
+					'profiles': os.path.join(BuffPy_Project_Root, 'buffpy', 'data', 'build'),
+					'self': os.path.join(BuffPy_Project_Root, 'buffpy', 'data', 'robots', 'self.txt')}
 
 def buff_log(msg, status):
 	"""
@@ -175,19 +176,17 @@ def load_install_params():
 	"""
 
 	# Setup Parameters for install
-	project_root = os.getenv('PROJECT_ROOT')
-	source = os.path.join(project_root, 'buffpy')
+	source = BuffPy_LOC_LUT['buffpy']
 	target = os.path.join('/home', 'cu-robotics', 'buff-code')
-	ID = os.path.join(project_root, 'buffpy', 'data', 'robots', 'self.txt')
+	ID = BuffPy_LOC_LUT['self']
 
 	if len(os.listdir(os.path.join(source, 'lib'))) == 0:
 		print("Workspace not built, run:\n\t \'buffpy --build <profile>\'")
 
-
 	# Don't install from edge devices (robot)
 	if 'edge' in os.getenv('HOSTNAME'):
 		print(f'Can\'t install from device: {os.getenv("HOSTNAME")}')
-		return
+		return source, target, ID, []
 
 	devices = get_devices()
 

@@ -28,7 +28,7 @@ class Robot_Description:
 
 	def ros_node_commands(self, nodes):
 		"""
-			Parse the ros-nodes section of a nodes.yaml
+			Parse the ros_nodes section of a nodes.yaml
 			Construct a rosrun command for each node.
 
 			@params:
@@ -64,7 +64,7 @@ class Robot_Description:
 
 	def buff_node_commands(self, nodes):
 		"""
-			parse the buff-nodes section of a nodes.yaml
+			parse the buff_nodes section of a nodes.yaml
 			Construct commands to run each node, does not
 			use rosrun
 
@@ -117,12 +117,13 @@ class Robot_Description:
 		with open(self.path, 'r') as description:
 			contents = yaml.safe_load(description)
 
-		if 'robot-type' in contents:
-			self.type = contents['robot-type']
-			self.data['robot-type'] = contents['robot-type']
+
+		if 'robot_type' in contents:
+			self.type = contents['robot_type']
+			self.data['robot_type'] = contents['robot_type']
 
 		else:
-			print("No robot-type identifier: add a robot-type to the description and try again")
+			print("No robot-type identifier: add a robot_type to the description and try again")
 			self.name = None
 			return
 
@@ -131,15 +132,20 @@ class Robot_Description:
 			return
 
 		else:
-			self.with_xacro = 'with-xacro' in contents
+			self.with_xacro = 'with_xacro' in contents
 
-			if 'ros-nodes' in contents:
-				self.ros_node_commands(contents['ros-nodes'])
-				self.data['ros-nodes'] = contents['ros-nodes']
+			if 'ros_nodes' in contents:
+				self.ros_node_commands(contents['ros_nodes'])
+				self.data['ros_nodes'] = contents['ros_nodes']
 
-			if 'buff-nodes' in contents:	
-				self.buff_node_commands(contents['buff-nodes'])
-				self.data['buff-nodes'] = contents['buff-nodes']
+			if 'buff_nodes' in contents:	
+				self.buff_node_commands(contents['buff_nodes'])
+				self.data['buff_nodes'] = contents['buff_nodes']
+
+		self.data['robot_name'] = name
+		os.environ['ROBOT_NAME'] = name					# for BYU
+		self.data['sensor_index'] = contents['sensor_index']
+		self.data['motor_index'] = contents['motor_index']
 
 		print(f'System Description:\n{yaml.dump(self.data, allow_unicode=True)}\n')
 

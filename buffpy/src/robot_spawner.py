@@ -145,8 +145,8 @@ def main():
 			robot = f.read()
 	else:
 		robot = sys.argv[1]
-		with open(os.path.join(BuffPy_LOC_LUT['robots'], 'self.txt'), 'w') as f:
-			f.write(robot)
+		# with open(os.path.join(BuffPy_LOC_LUT['robots'], 'self.txt'), 'w') as f:
+		# 	f.write(robot)
 
 
 	rs = Robot_Spawner()

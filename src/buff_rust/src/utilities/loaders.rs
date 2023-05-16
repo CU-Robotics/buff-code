@@ -50,12 +50,8 @@ impl BuffYamlUtil {
     }
 
     pub fn default() -> BuffYamlUtil {
-        let robot_name = rosrust::param("/buffbot/robot_name")
-            .unwrap()
-            .get::<String>()
-            .unwrap();
-
-        BuffYamlUtil::new(&robot_name.as_str())
+        let robot_name = env::var("ROBOT_NAME").expect("Robot name was not set");
+        BuffYamlUtil::new(robot_name.as_str())
     }
 
     pub fn load_string(&self, item: &str) -> String {

@@ -6,11 +6,11 @@
 #
 ##############################
 
-robot-type: infantry
+robot_type: infantry
 
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
-buff-nodes:
+buff_nodes:
   buff_rust:
     files: [comms_node]
   # buffnet:

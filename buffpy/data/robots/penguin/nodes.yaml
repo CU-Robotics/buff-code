@@ -6,11 +6,11 @@
 #
 ##############################
 
-robot-type: demo
+robot_type: demo
 
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
-buff-nodes:
+buff_nodes:
   buff_rust:
     files: [comms_node]
 
@@ -62,11 +62,12 @@ sensor_config:
 # This defines the indices of all the motors
 # on the CAN bus (index = row, starts at zero)
 motor_index:
-  - drive1    # V0  left of mcu (engineers view) (X positive axis)
-  - drive2    # V1  right of mcu left of battery (Y positive axis)
+  - test1    # V0  left of mcu (engineers view) (X positive axis)
+  - test2    # V1  right of mcu left of battery (Y positive axis)
   - drive3    # V2  right of battery (opposite test1) (X negative axis)
   - drive4    # V3  opposite V1 (Y negative axis)
   - pitch
+  - yawl
   - yawr
   - shooter
   - feeder
@@ -81,6 +82,7 @@ motor_can_index:
   - [1, 1, 2]     # Sets CAN config for V3
   - [1, 1, 3]     # Sets CAN config for V2
   - [2, 1, 1]
+  - [1, 1, 5]
   - [1, 1, 6]
   - [2, 1, 3]     
   - [2, 0, 2]     
@@ -118,21 +120,22 @@ inverse_kinematics: # (N_controller_inputs X N_motors) = (N_robot_states X N_mot
   - [  1.0,    0.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V2 =  Vx - omega
   - [  0.0,    1.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V3 =  Vx - omega
   - [  0.0,    0.0,    0.0,   -1.0,    0.0,    0.0,    0.0] # V4 =  -dPhi 
-  - [  0.0,    0.0,   -0.24,    0.0,    1.0,    0.0,    0.0] # V4 =  dPsi - omega
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0] # V5 =  const
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,   -1.0,    0.0] # V5 =  -dGamma
+  - [  0.0,    0.0,   -0.24,   0.0,    1.0,    0.0,    0.0] # V5 =  dPsi - omega
+  - [  0.0,    0.0,   -0.24,   0.0,    1.0,    0.0,    0.0] # V6 =  dPsi - omega
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0] # V7 =  const
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,   -1.0,    0.0] # V8 =  -dGamma
 
 #   Forward
 # Used by encoder estimator (kee)
 # [V0, V1, V2, V3, V4, V5, V6, V7, V8] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma, dShooter]
 forward_kinematics: # (N_motors X N_controller_inputs) = (N_motors X N_robot_states) = (rows X Cols)
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vy = (V1 - V3) / 2
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPhi = V4
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vy = (V1 - V3) / 2
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPhi = V4
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
 
 #
 #     Motor Controllers
@@ -146,14 +149,15 @@ forward_kinematics: # (N_motors X N_controller_inputs) = (N_motors X N_robot_sta
 #   Motor controllers will set their third feedback term to either a system power value or a
 # gravitational offset. The idea is we can efficiently conrol and reconfig a system invovling
 # power sensitive actuation and inverse pendulum like linkages.
-# 0 = full state feedback, 1 = power limited fsb, 2 = fsb w/ grav compensation (pendulum)
+# 0 = full state feedback, 1 = no velocity reference fsb, 2 = power limited fsb, 3 = fsb w/ grav compensation (pendulum)
 motor_controller_types:
+  - [2]
+  - [2]
+  - [2]
+  - [2]
+  - [3]
   - [1]
-  - [1]
-  - [1]
-  - [1]
-  - [0]
-  - [0]
+  - [-5]
   - [0]
   - [0]
 
@@ -166,14 +170,15 @@ motor_controller_types:
 # where K[i] is the ith row (1x3) and '*' is a vector inner product ((1x3)(3x1)).
 #         Kp,         Kd,   (Kpow/Kpend) # Motor the output is routed to
 motor_gains: 
-  - [0.0, 0.01, 0.0]       # motor 0 
-  - [0.0, 0.01, 0.0]       # motor 1 
-  - [0.0, 0.01, 0.0]       # motor 2
-  - [0.0, 0.00, 0.0]       # motor 3
-  - [0.4, 0.025, 0.0]       # motor 4
-  - [0.1, 0.01, 0.0]       # motor 5
-  - [0.1, 0.01, 0.0]       # motor 6
-  - [0.1, 0.01, 0.0]       # motor 7
+  - [0.0, 0.0, 0.0]       # motor 0 
+  - [0.0, 0.0, 0.0]       # motor 1 
+  - [0.0, 0.0, 0.0]       # motor 2
+  - [0.0, 0.0, 0.0]       # motor 3
+  - [0.0, 0.0, 0.0]       # motor 4
+  - [0.0, 0.0, 0.0]       # motor 5
+  - [0.0, 0.0, 0.0]       # motor 6
+  - [0.0, 0.0, 0.0]       # motor 7
+  - [0.0, 0.0, 0.0]       # motor 8
 
 motor_filters:
   - [0.5]
@@ -181,7 +186,8 @@ motor_filters:
   - [0.5]
   - [0.5]
   - [0.75]
-  - [0.75]
+  - [0.8]
+  - [0.8]
   - [0.5]
   - [0.5]
 
@@ -197,7 +203,8 @@ motor_limits:
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
-  - [0.0, 0.0, 0.1, 5.5]
+  - [0.0, 0.0, 0.17, 5.5]
+  - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]

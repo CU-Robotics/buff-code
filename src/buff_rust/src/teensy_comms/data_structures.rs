@@ -427,8 +427,8 @@ impl RobotStatus {
         }
     }
 
-    pub fn new(robot_name: &str) -> RobotStatus {
-        let byu = BuffYamlUtil::new(robot_name);
+    pub fn new() -> RobotStatus {
+        let byu = BuffYamlUtil::default();
         RobotStatus::from_byu(byu)
     }
 
