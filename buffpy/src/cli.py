@@ -59,6 +59,9 @@ def main():
 	if ap.build:
 		build_profile(ap.build)
 
+	if ap.initialize:
+		initialize_devices()
+
 	if ap.deploy:
 		deploy_all_devices()
 

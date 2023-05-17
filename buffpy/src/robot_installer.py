@@ -115,7 +115,7 @@ def initialize_devices():
 			f.write(f"{robot}")
 
 		# deploy buffpy and source the install scripts
-		clean_dir_result = subprocess.run(['ssh', robot_address, f'if [[ -d {target} ]]; then rm -rf {target}/; fi; mkdir -p {target}'], timeout=30)
+		clean_dir_result = sb.run(['ssh', robot_address, f'if [[ -d {target} ]]; then rm -rf {target}/; fi; mkdir -p {target}'], timeout=30)
 
 		if clean_dir_result.returncode != 0:
 			print(f'Failed to clean {robot}')
@@ -126,10 +126,10 @@ def initialize_devices():
 			continue
 
 		try:
-			setup_result = subprocess.run(['ssh', 
+			setup_result = sb.run(['ssh', 
 					'-t',
 					robot_address, 
 					f'cd /home/cu-robotics/buff-code && source buffpy/scripts/install.bash'])
 
-		except subprocess.TimeoutExpired:
+		except sb.TimeoutExpired:
 			print(f'{robot_address} Timed out')
