@@ -47,8 +47,8 @@ try:
 
         hsv = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2HSV)
 
-        lowerw = np.array([0, 0, 50])
-        upperw = np.array([255, 200, 150])
+        lowerw = np.array([0, 0, 25])
+        upperw = np.array([255, 200, 125])
         maskw = cv2.inRange(hsv, lowerw, upperw)
 
         lowerb = np.array([0, 0, 0])
@@ -168,7 +168,7 @@ try:
             rospy.init_node('detection')
             msg = Float64MultiArray()
 
-            rate = rospy.Rate(10)
+            rate = rospy.Rate(30)
 
             # normalized_target[3] = yaw
             # normalized_target[4] = pi
@@ -186,6 +186,7 @@ try:
         evaluation_time = (time.time() - start_time)
         evaluation_ms = evaluation_time * 1000.0
         evaluation_fps = 1000.0 / (evaluation_ms + 0.0001)
+        #print(evaluation_fps)
 
         
         cv2.imshow("Detected Targets", vertical_lights)

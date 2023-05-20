@@ -306,10 +306,10 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	// velocity of IMU relative to world in the chassis reference frame
 	imu_state[0] += imu_accel_state[0] * dt;
 	imu_state[1] += imu_accel_state[1] * dt;
-	imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
+	imu_state[2] = //chassis_imu[5] * 0.017453; // gyro yaw
 	// use other imu for the rest
-	imu_state[3] = chassis_imu[4] * 0.017453; // pitch
-	imu_state[4] = chassis_imu[5] * 0.017453; // yaw
+	imu_state[3] = //chassis_imu[4] * 0.017453; // pitch
+	imu_state[4] = //chassis_imu[5] * 0.017453; // yaw
 	imu_state[5] = 0; // feeder (can leave zero)
 	imu_state[6] = 0; // constant (can leave zero)
 
@@ -324,14 +324,14 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	}
 
 	// get the encoder angles as radians
-	gimbal_pitch_angle = enc_filters[0].filter(wrap_angle((encoders[0] - encoder_bias[0]) * PI / 180));
-	gimbal_yaw_angle = enc_filters[1].filter(wrap_angle((encoders[1] - encoder_bias[1]) * PI / 180));
+	gimbal_pitch_angle = feedback[4][0] * 0.11184210526;
+	gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 	// Serial.printf("%f %f\n", (encoders[1] - encoder_bias[1]) * PI / 180, gimbal_yaw_angle);
 
 	enc_mag_pos[2] = chassis_yaw;
 	enc_mag_pos[3] = gimbal_pitch_angle;
-	enc_mag_pos[4] = gimbal_yaw_angle + chassis_yaw;
-	
+	enc_mag_pos[4] = gimbal_yaw_angle;// + chassis_yaw;
+
 	// fuse position estimates (kinda pointless just use one or the other)
 	weighted_vector_addition(enc_mag_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);
 }

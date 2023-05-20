@@ -7,6 +7,7 @@
 #define BUFF_CONTROLLERS_H
 
 
+float wrap_angle(float);
 void rotate2D(float*, float*, float);
 float vector_product(float*, float*, int);
 float cross_product2D(float*, float*);

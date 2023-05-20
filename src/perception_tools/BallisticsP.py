@@ -196,22 +196,20 @@ def findGlobalAngle(target,fov,robotState):
     # imgAngleX = ((target[2]-target[0])/target[2])*fov[1]
 
     angleX = (fov[1]*target[0])-(fov[1]/2.0)    
-    angleY = (fov[0]*target[1])-(fov[0]/2.0) + 90
+    angleY = (fov[0]*target[1])-(fov[0]/2.0)# + 90
 
     # imgAngleY = ((target[3]-target[1])/target[3])*fov[0]
 
-    psi = robotState[4]  #yaw   #CHECK INDICES FROM ENC MAG POS
-    phi = robotState[3]  #pitch
     # x = imgAngleX + psi
     # y = imgAngleY + phi
 
-    return [angleX+psi,angleY+phi]  #degrees
+    return [angleX,angleY]  #degrees
 
 def findTargetPos(angle, robotState, depth):  #assumes camera is at the x,y pos given in robotState
 
 
     angle[0] = np.deg2rad(angle[0])
-    angle[1]= np.deg2rad(angle[1])
+    angle[1] = np.deg2rad(angle[1])
 
     x = np.cos(angle[0])*np.sin(angle[1])*depth
     y = np.sin(angle[0])*np.sin(angle[1])*depth
@@ -226,14 +224,13 @@ def vision_callback(data):
         
 
 def robotstate_callback(data):
-   global robot_state
-   robot_state = data.data  #[X,Y,Thet,Pitch,Yaw,Feeder,Shooter] according to md file in firmware
-
+    global robot_state
+    robot_state = data.data #[X,Y,Thet,Pitch,Yaw,Feeder,Shooter] according to md file in firmware
 
 #xywh
 
 
-    
+
 def rosSetup(pub_topic, r_sub_topic,v_sub_topic):
         rospy.init_node('ballistics')
         pub = rospy.Publisher(pub_topic, Float64MultiArray,queue_size=1)
@@ -244,30 +241,38 @@ def rosSetup(pub_topic, r_sub_topic,v_sub_topic):
 if __name__ == "__main__":
         pub = rosSetup('gimbal_control_input','enc_mag_pos','vision') #gimbal_control_input
 
-        rate = rospy.Rate(10)
+        rate = rospy.Rate(100)
         msg = Float64MultiArray()
 
         while not rospy.is_shutdown():
-           if(targets_vision[2]!=0):
+            if (targets_vision[2]):
+                angle = findGlobalAngle(targets_vision, fov, robot_state)
+                pos = findTargetPos(angle, robot_state, targets_vision[2])
+                # print(pos)
+                # print(targets_vision[2])
 
-            angle = findGlobalAngle(targets_vision, fov, robot_state)
-            pos = findTargetPos(angle, robot_state, targets_vision[2])
-            # print(pos)
-            # print(targets_vision[2])
+                # b = getBallistics([0,0,0],pos,[0,0,0],g)
 
-            b = getBallistics([0,0,0],pos,[0,0,0],g)
+                # print("BALLISTICS: ",b)
 
-            # print("BALLISTICS: ",b)
+                # b[0] = b[0] - 90 #adjust axis
+                # print(b)
 
-            b[0] = b[0] - 90 #adjust axis
+                # b[0] = (b[0]) * math.pi / 180.0
+                # b[1] = (b[1]) * math.pi / 180.0
+                #print(robot_state[3],robot_state[4])
 
-            print(b)
-            
-            # msg.data = np.array(b)
-                
-            # pub.publish(msg)     
-            rate.sleep()
-           else: print("0 DEPTH")
+                pitch = robot_state[3]+angle[1]+0.37
+                yaw = robot_state[4]-angle[0]
+
+                b = (pitch, yaw)
+                msg.data = np.array(b)
+
+                # msg.data = np.array(b)
+                # if (len(b) > 0):
+                pub.publish(msg)
+                rate.sleep()
+           #else: print("0 DEPTH")
 
 
 
