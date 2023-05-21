@@ -7,6 +7,12 @@ import pyrealsense2 as rs
 import rospy
 from std_msgs.msg import Float64MultiArray
 
+robot_state = [0,0,0,0,0,0]
+
+def robotstate_callback(data):
+    global robot_state
+    robot_state = data.data
+
 
 config = rs.config()
 config.enable_stream(rs.stream.depth,1280,720,rs.format.z16,30)
@@ -18,9 +24,21 @@ pitch = 0
 
 evaluation_ms = 0
 
+print("Realsense connecting")
+
 pipe = rs.pipeline()
 profile = pipe.start(config)
 
+print("Ros connecting")
+
+rospy.init_node('ballistics')
+pub = rospy.Publisher('gimbal_control_input', Float64MultiArray, queue_size=1)
+rospy.Subscriber('enc_mag_pos',Float64MultiArray, robotstate_callback)
+
+print("Ros connected")
+
+rate = rospy.Rate(100)
+msg = Float64MultiArray()
 
 # TODO: Clean this up significantly
 try:
@@ -47,8 +65,8 @@ try:
 
         hsv = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2HSV)
 
-        lowerw = np.array([0, 0, 25])
-        upperw = np.array([255, 200, 125])
+        lowerw = np.array([0, 0, 75])
+        upperw = np.array([255, 50, 255])
         maskw = cv2.inRange(hsv, lowerw, upperw)
 
         lowerb = np.array([0, 0, 0])
@@ -164,25 +182,26 @@ try:
             normalized_target = [centermost_target[0][0] / (img_w * 1.0), centermost_target[0][1] / (img_h * 1.0), centermost_target[1],yaw,pitch]
            
 
-            pub = rospy.Publisher("vision", Float64MultiArray, queue_size = 1)
-            rospy.init_node('detection')
-            msg = Float64MultiArray()
+            angleX = (87*normalized_target[0])-(87/2.0)    
+            angleY = (58*normalized_target[1])-(58/2.0)
 
-            rate = rospy.Rate(30)
+            angleX *= (math.pi / 180.0)
+            angleY *= (math.pi / 180.0)
 
-            # normalized_target[3] = yaw
-            # normalized_target[4] = pi
-            
-            
-        
-            msg.data = np.array(normalized_target)
-            
+            pitchOut = robot_state[3]+angleY+0.37
+            yawOut = robot_state[4]-angleX
 
+            print(angleX, robot_state[4], yawOut)
+
+            b = (pitchOut, yawOut)
+            msg.data = np.array(b)
+
+            # msg.data = np.array(b)
+            # if (len(b) > 0):
             pub.publish(msg)
             rate.sleep()
-            
 
-
+        
         evaluation_time = (time.time() - start_time)
         evaluation_ms = evaluation_time * 1000.0
         evaluation_fps = 1000.0 / (evaluation_ms + 0.0001)
