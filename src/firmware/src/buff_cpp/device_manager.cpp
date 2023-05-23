@@ -468,26 +468,26 @@ void Device_Manager::step_controllers(float dt) {
 
 	controller_manager.estimate_state(chassis_imu.data, chassis_imu.yaw, dt);
 
-	// if (!receiver.safety_shutdown) {//(controller_switch == 1) {								// Use DR16 control input
-	// 	controller_manager.set_input(receiver.data);
-	// }
-	//Serial.println(receiver.safety_shutdown);
-	if (!receiver.safety_shutdown) {							// Use DR16 chassis control and HID gimbal control
-		controller_manager.input[0] = receiver.data[0];
-		controller_manager.input[1] = receiver.data[1];
-		controller_manager.input[2] = receiver.data[2];
-		float pitch_enc = controller_manager.feedback[4][0] * 0.11184210526;
-        //controller_manager.input[3] = -10 * (controller_manager.autonomy_input[3] - pitch_enc);
-        controller_manager.input[4] = -100 * (controller_manager.autonomy_input[4] - controller_manager.enc_mag_pos[4]);
-        //controller_manager.input[5] = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_mag_pos[5]);
-
-		Serial.print(controller_manager.autonomy_input[3]);
-		Serial.print(" /// ");
-		Serial.print(pitch_enc);
-		Serial.print(" /// ");
-		Serial.print(controller_manager.input[3]);
-		Serial.println();
+	if (!receiver.safety_shutdown) {//(controller_switch == 1) {								// Use DR16 control input
+		controller_manager.set_input(receiver.data);
 	}
+	//Serial.println(receiver.safety_shutdown);
+	// if (!receiver.safety_shutdown) {							// Use DR16 chassis control and HID gimbal control
+	// 	controller_manager.input[0] = receiver.data[0];
+	// 	controller_manager.input[1] = receiver.data[1];
+	// 	controller_manager.input[2] = receiver.data[2];
+	// 	float pitch_enc = controller_manager.feedback[4][0] * 0.11184210526;
+    //     //controller_manager.input[3] = -10 * (controller_manager.autonomy_input[3] - pitch_enc);
+    //     controller_manager.input[4] = -100 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_mag_pos[4]);
+    //     //controller_manager.input[5] = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_mag_pos[5]);
+
+	// 	Serial.print(controller_manager.autonomy_input[3]);
+	// 	Serial.print(" /// ");
+	// 	Serial.print(pitch_enc);
+	// 	Serial.print(" /// ");
+	// 	Serial.print(controller_manager.input[3]);
+	// 	Serial.println();
+	// }
 
 	bool new_reference = timer_info_ms(2) >= 10;
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {

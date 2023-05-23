@@ -1,11 +1,16 @@
+import os
 import cv2
-import numpy as np
 import time
 import math
-import pyrealsense2 as rs
-
 import rospy
+import numpy as np
 from std_msgs.msg import Float64MultiArray
+
+if os.getenv("HOSTNAME")[:4] == "edge":
+    import pyrealsense2.pyrealsense2 as rs
+else:
+    import pyrealsense as rs
+
 
 robot_state = [0,0,0,0,0,0]
 
@@ -28,6 +33,13 @@ print("Realsense connecting")
 
 pipe = rs.pipeline()
 profile = pipe.start(config)
+
+color_sensor = profile.get_device().first_color_sensor()
+color_sensor.set_option(rs.option.exposure, 39)
+color_sensor.set_option(rs.option.gain, 128)
+color_sensor.set_option(rs.option.saturation, 64)
+color_sensor.set_option(rs.option.enable_auto_white_balance, 0)
+color_sensor.set_option(rs.option.white_balance, 3700)
 
 print("Ros connecting")
 
@@ -201,17 +213,17 @@ try:
             pub.publish(msg)
             rate.sleep()
 
-        
+
         evaluation_time = (time.time() - start_time)
         evaluation_ms = evaluation_time * 1000.0
         evaluation_fps = 1000.0 / (evaluation_ms + 0.0001)
         #print(evaluation_fps)
 
-        
-        cv2.imshow("Detected Targets", vertical_lights)
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            pipe.stop()
-            break
+
+        # cv2.imshow("Detected Targets", vertical_lights)
+        # if cv2.waitKey(25) & 0xFF == ord('q'):
+        #     pipe.stop()
+        #     break
 
     cv2.destroyAllWindows()
 

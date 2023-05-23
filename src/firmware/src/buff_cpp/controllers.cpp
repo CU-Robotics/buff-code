@@ -13,6 +13,23 @@ float wrap_angle(float angle) {
 	return angle;
 }
 
+float wrap_error(float error) {
+	bool wrapped = false;
+	while (error >= PI) {
+		error -= 2 * PI;
+		wrapped = true;
+	}
+
+	while (error < -PI) {
+		error += 2 * PI;
+		wrapped = true;
+	}
+
+	if (wrapped) error *= -1;
+
+	return error;
+}
+
 void rotate2D(float* v, float* v_tf, float angle) {
 	v_tf[0] = (v[0] * cos(angle)) - (v[1] * sin(angle));
 	v_tf[1] = (v[0] * sin(angle)) + (v[1] * cos(angle));
