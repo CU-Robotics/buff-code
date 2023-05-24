@@ -408,7 +408,7 @@ void Device_Manager::read_sensors() {
 			sensor_switch += 1;
 			break;
 
-		default:
+		case 3:
 			switch (receiver.read()) {
 				case USER_SHUTDOWN:
 					controller_switch = -1;
@@ -424,9 +424,13 @@ void Device_Manager::read_sensors() {
 					break;
 
 				default:
-					controller_switch = -1;
 					break;
 			}
+
+			sensor_switch = 0;
+			break;
+
+		default:
 			sensor_switch = 0;
 			break;
 	}

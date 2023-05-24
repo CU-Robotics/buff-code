@@ -49,17 +49,26 @@ if [[ "${PATH}" != *"/.cargo"*  && -f ${HOME}/.cargo/env ]]; then
 	source ${HOME}/.cargo/env
 fi
 
-#		Setup python tools
+#		Setup python tools (if reset replace the bin links)
+if [[ "$1" == "reset" ]]; then
+	if [[ -f "/usr/local/bin/buffpy" ]]; then
+		${SUDO} rm -rf "/usr/local/bin/buffpy"
+	fi
+	if [[ -f "/usr/local/bin/run" ]]; then
+		${SUDO} rm -rf "/usr/local/bin/run"
+	fi
+fi
+
 if [[ ! -f "/usr/local/bin/buffpy" ]]; then
 	${SUDO} touch "/usr/local/bin/buffpy"
-	echo "/usr/bin/env python3 $PROJECT_ROOT/buffpy/src/cli.py \$@" | ${SUDO} tee "/usr/local/bin/buffpy"
+	echo "/usr/bin/env python3 \${PROJECT_ROOT}/buffpy/src/cli.py \$@" | ${SUDO} tee "/usr/local/bin/buffpy"
 	${SUDO} chmod +x "/usr/local/bin/buffpy"
 fi 
 if [[ ! -f "/usr/local/bin/run" ]]; then
 	${SUDO} touch "/usr/local/bin/run"
-	echo "/usr/bin/env python3 $PROJECT_ROOT/buffpy/src/robot_spawner.py \$@" | ${SUDO} tee "/usr/local/bin/run"
+	echo "/usr/bin/env python3 \${PROJECT_ROOT}/buffpy/src/robot_spawner.py \$@" | ${SUDO} tee "/usr/local/bin/run"
 	${SUDO} chmod +x "/usr/local/bin/run"
-fi 
+fi
 
 
 # Only export if if not already in path
