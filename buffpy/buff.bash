@@ -79,6 +79,10 @@ if [[ "${PYTHONPATH}" != *"${PROJECT_ROOT}/buffpy/src:"* ]]; then
 	export PYTHONPATH="${PROJECT_ROOT}/buffpy/src:${PYTHONPATH}" 
 fi
 
+if [[ "${PYTHONPATH}" != *"*:/usr/lib/python3.8/site-packages"* ]]; then	
+	export PYTHONPATH="${PYTHONPATH}:/usr/lib/python3.8/site-packages"
+fi
+
 # set ROS package path to buff-code so it can see buffpy
 if [[ "${ROS_PACKAGE_PATH}" != *"buff-code"* ]]; then
 	export ROS_PACKAGE_PATH="${PROJECT_ROOT}:${ROS_PACKAGE_PATH}"
@@ -107,8 +111,7 @@ else
 	alias builda="buffpy -b all"
 	alias buff-test="br && cargo test"
 	alias sshbot="ssh -X cu-robotics@edgek.local"
-	alias scp-src="scp -r ~/buff-code/src/rknn_buffnet/src cu-robotics@edgek.local:/home/cu-robotics/buff-code/src/rknn_buffnet"
-	alias scp-h="scp -r ~/buff-code/src/rknn_buffnet/include cu-robotics@edgek.local:/home/cu-robotics/buff-code/src/rknn_buffnet"
+	alias scp-src="buffpy -c rust && scp -r src/buff_rust/ cu-robotics@edgek.local:/home/cu-robotics/buff-code/src/"
 	set-ros-master () {
 		export ROS_MASTER_URI=http://$1:11311
 	}

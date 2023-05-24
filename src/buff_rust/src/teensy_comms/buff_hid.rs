@@ -468,45 +468,47 @@ impl HidROS {
         let cf1_clone = control_flag.clone();
         let cf2_clone = control_flag.clone();
 
-        let motor_subscribers = vec![rosrust::subscribe(
-            "motor_can_output",
-            1,
-            move |msg: std_msgs::Float64MultiArray| {
-                assert!(
-                    msg.data.len() == n_motors,
-                    "ROS can output msg had a different number of values than there are motors",
-                );
-                *cf_clone.write().unwrap() = 0;
-                *motor_can_output.write().unwrap() = msg.data;
-            },
-        )
-        .unwrap(),
-        rosrust::subscribe(
-            "gimbal_control_input",
-            1,
-            move |msg: std_msgs::Float64MultiArray| {
-                assert!(
-                    msg.data.len() == 3,
-                    "ROS gimbal control msg had a different number of values than there are gimbal actuators",
-                );
-                *cf1_clone.write().unwrap() = 1;
-                *gimbal_control.write().unwrap() = msg.data;
-            },
-        )
-        .unwrap(),
-        rosrust::subscribe(
-            "control_input",
-            1,
-            move |msg: std_msgs::Float64MultiArray| {
-                assert!(
-                    msg.data.len() == n_motors,
-                    "ROS control msg had a different number of values than there are motors",
-                );
-                *cf2_clone.write().unwrap() = 2;
-                *control_input.write().unwrap() = msg.data;
-            },
-        )
-        .unwrap()];
+        let motor_subscribers = vec![
+            rosrust::subscribe(
+                "motor_can_output",
+                1,
+                move |msg: std_msgs::Float64MultiArray| {
+                    assert!(
+                        msg.data.len() == n_motors,
+                        "ROS can output msg had a different number of values than there are motors",
+                    );
+                    *cf_clone.write().unwrap() = 0;
+                    *motor_can_output.write().unwrap() = msg.data;
+                },
+            )
+            .unwrap(),
+            rosrust::subscribe(
+                "gimbal_control_input",
+                1,
+                move |msg: std_msgs::Float64MultiArray| {
+                    // assert!(
+                    //     msg.data.len() == 3,
+                    //     "ROS gimbal control msg had a different number of values than there are gimbal actuators",
+                    // );
+                    *cf1_clone.write().unwrap() = 1;
+                    *gimbal_control.write().unwrap() = msg.data;
+                },
+            )
+            .unwrap(),
+            rosrust::subscribe(
+                "control_input",
+                1,
+                move |msg: std_msgs::Float64MultiArray| {
+                    assert!(
+                        msg.data.len() == n_motors,
+                        "ROS control msg had a different number of values than there are motors",
+                    );
+                    *cf2_clone.write().unwrap() = 2;
+                    *control_input.write().unwrap() = msg.data;
+                },
+            )
+            .unwrap(),
+        ];
 
         HidROS {
             shutdown: Arc::new(RwLock::new(false)),

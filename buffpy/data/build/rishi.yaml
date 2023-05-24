@@ -1,0 +1,4 @@
+project: 'perception_tools'
+clean: 'rm -rf __pycache__'
+targets: [BallisticsP.py, 'find-armor-plate.py']
+install: ['lib', 'lib']
