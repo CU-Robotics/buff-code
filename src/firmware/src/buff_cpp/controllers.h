@@ -44,7 +44,7 @@ struct Controller_Manager {
 	void step_motors();
 	void set_input(float*);
 	void set_feedback(int, float*, float);
-	void estimate_state(float*, float, float);
+	void estimate_state(float*, float*, float);
 	void set_reference(int);
 
 	float power_buffer;

@@ -29,3 +29,17 @@ void ICM20649::readSensor() {
     gyroY = gyro.gyro.y;
     gyroZ = gyro.gyro.z;
 }
+
+void ICM20649::read_accel() {
+    icm_accel->getEvent(&accel);
+    data[0] = accel.acceleration.x;
+    data[1] = accel.acceleration.y;
+    data[2] = accel.acceleration.z;
+}
+
+void ICM20649::read_gyro() {
+    icm_gyro->getEvent(&gyro);
+    data[3] = gyro.gyro.x;
+    data[4] = gyro.gyro.y;
+    data[5] = gyro.gyro.z;
+}

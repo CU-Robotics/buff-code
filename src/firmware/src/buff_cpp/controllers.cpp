@@ -303,7 +303,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	Using independant measurement values to build kee_state, imu_state and enc_mag_pos will help us reduce noise and improve estimates.
 	kee_imu_pos is the most unreliable as it is an integrated estimate (can amplify errors in the estimate).
 */
-void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, float dt) {
+void Controller_Manager::estimate_state(float* chassis_imu, float* gimbal_imu, float dt) {
 
 	float imu_accel_state[2];
 
@@ -323,10 +323,9 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	// velocity of IMU relative to world in the chassis reference frame
 	imu_state[0] += imu_accel_state[0] * dt;
 	imu_state[1] += imu_accel_state[1] * dt;
-	imu_state[2] = //chassis_imu[5] * 0.017453; // gyro yaw
-	// use other imu for the rest
-	imu_state[3] = //chassis_imu[4] * 0.017453; // pitch
-	imu_state[4] = //chassis_imu[5] * 0.017453; // yaw
+	imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
+	// imu_state[3] = gimbal_imu[4] * 0.017453; // pitch NEED TO DERIVATIVE FILTER ENCODERS TO FIND THIS (or use motors)
+	imu_state[4] = gimbal_imu[5] * 0.017453; // yaw
 	imu_state[5] = 0; // feeder (can leave zero)
 	imu_state[6] = 0; // constant (can leave zero)
 
@@ -345,7 +344,7 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 	// Serial.printf("%f %f\n", (encoders[1] - encoder_bias[1]) * PI / 180, gimbal_yaw_angle);
 
-	enc_mag_pos[2] = chassis_yaw;
+	enc_mag_pos[2] += imu_state[2] * dt;
 	enc_mag_pos[3] = gimbal_pitch_angle;
 	enc_mag_pos[4] = gimbal_yaw_angle;// + chassis_yaw;
 

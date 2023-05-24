@@ -234,7 +234,7 @@ void Device_Manager::sensor_request_handle() {	// 	3
 
 	switch (sensor) {
 		case 0:
-			for (int i = 0; i < IMU_DOF; i++){
+			for (int i = 0; i < ICM20649_DOF; i++){
 				output_report.put_float((4 * i) + 2, chassis_imu.data[i]);
 			}
 			break;
@@ -396,21 +396,26 @@ void Device_Manager::read_sensors() {
 
 	switch (sensor_switch) {
 		case 0:
-			//chassis_imu.read_lsm6dsox_accel();
+			chassis_imu.read_accel();
 			sensor_switch += 1;
 			break;
 
 		case 1:
-			//chassis_imu.read_lsm6dsox_gyro();
+			chassis_imu.read_gyro();
 			sensor_switch += 1;
 			break;
 
 		case 2:
-			//chassis_imu.read_lis3mdl();
+			gimbal_imu.read_accel();
 			sensor_switch += 1;
 			break;
 
 		case 3:
+			gimbal_imu.read_gyro();
+			sensor_switch += 1;
+			break;
+
+		case 4:
 			switch (receiver.read()) {
 				case USER_SHUTDOWN:
 					controller_switch = -1;
@@ -470,10 +475,32 @@ void Device_Manager::read_sensors() {
 void Device_Manager::step_controllers(float dt) {
 	static int prev_shutdown = 1;
 
-	controller_manager.estimate_state(chassis_imu.data, chassis_imu.yaw, dt);
+	controller_manager.estimate_state(chassis_imu.data, gimbal_imu.data, dt);
 
 	if (!receiver.safety_shutdown) {//(controller_switch == 1) {								// Use DR16 control input
-		controller_manager.set_input(receiver.data);
+		float pitch_enc = controller_manager.feedback[4][0] * 0.11184210526;
+		float input_buffer[REMOTE_CONTROL_LEN];
+
+		switch (controller_switch) {
+			case 1:
+				memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
+				break;
+
+			case 2:
+				float pitch_pose_err = -10 * (controller_manager.autonomy_input[3] - pitch_enc);
+				float yaw_pose_err = -100 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_mag_pos[4]);
+				float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_mag_pos[5]);
+				float yaw_speed_err = 0.0 * (yaw_pose_err - controller_manager.imu_state[5]);
+				input_buffer[0] = receiver.data[0];
+				input_buffer[1] = receiver.data[1];
+				input_buffer[2] = receiver.data[2];
+				input_buffer[3] = pitch_pose_err;
+				input_buffer[4] = yaw_pose_err + yaw_speed_err;
+				input_buffer[5] = feeder_pose_err;
+				break;
+		}
+
+		controller_manager.set_input(input_buffer);
 	}
 	//Serial.println(receiver.safety_shutdown);
 	// if (!receiver.safety_shutdown) {							// Use DR16 chassis control and HID gimbal control
