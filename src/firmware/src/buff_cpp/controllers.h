@@ -48,6 +48,7 @@ struct Controller_Manager {
 	void set_reference(int);
 
 	float power_buffer;
+	float projectile_speed;
 
 	float pitch_angle;
 	float pitch_offset;

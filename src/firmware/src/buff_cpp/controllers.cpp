@@ -179,6 +179,7 @@ void Controller_Manager::get_manager_report(float* data) {
 		data[i] = input[i];
 	}
 	data[REMOTE_CONTROL_LEN] = power_buffer;
+	data[REMOTE_CONTROL_LEN+1] = projectile_speed;
 }
 
 void Controller_Manager::step_motors() {
