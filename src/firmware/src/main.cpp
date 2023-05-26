@@ -36,9 +36,9 @@ int main() {											// Basically a schudeling algorithm
 		device_manager.hid_input_switch(cycle_time_us);	// check for an input packet (data request/control input) handle accordingly
 		device_manager.push_can();						// push data on and off the can bus
 
-		if (timer_info_ms(0) > cycle_time_ms) {
-			Serial.println("Teensy overcycled");
-		}
+		// if (timer_info_ms(0) > cycle_time_ms) {
+		// 	Serial.println("Teensy overcycled");
+		// }
 		timer_wait_us(0, cycle_time_us);				// normalize master loop cycle time to cycle_time_u
 		// blink();										// helpful if you think the loop is crashing (light will pause)
 	}

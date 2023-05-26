@@ -325,7 +325,7 @@ void Controller_Manager::estimate_state(float* chassis_imu, float* gimbal_imu, f
 	imu_state[1] += imu_accel_state[1] * dt;
 	imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
 	// imu_state[3] = gimbal_imu[4] * 0.017453; // pitch NEED TO DERIVATIVE FILTER ENCODERS TO FIND THIS (or use motors)
-	imu_state[4] = gimbal_imu[5] * 0.017453; // yaw
+	imu_state[4] = feedback[4][1] * 0.11184210526; // yaw
 	imu_state[5] = 0; // feeder (can leave zero)
 	imu_state[6] = 0; // constant (can leave zero)
 
