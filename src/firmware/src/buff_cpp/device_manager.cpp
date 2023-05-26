@@ -9,8 +9,8 @@ Device_Manager::Device_Manager(){
 	timer_set(2);
 	timer_set(3);
 	controller_switch = -1;
-	// gimbal_imu.init(GIMBAL_IMU_ADDR);
-	chassis_imu.init(CHASSIS_IMU_ADDR);
+	gimbal_imu.init(GIMBAL_IMU_ADDR);
+	// chassis_imu.init(CHASSIS_IMU_ADDR);
 }
 
 /*
@@ -401,7 +401,7 @@ void Device_Manager::read_sensors() {
 	switch (sensor_switch) {
 		case 0:
 			// chassis_imu.read_accel();
-			chassis_imu.read_gyro();
+			// chassis_imu.read_gyro();
 			sensor_switch += 1;
 			break;
 
@@ -410,7 +410,7 @@ void Device_Manager::read_sensors() {
 			break;
 
 		case 2:
-			// gimbal_imu.read_gyro();
+			gimbal_imu.read_gyro();
 			sensor_switch += 1;
 			break;
 

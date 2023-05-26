@@ -45,8 +45,8 @@ struct Device_Manager {
 
 	// ADD new IMU here, also make sure the 
 	// senor pipeline and dev manager constructors knows about it!!
-	ICM20649 chassis_imu;
-	// ICM20649 gimbal_imu;
+	// ICM20649 chassis_imu;
+	ICM20649 gimbal_imu;
 
 	DR16 receiver;
 	RefSystem ref;
