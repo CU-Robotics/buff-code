@@ -303,7 +303,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	Using independant measurement values to build kee_state, imu_state and enc_mag_pos will help us reduce noise and improve estimates.
 	kee_imu_pos is the most unreliable as it is an integrated estimate (can amplify errors in the estimate).
 */
-void Controller_Manager::estimate_state(float* chassis_imu, float* gimbal_imu, float dt) {
+void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 
 	float imu_accel_state[2];
 
@@ -318,14 +318,14 @@ void Controller_Manager::estimate_state(float* chassis_imu, float* gimbal_imu, f
 
 	// compute the accelerometer velocity estimate
 	// turn inertial measurement to robot state measurement
-	rotate2D(chassis_imu, imu_accel_state, imu_offset_angle);
+	// rotate2D(chassis_imu, imu_accel_state, imu_offset_angle);
 
 	// velocity of IMU relative to world in the chassis reference frame
 	imu_state[0] += imu_accel_state[0] * dt;
 	imu_state[1] += imu_accel_state[1] * dt;
-	imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
+	// imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
 	// imu_state[3] = gimbal_imu[4] * 0.017453; // pitch NEED TO DERIVATIVE FILTER ENCODERS TO FIND THIS (or use motors)
-	imu_state[4] = feedback[4][1] * 0.11184210526; // yaw
+	imu_state[4] = gimbal_imu[5]; // yaw
 	imu_state[5] = 0; // feeder (can leave zero)
 	imu_state[6] = 0; // constant (can leave zero)
 
