@@ -242,7 +242,7 @@ void Controller_Manager::set_reference(int controller_id) {
 	// can also set reference[x][1] = 0; (2nd gain is then a friction term)
 	references[controller_id][0] += speed * 0.01; // 10ms this can't be hardcoded
 
-	if (ctrl_type != 1) {
+	if (ctrl_type != 1 && ctrl_type != 3) {
 		references[controller_id][1] = speed;
 	}
 
@@ -271,6 +271,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 
 	feedback[controller_id][0] = data[0] + (2 * PI * rollover) - biases[controller_id];
 	feedback[controller_id][1] = motor_filters[controller_id].filter(data[1] * 2 * PI / 60);
+	feedback[controller_id][2] = data[2];
 
 	switch(controller_types[controller_id]) {
 		case 0:
@@ -280,7 +281,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 			break;
 
 		case 3:
-			feedback[controller_id][2] = sin((feedback[controller_id][0]));
+			feedback[controller_id][2] = -sin((feedback[controller_id][0] / 4.5) + (PI / 2.75));
 			break;
 
 		default:
