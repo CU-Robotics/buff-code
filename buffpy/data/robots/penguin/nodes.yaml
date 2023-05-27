@@ -12,7 +12,7 @@ robot_type: demo
 # spinup perception and comms here
 buff_nodes:
   buff_rust:
-    files: [comms_node, BallisticsP.py, find-armor-plate.py]
+    files: [comms_node]
 
 # Examle of includig ros
 # Maybe some kind of option to shut this down via cmdline
@@ -31,8 +31,8 @@ teensy_pid: 0x0486
 # Defines the sensor index for
 # HID packets. String is the topic
 sensor_index:
-  - lsm6dsox
-  - icm20649
+  - chassis_imu
+  - gimbal_imu
   - dr16
   - refsys
   - revEnc
@@ -176,9 +176,9 @@ motor_gains:
   - [0.0, 0.0, 0.0]       # motor 1 
   - [0.0, 0.0, 0.0]       # motor 2
   - [0.0, 0.0, 0.0]       # motor 3
-  - [0.0, 0.005, 0.0]       # motor 4
-  - [0.0, 0.005, 0.0]       # motor 5
-  - [0.0, 0.005, 0.0]       # motor 6
+  - [0.0, 0.0, 0.0]       # motor 4
+  - [0.0, 0.0, 0.0]       # motor 5
+  - [0.0, 0.0, 0.0]       # motor 6
   - [0.0, 0.0, 0.0]       # motor 7
   - [0.0, 0.0, 0.0]       # motor 8
 

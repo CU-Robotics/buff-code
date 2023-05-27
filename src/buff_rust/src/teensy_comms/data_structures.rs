@@ -252,6 +252,7 @@ pub struct RobotStatus {
     pub kee_imu_pos: Arc<RwLock<Vec<f64>>>,
     pub enc_mag_pos: Arc<RwLock<Vec<f64>>>,
     pub power_buffer: Arc<RwLock<f64>>,
+    pub projectile_speed: Arc<RwLock<f64>>,
     pub control_mode: Arc<RwLock<f64>>,
 
     pub forward_kinematics: Vec<Vec<f64>>,
@@ -271,7 +272,8 @@ impl RobotStatus {
             kee_imu_pos: Arc::new(RwLock::new(vec![])),
             enc_mag_pos: Arc::new(RwLock::new(vec![])),
             power_buffer: Arc::new(RwLock::new(0.0)),
-            control_mode: Arc::new(RwLock::new(0.0)),
+            projectile_speed: Arc::new(RwLock::new(15.0)),
+            control_mode: Arc::new(RwLock::new(-1.0)),
             forward_kinematics: vec![vec![]],
             inverse_kinematics: vec![vec![]],
         }
@@ -421,6 +423,7 @@ impl RobotStatus {
             kee_imu_pos: Arc::new(RwLock::new(vec![0.0; robot_state_len])),
             enc_mag_pos: Arc::new(RwLock::new(vec![0.0; robot_state_len])),
             power_buffer: Arc::new(RwLock::new(0.0)),
+            projectile_speed: Arc::new(RwLock::new(15.0)),
             control_mode: Arc::new(RwLock::new(0.0)),
             forward_kinematics: forward_kinematics,
             inverse_kinematics: inverse_kinematics,
@@ -453,6 +456,7 @@ impl RobotStatus {
             control_input: self.control_input.clone(),
             control_output: self.control_output.clone(),
             power_buffer: self.power_buffer.clone(),
+            projectile_speed: self.projectile_speed.clone(),
             control_mode: self.control_mode.clone(),
             forward_kinematics: self.forward_kinematics.clone(),
             inverse_kinematics: self.inverse_kinematics.clone(),

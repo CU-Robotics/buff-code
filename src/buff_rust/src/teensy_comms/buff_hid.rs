@@ -313,6 +313,8 @@ impl HidReader {
                         *self.robot_status.control_input.write().unwrap() =
                             self.input.get_floats(4, 7).to_vec();
                         *self.robot_status.power_buffer.write().unwrap() = self.input.get_float(32);
+                        *self.robot_status.projectile_speed.write().unwrap() =
+                            self.input.get_float(36);
                     }
                     _ => {}
                 },
@@ -407,6 +409,7 @@ pub struct HidROS {
     pub estimate_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub control_publisher: rosrust::Publisher<std_msgs::Float64MultiArray>,
     pub power_buffer_publisher: rosrust::Publisher<std_msgs::Float64>,
+    pub proj_speed_publisher: rosrust::Publisher<std_msgs::Float64>,
 
     pub motor_subscribers: Vec<rosrust::Subscriber>,
 }
@@ -455,6 +458,7 @@ impl HidROS {
 
         let control_publisher = rosrust::publish("control_input_echo", 1).unwrap();
         let power_buffer_publisher = rosrust::publish("power_buffer", 1).unwrap();
+        let proj_speed_publisher = rosrust::publish("projectile_speed", 1).unwrap();
 
         let n_motors = robot_status.motors.len();
         let motor_can_output = Arc::new(RwLock::new(vec![0.0; n_motors]));
@@ -524,6 +528,7 @@ impl HidROS {
             control_publisher: control_publisher,
             estimate_publishers: estimate_publishers,
             power_buffer_publisher: power_buffer_publisher,
+            proj_speed_publisher: proj_speed_publisher,
 
             motor_subscribers: motor_subscribers,
         }
@@ -600,6 +605,10 @@ impl HidROS {
         let mut msg = std_msgs::Float64::default();
         msg.data = self.robot_status.power_buffer.read().unwrap().clone();
         self.power_buffer_publisher.send(msg).unwrap();
+
+        let mut msg = std_msgs::Float64::default();
+        msg.data = self.robot_status.projectile_speed.read().unwrap().clone();
+        self.proj_speed_publisher.send(msg).unwrap();
 
         let mut msg = std_msgs::Float64MultiArray::default();
         msg.data = self.robot_status.control_input.read().unwrap().clone();

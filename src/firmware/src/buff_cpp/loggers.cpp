@@ -158,8 +158,17 @@ int float_geq(float a, float b, String message){
 
 void timer_print(uint32_t time, String message) {
 	Serial.print("[BUFF_TIMER]\t");
-		Serial.print(message);
-		Serial.printf("\t%i\n", time);
+	Serial.print(message);
+	Serial.printf("\t%i\n", time);
+}
+
+void fancy_vec(float* arr, int n) {
+	Serial.print("[Vector]\t[");
+	for (int i = 0; i < n-1; i++) {
+		Serial.printf("%f, ", arr[i]);
+	}
+	Serial.printf("%f]\n", arr[n-1]);
+	
 }
 
 

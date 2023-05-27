@@ -1,6 +1,7 @@
 #include "sensors/dr16.h"
 #include "sensors/revEnc.h"
 #include "sensors/lsm6dsox.h"
+#include "sensors/icm20649.h"
 #include "sensors/refSystem.h"
 #include "buff_cpp/controllers.h"
 #include "robot_comms/hid_report.h"
@@ -44,7 +45,8 @@ struct Device_Manager {
 
 	// ADD new IMU here, also make sure the 
 	// senor pipeline and dev manager constructors knows about it!!
-	LSM6DSOX chassis_imu;
+	// ICM20649 chassis_imu;
+	ICM20649 gimbal_imu;
 
 	DR16 receiver;
 	RefSystem ref;
