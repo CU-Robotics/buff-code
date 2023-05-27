@@ -202,11 +202,12 @@ void Controller_Manager::step_motors() {
 			case 0:
 			case 1:
 			case 3:
+			case 4:
 				output[i] = controllers[i].step(references[i], feedback[i]);
 				break;
 
 			case 2:
-				output[i] = controllers[i].step(references[i], feedback[i]);  // * ratio;
+				output[i] = controllers[i].step(references[i], feedback[i]) * ratio;
 				break;
 
 			default:
@@ -282,6 +283,9 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 			feedback[controller_id][2] = sin((feedback[controller_id][0]));
 			break;
 
+		case 4:
+			feedback[controller_id][0] = gimbal_pitch_angle;
+
 		default:
 			if (controller_types[controller_id] < 0) {
 				feedback[controller_id][0] = feedback[-controller_types[controller_id]][0];
@@ -341,7 +345,7 @@ void Controller_Manager::estimate_state(float* chassis_imu, float chassis_yaw, f
 	}
 
 	// get the encoder angles as radians
-	gimbal_pitch_angle = feedback[4][0] * 0.11184210526;
+	gimbal_pitch_angle = wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
 	gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 	// Serial.printf("%f %f\n", (encoders[1] - encoder_bias[1]) * PI / 180, gimbal_yaw_angle);
 
