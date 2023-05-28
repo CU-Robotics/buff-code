@@ -144,6 +144,7 @@ class Robot_Description:
 
 		self.data['robot_name'] = name
 		os.environ['ROBOT_NAME'] = name					# for BYU
+		os.environ['ROBOT_TYPE'] = contents['robot_type']
 		self.data['sensor_index'] = contents['sensor_index']
 		self.data['motor_index'] = contents['motor_index']
 

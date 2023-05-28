@@ -182,16 +182,11 @@ void Device_Manager::control_input_handle() { // 2
 
 			break;
 
-		case 2:
-			if (receiver.safety_shutdown == 1) {	// Way points
-				break;
-			}
-
-			
+		case 2: //  waypoint report
 			
 			break;
 
-		case 3:
+		case 3: // autonomy control report
 			if (abs(controller_switch) == 1) {	// Only user can put the bot in autonomous mode
 				break;
 			}
@@ -205,6 +200,10 @@ void Device_Manager::control_input_handle() { // 2
 			controller_manager.autonomy_input[4] = input_report.get_float(19);
 			controller_manager.autonomy_input[5] = input_report.get_float(23);
 			
+			break;
+
+		case 4: // position override report
+
 			break;
 
 		default:
