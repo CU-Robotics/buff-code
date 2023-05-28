@@ -87,6 +87,7 @@ struct Controller_Manager {
 
 	int controller_types[MAX_NUM_RM_MOTORS];
 
+	LPFilter imu_yaw;
 	LPFilter enc_filters[MAX_REV_ENCODERS];
 	LPFilter motor_filters[MAX_NUM_RM_MOTORS];
 

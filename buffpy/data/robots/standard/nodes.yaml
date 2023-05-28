@@ -12,7 +12,7 @@ robot_type: standard
 # spinup perception and comms here
 buff_nodes:
   buff_rust:
-    files: [comms_node, find-armor-plate.py]
+    files: [comms_node]
 
 # Examle of includig ros
 # Maybe some kind of option to shut this down via cmdline
@@ -155,7 +155,7 @@ motor_controller_types:
   - [2]
   - [2]
   - [2]
-  - [0]
+  - [3]
   - [0]
   - [-5]
   - [0]
@@ -175,8 +175,8 @@ motor_gains:
   - [0.0, 0.01, 0.0]       # motor 2
   - [0.0, 0.01, 0.0]       # motor 3
   - [0.1, 0.0075, 0.175]       # motor 4
-  - [0.0, 0.008, 0.0]       # motor 5
-  - [0.0, 0.008, 0.0]       # motor 6
+  - [0.0, 0.005, 0.0]       # motor 5
+  - [0.0, 0.005, 0.0]       # motor 6
   - [0.1, 0.01, 0.0]       # motor 7
   - [0.1, 0.01, 0.0]       # motor 8
 

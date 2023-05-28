@@ -481,6 +481,7 @@ void Device_Manager::step_controllers(float dt) {
 	static int prev_shutdown = 1;
 
 	controller_manager.estimate_state(gimbal_imu.data, dt);
+	float yaw_speed_err = 0.075;
 
 	if (!receiver.safety_shutdown) {//(controller_switch == 1) {								// Use DR16 control input
 		float pitch_enc = controller_manager.feedback[4][0] * 0.11184210526;
@@ -488,6 +489,7 @@ void Device_Manager::step_controllers(float dt) {
 
 		switch (controller_switch) {
 			case 1:
+				yaw_speed_err *= receiver.data[4] - controller_manager.imu_state[4];
 				memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
 				break;
 
@@ -495,16 +497,17 @@ void Device_Manager::step_controllers(float dt) {
 				float pitch_pose_err = -10 * (controller_manager.autonomy_input[3] - pitch_enc);
 				float yaw_pose_err = -100 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_mag_pos[4]);
 				float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_mag_pos[5]);
-				// float yaw_speed_err = 0.0 * (yaw_pose_err - controller_manager.imu_state[4]);
+				yaw_speed_err *= yaw_pose_err - controller_manager.imu_state[4];
 				input_buffer[0] = receiver.data[0];
 				input_buffer[1] = receiver.data[1];
 				input_buffer[2] = receiver.data[2];
 				input_buffer[3] = pitch_pose_err;
-				input_buffer[4] = yaw_pose_err; //+ yaw_speed_err;
+				input_buffer[4] = yaw_pose_err;
 				input_buffer[5] = feeder_pose_err;
 				break;
 		}
 
+		input_buffer[4] += yaw_speed_err;
 		controller_manager.set_input(input_buffer);
 	}
 
@@ -512,6 +515,7 @@ void Device_Manager::step_controllers(float dt) {
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
 		if (receiver.safety_shutdown == 0) {
 			if (new_reference) {	// only update motor references when safety switch is off
+				Serial.printf("%f, %f, %f\n", receiver.data[4],  controller_manager.imu_state[4], yaw_speed_err);
 				controller_manager.set_reference(i);			
 			}
 			if (prev_shutdown == 1) {
