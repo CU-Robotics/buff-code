@@ -51,10 +51,10 @@ struct Device_Manager {
 	DR16 receiver;
 	RefSystem ref;
 
+	RevEnc pitchEncoder = RevEnc(5);
 	RevEnc yawEncoder = RevEnc(4);
-	RevEnc pitchEncoder = RevEnc(2);
-	RevEnc xOdometryEncoder = RevEnc(3);
-	RevEnc yOdometryEncoder = RevEnc(1);
+	// RevEnc xOdometryEncoder = RevEnc(3);
+	// RevEnc yOdometryEncoder = RevEnc(1);
 
 	RM_CAN_Interface rm_can_ux;
 
