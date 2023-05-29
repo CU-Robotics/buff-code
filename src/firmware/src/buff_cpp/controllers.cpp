@@ -286,7 +286,8 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 			break;
 
 		case 4:
-			feedback[controller_id][0] = gimbal_pitch_angle;
+			// feedback[controller_id][0] = gimbal_pitch_angle;
+			// feedback[controller_id][2] = -sin((feedback[controller_id][0] / 4.5) + (PI / 2.75));
 
 		default:
 			if (controller_types[controller_id] < 0) {
@@ -347,6 +348,7 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 
 	// get the encoder angles as radians
 	gimbal_pitch_angle = wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
+	// Serial.println(encoders[0]);
 	gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 	// Serial.printf("%f %f\n", (encoders[1] - encoder_bias[1]) * PI / 180, gimbal_yaw_angle);
 
