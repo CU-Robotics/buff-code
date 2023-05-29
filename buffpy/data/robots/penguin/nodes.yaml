@@ -51,7 +51,7 @@ sensor_config:
   - [0.0]
   - [0.0]
   # rev encoders [offset1, filter_gain1, offset2, filter_gain2, offset3, filter_gain3...] offset > 1000 => use motor encode at offset / 1000 instead
-  - [0.0, 0.0, 300.0, 0.99, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
+  - [4000.0, 0.0, 300.0, 0.99, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
 
 ##############################
 #
@@ -131,11 +131,11 @@ inverse_kinematics: # (N_controller_inputs X N_motors) = (N_robot_states X N_mot
 # Used by encoder estimator (kee)
 # [V0, V1, V2, V3, V4, V5, V6, V7, V8] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma, dShooter]
 forward_kinematics: # (N_motors X N_controller_inputs) = (N_motors X N_robot_states) = (rows X Cols)
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vy = (V1 - V3) / 2
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPhi = V4
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vx = 
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vy = 
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dTheta =
+  - [  0.0,    0.0,    0.0,    0.0,  -21.0,    0.0,    0.0,    0.0,    0.0]  # dPhi =
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0, -246.0,    0.0,    0.0]  # dPsi =
   - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
   - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
 

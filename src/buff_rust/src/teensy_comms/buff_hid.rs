@@ -460,7 +460,7 @@ impl HidROS {
         let estimate_publishers = vec![
             rosrust::publish("kee_vel_est", 1).unwrap(),
             rosrust::publish("imu_vel_est", 1).unwrap(),
-            rosrust::publish("kee_imu_pos", 1).unwrap(),
+            rosrust::publish("autonomy_goal", 1).unwrap(),
             rosrust::publish("enc_odm_pos", 1).unwrap(),
         ];
 
@@ -636,17 +636,17 @@ impl HidROS {
         msg.data = self.robot_status.control_input.read().unwrap().clone();
         self.control_publisher.send(msg).unwrap();
 
-        // let mut msg = std_msgs::Float64MultiArray::default();
-        // msg.data = self.robot_status.kee_vel_est.read().unwrap().clone();
-        // self.estimate_publishers[0].send(msg).unwrap();
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.kee_vel_est.read().unwrap().clone();
+        self.estimate_publishers[0].send(msg).unwrap();
 
         let mut msg = std_msgs::Float64MultiArray::default();
         msg.data = self.robot_status.imu_vel_est.read().unwrap().clone();
         self.estimate_publishers[1].send(msg).unwrap();
 
-        // let mut msg = std_msgs::Float64MultiArray::default();
-        // msg.data = self.robot_status.kee_imu_pos.read().unwrap().clone();
-        // self.estimate_publishers[2].send(msg).unwrap();
+        let mut msg = std_msgs::Float64MultiArray::default();
+        msg.data = self.robot_status.kee_imu_pos.read().unwrap().clone();
+        self.estimate_publishers[2].send(msg).unwrap();
 
         let mut msg = std_msgs::Float64MultiArray::default();
         msg.data = self.robot_status.enc_mag_pos.read().unwrap().clone();

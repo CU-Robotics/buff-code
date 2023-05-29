@@ -57,6 +57,8 @@ Currently used indices
 
 3: HID packet timer (lifetime counter)
 
+4: Estimator timer info
+
 ## Firmware status guide (terminology)
 
 LED blinking = HID connected

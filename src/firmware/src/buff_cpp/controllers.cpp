@@ -54,6 +54,12 @@ void weighted_vector_addition(float* a, float* b, float k1, float k2, int n, flo
 	}
 }
 
+void n_weighted_vector_addition(float* a, float* b, float* k1, float* k2, int n, float* output) {
+	for (int i = 0; i < n; i++) {
+		output[i] = (k1[i] * a[i]) + (k2[i] * b[i]);
+	}
+}
+
 Feedback_Controller::Feedback_Controller() {
 	for (int i = 0; i < MOTOR_FEEDBACK_SIZE; i++) {
 		gains[i] = 0;
@@ -100,6 +106,7 @@ void Feedback_Controller::bound_reference(float* reference) {
 }
 
 Controller_Manager::Controller_Manager() {
+	timer_set(4);
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
 		output[i] = 0;
 		biases[i] = 0;
@@ -124,6 +131,8 @@ Controller_Manager::Controller_Manager() {
 			encoder_bias[i] = encoders[i];
 		}
 	}
+
+	imu_yaw.set_gain(0.9);
 }
 
 void Controller_Manager::reset_controller(int controller_id) {
@@ -169,7 +178,7 @@ void Controller_Manager::get_vel_est_report(float* data) {
 
 void Controller_Manager::get_pos_est_report(float* data) {
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
-		data[i] = kee_imu_pos[i];
+		data[i] = autonomy_goal[i];
 		data[i + REMOTE_CONTROL_LEN] = enc_odm_pos[i];
 	}
 }
@@ -322,6 +331,9 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 		}
 	}
 
+	kee_state[3] *= PI / (180.0 * 17.0); // pitch motor teeth and deg to rad
+	kee_state[4] *= PI / (180.0 * 17.0 * 2.2); // yaw motor teeth and deg to rad
+
 	// compute the accelerometer velocity estimate
 	// turn inertial measurement to robot state measurement
 	// rotate2D(chassis_imu, imu_accel_state, imu_offset_angle);
@@ -331,7 +343,7 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// imu_state[1] += imu_accel_state[1] * dt;
 	// imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
 	// imu_state[3] = gimbal_imu[4] * 0.017453; // pitch NEED TO DERIVATIVE FILTER ENCODERS TO FIND THIS (or use motors)
-	imu_state[4] = imu_yaw.filter(-14.470588 * gimbal_imu[5]); // yaw
+	imu_state[4] = imu_yaw.filter((246.0 / 17.0) * gimbal_imu[5] / (3.9 * 2.2)) + 0.0115; // yaw imu est
 	// imu_state[5] = 0; // feeder (can leave zero)
 	// imu_state[6] = 0; // constant (can leave zero)
 
@@ -339,15 +351,19 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// float weights[REMOTE_CONTROL_LEN] = {(r * chassis_imu[5]), (r * chassis_imu[5]), 0, 0, 0, 0, 0};
 	// float compensated_imu_state[REMOTE_CONTROL_LEN];
 	// weighted_vector_addition(imu_state, weights, 1, -1, REMOTE_CONTROL_LEN, compensated_imu_state);
-	weighted_vector_addition(imu_state, kee_state, 0.5, 0.5, REMOTE_CONTROL_LEN, kee_imu_state);
+	float imu_weight[REMOTE_CONTROL_LEN] = {0.0, 0.0, 0.0, 0.0, 0.75, 0.0, 0.0}; 
+	float kee_weight[REMOTE_CONTROL_LEN] = {0.0, 0.0, 0.0, 1.0, 0.25, 0.0, 0.0}; 
+	n_weighted_vector_addition(imu_state, kee_state, imu_weight, kee_weight, REMOTE_CONTROL_LEN, kee_imu_state);
 
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		kee_imu_pos[i] += kee_imu_state[i] * dt;
 	}
 
+	// kee_imu_pos[4] = kee_imu_pos[4] / 2.0;
+
 	// some robots have an encoder, some do not
 	if (encoder_bias[0] > 1000) {
-		gimbal_pitch_angle = wrap_angle(feedback[int(encoder_bias[0] / 1000)][0] * 0.11184210526);
+		gimbal_pitch_angle = wrap_angle(-feedback[int(encoder_bias[0] / 1000)][0] * 0.11184210526) + 0.3;
 	}
 	else {
 		gimbal_pitch_angle = wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
@@ -358,9 +374,9 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 
 	// enc_odm_pos[0] += dead_wheel_odm[0];					// puts the odm in enc_odm_pos
 	// enc_odm_pos[1] += dead_wheel_odm[1];
-	enc_odm_pos[2] = kee_imu_pos[4] - gimbal_yaw_angle;		// also uses kee + imu integration, shhhhh...
+	enc_odm_pos[2] = wrap_angle(kee_imu_pos[4] - gimbal_yaw_angle);		// also uses kee + imu integration, shhhhh...
 	enc_odm_pos[3] = gimbal_pitch_angle;					// puts the enc in enc_odm_pos
-	enc_odm_pos[4] = kee_imu_pos[4]; // + chassis_yaw;
+	enc_odm_pos[4] = wrap_angle(kee_imu_pos[4]); // + chassis_yaw;
 
 	// fuse position estimates (kinda pointless just use one or the other)
 	// weighted_vector_addition(enc_odm_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);

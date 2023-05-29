@@ -388,15 +388,11 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
-	ref.read_serial();
 	controller_manager.encoders[0] = pitchEncoder.getAngle();
 	controller_manager.encoders[1] = yawEncoder.getAngle();
-	controller_manager.power_buffer = ref.data.power_buffer;
 
 	switch (sensor_switch) {
 		case 0:
-			// chassis_imu.read_accel();
-			// chassis_imu.read_gyro();
 			ref.read_serial();
 			controller_manager.power_buffer = ref.data.power_buffer;
 			controller_manager.projectile_speed = ref.data.robot_1_speed_lim;
@@ -408,7 +404,7 @@ void Device_Manager::read_sensors() {
 			break;
 
 		case 2:
-			// gimbal_imu.read_gyro();
+			gimbal_imu.read_gyro();
 			sensor_switch += 1;
 			break;
 
