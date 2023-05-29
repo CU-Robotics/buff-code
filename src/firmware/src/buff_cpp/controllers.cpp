@@ -286,8 +286,8 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 			break;
 
 		case 4:
-			// feedback[controller_id][0] = gimbal_pitch_angle;
-			// feedback[controller_id][2] = -sin((feedback[controller_id][0] / 4.5) + (PI / 2.75));
+			feedback[controller_id][0] = gimbal_pitch_angle;
+			feedback[controller_id][2] = cos(feedback[controller_id][0] - 0.1);
 
 		default:
 			if (controller_types[controller_id] < 0) {
@@ -348,10 +348,10 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 
 	// some robots have an encoder, some do not
 	if (encoder_bias[0] > 1000) {
-		gimbal_pitch_angle = wrap_angle(feedback[int(encoder_bias[0] / 1000)][0] * 0.11184210526);
+		gimbal_pitch_angle = wrap_angle(feedback[int(encoder_bias[0] / 1000.0)][0] * 0.11184210526);
 	}
 	else {
-		gimbal_pitch_angle = wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
+		gimbal_pitch_angle = -wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
 	}
 
 	// get the encoder angles as radians	
