@@ -183,34 +183,28 @@ void Device_Manager::control_input_handle() { // 2
 
 			break;
 
-		case 2:
-			if (receiver.safety_shutdown == 1) {	// Only user can put the bot in auto aim
-				break;
-			}
-
-			// set the gimbal input from ros control
-			controller_manager.autonomy_input[3] = wrap_angle(input_report.get_float(2));
-			controller_manager.autonomy_input[4] = wrap_angle(input_report.get_float(6));
-			controller_manager.autonomy_input[5] = wrap_angle(input_report.get_float(10));
-			//Serial.printf("Reference set to %f %f %f\n", controller_manager.autonomy_input[3], controller_manager.autonomy_input[4], controller_manager.autonomy_input[5]);
+		case 2: //  waypoint report
 			
-			controller_switch = 2;											// block local gimbal input
 			break;
 
-		case 3:
-			if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
+		case 3: // autonomy control report
+			if (abs(controller_switch) == 1) {	// Only user can put the bot in autonomous mode
 				break;
 			}
 
+			controller_switch = input_report.get(2);												// block local input
 			// set the input from ros control
-			controller_manager.input[0] = input_report.get_float(2);
-			controller_manager.input[1] = input_report.get_float(6);
-			controller_manager.input[2] = input_report.get_float(10);
-			controller_manager.input[3] = input_report.get_float(14);
-			controller_manager.input[4] = input_report.get_float(18);
-			controller_manager.input[5] = input_report.get_float(22);
+			controller_manager.autonomy_input[0] = input_report.get_float(3);
+			controller_manager.autonomy_input[1] = input_report.get_float(7);
+			controller_manager.autonomy_input[2] = input_report.get_float(11);
+			controller_manager.autonomy_input[3] = input_report.get_float(15);
+			controller_manager.autonomy_input[4] = input_report.get_float(19);
+			controller_manager.autonomy_input[5] = input_report.get_float(23);
 			
-			controller_switch = 3;												// block local input
+			break;
+
+		case 4: // position override report
+
 			break;
 
 		default:
@@ -411,7 +405,7 @@ void Device_Manager::read_sensors() {
 			break;
 
 		case 2:
-			gimbal_imu.read_gyro();
+			// gimbal_imu.read_gyro();
 			sensor_switch += 1;
 			break;
 
@@ -481,29 +475,39 @@ void Device_Manager::step_controllers(float dt) {
 
 	controller_manager.estimate_state(gimbal_imu.data, dt);
 
-	if (!receiver.safety_shutdown) {//(controller_switch == 1) {								// Use DR16 control input
-		float pitch_enc = controller_manager.feedback[4][0] * 0.11184210526;
-		float input_buffer[REMOTE_CONTROL_LEN];
+	float input_buffer[REMOTE_CONTROL_LEN];
 
-		switch (controller_switch) {
-			case 1:
-				memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
-				break;
+	float ysc_gain = 0.075;
+	float yaw_speed_error = 0.0;
+	float pitch_pose_err = -10 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
+	float yaw_pose_err = -100 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
+	float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_odm_pos[5]);
 
-			case 2:
-				float pitch_pose_err = -10 * (controller_manager.autonomy_input[3] - pitch_enc);
-				float yaw_pose_err = -100 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_mag_pos[4]);
-				float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_mag_pos[5]);
-				// float yaw_speed_err = 0.0 * (yaw_pose_err - controller_manager.imu_state[4]);
+	if (!receiver.safety_shutdown) {
+		if (controller_switch == 1) {
+			yaw_speed_error = receiver.data[4] - controller_manager.imu_state[4];
+			memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
+		}
+		else if (controller_switch > 1) {
+			yaw_speed_error = yaw_pose_err - controller_manager.imu_state[4];
+
+			if (controller_switch > 2) {
+				input_buffer[0] = 0;
+				input_buffer[1] = 0;
+				input_buffer[2] = 0;
+			}
+			else {
 				input_buffer[0] = receiver.data[0];
 				input_buffer[1] = receiver.data[1];
 				input_buffer[2] = receiver.data[2];
-				input_buffer[3] = pitch_pose_err;
-				input_buffer[4] = yaw_pose_err; //+ yaw_speed_err;
-				input_buffer[5] = feeder_pose_err;
-				break;
+			}
+
+			input_buffer[3] = pitch_pose_err;
+			input_buffer[4] = yaw_pose_err;
+			input_buffer[5] = feeder_pose_err;
 		}
 
+		input_buffer[4] += ysc_gain * yaw_speed_error;
 		controller_manager.set_input(input_buffer);
 	}
 
@@ -511,6 +515,7 @@ void Device_Manager::step_controllers(float dt) {
 	for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {
 		if (receiver.safety_shutdown == 0) {
 			if (new_reference) {	// only update motor references when safety switch is off
+				// Serial.printf("%f, %f, %f\n", receiver.data[4],  controller_manager.imu_state[4], yaw_speed_err);
 				controller_manager.set_reference(i);			
 			}
 			if (prev_shutdown == 1) {

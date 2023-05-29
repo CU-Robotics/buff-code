@@ -78,15 +78,16 @@ struct Controller_Manager {
 	float imu_state[REMOTE_CONTROL_LEN];
 	float kee_imu_state[REMOTE_CONTROL_LEN];
 
-	// postional estimates
+	// Estimated state of the robot
 	float kee_imu_pos[REMOTE_CONTROL_LEN];
-	float enc_mag_pos[REMOTE_CONTROL_LEN];
-	float position_est[REMOTE_CONTROL_LEN];
+	float enc_odm_pos[REMOTE_CONTROL_LEN];
 
+	// Goal state of the robot
 	float autonomy_input[REMOTE_CONTROL_LEN];
 
 	int controller_types[MAX_NUM_RM_MOTORS];
 
+	LPFilter imu_yaw;
 	LPFilter enc_filters[MAX_REV_ENCODERS];
 	LPFilter motor_filters[MAX_NUM_RM_MOTORS];
 

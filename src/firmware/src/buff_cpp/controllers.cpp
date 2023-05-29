@@ -170,7 +170,7 @@ void Controller_Manager::get_vel_est_report(float* data) {
 void Controller_Manager::get_pos_est_report(float* data) {
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		data[i] = kee_imu_pos[i];
-		data[i + REMOTE_CONTROL_LEN] = enc_mag_pos[i];
+		data[i + REMOTE_CONTROL_LEN] = enc_odm_pos[i];
 	}
 }
 
@@ -305,14 +305,14 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	kee_state: kinematic encoder estimate, found using motor feedback speeds (filtered) and kinematics (scaled measurements)
 	imu_state: integration of IMU accel + gyro (chassis + gimbal)	(integrated measurements)
 	kee_imu_pos: integration of a fusion (k * a) + ((1-k) * b), w/ k <= 1. of the two velocity states (kee_state, imu_state) (integrated estimates)
-	enc_mag_pos: position of the robot based on an integration of encoders and the imu mag data (independant wrt the other estimate, doesnt use same measurements) (integrated & scaled measurements)
+	enc_odm_pos: position of the robot based on an integration of encoders and the imu mag data (independant wrt the other estimate, doesnt use same measurements) (integrated & scaled measurements)
 
-	Using independant measurement values to build kee_state, imu_state and enc_mag_pos will help us reduce noise and improve estimates.
+	Using independant measurement values to build kee_state, imu_state and enc_odm_pos will help us reduce noise and improve estimates.
 	kee_imu_pos is the most unreliable as it is an integrated estimate (can amplify errors in the estimate).
 */
 void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 
-	float imu_accel_state[2];
+	// float imu_accel_state[2];
 
 	// compute the kee velocity estimate
 	// turn motor speed feedback to robot speed feedback
@@ -328,13 +328,13 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// rotate2D(chassis_imu, imu_accel_state, imu_offset_angle);
 
 	// velocity of IMU relative to world in the chassis reference frame
-	imu_state[0] += imu_accel_state[0] * dt;
-	imu_state[1] += imu_accel_state[1] * dt;
+	// imu_state[0] += imu_accel_state[0] * dt;
+	// imu_state[1] += imu_accel_state[1] * dt;
 	// imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
 	// imu_state[3] = gimbal_imu[4] * 0.017453; // pitch NEED TO DERIVATIVE FILTER ENCODERS TO FIND THIS (or use motors)
-	imu_state[4] = gimbal_imu[5]; // yaw
-	imu_state[5] = 0; // feeder (can leave zero)
-	imu_state[6] = 0; // constant (can leave zero)
+	imu_state[4] = imu_yaw.filter(-14.470588 * gimbal_imu[5]); // yaw
+	// imu_state[5] = 0; // feeder (can leave zero)
+	// imu_state[6] = 0; // constant (can leave zero)
 
 	// fuse velocity estimates (increase k to 'add gain')
 	// float weights[REMOTE_CONTROL_LEN] = {(r * chassis_imu[5]), (r * chassis_imu[5]), 0, 0, 0, 0, 0};
@@ -346,18 +346,25 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 		kee_imu_pos[i] += kee_imu_state[i] * dt;
 	}
 
-	// get the encoder angles as radians
-	gimbal_pitch_angle = wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
-	// Serial.println(encoders[0]);
-	gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
-	// Serial.printf("%f %f\n", (encoders[1] - encoder_bias[1]) * PI / 180, gimbal_yaw_angle);
+	// some robots have an encoder, some do not
+	if (encoder_bias[0] > 1000) {
+		gimbal_pitch_angle = wrap_angle(feedback[int(encoder_bias[0] / 1000)][0] * 0.11184210526);
+	}
+	else {
+		gimbal_pitch_angle = wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
+	}
 
-	enc_mag_pos[2] += imu_state[2] * dt;
-	enc_mag_pos[3] = gimbal_pitch_angle;
-	enc_mag_pos[4] = gimbal_yaw_angle;// + chassis_yaw;
+	// get the encoder angles as radians	
+	gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
+
+	// enc_odm_pos[0] += dead_wheel_odm[0];					// puts the odm in enc_odm_pos
+	// enc_odm_pos[1] += dead_wheel_odm[1];
+	enc_odm_pos[2] = kee_imu_pos[4] - gimbal_yaw_angle;		// also uses kee + imu integration, shhhhh...
+	enc_odm_pos[3] = gimbal_pitch_angle;					// puts the enc in enc_odm_pos
+	enc_odm_pos[4] = kee_imu_pos[4]; // + chassis_yaw;
 
 	// fuse position estimates (kinda pointless just use one or the other)
-	weighted_vector_addition(enc_mag_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);
+	// weighted_vector_addition(enc_odm_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);
 }
 
 void Controller_Manager::set_input(float* control_input) {

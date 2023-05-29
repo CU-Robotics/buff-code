@@ -5,6 +5,7 @@ use crate::utilities::{buffers::*, loaders::*};
 use hidapi::{HidApi, HidDevice};
 use rosrust_msg::std_msgs;
 use std::{
+    env,
     sync::{
         mpsc,
         mpsc::{Receiver, Sender},
@@ -398,10 +399,11 @@ impl HidReader {
 pub struct HidROS {
     pub shutdown: Arc<RwLock<bool>>,
     pub robot_status: RobotStatus,
+    pub autonomy_mode: u8,
     pub control_flag: Arc<RwLock<i32>>,
-    pub gimbal_control: Arc<RwLock<Vec<f64>>>,
+    pub robot_waypoints: Arc<RwLock<Vec<f64>>>,
     pub control_input: Arc<RwLock<Vec<f64>>>,
-    pub motor_can_output: Arc<RwLock<Vec<f64>>>,
+    pub celestial_estimate: Arc<RwLock<Vec<f64>>>,
 
     pub motor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub controller_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
@@ -435,6 +437,12 @@ impl HidROS {
 
         env_logger::init();
         rosrust::init("buffpy_hid");
+        let autonomy_mode;
+        match env::var("ROBOT_TYPE").unwrap().as_str() {
+            "autoaim" => autonomy_mode = 2,
+            "fullauto" => autonomy_mode = 3,
+            _ => autonomy_mode = 1,
+        }
 
         let sensor_publishers = sensor_names
             .iter()
@@ -453,7 +461,7 @@ impl HidROS {
             rosrust::publish("kee_vel_est", 1).unwrap(),
             rosrust::publish("imu_vel_est", 1).unwrap(),
             rosrust::publish("kee_imu_pos", 1).unwrap(),
-            rosrust::publish("enc_mag_pos", 1).unwrap(),
+            rosrust::publish("enc_odm_pos", 1).unwrap(),
         ];
 
         let control_publisher = rosrust::publish("control_input_echo", 1).unwrap();
@@ -461,33 +469,33 @@ impl HidROS {
         let proj_speed_publisher = rosrust::publish("projectile_speed", 1).unwrap();
 
         let n_motors = robot_status.motors.len();
-        let motor_can_output = Arc::new(RwLock::new(vec![0.0; n_motors]));
-        let gimbal_control = Arc::new(RwLock::new(vec![0.0; 3]));
+        let celestial_estimate = Arc::new(RwLock::new(vec![0.0; n_motors]));
+        let robot_waypoints = Arc::new(RwLock::new(vec![0.0; 3]));
         let control_input = Arc::new(RwLock::new(vec![0.0; n_motors]));
-        let gc_clone = gimbal_control.clone();
+        let gc_clone = robot_waypoints.clone();
         let con_clone = control_input.clone();
-        let mco_clone = motor_can_output.clone();
+        let mco_clone = celestial_estimate.clone();
         let control_flag = Arc::new(RwLock::new(-1));
         let cf_clone = control_flag.clone();
         let cf1_clone = control_flag.clone();
         let cf2_clone = control_flag.clone();
 
         let motor_subscribers = vec![
+            // rosrust::subscribe(
+            //     "motor_can_output",
+            //     1,
+            //     move |msg: std_msgs::Float64MultiArray| {
+            //         assert!(
+            //             msg.data.len() == n_motors,
+            //             "ROS can output msg had a different number of values than there are motors",
+            //         );
+            //         *cf_clone.write().unwrap() = 0;
+            //         *motor_can_output.write().unwrap() = msg.data;
+            //     },
+            // )
+            // .unwrap(),
             rosrust::subscribe(
-                "motor_can_output",
-                1,
-                move |msg: std_msgs::Float64MultiArray| {
-                    assert!(
-                        msg.data.len() == n_motors,
-                        "ROS can output msg had a different number of values than there are motors",
-                    );
-                    *cf_clone.write().unwrap() = 0;
-                    *motor_can_output.write().unwrap() = msg.data;
-                },
-            )
-            .unwrap(),
-            rosrust::subscribe(
-                "gimbal_control_input",
+                "robot_waypoints",
                 1,
                 move |msg: std_msgs::Float64MultiArray| {
                     // assert!(
@@ -495,7 +503,7 @@ impl HidROS {
                     //     "ROS gimbal control msg had a different number of values than there are gimbal actuators",
                     // );
                     *cf1_clone.write().unwrap() = 1;
-                    *gimbal_control.write().unwrap() = msg.data;
+                    *robot_waypoints.write().unwrap() = msg.data;
                 },
             )
             .unwrap(),
@@ -504,11 +512,24 @@ impl HidROS {
                 1,
                 move |msg: std_msgs::Float64MultiArray| {
                     assert!(
-                        msg.data.len() == n_motors,
-                        "ROS control msg had a different number of values than there are motors",
+                        msg.data.len() == 7,
+                        "ROS control msg had a different number of values than there are inputs",
                     );
                     *cf2_clone.write().unwrap() = 2;
                     *control_input.write().unwrap() = msg.data;
+                },
+            )
+            .unwrap(),
+            rosrust::subscribe(
+                "estimate_override",
+                1,
+                move |msg: std_msgs::Float64MultiArray| {
+                    assert!(
+                        msg.data.len() == 7,
+                        "ROS control msg had a different number of values than there are inputs",
+                    );
+                    *cf_clone.write().unwrap() = 3;
+                    *celestial_estimate.write().unwrap() = msg.data;
                 },
             )
             .unwrap(),
@@ -517,10 +538,11 @@ impl HidROS {
         HidROS {
             shutdown: Arc::new(RwLock::new(false)),
             robot_status: robot_status,
+            autonomy_mode: autonomy_mode,
             control_flag: control_flag,
-            gimbal_control: gc_clone,
+            robot_waypoints: gc_clone,
             control_input: con_clone,
-            motor_can_output: mco_clone,
+            celestial_estimate: mco_clone,
 
             motor_publishers: motor_publishers,
             sensor_publishers: sensor_publishers,
@@ -614,17 +636,17 @@ impl HidROS {
         msg.data = self.robot_status.control_input.read().unwrap().clone();
         self.control_publisher.send(msg).unwrap();
 
-        let mut msg = std_msgs::Float64MultiArray::default();
-        msg.data = self.robot_status.kee_vel_est.read().unwrap().clone();
-        self.estimate_publishers[0].send(msg).unwrap();
+        // let mut msg = std_msgs::Float64MultiArray::default();
+        // msg.data = self.robot_status.kee_vel_est.read().unwrap().clone();
+        // self.estimate_publishers[0].send(msg).unwrap();
 
         let mut msg = std_msgs::Float64MultiArray::default();
         msg.data = self.robot_status.imu_vel_est.read().unwrap().clone();
         self.estimate_publishers[1].send(msg).unwrap();
 
-        let mut msg = std_msgs::Float64MultiArray::default();
-        msg.data = self.robot_status.kee_imu_pos.read().unwrap().clone();
-        self.estimate_publishers[2].send(msg).unwrap();
+        // let mut msg = std_msgs::Float64MultiArray::default();
+        // msg.data = self.robot_status.kee_imu_pos.read().unwrap().clone();
+        // self.estimate_publishers[2].send(msg).unwrap();
 
         let mut msg = std_msgs::Float64MultiArray::default();
         msg.data = self.robot_status.enc_mag_pos.read().unwrap().clone();
@@ -721,29 +743,29 @@ impl HidROS {
             // handle control inputs
             let control_mode = *self.control_flag.read().unwrap();
             match control_mode {
-                0 => {
-                    let mut control_buffer = ByteBuffer::new(64);
+                // 0 => {
+                //     let mut control_buffer = ByteBuffer::new(64);
 
-                    self.motor_can_output
-                        .read()
-                        .unwrap()
-                        .chunks(4)
-                        .enumerate()
-                        .for_each(|(i, block)| {
-                            control_buffer.puts(0, vec![2, 0, i as u8]);
-                            control_buffer.put_floats(3, block.to_vec());
-                            control_tx.send(control_buffer.data.clone()).unwrap();
-                        });
+                //     self.motor_can_output
+                //         .read()
+                //         .unwrap()
+                //         .chunks(4)
+                //         .enumerate()
+                //         .for_each(|(i, block)| {
+                //             control_buffer.puts(0, vec![2, 0, i as u8]);
+                //             control_buffer.put_floats(3, block.to_vec());
+                //             control_tx.send(control_buffer.data.clone()).unwrap();
+                //         });
 
-                    *self.control_flag.write().unwrap() = -1;
-                }
+                //     *self.control_flag.write().unwrap() = -1;
+                // }
                 1 => {
-                    let mut control_buffer = ByteBuffer::new(64);
+                    let mut waypoint_buffer = ByteBuffer::new(64);
 
-                    let gimabl_reference = self.gimbal_control.read().unwrap().clone();
-                    control_buffer.puts(0, vec![2, 2]);
-                    control_buffer.put_floats(2, gimabl_reference);
-                    control_tx.send(control_buffer.data).unwrap();
+                    let waypoints = self.robot_waypoints.read().unwrap().clone();
+                    waypoint_buffer.puts(0, vec![2, 2]);
+                    waypoint_buffer.put_floats(2, waypoints);
+                    control_tx.send(waypoint_buffer.data).unwrap();
 
                     *self.control_flag.write().unwrap() = -1;
                 }
@@ -751,7 +773,17 @@ impl HidROS {
                     let mut control_buffer = ByteBuffer::new(64);
 
                     let robot_reference = self.control_input.read().unwrap().clone();
-                    control_buffer.puts(0, vec![2, 3]);
+                    control_buffer.puts(0, vec![2, 3, self.autonomy_mode]);
+                    control_buffer.put_floats(2, robot_reference);
+                    control_tx.send(control_buffer.data).unwrap();
+
+                    *self.control_flag.write().unwrap() = -1;
+                }
+                3 => {
+                    let mut control_buffer = ByteBuffer::new(64);
+
+                    let robot_reference = self.celestial_estimate.read().unwrap().clone();
+                    control_buffer.puts(0, vec![2, 4]);
                     control_buffer.put_floats(2, robot_reference);
                     control_tx.send(control_buffer.data).unwrap();
 
