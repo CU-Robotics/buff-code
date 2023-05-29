@@ -296,6 +296,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 
 		case 4:
 			feedback[controller_id][0] = gimbal_pitch_angle;
+			feedback[controller_id][2] = cos(feedback[controller_id][0] - 0.1);
 
 		default:
 			if (controller_types[controller_id] < 0) {
@@ -366,7 +367,7 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 		gimbal_pitch_angle = wrap_angle(-feedback[int(encoder_bias[0] / 1000)][0] * 0.11184210526) + 0.3;
 	}
 	else {
-		gimbal_pitch_angle = wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
+		gimbal_pitch_angle = -wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
 	}
 
 	// get the encoder angles as radians	

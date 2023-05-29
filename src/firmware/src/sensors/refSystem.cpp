@@ -33,7 +33,7 @@ bool RefSystem::read_serial() {
 			Serial2.readBytes(&temp, 1); // Get the length of the packet
 			data_length = temp;
 			Serial2.readBytes(&temp, 1);
-			data_length = data_length | (temp << 8); 
+			data_length = data_length | (temp << 8);
 
 			Serial2.readBytes(&temp, 1);
 			seq = temp;

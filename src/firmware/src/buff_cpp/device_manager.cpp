@@ -11,6 +11,7 @@ Device_Manager::Device_Manager(){
 	controller_switch = -1;
 	gimbal_imu.init(GIMBAL_IMU_ADDR);
 	// chassis_imu.init(CHASSIS_IMU_ADDR);
+	ref.init();
 }
 
 /*
@@ -372,7 +373,7 @@ void Device_Manager::push_can(){
 	rm_can_ux.write_can();
 
 	for (int i = 0; i < NUM_CAN_BUSES; i++) {
-		rm_can_ux.read_can(i + 1);		
+		rm_can_ux.read_can(i + 1);
 	}
 }
 
