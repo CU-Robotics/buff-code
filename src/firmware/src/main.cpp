@@ -5,7 +5,7 @@
 
 uint32_t cycle_time_us = 1000;
 uint32_t cycle_time_ms = cycle_time_us / 1000;
-float cycle_time_s = cycle_time_us / 1E6;
+float cycle_time_s = cycle_time_us * 1E-6;
 
 
 Device_Manager device_manager;						// all firmware pipelines are implemented in this object.

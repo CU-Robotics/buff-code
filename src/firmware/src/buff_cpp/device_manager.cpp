@@ -405,7 +405,7 @@ void Device_Manager::read_sensors() {
 			break;
 
 		case 2:
-			// gimbal_imu.read_gyro();
+			gimbal_imu.read_gyro();
 			sensor_switch += 1;
 			break;
 

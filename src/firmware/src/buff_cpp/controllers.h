@@ -57,6 +57,7 @@ struct Controller_Manager {
 
 	float imu_offset_angle;
 
+
 	float encoders[MAX_REV_ENCODERS];
 	float encoder_bias[MAX_REV_ENCODERS];
 
@@ -72,6 +73,8 @@ struct Controller_Manager {
 	// then state_est = (a1*m1) + (a2*m2) + (a3*m3), tune weights to remove
 	// noise. m1 can be a linear transform from a sensor reading to a state. ie mi = R_i * measurement_i
 	// Assume sensor readings are filtered by the drivers that read them.
+
+	float autonomy_goal[REMOTE_CONTROL_LEN];
 
 	// velocity estimates
 	float kee_state[REMOTE_CONTROL_LEN];
