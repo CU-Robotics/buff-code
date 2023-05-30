@@ -204,6 +204,7 @@ void Controller_Manager::step_motors() {
 			case 1:
 			case 3:
 			case 4:
+			case 5:
 				output[i] = controllers[i].step(references[i], feedback[i]);
 				break;
 
@@ -265,7 +266,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	// motor_index[i].data[0] is the motor_angle add 2pi roll over to make an output angle
 	// leave tmp[1] 0 to allow velocity control (doesn't use error like position)
 	// set tmp[2] to the sum of the change in input (make gain 3 act as a damper)
-	if (biases[controller_id] == 0){
+	if (biases[controller_id] == 0 && controller_id != 4 && controller_id != 5) {
 		biases[controller_id] = data[0] + (2 * PI * rollover);
 		references[controller_id][0] = 0;
 	}
@@ -286,8 +287,14 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 			break;
 
 		case 4:
-			feedback[controller_id][0] = gimbal_pitch_angle;
-			feedback[controller_id][2] = cos(feedback[controller_id][0] - 0.1);
+			feedback[controller_id][0] = -gimbal_pitch_angle * 152 / 17.0;
+			feedback[controller_id][2] = cos(-gimbal_pitch_angle - 0.1);
+			break;
+
+		case 5:
+			feedback[controller_id][0] = gimbal_pitch_angle * 152 / 17.0;
+			feedback[controller_id][2] = cos(gimbal_pitch_angle - 0.1);
+			break;
 
 		default:
 			if (controller_types[controller_id] < 0) {

@@ -308,3 +308,48 @@ bool RefSystem::read_serial() {
 	}
 	return 1;
 }
+
+void RefSystem::write_serial() {
+	byte msg[119];
+	//msg = generate_hud_msg();
+	// switch (data.robot_id) {
+	// 	case 1:
+
+	// }
+	Serial2.write(msg, 119);
+}
+
+byte* RefSystem::generate_hud_msg() {
+	byte msg[119];
+	msg[0] = 0x01;
+	msg[1] = 0x01;
+	msg[2] = 0x00;
+	msg[3] = data.robot_id;
+	msg[4] = 0x00;
+	msg[5] = data.robot_id;
+	msg[6] = 0x00;
+	msg[7] = 0x00;
+	msg[8] = 0x01;
+	msg[9] = 0b01000100;
+	msg[10] = 0b10010000;
+	msg[16] = 0xFF;
+	msg[18] = 0xFF;
+}
+
+// Generates a movemement command for the Sentry
+byte* RefSystem::generate_movement_command_msg() {
+	byte msg[119];
+	msg[0] = 0x02;
+	msg[1] = retrieve_message_id();
+	msg[2] = 0x00;
+	msg[3] = data.robot_id;
+	msg[4] = 0x00;
+	msg[5] = 0x07; // Sentry
+	msg[6] = 2;
+	// msg[20] = ((byte*)&f)[0]
+}
+
+uint8_t RefSystem::retrieve_message_id() {
+	message_id++;
+	return message_id;
+}

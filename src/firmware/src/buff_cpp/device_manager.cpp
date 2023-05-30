@@ -518,7 +518,7 @@ void Device_Manager::step_controllers(float dt) {
 				// Serial.printf("%f, %f, %f\n", receiver.data[4],  controller_manager.imu_state[4], yaw_speed_err);
 				controller_manager.set_reference(i);			
 			}
-			if (prev_shutdown == 1) {
+			if (prev_shutdown == 1 && i != 4 && i != 5) {
 				controller_manager.biases[i] = 0; // when turning off safety mode we want to rebias the motors
 			}
 		}

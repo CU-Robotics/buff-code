@@ -76,7 +76,27 @@ class RefSystem{
         RefSystem();
         void init();
         bool read_serial();
+        void write_serial();
+        byte* generate_hud_msg();
+        byte* generate_movement_command_msg();
+        byte* generate_state_msg();
+        uint8_t retrieve_message_id();
+
         RefData data;
+        uint8_t message_id = 0;
+
+        // Display rendering
+        bool mapMode = false;
+
+        // Robot map
+        float sentryPos[2];
+        float sentryGoal[2];
+        float sentrySelectedGoal[2];
+        float sentryWaypoints[8][2];
+        float infantryPos[2];
+        float infantryGoal[2];
+        float infantrySelectedGoal[2];
+        float infantryWaypoints[8][2];
 };
 
 #endif
