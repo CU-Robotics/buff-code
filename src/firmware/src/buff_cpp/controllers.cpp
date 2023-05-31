@@ -1,6 +1,13 @@
 #include "buff_cpp/timing.h"
 #include "buff_cpp/controllers.h"
 
+float odom_diff(float odom_curr, float odom_prev) {
+	float odom_diff = odom_curr - odom_prev;
+	if (odom_diff < -180) odom_diff += 360;
+	if (odom_diff > 180) odom_diff -= 360;
+	return odom_diff;
+}
+
 float wrap_angle(float angle) {
 	while (angle >= PI) {
 		angle -= 2 * PI;
@@ -380,8 +387,11 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// get the encoder angles as radians	
 	gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 
-	// enc_odm_pos[0] += dead_wheel_odm[0];					// puts the odm in enc_odm_pos
-	// enc_odm_pos[1] += dead_wheel_odm[1];
+	enc_odm_pos[0] += odom_diff(encoders[2], odom_prev[0]);					// puts the odm in enc_odm_pos
+	enc_odm_pos[1] += odom_diff(encoders[3], odom_prev[1]);
+	Serial.print(enc_odm_pos[0]);
+	Serial.print(", ");
+	Serial.println(enc_odm_pos[1]);
 	enc_odm_pos[2] = wrap_angle(kee_imu_pos[4] - gimbal_yaw_angle);		// also uses kee + imu integration, shhhhh...
 	enc_odm_pos[3] = gimbal_pitch_angle;					// puts the enc in enc_odm_pos
 	enc_odm_pos[4] = wrap_angle(kee_imu_pos[4]); // + chassis_yaw;

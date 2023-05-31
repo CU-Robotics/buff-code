@@ -53,8 +53,8 @@ struct Device_Manager {
 
 	RevEnc pitchEncoder = RevEnc(5);
 	RevEnc yawEncoder = RevEnc(4);
-	// RevEnc xOdometryEncoder = RevEnc(3);
-	// RevEnc yOdometryEncoder = RevEnc(1);
+	RevEnc xOdometryEncoder = RevEnc(3);
+	RevEnc yOdometryEncoder = RevEnc(2);
 
 	RM_CAN_Interface rm_can_ux;
 

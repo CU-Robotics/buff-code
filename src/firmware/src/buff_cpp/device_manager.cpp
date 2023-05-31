@@ -391,6 +391,10 @@ void Device_Manager::push_can(){
 void Device_Manager::read_sensors() {
 	controller_manager.encoders[0] = pitchEncoder.getAngle();
 	controller_manager.encoders[1] = yawEncoder.getAngle();
+	controller_manager.odom_prev[0] = controller_manager.encoders[2];
+	controller_manager.odom_prev[1] = controller_manager.encoders[3];
+	controller_manager.encoders[2] = xOdometryEncoder.getAngle();
+	controller_manager.encoders[3] = yOdometryEncoder.getAngle();
 
 	switch (sensor_switch) {
 		case 0:

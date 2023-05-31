@@ -7,6 +7,7 @@
 #define BUFF_CONTROLLERS_H
 
 
+float odom_diff(float, float);
 float wrap_angle(float);
 float wrap_error(float);
 void rotate2D(float*, float*, float);
@@ -84,6 +85,7 @@ struct Controller_Manager {
 	// Estimated state of the robot
 	float kee_imu_pos[REMOTE_CONTROL_LEN];
 	float enc_odm_pos[REMOTE_CONTROL_LEN];
+	float odom_prev[2];
 
 	// Goal state of the robot
 	float autonomy_input[REMOTE_CONTROL_LEN];
