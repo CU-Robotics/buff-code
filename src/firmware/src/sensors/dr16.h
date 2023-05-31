@@ -19,10 +19,10 @@
 #define SPINRATE_STILL 900.0
 #define SPINRATE_TRANSLATE 450.0
 
-#define FEEDRATE_LOW 200.0
+#define FEEDRATE_LOW 300.0 //300.0
 #define FEEDRATE_HIGH 500.0
 
-#define FLYWHEEL_SPEED					900.0
+#define FLYWHEEL_SPEED 900.0
 
 /*
 	 Driver software for the dr16 receiver.

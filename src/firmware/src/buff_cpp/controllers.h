@@ -7,7 +7,7 @@
 #define BUFF_CONTROLLERS_H
 
 
-float odom_diff(float, float);
+void odom_diff(float*, float*, float, float*);
 float wrap_angle(float);
 float wrap_error(float);
 void rotate2D(float*, float*, float);

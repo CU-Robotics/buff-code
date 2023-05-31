@@ -1,11 +1,15 @@
 #include "buff_cpp/timing.h"
 #include "buff_cpp/controllers.h"
 
-float odom_diff(float odom_curr, float odom_prev) {
-	float odom_diff = odom_curr - odom_prev;
-	if (odom_diff < -180) odom_diff += 360;
-	if (odom_diff > 180) odom_diff -= 360;
-	return odom_diff;
+void odom_diff(float* odom_curr, float* odom_prev, float chassis_angle, float* output) {
+	float diff[2];
+	diff[0] = odom_curr[0] - odom_prev[0];
+	diff[1] = odom_curr[1] - odom_prev[1];
+	if (diff[0] < -180) diff[0] += 360;
+	if (diff[0] > 180) diff[0] -= 360;
+	if (diff[1] < -180) diff[1] += 360;
+	if (diff[1] > 180) diff[1] -= 360;
+	rotate2D(diff, output, chassis_angle);
 }
 
 float wrap_angle(float angle) {
@@ -384,17 +388,25 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 		gimbal_pitch_angle = -wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
 	}
 
-	// get the encoder angles as radians	
+	// get the encoder angles as radians
 	gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 
-	enc_odm_pos[0] += odom_diff(encoders[2], odom_prev[0]);					// puts the odm in enc_odm_pos
-	enc_odm_pos[1] += odom_diff(encoders[3], odom_prev[1]);
-	Serial.print(enc_odm_pos[0]);
-	Serial.print(", ");
-	Serial.println(enc_odm_pos[1]);
+
+
 	enc_odm_pos[2] = wrap_angle(kee_imu_pos[4] - gimbal_yaw_angle);		// also uses kee + imu integration, shhhhh...
 	enc_odm_pos[3] = gimbal_pitch_angle;					// puts the enc in enc_odm_pos
 	enc_odm_pos[4] = wrap_angle(kee_imu_pos[4]); // + chassis_yaw;
+
+	float odom[2] = {encoders[2], encoders[3]};
+	float odom_components[2];
+	odom_diff(odom, odom_prev, enc_odm_pos[2], odom_components);
+	enc_odm_pos[0] += odom_components[0];
+	enc_odm_pos[1] += odom_components[1];
+	Serial.print(enc_odm_pos[0]);
+	Serial.print(", ");
+	Serial.print(enc_odm_pos[1]);
+	Serial.print(", ");
+	Serial.println(gimbal_yaw_angle);
 
 	// fuse position estimates (kinda pointless just use one or the other)
 	// weighted_vector_addition(enc_odm_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);

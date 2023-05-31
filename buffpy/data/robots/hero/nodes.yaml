@@ -6,7 +6,7 @@
 #
 ##############################
 
-robot_type: sentry
+robot_type: hero
 
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
