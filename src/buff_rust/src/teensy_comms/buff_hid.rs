@@ -745,7 +745,8 @@ impl HidROS {
             // send reports based on priority if control_input is true and waypoints is true send control_inputs
             // and set control_input_flag to flase, next loop waypoints_flag should be true and that will send.
             let control_mode = *self.control_flag.read().unwrap();
-            match control_mode { // switch control mode to a bool for each rostopic if messages are not getting through
+            match control_mode {
+                // switch control mode to a bool for each rostopic if messages are not getting through
                 // 0 => {
                 //     let mut control_buffer = ByteBuffer::new(64);
 
