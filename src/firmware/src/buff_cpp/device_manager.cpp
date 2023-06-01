@@ -389,13 +389,6 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
-	controller_manager.encoders[0] = pitchEncoder.getAngle();
-	controller_manager.encoders[1] = yawEncoder.getAngle();
-	controller_manager.odom_prev[0] = controller_manager.encoders[2];
-	controller_manager.odom_prev[1] = controller_manager.encoders[3];
-	controller_manager.encoders[2] = xOdometryEncoder.getAngle();
-	controller_manager.encoders[3] = yOdometryEncoder.getAngle();
-
 	switch (sensor_switch) {
 		case 0:
 			ref.read_serial();
@@ -406,6 +399,12 @@ void Device_Manager::read_sensors() {
 
 		case 1:
 			sensor_switch += 1;
+			controller_manager.encoders[0] = pitchEncoder.getAngle();
+			controller_manager.encoders[1] = yawEncoder.getAngle();
+			controller_manager.odom_prev[0] = controller_manager.encoders[2];
+			controller_manager.odom_prev[1] = controller_manager.encoders[3];
+			controller_manager.encoders[2] = xOdometryEncoder.getAngle();
+			controller_manager.encoders[3] = yOdometryEncoder.getAngle();
 			break;
 
 		case 2:
@@ -481,7 +480,7 @@ void Device_Manager::step_controllers(float dt) {
 
 	float input_buffer[REMOTE_CONTROL_LEN];
 
-	float ysc_gain = 0.075;
+	float ysc_gain = 1.0;//0.075;
 	float yaw_speed_error = 0.0;
 	float pitch_pose_err = -10 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
 	float yaw_pose_err = -100 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
