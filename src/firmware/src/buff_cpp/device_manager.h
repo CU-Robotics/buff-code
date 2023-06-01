@@ -10,6 +10,7 @@
 #ifndef BUFF_DEVICE_MANAGER_H
 #define BUFF_DEVICE_MANAGER_H
 
+#define ROBOT_WAYPOINTS 5
 /*
 	An organizer for all the pipelines with the firmware.
 	A large portion of this is HID handling (lots of switches)
@@ -59,6 +60,8 @@ struct Device_Manager {
 	RM_CAN_Interface rm_can_ux;
 
 	Controller_Manager controller_manager;
+
+	float robot_waypoints[2 * ROBOT_WAYPOINTS];
 
 	// track the time since a connection was made
 	float lifetime;
