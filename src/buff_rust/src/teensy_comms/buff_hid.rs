@@ -741,8 +741,12 @@ impl HidROS {
             }
 
             // handle control inputs
+            // switch control mode to a bool for each rostopic if messages are not getting through
+            // send reports based on priority if control_input is true and waypoints is true send control_inputs
+            // and set control_input_flag to flase, next loop waypoints_flag should be true and that will send.
             let control_mode = *self.control_flag.read().unwrap();
             match control_mode {
+                // switch control mode to a bool for each rostopic if messages are not getting through
                 // 0 => {
                 //     let mut control_buffer = ByteBuffer::new(64);
 
@@ -762,7 +766,7 @@ impl HidROS {
                 1 => {
                     let mut waypoint_buffer = ByteBuffer::new(64);
 
-                    let waypoints = self.robot_waypoints.read().unwrap().clone();
+                    let waypoints = self.robot_waypoints.read().unwrap().clone(); // vector of waypoints (wraped in a shared mem obj)
                     waypoint_buffer.puts(0, vec![2, 2]);
                     waypoint_buffer.put_floats(2, waypoints);
                     control_tx.send(waypoint_buffer.data).unwrap();
@@ -772,7 +776,7 @@ impl HidROS {
                 2 => {
                     let mut control_buffer = ByteBuffer::new(64);
 
-                    let robot_reference = self.control_input.read().unwrap().clone();
+                    let robot_reference = self.control_input.read().unwrap().clone(); // use read().unwrap() to take shared mem lock
                     control_buffer.puts(0, vec![2, 3, self.autonomy_mode]);
                     control_buffer.put_floats(2, robot_reference);
                     control_tx.send(control_buffer.data).unwrap();

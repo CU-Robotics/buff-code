@@ -184,6 +184,13 @@ void Device_Manager::control_input_handle() { // 2
 			break;
 
 		case 2: //  waypoint report
+			for (int i = 0; i < ROBOT_WAYPOINTS; i+=2){
+				robot_waypoints[i] = input_report.get_float((4 * i) + 2);
+				robot_waypoints[i+1] = input_report.get_float((4 * (i +  1)) + 2);
+				// Serial.printf("Waypoint received: <%f, %f>\n", robot_waypoints[i], robot_waypoints[i+1]);
+			}
+			// timestamp (only if added to rosmessage when publishing)
+			// timestamp = input_report.get_float((2 * sizeof(float) * ROBOT_WAYPOINTS) + 2);
 			
 			break;
 
@@ -204,6 +211,12 @@ void Device_Manager::control_input_handle() { // 2
 			break;
 
 		case 4: // position override report
+			// Do not be afraid of buff_rust, it might not be readable but uses a similar function
+			// signature to build the packets see buff_hid.rs:HidROS::new() and buff_hid.rs:HidROS::pipeline()
+			// controller_manager.enc_odm_pos[0] = input_report.get_float(2); // x pos
+			// controller_manager.enc_odm_pos[1] = input_report.get_float(6); // y pos
+			// controller_manager.enc_odm_pos[3] = input_report.get_float(6); // gimbal heading
+			// timestamp (same as waypoint report)
 
 			break;
 
@@ -547,11 +560,11 @@ void Device_Manager::step_controllers(float dt) {
 	// does not write to the motors, only produces an output value
 	// this value will not be passed to CAN if safety switch is on
 	// we want to generate the values anyways so we can see if they
-	// are unreasonable without running the motors (debug feature)
+	// are unreasonable without running the motors (debug feature) // dumb the reference is not generated in safety mode
 	controller_manager.step_motors();
 
 	// now use the safety switch to stop from setting output
-	if (receiver.safety_shutdown == 0) {								// Use the HIDLayers CAN output values or the controllers
+	if (receiver.safety_shutdown == 0) {
 		for (int i = 0; i < MAX_NUM_RM_MOTORS; i++) {				// Send the controllers output to the can interface
 			// Serial.printf("%i output: %f\n", i, controller_manager.output[i]);
 			rm_can_ux.set_output(i, controller_manager.output[i]);

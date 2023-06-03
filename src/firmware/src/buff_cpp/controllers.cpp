@@ -400,7 +400,7 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	float odom[2] = {encoders[2], encoders[3]};
 	float odom_components[2];
 	odom_diff(odom, odom_prev, enc_odm_pos[2], odom_components);
-	enc_odm_pos[0] += odom_components[0];
+	enc_odm_pos[0] += odom_components[0]; // should there be a dt here?
 	enc_odm_pos[1] += odom_components[1];
 
 	// fuse position estimates (kinda pointless just use one or the other)
