@@ -480,19 +480,27 @@ void Device_Manager::step_controllers(float dt) {
 
 	float input_buffer[REMOTE_CONTROL_LEN];
 
-	float ysc_gain = 1.0;//0.075;
+	float ysc_gain = 1;
 	float yaw_speed_error = 0.0;
+	float ypc_gain = -100.0;
+	float yaw_ang_err = controller_manager.kee_imu_pos[4] - (controller_manager.global_yaw_reference);
+	Serial.println(controller_manager.kee_imu_pos[4]);
+	Serial.println(controller_manager.global_yaw_reference);
+	Serial.println(yaw_ang_err);
+	Serial.println();
+
 	float pitch_pose_err = -10 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
 	float yaw_pose_err = -100 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
 	float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_odm_pos[5]);
 
 	if (!receiver.safety_shutdown) {
 		if (controller_switch == 1) {
-			yaw_speed_error = receiver.data[4] - controller_manager.imu_state[4];
+			yaw_speed_error = receiver.data[4] - (controller_manager.imu_state[4] * 246 / 17.0);
 			memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
+			controller_manager.global_yaw_reference += (receiver.data[4] * 17 / 246.0) * dt;
 		}
 		else if (controller_switch > 1) {
-			yaw_speed_error = yaw_pose_err - controller_manager.imu_state[4];
+			yaw_speed_error = yaw_pose_err - (controller_manager.imu_state[4] * 246 / 17.0);
 
 			if (controller_switch > 2) {
 				input_buffer[0] = 0;
@@ -508,9 +516,12 @@ void Device_Manager::step_controllers(float dt) {
 			input_buffer[3] = pitch_pose_err;
 			input_buffer[4] = yaw_pose_err;
 			input_buffer[5] = feeder_pose_err;
+
+			controller_manager.global_yaw_reference += (yaw_pose_err * 17 / 246.0) * dt;
 		}
 
 		input_buffer[4] += ysc_gain * yaw_speed_error;
+		input_buffer[4] += ypc_gain * yaw_ang_err;
 		controller_manager.set_input(input_buffer);
 	}
 

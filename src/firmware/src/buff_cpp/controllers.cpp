@@ -363,7 +363,7 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
 	// imu_state[3] = gimbal_imu[4] * 0.017453; // pitch NEED TO DERIVATIVE FILTER ENCODERS TO FIND THIS (or use motors)
 	// imu_state[4] = imu_yaw.filter((246.0 / 17.0) * gimbal_imu[5] / (3.9 * 2.2)) + 0.0115; // yaw imu est
-	imu_state[4] = imu_yaw.filter(gimbal_imu[5]); // yaw imu est
+	imu_state[4] = imu_yaw.filter(-gimbal_imu[5] * 1.5); // yaw imu est
 	// imu_state[5] = 0; // feeder (can leave zero)
 	// imu_state[6] = 0; // constant (can leave zero)
 
@@ -392,9 +392,6 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// get the encoder angles as radians
 	// gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 	gimbal_yaw_angle = wrap_angle((encoders[1] - encoder_bias[1]) * PI / 180);
-	Serial.println(gimbal_yaw_angle);
-
-
 
 	enc_odm_pos[2] = wrap_angle(kee_imu_pos[4] - gimbal_yaw_angle);		// also uses kee + imu integration, shhhhh...
 	enc_odm_pos[3] = gimbal_pitch_angle;					// puts the enc in enc_odm_pos

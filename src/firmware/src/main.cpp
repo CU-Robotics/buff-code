@@ -7,6 +7,8 @@ uint32_t cycle_time_us = 1000;
 uint32_t cycle_time_ms = cycle_time_us / 1000;
 float cycle_time_s = cycle_time_us * 1E-6;
 
+unsigned long prev_time;
+
 
 Device_Manager device_manager;						// all firmware pipelines are implemented in this object.
 													// Device Manager provides a single function call for each of the pipelines
@@ -26,13 +28,19 @@ void setup() {
 // Master loop
 int main() {											// Basically a schudeling algorithm
 	setup();
+	prev_time = micros();
 
 	while(1) {
 		timer_set(0);
 
+		// Calculate dt
+		unsigned long curr_time = micros();
+		float dt = (curr_time - prev_time) / 1000000.0;
+		prev_time = curr_time;
+
 		// handle any hid input output
 		device_manager.read_sensors();					// read a single sensor each call (increments the sensor id automatically)		
-		device_manager.step_controllers(cycle_time_s);	// given the current inputs and feedback compute a control	
+		device_manager.step_controllers(dt);	// given the current inputs and feedback compute a control	
 		device_manager.hid_input_switch(cycle_time_us);	// check for an input packet (data request/control input) handle accordingly
 		device_manager.push_can();						// push data on and off the can bus
 

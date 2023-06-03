@@ -86,6 +86,7 @@ struct Controller_Manager {
 	float kee_imu_pos[REMOTE_CONTROL_LEN];
 	float enc_odm_pos[REMOTE_CONTROL_LEN];
 	float odom_prev[2];
+	float global_yaw_reference;
 
 	// Goal state of the robot
 	float autonomy_input[REMOTE_CONTROL_LEN];
