@@ -1,0 +1,15 @@
+project: '../../celestial'
+clean: 'rm -rf __pycache__'
+
+targets: [celestial.py,
+          armor_detector.py,
+          ballistic_projector.py,
+          camera_manager.py,
+          state_buffer.py,
+          target.py,
+          world_map.py,
+          armor-detector-config.json,
+          realsense-config.json,
+          robot-config.json]
+
+install: ['lib','lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib']

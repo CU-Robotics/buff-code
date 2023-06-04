@@ -199,7 +199,9 @@ int DR16::generate_control() {
 		}
 
 		return USER_DRIVE_MODE;
-	} else if (l_switch == 3.0) {	
+	} else if (l_switch == 3.0) {
+		if (l_stick_y < -0.95) return AUTONOMY_MODE;
+
 		// Chassis Translation
 		data[0] = r_stick_x * JOYSTICK_X_SENSITIVITY;
 		data[1] = r_stick_y * JOYSTICK_Y_SENSITIVITY;

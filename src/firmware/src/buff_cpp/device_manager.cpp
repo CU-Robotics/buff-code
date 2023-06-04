@@ -195,9 +195,11 @@ void Device_Manager::control_input_handle() { // 2
 			break;
 
 		case 3: // autonomy control report
+			Serial.println("1");
 			if (abs(controller_switch) == 1) {	// Only user can put the bot in autonomous mode
 				break;
 			}
+			Serial.println("2");
 
 			controller_switch = input_report.get(2);												// block local input
 			// set the input from ros control
@@ -207,6 +209,8 @@ void Device_Manager::control_input_handle() { // 2
 			controller_manager.autonomy_input[3] = input_report.get_float(15);
 			controller_manager.autonomy_input[4] = input_report.get_float(19);
 			controller_manager.autonomy_input[5] = input_report.get_float(23);
+
+			Serial.println(controller_manager.autonomy_input[4]);
 			
 			break;
 
@@ -493,17 +497,13 @@ void Device_Manager::step_controllers(float dt) {
 
 	float input_buffer[REMOTE_CONTROL_LEN];
 
-	float ysc_gain = 1;
+	float ysc_gain = 0.8;
 	float yaw_speed_error = 0.0;
-	float ypc_gain = -100.0;
-	float yaw_ang_err = controller_manager.kee_imu_pos[4] - (controller_manager.global_yaw_reference);
-	Serial.println(controller_manager.kee_imu_pos[4]);
-	Serial.println(controller_manager.global_yaw_reference);
-	Serial.println(yaw_ang_err);
-	Serial.println();
+	float ypc_gain = 150.0;
+	float yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
 
 	float pitch_pose_err = -10 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
-	float yaw_pose_err = -100 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
+	float yaw_pose_err = 10 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
 	float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_odm_pos[5]);
 
 	if (!receiver.safety_shutdown) {
@@ -530,12 +530,19 @@ void Device_Manager::step_controllers(float dt) {
 			input_buffer[4] = yaw_pose_err;
 			input_buffer[5] = feeder_pose_err;
 
-			controller_manager.global_yaw_reference += (yaw_pose_err * 17 / 246.0) * dt;
+			controller_manager.global_yaw_reference += yaw_pose_err * dt;
 		}
+
+		// Serial.println(controller_manager.autonomy_input[4]);
+		// Serial.println(controller_manager.enc_odm_pos[4]);
+		// Serial.println(yaw_pose_err);
+		// Serial.println();
 
 		input_buffer[4] += ysc_gain * yaw_speed_error;
 		input_buffer[4] += ypc_gain * yaw_ang_err;
 		controller_manager.set_input(input_buffer);
+	} else {
+		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
 	}
 
 	bool new_reference = timer_info_ms(2) >= 10;

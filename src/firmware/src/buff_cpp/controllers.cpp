@@ -232,6 +232,12 @@ void Controller_Manager::step_motors() {
 				output[i] = controllers[i].step(references[i], feedback[i]) * ratio;
 				break;
 
+			case 6:
+				output[i] = controllers[i].step(references[i], feedback[i]);
+				if (output[i] > 0.7) output[i] = 0.7;
+				if (output[i] < -0.7) output[i] = -0.7;
+				break;
+
 			default:
 				break;
 		}
@@ -299,6 +305,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 		case 0:
 		case 1:
 		case 2:
+		case 6:
 			// feedback[controller_id][2] = output[controller_id] * feedback[controller_id][1]; // voltage times current
 			break;
 
@@ -313,7 +320,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 
 		case 5:
 			feedback[controller_id][0] = gimbal_pitch_angle * 152 / 17.0;
-			feedback[controller_id][2] = cos(gimbal_pitch_angle - 0.1);
+			feedback[controller_id][2] = cos(gimbal_pitch_angle);
 			break;
 
 		default:
@@ -409,6 +416,6 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 
 void Controller_Manager::set_input(float* control_input) {
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
-		input[i] = control_input[i];		
+		input[i] = control_input[i];
 	}
 }
