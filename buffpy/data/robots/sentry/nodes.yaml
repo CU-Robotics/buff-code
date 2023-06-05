@@ -51,7 +51,7 @@ sensor_config:
   - [0.0]
   - [0.0]
   # rev encoders [offset1, filter_gain1, offset2, filter_gain2, offset3, filter_gain3...] offset > 1000 => use motor encoder[offset / 1000] instead
-  - [138.0, 0.99, 60.0, 0.99, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
+  - [-51.0, 0.99, 60.0, 0.99, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
 
 ##############################
 #
@@ -184,8 +184,8 @@ motor_gains:
   - [0.0, 0.005, 0.0]       # motor 3
   - [0.0, 0.008, 0.0]       # motor 4 yaw 1
   - [0.0, 0.008, 0.0]       # motor 5 yaw 2
-  - [0.0, 0.0125, 0.2]       # motor 6 pitch l
-  - [0.0, 0.0125, -0.2]       # motor 7 pitch r
+  - [0.0, 0.0125, 0.15]       # motor 6 pitch l
+  - [0.0, 0.0125, -0.15]       # motor 7 pitch r
   - [0.0, 0.008, 0.0]       # motor 8 flywheel l
   - [0.0, 0.008, 0.0]       # motor 9 flywheel r
   - [0.0, 0.008, 0.0]       # motor 10 feeder l

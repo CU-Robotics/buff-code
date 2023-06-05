@@ -315,7 +315,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 
 		case 4:
 			feedback[controller_id][0] = -gimbal_pitch_angle * 152 / 17.0;
-			feedback[controller_id][2] = cos(-gimbal_pitch_angle - 0.1);
+			feedback[controller_id][2] = cos(-gimbal_pitch_angle);
 			break;
 
 		case 5:
