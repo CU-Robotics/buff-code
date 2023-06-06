@@ -370,7 +370,7 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
 	// imu_state[3] = gimbal_imu[4] * 0.017453; // pitch NEED TO DERIVATIVE FILTER ENCODERS TO FIND THIS (or use motors)
 	// imu_state[4] = imu_yaw.filter((246.0 / 17.0) * gimbal_imu[5] / (3.9 * 2.2)) + 0.0115; // yaw imu est
-	imu_state[4] = imu_yaw.filter(-gimbal_imu[5] * 1.5); // yaw imu est
+	imu_state[4] = imu_yaw.filter(-gimbal_imu[5]); // yaw imu est
 	// imu_state[5] = 0; // feeder (can leave zero)
 	// imu_state[6] = 0; // constant (can leave zero)
 
@@ -407,8 +407,10 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	float odom[2] = {encoders[2], encoders[3]};
 	float odom_components[2];
 	odom_diff(odom, odom_prev, enc_odm_pos[2], odom_components);
-	enc_odm_pos[0] += odom_components[0]; // should there be a dt here?
-	enc_odm_pos[1] += odom_components[1];
+	// enc_odm_pos[0] += odom_components[0]; // should there be a dt here?
+	// enc_odm_pos[1] += odom_components[1];
+	enc_odm_pos[0] = 0;
+	enc_odm_pos[1] = 0;
 
 	// fuse position estimates (kinda pointless just use one or the other)
 	// weighted_vector_addition(enc_odm_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);

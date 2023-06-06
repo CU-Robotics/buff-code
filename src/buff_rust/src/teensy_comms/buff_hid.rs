@@ -371,7 +371,7 @@ impl HidReader {
 
             self.rust_lifetime += TEENSY_CYCLE_TIME_S;
             if loopt.elapsed().as_micros() > TEENSY_CYCLE_TIME_US as u128 {
-                println!("HID reader over cycled {}", loopt.elapsed().as_micros());
+                //println!("HID reader over cycled {}", loopt.elapsed().as_micros());
             }
             while loopt.elapsed().as_micros() < TEENSY_CYCLE_TIME_US as u128 {}
         }

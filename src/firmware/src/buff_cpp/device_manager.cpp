@@ -207,7 +207,7 @@ void Device_Manager::control_input_handle() { // 2
 			controller_manager.autonomy_input[4] = input_report.get_float(18);
 			controller_manager.autonomy_input[5] = input_report.get_float(22);
 			controller_manager.autonomy_input[6] = input_report.get_float(26);
-			
+
 			break;
 
 		case 4: // position override report
@@ -498,19 +498,17 @@ void Device_Manager::step_controllers(float dt) {
 	float ypc_gain = 150.0;
 	float yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
 
-	float pitch_pose_err = -10 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
-	float yaw_pose_err = 10 * wrap_angle(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
+	float pitch_pose_err = 50 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
+	float yaw_pose_err = 200 * (controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
 	float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_odm_pos[5]);
 
 	if (!receiver.safety_shutdown) {
 		if (controller_switch == 1) {
 			yaw_speed_error = receiver.data[4] - (controller_manager.imu_state[4] * 246 / 17.0);
-			memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
 			controller_manager.global_yaw_reference += (receiver.data[4] * 17 / 246.0) * dt;
+			memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
 		}
 		else if (controller_switch > 1) {
-			yaw_speed_error = yaw_pose_err - (controller_manager.imu_state[4] * 246 / 17.0);
-
 			if (controller_switch > 2) {
 				input_buffer[0] = 0;
 				input_buffer[1] = 0;
@@ -522,20 +520,28 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[2] = receiver.data[2];
 			}
 
-			// input_buffer[3] = pitch_pose_err;
-			// input_buffer[4] = yaw_pose_err;
-			// input_buffer[5] = feeder_pose_err;
+			input_buffer[3] = pitch_pose_err;
+			input_buffer[4] = 0;
 
-			controller_manager.global_yaw_reference += (yaw_pose_err * 17 / 246.0) * dt;
+			if (controller_manager.autonomy_input[5]) {
+				yaw_speed_error = yaw_pose_err - (controller_manager.imu_state[4] * 246 / 17.0);
+			} else {
+				yaw_speed_error = 0;
+			}
+			controller_manager.global_yaw_reference += (yaw_speed_error * 17 / 246.0) * dt;
+			//controller_manager.global_yaw_reference += (yaw_pose_err * 17 / 246.0) * dt;
 		}
 
-		Serial.println(controller_manager.autonomy_input[4]);
-		Serial.println(yaw_pose_err);
-		Serial.println(controller_manager.global_yaw_reference);
-		Serial.println();
+		input_buffer[4] += ysc_gain * yaw_speed_error;
+		Serial.println(controller_manager.autonomy_input[0]);
 
-		// input_buffer[4] += ysc_gain * yaw_speed_error;
-		// input_buffer[4] += ypc_gain * yaw_ang_err;
+		// Serial.(controller_manager.autonomy_input[4]);
+		// Serial.println(yaw_pose_err);
+		// Serial.println(input_buffer[4]);
+		// Serial.println();
+
+		
+		input_buffer[4] += ypc_gain * yaw_ang_err;
 		controller_manager.set_input(input_buffer);
 	} else {
 		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
