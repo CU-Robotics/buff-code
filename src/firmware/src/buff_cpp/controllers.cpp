@@ -2,7 +2,7 @@
 #include "buff_cpp/controllers.h"
 
 void odom_diff(float* odom_curr, float* odom_prev, float* output) {
-	float diff[3];
+	float diff[2];
 	diff[0] = odom_curr[0] - odom_prev[0];
 	diff[1] = odom_curr[1] - odom_prev[1];
 	if (diff[0] < -180) diff[0] += 360;
@@ -11,7 +11,8 @@ void odom_diff(float* odom_curr, float* odom_prev, float* output) {
 	if (diff[1] > 180) diff[1] -= 360;
 	diff[0] = (diff[0] * (PI/180)) * .048;
 	diff[1] = (diff[1] * (PI/180)) * .048;
-
+	output[0] = diff[0];
+	output[1] = diff[1];
 }
 
 float wrap_angle(float angle) {
@@ -410,9 +411,18 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	float odom[2] = {encoders[2], encoders[3]};
 	float odom_components[2];
 	odom_diff(odom, odom_prev, odom_components);
+	float d_chassis_heading = enc_odm_pos[2] - prev_chassis_heading;
 
-	enc_odm_pos[0] = 0;
-	enc_odm_pos[1] = 0;
+ 	if (d_chassis_heading == 0){
+    	enc_odm_pos[0] += ((odom_components[0])*sin(enc_odm_pos[2])) - ((odom_components[1])*cos(((enc_odm_pos[2]*PI)/180)));
+    	enc_odm_pos[1] += ((odom_components[0])*cos(enc_odm_pos[2])) + ((odom_components[1])*sin(((enc_odm_pos[2]*PI)/180)));
+  	} else {
+  		enc_odm_pos[0] += (2 * sin(d_chassis_heading/2) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * sin(enc_odm_pos[2] + (d_chassis_heading/2)))
+			- (2 * sin(d_chassis_heading/2) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * cos(enc_odm_pos[2] + (d_chassis_heading/2)));
+
+  		enc_odm_pos[1] += (2 * sin(d_chassis_heading/2) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * cos(enc_odm_pos[2] + (d_chassis_heading/2)))
+			+ (2 * sin(d_chassis_heading/2) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * sin(enc_odm_pos[2] + (d_chassis_heading/2)));
+  	}
 
 	// fuse position estimates (kinda pointless just use one or the other)
 	// weighted_vector_addition(enc_odm_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);

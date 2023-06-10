@@ -6,6 +6,8 @@
 #ifndef BUFF_CONTROLLERS_H
 #define BUFF_CONTROLLERS_H
 
+#define ODOM_AXIS_OFFSET_X 0.1
+#define ODOM_AXIS_OFFSET_Y 0.1
 
 void odom_diff(float*, float*, float, float*);
 float wrap_angle(float);
