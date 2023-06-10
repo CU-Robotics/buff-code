@@ -400,6 +400,7 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 	gimbal_yaw_angle = wrap_angle((encoders[1] - encoder_bias[1]) * PI / 180);
 
+	float prev_chassis_heading = enc_odm_pos[2];
 	enc_odm_pos[2] = wrap_angle(kee_imu_pos[4] - gimbal_yaw_angle);		// also uses kee + imu integration, shhhhh...
 	enc_odm_pos[3] = gimbal_pitch_angle;					// puts the enc in enc_odm_pos
 	enc_odm_pos[4] = wrap_angle(kee_imu_pos[4]); // + chassis_yaw;
