@@ -15,7 +15,7 @@ use std::{
     time::Instant,
 };
 
-static TEENSY_CYCLE_TIME_S: f64 = 0.001;
+static TEENSY_CYCLE_TIME_S: f64 = 0.002;
 static TEENSY_CYCLE_TIME_MS: f64 = TEENSY_CYCLE_TIME_S * 1000.0;
 static TEENSY_CYCLE_TIME_US: f64 = TEENSY_CYCLE_TIME_MS * 1000.0;
 
@@ -783,16 +783,16 @@ impl HidROS {
 
                     *self.control_flag.write().unwrap() = -1;
                 }
-                3 => {
-                    let mut control_buffer = ByteBuffer::new(64);
+                // 3 => {
+                //     let mut control_buffer = ByteBuffer::new(64);
 
-                    let robot_reference = self.celestial_estimate.read().unwrap().clone();
-                    control_buffer.puts(0, vec![2, 4]);
-                    control_buffer.put_floats(2, robot_reference);
-                    control_tx.send(control_buffer.data).unwrap();
+                //     let robot_reference = self.celestial_estimate.read().unwrap().clone();
+                //     control_buffer.puts(0, vec![2, 4]);
+                //     control_buffer.put_floats(2, robot_reference);
+                //     control_tx.send(control_buffer.data).unwrap();
 
-                    *self.control_flag.write().unwrap() = -1;
-                }
+                //     *self.control_flag.write().unwrap() = -1;
+                // }
                 _ => {
                     // send a new report request every cycle
                     control_tx.send(reports[current_report].clone()).unwrap();
