@@ -349,6 +349,17 @@ byte* RefSystem::generate_movement_command_msg() {
 	// msg[20] = ((byte*)&f)[0]
 }
 
+byte* RefSystem::generate_graphic(int identifier, int operation, int type, int num_layers, int color, int start_angle, int end_angle, int width, int x_start, int y_start, int fontsize_or_radius, int x_end, int y_end) {
+	byte msg[15];
+
+	msg[0] = 0x00;
+	msg[1] = identifier & 0xff;
+	msg[2] = (identifier >> (8)) & 0xff;
+
+	msg[3] = (operation << 5) | (type << 2) | (num_layers >> 2);
+	msg[4] = (num_layers << 6) | (color << 2) | (start_angle >> 6);
+}
+
 uint8_t RefSystem::retrieve_message_id() {
 	message_id++;
 	return message_id;
