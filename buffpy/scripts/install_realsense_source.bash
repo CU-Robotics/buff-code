@@ -1,4 +1,5 @@
 sudo pip install pybind11
+sudo pip install pyrealsense2
 
 sudo apt update && sudo apt upgrade -y && sudo apt dist-upgrade -y
 
