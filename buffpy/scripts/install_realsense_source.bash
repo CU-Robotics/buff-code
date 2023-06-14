@@ -1,3 +1,5 @@
+sudo pip install pybind11
+
 sudo apt update && sudo apt upgrade -y && sudo apt dist-upgrade -y
 
 cd ${HOME} && \
