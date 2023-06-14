@@ -2,4 +2,5 @@
 
 cd /home/cu-robotics/buff-code
 source buffpy/buff.bash
-run sentry > /home/cu-robotics/buff.log
+ROBOT=$(<whoami.txt)
+run ROBOT > /home/cu-robotics/buff.log

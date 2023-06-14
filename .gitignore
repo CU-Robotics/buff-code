@@ -19,3 +19,5 @@ src/buff_rust/target/*
 src/buffnet/build/*
 src/buffnet/install/*
 src/efficientdet-d0-trainer/*
+
+whoami.txt
