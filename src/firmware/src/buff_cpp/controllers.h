@@ -50,8 +50,9 @@ struct Controller_Manager {
 	void estimate_state(float*, float);
 	void set_reference(int);
 
-	float power_buffer;
+	float team_color;
 	float projectile_speed;
+	float power_buffer;
 
 	float pitch_angle;
 	float pitch_offset;

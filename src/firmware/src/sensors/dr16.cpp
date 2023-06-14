@@ -1,5 +1,6 @@
 #include "dr16.h"
 #include "buff_cpp/timing.h"
+#include "sensors/refSystem.h"
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)  \
@@ -107,7 +108,7 @@ void DR16::print_control_data(){
 		6: yaw
 	*/
 
-int DR16::generate_control() {
+int DR16::generate_control(RefData ref_data) {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
 
@@ -147,61 +148,89 @@ int DR16::generate_control() {
 	bool l_mouse_button = tmp[12];
 	bool r_mouse_button = tmp[13];
 
+	float feedrate_bps_continuous = 8;
+	float feedrate_bps_burst = 16;
+	// Infantry, Standard, and Sentry
+	if (ref_data.robot_type == 3 || ref_data.robot_type == 5 || ref_data.robot_type == 7) {
+		feedrate_bps_continuous = ref_data.robot_1_cool_val/10.0;
+		feedrate_bps_burst = (ref_data.robot_1_cool_val+ref_data.robot_1_barr_heat_lim)/10.0;
+		if (ref_data.robot_type != 5 && feedrate_bps_burst > 10) {
+			feedrate_bps_burst = 10;
+		} else if (ref_data.robot_type == 5 && feedrate_bps_burst > 20) {
+			feedrate_bps_burst = 20;
+		}
+	}
 
 	// Safety Switch
 	safety_shutdown = 0;
 	if (l_switch == 2.0) {
-		// Toggle Sentry Control HUD
-		if (key_f && !f_prev) sentry_control_hud = !sentry_control_hud;
-		f_prev = key_f;
+		// Sentry -- Fully autonomous
+		if (ref_data.robot_type == 7) {
+			data[2] = SPINRATE_IDLE;
+			data[6] = FLYWHEEL_SPEED;
+		} 
+		// Infantry, Standard, and Hero -- User driving
+		else {
+			// Toggle Sentry Control HUD
+			if (key_f && !f_prev) sentry_control_hud = !sentry_control_hud;
+			f_prev = key_f;
 
-		// Chassis Translation
-		data[0] = (key_w - key_s) * CHASSIS_SPEED;
-		data[1] = (key_d - key_a) * CHASSIS_SPEED;
-
-		// Chassis Spin
-		if (key_ctrl && !ctrl_prev) beyblade_mode = !beyblade_mode;
-		ctrl_prev = key_ctrl;
-		if (beyblade_mode || key_shift) {
-			if (key_w || key_s || key_d || key_a) data[2] = SPINRATE_TRANSLATE; // Spin slower while translating
-			else data[2] = SPINRATE_STILL; // Spin fast when still
-		} else {
-			data[2] = (key_x - key_z) * SPINRATE_TRANSLATE;
-		}
-
-		// Gimbal
-		if (!sentry_control_hud) {
-			data[3] = mouse_y * MOUSE_SENSITIVITY;
-			data[4] = mouse_x * MOUSE_SENSITIVITY;
-		}
-
-		// Shooter/Feeder
-		if (key_q) shooter_mode = 0;
-		if (key_e) shooter_mode = 1;
-
-		if (l_mouse_button && !sentry_control_hud) {
-			switch (shooter_mode) {
-				case 0:
-					data[5] = FEEDRATE_LOW;
-					break;
-				case 1:
-					data[5] = FEEDRATE_HIGH;
-					break;
-				default:
-					data[5] = 0;
+			// Send autonomy command
+			if (key_r && !r_prev) {
+				// TODO: Send autonomy command
 			}
+			r_prev = key_r;
+
+			// Chassis Translation
+			data[0] = (key_w - key_s) * CHASSIS_SPEED;
+			data[1] = (key_d - key_a) * CHASSIS_SPEED;
+
+			// Chassis Spin
+			if (key_ctrl && !ctrl_prev) beyblade_mode = !beyblade_mode;
+			ctrl_prev = key_ctrl;
+			if (beyblade_mode || key_shift) {
+				if (key_w || key_s || key_d || key_a) data[2] = SPINRATE_TRANSLATE; // Spin slower while translating
+				else data[2] = SPINRATE_STILL; // Spin fast when still
+			} else {
+				data[2] = (key_x - key_z) * SPINRATE_TRANSLATE + SPINRATE_IDLE;
+			}
+
+			// Gimbal
+			if (!sentry_control_hud) {
+				data[3] = mouse_y * MOUSE_SENSITIVITY;
+				data[4] = mouse_x * MOUSE_SENSITIVITY;
+			}
+
+			// Shooter/Feeder
+			if (key_q) shooter_mode = 0;
+			if (key_e) shooter_mode = 1;
+
+			if (l_mouse_button && !sentry_control_hud) {
+				switch (shooter_mode) {
+					case 0:
+						if (ref_data.robot_type == 3 || ref_data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
+						else if (ref_data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
+						else data[5] = FEEDSPEED_DEFAULT;
+						break;
+					case 1:
+						if (ref_data.robot_type == 3 || ref_data.robot_type == 7) data[5] = feedrate_bps_burst * 45.24;
+						else if (ref_data.robot_type == 5) data[5] = feedrate_bps_burst * 28.27;
+						else data[5] = FEEDSPEED_DEFAULT;
+						break;
+					default:
+						data[5] = 0;
+				}
+			}
+
+			data[6] = FLYWHEEL_SPEED; // Always keep the flywheel on
+
+			if (r_mouse_button) { // Engage autonomous gimbal when right mouse button is pressed
+				return AUTONOMY_MODE;
+			}
+
+			return USER_DRIVE_MODE;
 		}
-
-		data[6] = FLYWHEEL_SPEED; // Always keep the flywheel on
-
-		if (r_mouse_button) { // Engage autonomous gimbal when right mouse button is pressed
-			return AUTONOMY_MODE;
-		}
-
-		return USER_DRIVE_MODE;
 	} else if (l_switch == 3.0) {
-		if (l_stick_y < -0.95) return AUTONOMY_MODE;
-
 		// Chassis Translation
 		data[0] = r_stick_x * JOYSTICK_X_SENSITIVITY;
 		data[1] = r_stick_y * JOYSTICK_Y_SENSITIVITY;
@@ -215,7 +244,9 @@ int DR16::generate_control() {
 
 		// Shooter/Feeder
 		if (r_switch == 1.0) {
-			data[5] = FEEDRATE_LOW;
+			if (ref_data.robot_type == 3 || ref_data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
+			else if (ref_data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
+			else data[5] = FEEDSPEED_DEFAULT;
 			data[6] = FLYWHEEL_SPEED;
 		} else if (r_switch == 3.0) {
 			data[5] = 0.0;
@@ -225,6 +256,7 @@ int DR16::generate_control() {
 			data[6] = 0.0;
 		}
 
+		if (l_stick_y < -0.95) return AUTONOMY_MODE;
 		return ROBOT_DEMO_MODE;
 	} else { // Engage SAFETY mode when the switch is in position 1. Also acts as the default.
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
@@ -235,10 +267,10 @@ int DR16::generate_control() {
 	}
 }
 
-int DR16::read() {
+int DR16::read(RefData ref_data) {
 	if (serial->available() == 18) {
 		timer_set(1);
-		return generate_control();
+		return generate_control(ref_data);
 	}
 
 	if (serial->available() > 18) {

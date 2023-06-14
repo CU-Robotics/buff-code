@@ -201,7 +201,7 @@ void Controller_Manager::get_manager_report(float* data) {
 	for (int i = 0; i < REMOTE_CONTROL_LEN ; i++) {
 		data[i] = input[i];
 	}
-	data[REMOTE_CONTROL_LEN] = power_buffer;
+	data[REMOTE_CONTROL_LEN] = team_color;
 	data[REMOTE_CONTROL_LEN+1] = projectile_speed;
 }
 
@@ -209,8 +209,6 @@ void Controller_Manager::step_motors() {
 	float ratio = 1.0;
 	float power_buffer_limit_thresh = 60.0;
 	float power_buffer_critical_thresh = 30.0;
-	// Set the output to each motor by giving that motors feedback to a controller
-	// Serial.printf("outputs: ");
 
 	if (power_buffer < power_buffer_limit_thresh) {
 		ratio = constrain((power_buffer - power_buffer_critical_thresh) / power_buffer_limit_thresh, 0.0, 1.0);
@@ -423,6 +421,11 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
   		enc_odm_pos[1] += (2 * sin(d_chassis_heading/2) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * cos(enc_odm_pos[2] + (d_chassis_heading/2)))
 			+ (2 * sin(d_chassis_heading/2) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * sin(enc_odm_pos[2] + (d_chassis_heading/2)));
   	}
+
+	Serial.print(enc_odm_pos[0]);
+	Serial.print(", ");
+	Serial.print(enc_odm_pos[1]);
+	Serial.println();
 
 	// fuse position estimates (kinda pointless just use one or the other)
 	// weighted_vector_addition(enc_odm_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);

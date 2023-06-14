@@ -25,7 +25,7 @@ bool RefSystem::read_serial() {
 	uint8_t seq, crc, comp_stat, warning_level, robo_id, robot_level;
 	uint32_t temp_launch_speed;
 
-	while(Serial2.available() > 1) {
+	while (Serial2.available() > 1) {
 		enter_code = Serial2.read();
 
 		if(enter_code == 0xA5) { // It looks for this value that signifies that there is about to be a transmission of data
@@ -137,6 +137,9 @@ bool RefSystem::read_serial() {
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
 				data.robot_id = temp;
+				data.robot_type = data.robot_id % 100;
+				if (data.robot_id < 100) data.team_color = 0;
+				else data.team_color = 1;
 				while(Serial2.readBytes(&temp, 1) != 1) {}
 				data.robot_level = temp;
 
@@ -158,7 +161,7 @@ bool RefSystem::read_serial() {
 
 				// //This part looks for the robot id and then assigns values that follow depending on what robot id is transmitted
 
-				if(int(robo_id) == 1) {      //red hero
+				if(int(data.robot_id) == 1) {      //red hero
 
 					if(int(data.robot_level) >= 1 && int(data.robot_level) <=3)
 						data.robot_level = int(data.robot_level);
@@ -167,7 +170,7 @@ bool RefSystem::read_serial() {
 					data.red_hero_max_hp = temp_max_hp;
 					
 				}
-				else if(int(robo_id) == 3) {    //red infantry
+				else if(int(data.robot_id) == 3) {    //red infantry
 
 					if(int(robot_level) >= 1 && int(robot_level) <=3)
 						data.robot_level = int(robot_level);
@@ -175,7 +178,7 @@ bool RefSystem::read_serial() {
 					data.red_infantry_hp = temp_hp;
 					data.red_infantry_max_hp = temp_max_hp;
 				}
-				else if(int(robo_id) == 7) {    //red sentry
+				else if(int(data.robot_id) == 7) {    //red sentry
 
 					if(int(robot_level) >= 1 && int(robot_level) <=3)
 						data.robot_level = int(robot_level);
@@ -183,16 +186,16 @@ bool RefSystem::read_serial() {
 					data.red_sentry_hp = temp_hp;
 					data.red_sentry_max_hp = temp_max_hp;
 				}
-				else if(int(robo_id) == 101) {    //blue hero
+				else if(int(data.robot_id) == 101) {    //blue hero
 
-					if(int(robot_level) >= 1 && int(robot_level) <=3)
+					if(int(data.robot_id) >= 1 && int(robot_level) <=3)
 						data.robot_level = int(robot_level);      
 
 					data.blue_hero_hp = temp_hp;
 					data.blue_hero_max_hp = temp_max_hp;
 					
 				}
-				else if(int(robo_id) == 103) {    //blue infantry
+				else if(int(data.robot_id) == 103) {    //blue infantry
 
 					if(int(robot_level) >= 1 && int(robot_level) <=3)
 						data.robot_level = int(robot_level);
@@ -201,7 +204,7 @@ bool RefSystem::read_serial() {
 					data.blue_infantry_max_hp = temp_max_hp;
 					
 				}
-				else if(int(robo_id) == 107) {    //blue sentry
+				else if(int(data.robot_id) == 107) {    //blue sentry
 
 					if(int(robot_level) >= 1 && int(robot_level) <=3)
 						data.robot_level = int(robot_level);
@@ -310,16 +313,12 @@ bool RefSystem::read_serial() {
 }
 
 void RefSystem::write_serial() {
-	byte msg[119];
-	//msg = generate_hud_msg();
-	// switch (data.robot_id) {
-	// 	case 1:
-
-	// }
+	byte* msg;
+	msg = generate_client_info_msg();
 	Serial2.write(msg, 119);
 }
 
-byte* RefSystem::generate_hud_msg() {
+byte* RefSystem::generate_client_hud_msg() {
 	byte msg[119];
 	msg[0] = 0x01;
 	msg[1] = 0x01;
@@ -336,9 +335,29 @@ byte* RefSystem::generate_hud_msg() {
 	msg[18] = 0xFF;
 }
 
+byte* RefSystem::generate_client_info_msg() {
+	byte msg[119] = {0};
+
+	msg[0] = 0x01;
+	msg[1] = 0x01;
+
+	msg[2] = (data.robot_id >> 8);
+	msg[3] = data.robot_id;
+
+	msg[4] = (data.robot_id >> 8);
+	msg[5] = data.robot_id;
+
+	byte* graphic = generate_graphic("rbt", 1, 2, 1, 1, 0, 0, 0, 100, 100, 100, 0, 0);
+	for (int i = 0; i < 15; i++) {
+		msg[6+i] = graphic[i];
+	}
+
+	return msg;
+}
+
 // Generates a movemement command for the Sentry
 byte* RefSystem::generate_movement_command_msg() {
-	byte msg[119];
+	byte msg[119] = {0};
 	msg[0] = 0x02;
 	msg[1] = retrieve_message_id();
 	msg[2] = 0x00;
@@ -349,15 +368,29 @@ byte* RefSystem::generate_movement_command_msg() {
 	// msg[20] = ((byte*)&f)[0]
 }
 
-byte* RefSystem::generate_graphic(int identifier, int operation, int type, int num_layers, int color, int start_angle, int end_angle, int width, int x_start, int y_start, int fontsize_or_radius, int x_end, int y_end) {
-	byte msg[15];
+byte* RefSystem::generate_graphic(char name[3], int operation, int type, int num_layers, int color, int start_angle, int end_angle, int width, int start_x, int start_y, int radius, int end_x, int end_y) {
+	byte graphic[15] = {0};
 
-	msg[0] = 0x00;
-	msg[1] = identifier & 0xff;
-	msg[2] = (identifier >> (8)) & 0xff;
+	graphic[0] = name[0];
+	graphic[1] = name[1];
+	graphic[2] = name[2];
 
-	msg[3] = (operation << 5) | (type << 2) | (num_layers >> 2);
-	msg[4] = (num_layers << 6) | (color << 2) | (start_angle >> 6);
+	graphic[3] = (operation << 5) | (type << 2) | (num_layers >> 2);
+	graphic[4] = (num_layers << 6) | (color << 2) | (start_angle >> 7);
+	graphic[5] = (start_angle << 2) | (end_angle >> 8);
+	graphic[6] = (end_angle << 1);
+
+	graphic[7] = (width >> 2);
+	graphic[8] = (width << 8) | (start_x >> 5);
+	graphic[9] = (start_x << 6) | (start_y >> 8);
+	graphic[10] = (start_y << 3);
+
+	graphic[11] = (radius >> 2);
+	graphic[12] = (radius << 8) | (end_x >> 5);
+	graphic[13] = (end_x << 6) | (end_y >> 8);
+	graphic[14] = (end_y << 3);
+
+	return graphic;
 }
 
 uint8_t RefSystem::retrieve_message_id() {

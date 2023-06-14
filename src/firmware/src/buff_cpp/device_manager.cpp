@@ -405,8 +405,9 @@ void Device_Manager::read_sensors() {
 	switch (sensor_switch) {
 		case 0:
 			ref.read_serial();
+			controller_manager.team_color = ref.data.team_color;
+			controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
 			controller_manager.power_buffer = ref.data.power_buffer;
-			controller_manager.projectile_speed = ref.data.robot_1_speed_lim;
 			sensor_switch += 1;
 			break;
 
@@ -426,11 +427,12 @@ void Device_Manager::read_sensors() {
 			break;
 
 		case 3:
+			ref.write_serial();
 			sensor_switch += 1;
 			break;
 
 		case 4:
-			switch (receiver.read()) {
+			switch (receiver.read(ref.data)) {
 				case USER_SHUTDOWN:
 					controller_switch = -1;
 					break;
@@ -501,46 +503,54 @@ void Device_Manager::step_controllers(float dt) {
 	float pitch_pose_err = 50 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
 	float yaw_pose_err = 200 * (controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
 	float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_odm_pos[5]);
-
 	if (!receiver.safety_shutdown) {
+		// User drive and demo mode
 		if (controller_switch == 1) {
 			yaw_speed_error = receiver.data[4] - (controller_manager.imu_state[4] * 246 / 17.0);
 			controller_manager.global_yaw_reference += (receiver.data[4] * 17 / 246.0) * dt;
 			memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
 		}
+		// Autonomy mode
 		else if (controller_switch > 1) {
-			if (controller_switch > 2) {
+			// Sentry 
+			if (ref.data.robot_type == 7) {
 				input_buffer[0] = 0;
 				input_buffer[1] = 0;
 				input_buffer[2] = 0;
+				input_buffer[3] = 0;
+				yaw_speed_error = -controller_manager.imu_state[4] * 246 / 17.0;
 			}
+			// Infantry, Hero, Standard
 			else {
 				input_buffer[0] = receiver.data[0];
 				input_buffer[1] = receiver.data[1];
 				input_buffer[2] = receiver.data[2];
+				input_buffer[3] = receiver.data[3];
+				yaw_speed_error = receiver.data[4] - (controller_manager.imu_state[4] * 246 / 17.0);
 			}
 
-			input_buffer[3] = pitch_pose_err;
 			input_buffer[4] = 0;
+			input_buffer[6] = receiver.data[6]; // Always spin the flywheels
 
+			// Track with gimbal if we are instructed to
 			if (controller_manager.autonomy_input[5]) {
+				input_buffer[3] = pitch_pose_err;
 				yaw_speed_error = yaw_pose_err - (controller_manager.imu_state[4] * 246 / 17.0);
-			} else {
-				yaw_speed_error = 0;
+
+				// Fire if we are looking at the target
+				if (ref.data.robot_type == 7) {
+					if (fabs(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]) < 0.3) { // Within 0.3rad on either side
+						input_buffer[5] = controller_manager.autonomy_input[6];
+					}
+				} else{
+					input_buffer[5] = receiver.data[5];
+				}
 			}
+
 			controller_manager.global_yaw_reference += (yaw_speed_error * 17 / 246.0) * dt;
-			//controller_manager.global_yaw_reference += (yaw_pose_err * 17 / 246.0) * dt;
 		}
 
 		input_buffer[4] += ysc_gain * yaw_speed_error;
-		Serial.println(controller_manager.autonomy_input[0]);
-
-		// Serial.(controller_manager.autonomy_input[4]);
-		// Serial.println(yaw_pose_err);
-		// Serial.println(input_buffer[4]);
-		// Serial.println();
-
-		
 		input_buffer[4] += ypc_gain * yaw_ang_err;
 		controller_manager.set_input(input_buffer);
 	} else {

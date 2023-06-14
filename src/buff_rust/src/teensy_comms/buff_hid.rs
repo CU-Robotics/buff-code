@@ -15,7 +15,7 @@ use std::{
     time::Instant,
 };
 
-static TEENSY_CYCLE_TIME_S: f64 = 0.002;
+static TEENSY_CYCLE_TIME_S: f64 = 0.001;
 static TEENSY_CYCLE_TIME_MS: f64 = TEENSY_CYCLE_TIME_S * 1000.0;
 static TEENSY_CYCLE_TIME_US: f64 = TEENSY_CYCLE_TIME_MS * 1000.0;
 
@@ -313,7 +313,7 @@ impl HidReader {
                         *self.robot_status.control_mode.write().unwrap() = self.input.get(3) as f64;
                         *self.robot_status.control_input.write().unwrap() =
                             self.input.get_floats(4, 7).to_vec();
-                        *self.robot_status.power_buffer.write().unwrap() = self.input.get_float(32);
+                        *self.robot_status.team_color.write().unwrap() = self.input.get_float(32);
                         *self.robot_status.projectile_speed.write().unwrap() =
                             self.input.get_float(36);
                     }
@@ -410,7 +410,7 @@ pub struct HidROS {
     pub sensor_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub estimate_publishers: Vec<rosrust::Publisher<std_msgs::Float64MultiArray>>,
     pub control_publisher: rosrust::Publisher<std_msgs::Float64MultiArray>,
-    pub power_buffer_publisher: rosrust::Publisher<std_msgs::Float64>,
+    pub team_color_publisher: rosrust::Publisher<std_msgs::Float64>,
     pub proj_speed_publisher: rosrust::Publisher<std_msgs::Float64>,
 
     pub motor_subscribers: Vec<rosrust::Subscriber>,
@@ -465,7 +465,7 @@ impl HidROS {
         ];
 
         let control_publisher = rosrust::publish("control_input_echo", 1).unwrap();
-        let power_buffer_publisher = rosrust::publish("power_buffer", 1).unwrap();
+        let team_color_publisher = rosrust::publish("team_color", 1).unwrap();
         let proj_speed_publisher = rosrust::publish("projectile_speed", 1).unwrap();
 
         let n_motors = robot_status.motors.len();
@@ -549,7 +549,7 @@ impl HidROS {
             controller_publishers: controller_publishers,
             control_publisher: control_publisher,
             estimate_publishers: estimate_publishers,
-            power_buffer_publisher: power_buffer_publisher,
+            team_color_publisher: team_color_publisher,
             proj_speed_publisher: proj_speed_publisher,
 
             motor_subscribers: motor_subscribers,
@@ -625,8 +625,8 @@ impl HidROS {
 
     pub fn publish_controller_manager(&self) {
         let mut msg = std_msgs::Float64::default();
-        msg.data = self.robot_status.power_buffer.read().unwrap().clone();
-        self.power_buffer_publisher.send(msg).unwrap();
+        msg.data = self.robot_status.team_color.read().unwrap().clone();
+        self.team_color_publisher.send(msg).unwrap();
 
         let mut msg = std_msgs::Float64::default();
         msg.data = self.robot_status.projectile_speed.read().unwrap().clone();
@@ -783,16 +783,16 @@ impl HidROS {
 
                     *self.control_flag.write().unwrap() = -1;
                 }
-                // 3 => {
-                //     let mut control_buffer = ByteBuffer::new(64);
+                3 => {
+                    let mut control_buffer = ByteBuffer::new(64);
 
-                //     let robot_reference = self.celestial_estimate.read().unwrap().clone();
-                //     control_buffer.puts(0, vec![2, 4]);
-                //     control_buffer.put_floats(2, robot_reference);
-                //     control_tx.send(control_buffer.data).unwrap();
+                    let robot_reference = self.celestial_estimate.read().unwrap().clone();
+                    control_buffer.puts(0, vec![2, 4]);
+                    control_buffer.put_floats(2, robot_reference);
+                    control_tx.send(control_buffer.data).unwrap();
 
-                //     *self.control_flag.write().unwrap() = -1;
-                // }
+                    *self.control_flag.write().unwrap() = -1;
+                }
                 _ => {
                     // send a new report request every cycle
                     control_tx.send(reports[current_report].clone()).unwrap();

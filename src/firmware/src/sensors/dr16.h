@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "sensors/refSystem.h"
 
 #ifndef BUFF_DR16_H
 #define BUFF_DR16_H
@@ -18,9 +19,9 @@
 
 #define SPINRATE_STILL 900.0
 #define SPINRATE_TRANSLATE 450.0
+#define SPINRATE_IDLE 200.0
 
-#define FEEDRATE_LOW 300.0 //300.0
-#define FEEDRATE_HIGH 500.0
+#define FEEDSPEED_DEFAULT 500.0
 
 #define FLYWHEEL_SPEED 900.0
 
@@ -46,9 +47,9 @@ struct DR16 {
 		DR16(HardwareSerial*);
 		void print_receiver_input(byte*);
 		void print_control_data();
-		int generate_control();
+		int generate_control(RefData ref_data);
 		void control_test();
-		int read(); 	// return the user mode input (different from the control mode)
+		int read(RefData ref_data); 	// return the user mode input (different from the control mode)
 
 		float numBytes;
 		unsigned long lastTime;
@@ -62,6 +63,7 @@ struct DR16 {
 		bool sentry_control_hud = 0;
 		bool ctrl_prev = 0;
 		bool f_prev = 0;
+		bool r_prev = 0;
 		
 		HardwareSerial* serial;
 };

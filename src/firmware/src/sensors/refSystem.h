@@ -30,6 +30,8 @@ struct RefData {
     int foul_robot_id = -1;
 
     int robot_id = -1;
+    int robot_type = -1;
+    int team_color = -1;
     int robot_level = -1;
     int robot_health = -1;
 
@@ -78,10 +80,11 @@ class RefSystem{
         bool read_serial();
         void write_serial();
 
-        byte* generate_hud_msg();
+        byte* generate_client_hud_msg();
+        byte* generate_client_info_msg();
         byte* generate_movement_command_msg();
         byte* generate_state_msg();
-        byte* generate_graphic(int, int, int, int, int, int, int, int, int, int, int, int, int);
+        byte* generate_graphic(char[3], int, int, int, int, int, int, int, int, int, int, int, int);
         uint8_t retrieve_message_id();
 
         RefData data;
