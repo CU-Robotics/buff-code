@@ -496,11 +496,9 @@ void Device_Manager::step_controllers(float dt) {
 	float ysc_gain = 0.8;
 	float yaw_speed_error = 0.0;
 	float ypc_gain = 150.0;
-	float yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
-
+	float ppc_gain = 50.0;
 	float pitch_pose_err = 50 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
 	float yaw_pose_err = 200 * (controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
-	float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_odm_pos[5]);
 	if (!receiver.safety_shutdown) {
 		// USER DRIVE
 		if (controller_switch == 1) {
@@ -558,8 +556,17 @@ void Device_Manager::step_controllers(float dt) {
 			else input_buffer[5] = 0;
 		}
 
+		controller_manager.global_pitch_reference += input_buffer[3] * dt;
+		float pitch_ang_err = controller_manager.global_pitch_reference - controller_manager.gimbal_pitch_angle;
+		input_buffer[3] += ppc_gain * pitch_ang_err;
+		input_buffer[3] = 0;
+
 		input_buffer[4] += ysc_gain * yaw_speed_error;
-		input_buffer[4] += ypc_gain * yaw_ang_err;
+		float yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
+		//input_buffer[4] += ypc_gain * yaw_ang_err;
+		Serial.println(yaw_speed_error);
+		Serial.println(yaw_ang_err);
+		Serial.println(input_buffer[4]);
 		controller_manager.set_input(input_buffer);
 	} else {
 		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];

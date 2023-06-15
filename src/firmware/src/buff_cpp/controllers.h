@@ -61,6 +61,8 @@ struct Controller_Manager {
 	float pitch_offset;
 	float gimbal_pitch_angle;
 	float gimbal_yaw_angle;
+	float global_yaw_reference;
+	float global_pitch_reference;
 
 	float imu_offset_angle;
 	float xPod;
@@ -93,7 +95,6 @@ struct Controller_Manager {
 	float kee_imu_pos[REMOTE_CONTROL_LEN];
 	float enc_odm_pos[REMOTE_CONTROL_LEN];
 	float odom_prev[2];
-	float global_yaw_reference;
 
 	// Goal state of the robot
 	float autonomy_input[REMOTE_CONTROL_LEN];

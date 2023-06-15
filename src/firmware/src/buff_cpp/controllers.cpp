@@ -402,12 +402,12 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
   		enc_odm_pos[1] += (2 * sin(d_chassis_heading/2.0) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * cos(-enc_odm_pos[2] + (d_chassis_heading/2.0)))
 			+ (2 * sin(d_chassis_heading/2.0) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * sin(-enc_odm_pos[2] + (d_chassis_heading/2.0)));
   	}
-	Serial.print(enc_odm_pos[0]);
-	Serial.print(", ");
-	Serial.print(enc_odm_pos[1]);
-	Serial.print(", ");
-	Serial.print(enc_odm_pos[2]*(180.0/PI));
-	Serial.println();
+	// Serial.print(enc_odm_pos[0]);
+	// Serial.print(", ");
+	// Serial.print(enc_odm_pos[1]);
+	// Serial.print(", ");
+	// Serial.print(enc_odm_pos[2]*(180.0/PI));
+	// Serial.println();
 }
 
 void Controller_Manager::set_input(float* control_input) {
