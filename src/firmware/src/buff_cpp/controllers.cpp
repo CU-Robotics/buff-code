@@ -233,10 +233,10 @@ void Controller_Manager::step_motors() {
 				output[i] = controllers[i].step(references[i], feedback[i]) * ratio;
 				break;
 
+			// Yaw motors
 			case 6:
 				output[i] = controllers[i].step(references[i], feedback[i]);
-				if (output[i] > 0.7) output[i] = 0.7;
-				if (output[i] < -0.7) output[i] = -0.7;
+				output[i] = constrain(output[i], -0.7, 0.7); // Prevent these motors from damaging the robot by limiting their current output to 70% (currently used on yaw)
 				break;
 
 			default:
@@ -267,13 +267,13 @@ void Controller_Manager::set_reference(int controller_id) {
 		ctrl_type = controller_types[-ctrl_type];
 	}
 
+
 	// integrate the speed to a postion
 	// can also set reference[x][1] = 0; (2nd gain is then a friction term)
 	references[controller_id][0] += speed * 0.01; // 10ms this can't be hardcoded
 
-	if (ctrl_type != 1 && ctrl_type != 3) {
-		references[controller_id][1] = speed;
-	}
+	references[controller_id][1] = speed;
+	if (ctrl_type == 1 && ctrl_type == 3) references[controller_id][1] = 0;
 
 	// bound the reference state to the defined limits
 	controllers[controller_id].bound_reference(references[controller_id]);
@@ -299,7 +299,7 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	}
 
 	feedback[controller_id][0] = data[0] + (2 * PI * rollover) - biases[controller_id];
-	feedback[controller_id][1] = motor_filters[controller_id].filter(data[1] * 2 * PI / 60);
+	feedback[controller_id][1] = motor_filters[controller_id].filter(data[1] * 2 * PI / 60.0);
 	feedback[controller_id][2] = data[2];
 
 	switch(controller_types[controller_id]) {
@@ -307,7 +307,6 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 		case 1:
 		case 2:
 		case 6:
-			// feedback[controller_id][2] = output[controller_id] * feedback[controller_id][1]; // voltage times current
 			break;
 
 		case 3:
@@ -323,6 +322,10 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 			feedback[controller_id][0] = gimbal_pitch_angle * 152 / 17.0;
 			feedback[controller_id][2] = cos(gimbal_pitch_angle);
 			break;
+
+		case 7:
+			if (fabs(feedback[controller_id][1] - hero_feed_bias) < 2*PI*36) hero_firing = true;
+			else hero_firing = false;
 
 		default:
 			if (controller_types[controller_id] < 0) {

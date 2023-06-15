@@ -199,6 +199,9 @@ int DR16::generate_control(RefData ref_data) {
 			if (!sentry_control_hud) {
 				data[3] = mouse_y * MOUSE_SENSITIVITY;
 				data[4] = mouse_x * MOUSE_SENSITIVITY;
+			} else {
+				data[3] = 0;
+				data[4] = 0;
 			}
 
 			// Shooter/Feeder
@@ -218,24 +221,19 @@ int DR16::generate_control(RefData ref_data) {
 						else data[5] = FEEDSPEED_DEFAULT;
 						break;
 					default:
-						data[5] = 0;
+						data[5] = FEEDSPEED_DEFAULT;
 				}
-			}
+			} else data[5] = 0;
 
 			data[6] = FLYWHEEL_SPEED; // Always keep the flywheel on
 
-			if (r_mouse_button) { // Engage autonomous gimbal when right mouse button is pressed
-				return AUTONOMY_MODE;
-			}
-
-			return USER_DRIVE_MODE;
+			if (r_mouse_button) return AUTONOMY_MODE; // Engage autonomous gimbal when right mouse button is pressed
+			else return USER_DRIVE_MODE;
 		}
 	} else if (l_switch == 3.0) {
-		// Chassis Translation
+		// Chassis translation and spin
 		data[0] = r_stick_x * JOYSTICK_X_SENSITIVITY;
 		data[1] = r_stick_y * JOYSTICK_Y_SENSITIVITY;
-
-		// Chassis Spin
 		data[2] = SPINRATE_STILL * wheel;
 
 		// Gimbal
@@ -257,7 +255,7 @@ int DR16::generate_control(RefData ref_data) {
 		}
 
 		if (l_stick_y < -0.95) return AUTONOMY_MODE;
-		return ROBOT_DEMO_MODE;
+		else return ROBOT_DEMO_MODE;
 	} else { // Engage SAFETY mode when the switch is in position 1. Also acts as the default.
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 			data[i] = 0;

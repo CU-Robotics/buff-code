@@ -106,6 +106,9 @@ struct Controller_Manager {
 	LPFilter motor_filters[MAX_NUM_RM_MOTORS];
 
 	Feedback_Controller controllers[MAX_NUM_RM_MOTORS];
+
+	bool hero_firing; // Indicates whether or not the hero is firing
+	float hero_feed_bias = 0; // The encoder angle of the feeder angle when the most recent fire command was started
 };
 
 #endif

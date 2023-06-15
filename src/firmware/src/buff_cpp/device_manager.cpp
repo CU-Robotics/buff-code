@@ -502,13 +502,13 @@ void Device_Manager::step_controllers(float dt) {
 	float yaw_pose_err = 200 * (controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
 	float feeder_pose_err = (0.5 / 0.174533) * (controller_manager.autonomy_input[5] - controller_manager.enc_odm_pos[5]);
 	if (!receiver.safety_shutdown) {
-		// User drive and demo mode
+		// USER DRIVE
 		if (controller_switch == 1) {
 			yaw_speed_error = (controller_manager.imu_state[4] * 246 / 17.0) + receiver.data[4];
 			controller_manager.global_yaw_reference += (receiver.data[4] * 17 / 246.0) * dt;
 			memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
 		}
-		// Autonomy mode
+		// AUTONOMY
 		else if (controller_switch > 1) {
 			// Sentry 
 			if (ref.data.robot_type == 7) {
@@ -535,17 +535,27 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[3] = pitch_pose_err;
 				yaw_speed_error = (controller_manager.imu_state[4] * 246 / 17.0) + yaw_pose_err;
 
-				// Fire if we are looking at the target
+				// Sentry: fire if we are looking at the target
 				if (ref.data.robot_type == 7) {
 					if (fabs(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]) < 0.3) { // Within 0.3rad on either side
 						input_buffer[5] = controller_manager.autonomy_input[6];
 					}
-				} else{
+				} else {
 					input_buffer[5] = receiver.data[5];
 				}
 			}
 
 			controller_manager.global_yaw_reference += (yaw_speed_error * 17 / 246.0) * dt;
+		}
+
+		// Hero firing logic (in conjunction with controller_manager.set_feedback())
+		if (ref.data.robot_type == 1) {
+			if (!controller_manager.hero_firing && input_buffer[5]) {
+				controller_manager.hero_feed_bias += 2*PI*36;
+				controller_manager.hero_firing = true;
+			}
+			if (controller_manager.hero_firing) input_buffer[5] = 500;
+			else input_buffer[5] = 0;
 		}
 
 		input_buffer[4] += ysc_gain * yaw_speed_error;
