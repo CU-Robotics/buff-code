@@ -415,8 +415,6 @@ void Device_Manager::read_sensors() {
 			sensor_switch += 1;
 			controller_manager.encoders[0] = pitchEncoder.getAngle();
 			controller_manager.encoders[1] = yawEncoder.getAngle();
-			controller_manager.odom_prev[0] = controller_manager.encoders[2];
-			controller_manager.odom_prev[1] = controller_manager.encoders[3];
 			controller_manager.encoders[2] = xOdometryEncoder.getAngle();
 			controller_manager.encoders[3] = yOdometryEncoder.getAngle();
 			break;
@@ -506,7 +504,7 @@ void Device_Manager::step_controllers(float dt) {
 	if (!receiver.safety_shutdown) {
 		// User drive and demo mode
 		if (controller_switch == 1) {
-			yaw_speed_error = receiver.data[4] - (controller_manager.imu_state[4] * 246 / 17.0);
+			yaw_speed_error = (controller_manager.imu_state[4] * 246 / 17.0) + receiver.data[4];
 			controller_manager.global_yaw_reference += (receiver.data[4] * 17 / 246.0) * dt;
 			memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
 		}
@@ -518,7 +516,7 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[1] = 0;
 				input_buffer[2] = 0;
 				input_buffer[3] = 0;
-				yaw_speed_error = -controller_manager.imu_state[4] * 246 / 17.0;
+				yaw_speed_error = controller_manager.imu_state[4] * 246 / 17.0;
 			}
 			// Infantry, Hero, Standard
 			else {
@@ -526,7 +524,7 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[1] = receiver.data[1];
 				input_buffer[2] = receiver.data[2];
 				input_buffer[3] = receiver.data[3];
-				yaw_speed_error = receiver.data[4] - (controller_manager.imu_state[4] * 246 / 17.0);
+				yaw_speed_error = (controller_manager.imu_state[4] * 246 / 17.0) + receiver.data[4];
 			}
 
 			input_buffer[4] = 0;
@@ -535,7 +533,7 @@ void Device_Manager::step_controllers(float dt) {
 			// Track with gimbal if we are instructed to
 			if (controller_manager.autonomy_input[5]) {
 				input_buffer[3] = pitch_pose_err;
-				yaw_speed_error = yaw_pose_err - (controller_manager.imu_state[4] * 246 / 17.0);
+				yaw_speed_error = (controller_manager.imu_state[4] * 246 / 17.0) + yaw_pose_err;
 
 				// Fire if we are looking at the target
 				if (ref.data.robot_type == 7) {

@@ -9,10 +9,10 @@ void odom_diff(float* odom_curr, float* odom_prev, float* output) {
 	if (diff[0] > 180) diff[0] -= 360;
 	if (diff[1] < -180) diff[1] += 360;
 	if (diff[1] > 180) diff[1] -= 360;
-	diff[0] = (diff[0] * (PI/180)) * .048;
-	diff[1] = (diff[1] * (PI/180)) * .048;
+	diff[0] = (diff[0] * (PI/180)) * .024;
+	diff[1] = (diff[1] * (PI/180)) * .024;
 	output[0] = diff[0];
-	output[1] = diff[1];
+	output[1] = -diff[1];
 }
 
 float wrap_angle(float angle) {
@@ -346,52 +346,25 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	kee_imu_pos is the most unreliable as it is an integrated estimate (can amplify errors in the estimate).
 */
 void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
-
-	// float imu_accel_state[2];
-
-	// compute the kee velocity estimate
-	// turn motor speed feedback to robot speed feedback
-	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
-		kee_state[i] = 0;
-		for (int j = 0; j < MAX_NUM_RM_MOTORS; j++) {
-			kee_state[i] += chassis_kinematics[i][j] * feedback[j][1]; // speed of motor j * forward_kinematics[i][j]
-		}
-	}
-
-	kee_state[3] *= PI / (180.0 * 17.0); // pitch motor teeth and deg to rad
-	kee_state[4] *= PI / (180.0 * 17.0 * 2.2); // yaw motor teeth and deg to rad
-
-	// compute the accelerometer velocity estimate
-	// turn inertial measurement to robot state measurement
-	// rotate2D(chassis_imu, imu_accel_state, imu_offset_angle);
-
 	// velocity of IMU relative to world in the chassis reference frame
-	// imu_state[0] += imu_accel_state[0] * dt;
-	// imu_state[1] += imu_accel_state[1] * dt;
-	// imu_state[2] = chassis_imu[5] * 0.017453; // gyro yaw
-	// imu_state[3] = gimbal_imu[4] * 0.017453; // pitch NEED TO DERIVATIVE FILTER ENCODERS TO FIND THIS (or use motors)
-	// imu_state[4] = imu_yaw.filter((246.0 / 17.0) * gimbal_imu[5] / (3.9 * 2.2)) + 0.0115; // yaw imu est
-	imu_state[4] = imu_yaw.filter(-gimbal_imu[5]); // yaw imu est
-	// imu_state[5] = 0; // feeder (can leave zero)
-	// imu_state[6] = 0; // constant (can leave zero)
-
-	// fuse velocity estimates (increase k to 'add gain')
-	// float weights[REMOTE_CONTROL_LEN] = {(r * chassis_imu[5]), (r * chassis_imu[5]), 0, 0, 0, 0, 0};
-	// float compensated_imu_state[REMOTE_CONTROL_LEN];
-	// weighted_vector_addition(imu_state, weights, 1, -1, REMOTE_CONTROL_LEN, compensated_imu_state);
-	float imu_weight[REMOTE_CONTROL_LEN] = {0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0}; 
-	float kee_weight[REMOTE_CONTROL_LEN] = {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0}; 
-	n_weighted_vector_addition(imu_state, kee_state, imu_weight, kee_weight, REMOTE_CONTROL_LEN, kee_imu_state);
+	if (counter < (int)(CALIBRATION_LOOPS)){
+		yaw_drift += gimbal_imu[5];
+		counter += 1;
+	}
+	if(counter == (int)(CALIBRATION_LOOPS)){
+		yaw_drift = yaw_drift/(CALIBRATION_LOOPS);
+		kee_imu_pos[4] = 0;
+		counter += 1;
+	}
+	
+	imu_state[4] = gimbal_imu[5] - yaw_drift; //imu_yaw.filter(gimbal_imu[5]); // yaw imu est
 
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
-		kee_imu_pos[i] += kee_imu_state[i] * dt;
+		kee_imu_pos[i] += imu_state[i] * dt;
 	}
-
-	// kee_imu_pos[4] = kee_imu_pos[4] / 2.0;
-
 	// some robots have an encoder, some do not
 	if (encoder_bias[0] > 1000) {
-		gimbal_pitch_angle = wrap_angle(-feedback[int(encoder_bias[0] / 1000)][0] * 0.11184210526) + 0.3;
+		gimbal_pitch_angle = wrap_angle(-feedback[int(encoder_bias[0] / 1000.0)][0] * 0.11184210526) + 0.3;
 	}
 	else {
 		gimbal_pitch_angle = -wrap_angle(enc_filters[0].filter((encoders[0] - encoder_bias[0]) * PI / 180));
@@ -402,33 +375,36 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	gimbal_yaw_angle = wrap_angle((encoders[1] - encoder_bias[1]) * PI / 180);
 
 	float prev_chassis_heading = enc_odm_pos[2];
-	enc_odm_pos[2] = wrap_angle(kee_imu_pos[4] - gimbal_yaw_angle);		// also uses kee + imu integration, shhhhh...
-	enc_odm_pos[3] = gimbal_pitch_angle;					// puts the enc in enc_odm_pos
-	enc_odm_pos[4] = wrap_angle(kee_imu_pos[4]); // + chassis_yaw;
+	enc_odm_pos[2] = wrap_angle(kee_imu_pos[4] - gimbal_yaw_angle);
+	enc_odm_pos[3] = gimbal_pitch_angle;
+	enc_odm_pos[4] = wrap_angle(kee_imu_pos[4]);
 
 	float odom[2] = {encoders[2], encoders[3]};
 	float odom_components[2];
 	odom_diff(odom, odom_prev, odom_components);
-	float d_chassis_heading = enc_odm_pos[2] - prev_chassis_heading;
+	odom_prev[0] = encoders[2];
+	odom_prev[1] = encoders[3];
 
- 	if (d_chassis_heading == 0){
-    	enc_odm_pos[0] += ((odom_components[0])*sin(enc_odm_pos[2])) - ((odom_components[1])*cos(((enc_odm_pos[2]*PI)/180)));
-    	enc_odm_pos[1] += ((odom_components[0])*cos(enc_odm_pos[2])) + ((odom_components[1])*sin(((enc_odm_pos[2]*PI)/180)));
+	float d_chassis_heading = -(enc_odm_pos[2] - prev_chassis_heading);
+	xPod += odom_components[0];
+	yPod += odom_components[1];
+
+ 	if (d_chassis_heading == 0) {
+    	enc_odm_pos[0] += ((odom_components[0])*sin(enc_odm_pos[2])) - ((odom_components[1])*cos(enc_odm_pos[2]));
+    	enc_odm_pos[1] += ((odom_components[0])*cos(enc_odm_pos[2])) + ((odom_components[1])*sin(enc_odm_pos[2]));
   	} else {
-  		enc_odm_pos[0] += (2 * sin(d_chassis_heading/2) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * sin(enc_odm_pos[2] + (d_chassis_heading/2)))
-			- (2 * sin(d_chassis_heading/2) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * cos(enc_odm_pos[2] + (d_chassis_heading/2)));
+  		enc_odm_pos[0] += (2 * sin(d_chassis_heading/2.0) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * sin(-enc_odm_pos[2] + (d_chassis_heading/2.0)))
+			- (2 * sin(d_chassis_heading/2.0) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * cos(-enc_odm_pos[2] + (d_chassis_heading/2.0)));
 
-  		enc_odm_pos[1] += (2 * sin(d_chassis_heading/2) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * cos(enc_odm_pos[2] + (d_chassis_heading/2)))
-			+ (2 * sin(d_chassis_heading/2) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * sin(enc_odm_pos[2] + (d_chassis_heading/2)));
+  		enc_odm_pos[1] += (2 * sin(d_chassis_heading/2.0) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * cos(-enc_odm_pos[2] + (d_chassis_heading/2.0)))
+			+ (2 * sin(d_chassis_heading/2.0) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * sin(-enc_odm_pos[2] + (d_chassis_heading/2.0)));
   	}
-
 	Serial.print(enc_odm_pos[0]);
 	Serial.print(", ");
 	Serial.print(enc_odm_pos[1]);
+	Serial.print(", ");
+	Serial.print(enc_odm_pos[2]*(180.0/PI));
 	Serial.println();
-
-	// fuse position estimates (kinda pointless just use one or the other)
-	// weighted_vector_addition(enc_odm_pos, kee_imu_pos, 0.8, 0.2, REMOTE_CONTROL_LEN, position_est);
 }
 
 void Controller_Manager::set_input(float* control_input) {

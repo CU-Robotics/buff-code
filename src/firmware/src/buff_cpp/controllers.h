@@ -6,8 +6,9 @@
 #ifndef BUFF_CONTROLLERS_H
 #define BUFF_CONTROLLERS_H
 
-#define ODOM_AXIS_OFFSET_X 0.1
-#define ODOM_AXIS_OFFSET_Y 0.1
+#define ODOM_AXIS_OFFSET_X 0.08480
+#define ODOM_AXIS_OFFSET_Y 0.09523
+#define CALIBRATION_LOOPS 500.0
 
 void odom_diff(float*, float*, float, float*);
 float wrap_angle(float);
@@ -50,6 +51,8 @@ struct Controller_Manager {
 	void estimate_state(float*, float);
 	void set_reference(int);
 
+	int counter;
+
 	float team_color;
 	float projectile_speed;
 	float power_buffer;
@@ -60,7 +63,8 @@ struct Controller_Manager {
 	float gimbal_yaw_angle;
 
 	float imu_offset_angle;
-
+	float xPod;
+	float yPod;
 
 	float encoders[MAX_REV_ENCODERS];
 	float encoder_bias[MAX_REV_ENCODERS];
@@ -97,6 +101,7 @@ struct Controller_Manager {
 	int controller_types[MAX_NUM_RM_MOTORS];
 
 	LPFilter imu_yaw;
+	float yaw_drift;
 	LPFilter enc_filters[MAX_REV_ENCODERS];
 	LPFilter motor_filters[MAX_NUM_RM_MOTORS];
 
