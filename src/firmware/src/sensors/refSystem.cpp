@@ -236,7 +236,9 @@ bool RefSystem::read_serial() {
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {} // setting robot 1 speed
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-				data.robot_1_speed_lim = temp_stat;
+				if (temp_stat <= 30.0 && temp_stat > 0.0) {
+					data.robot_1_speed_lim = temp_stat;
+				}
 
 				////////////////////////////////////////////////////////////////////////////
 
@@ -313,9 +315,54 @@ bool RefSystem::read_serial() {
 }
 
 void RefSystem::write_serial() {
-	byte* msg;
-	msg = generate_client_info_msg();
-	Serial2.write(msg, 119);
+	// byte* msg;
+	// msg = generate_client_info_msg();
+
+	byte msg[119] = {0};
+
+	msg[0] = 0x01;
+	msg[1] = 0x01;
+
+	msg[2] = (data.robot_id >> 8);
+	msg[3] = data.robot_id;
+
+	msg[4] = (data.robot_id >> 8);
+	msg[5] = data.robot_id;
+
+	byte graphic[15] = {0};
+
+	graphic[0] = "rbt";
+	graphic[1] = "rbt";
+	graphic[2] = "rbt";
+
+	graphic[3] = (1 << 5) | (2 << 2) | (1 >> 2);
+	graphic[4] = (1 << 6) | (1 << 2) | (0 >> 7);
+	graphic[5] = (0 << 2) | (0 >> 8);
+	graphic[6] = (0 << 1);
+
+	graphic[7] = (100 >> 2);
+	graphic[8] = (100 << 8) | (100 >> 5);
+	graphic[9] = (100 << 6) | (100 >> 8);
+	graphic[10] = (100 << 3);
+
+	graphic[11] = (100 >> 2);
+	graphic[12] = (100 << 8) | (200 >> 5);
+	graphic[13] = (200 << 6) | (200 >> 8);
+	graphic[14] = (200 << 3);
+	// byte* graphic = generate_graphic("rbt", 1, 2, 1, 1, 0, 0, 0, 100, 100, 100, 0, 0);
+	// Serial.println("test2");
+	for (int i = 0; i < 15; i++) {
+		msg[6+i] = graphic[i];
+	}
+	// Serial.println("test3");
+	// Serial.println(sizeof(msg));
+	int bsent = Serial2.write(msg, 119);	
+	// Serial.println(bsent);
+
+	Serial.println("==============");
+	for (int i = 0; i < 20; i++) {
+		Serial.println(msg[i],HEX);
+	}
 }
 
 byte* RefSystem::generate_client_hud_msg() {
@@ -351,6 +398,8 @@ byte* RefSystem::generate_client_info_msg() {
 	for (int i = 0; i < 15; i++) {
 		msg[6+i] = graphic[i];
 	}
+
+	Serial.println(sizeof(msg));
 
 	return msg;
 }

@@ -564,9 +564,9 @@ void Device_Manager::step_controllers(float dt) {
 		input_buffer[4] += ysc_gain * yaw_speed_error;
 		float yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
 		//input_buffer[4] += ypc_gain * yaw_ang_err;
-		Serial.println(yaw_speed_error);
-		Serial.println(yaw_ang_err);
-		Serial.println(input_buffer[4]);
+		// Serial.println(yaw_speed_error);
+		// Serial.println(yaw_ang_err);
+		// Serial.println(input_buffer[4]);
 		controller_manager.set_input(input_buffer);
 	} else {
 		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
