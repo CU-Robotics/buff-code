@@ -353,14 +353,28 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	if (calib_counter < (int)(CALIBRATION_LOOPS)) {
 		yaw_drift += gimbal_imu[5];
 		calib_counter ++;
+		Serial.println(kee_imu_pos[4]*(180.0/PI));		
 	}
 	if (calib_counter == (int)(CALIBRATION_LOOPS)) {
+		Serial.println(kee_imu_pos[4]*(180.0/PI));		
 		yaw_drift = yaw_drift/(float)(CALIBRATION_LOOPS);
 		kee_imu_pos[4] = 0;
 		calib_counter ++;
 	}
+	if ((calib_counter > (int)(CALIBRATION_LOOPS)) && (calib_counter < (int)(CALIBRATION_LOOPS+50))){
+		Serial.println(calib_counter);
+		calib_counter ++;
+	}
+	if (calib_counter == (int)(CALIBRATION_LOOPS+50)){
+		kee_imu_pos[4] = 0;
+		Serial.println(kee_imu_pos[4]*(180.0/PI));
+		calib_counter ++;
+	}
 
 	imu_state[4] = imu_yaw.filter(gimbal_imu[5] - yaw_drift); // yaw imu est
+	
+
+
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		kee_imu_pos[i] += imu_state[i] * dt; // integrate yaw imu to a yaw pose
 	}
@@ -402,12 +416,16 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
   		enc_odm_pos[1] += (2 * sin(d_chassis_heading/2.0) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * cos(-enc_odm_pos[2] + (d_chassis_heading/2.0)))
 			+ (2 * sin(d_chassis_heading/2.0) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * sin(-enc_odm_pos[2] + (d_chassis_heading/2.0)));
   	}
-	// Serial.print(enc_odm_pos[0]);
-	// Serial.print(", ");
-	// Serial.print(enc_odm_pos[1]);
-	// Serial.print(", ");
-	// Serial.print(enc_odm_pos[2]*(180.0/PI));
-	// Serial.println();
+	Serial.print(enc_odm_pos[0]);
+	Serial.print(", ");
+	Serial.print(enc_odm_pos[1]);
+	Serial.print(", ");
+	Serial.print(enc_odm_pos[2]*(180.0/PI));
+	Serial.print(", ");
+	Serial.print(kee_imu_pos[4]*(180.0/PI));
+	Serial.print(", ");
+	Serial.print(gimbal_yaw_angle*(180.0/PI));
+	Serial.println();
 }
 
 void Controller_Manager::set_input(float* control_input) {

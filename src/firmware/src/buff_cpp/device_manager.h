@@ -10,6 +10,8 @@
 #ifndef BUFF_DEVICE_MANAGER_H
 #define BUFF_DEVICE_MANAGER_H
 
+float yaw_reference_buffer[10];
+
 #define ROBOT_WAYPOINTS 5
 /*
 	An organizer for all the pipelines with the firmware.

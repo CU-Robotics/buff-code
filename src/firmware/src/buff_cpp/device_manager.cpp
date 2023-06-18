@@ -560,25 +560,25 @@ void Device_Manager::step_controllers(float dt) {
 		input_buffer[3] = 0;
 
 		input_buffer[4] += ysc_gain * yaw_speed;
-		// for (int b = 0; b < 4; b++) {
-		// 	Serial.println(b);
-		// 	controller_manager.yaw_reference_buffer[b] = controller_manager.yaw_reference_buffer[b+1];
-		// 	Serial.println(controller_manager.yaw_reference_buffer[b]);
-		// 	// Serial.printf("Inserting idx %d (val %d) into idx %d (val %d)\n", b+1, yaw_reference_buffer[b+1], b, yaw_reference_buffer[b]);
-		// 	// yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
-		// 	// Serial.println("It didn't crash");
-		// }
+		for (int b = 0; b < 9; b++) {
+			Serial.println(b);
+			yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
+			Serial.println(yaw_reference_buffer[b]);
+			// Serial.printf("Inserting idx %d (val %d) into idx %d (val %d)\n", b+1, yaw_reference_buffer[b+1], b, yaw_reference_buffer[b]);
+			// yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
+			// Serial.println("It didn't crash");
+		}
 
-		// controller_manager.yaw_reference_buffer[4] = input_buffer[4];
+		yaw_reference_buffer[9] = input_buffer[4];
 		controller_manager.global_yaw_reference -= (input_buffer[4]*17/246.0) * dt;
 		float prev_yaw_ang_err = yaw_ang_err;
 		yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
 		float yaw_ang_deriv = (yaw_ang_err-prev_yaw_ang_err) / dt;
 		input_buffer[4] += ypc_gain * yaw_ang_err;// + -5 * yaw_ang_deriv;
-		Serial.println(controller_manager.global_yaw_reference);
+		/*Serial.println(controller_manager.global_yaw_reference);
 		Serial.println(controller_manager.kee_imu_pos[4]);
 		Serial.println(yaw_ang_err);
-		Serial.println();
+		Serial.println();*/
 		controller_manager.set_input(input_buffer);
 	} else {
 		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
