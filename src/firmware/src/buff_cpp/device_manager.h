@@ -10,8 +10,8 @@
 #ifndef BUFF_DEVICE_MANAGER_H
 #define BUFF_DEVICE_MANAGER_H
 
-int yaw_reference_buffer_len = 35;
-float yaw_reference_buffer[35];
+int yaw_reference_buffer_len = 25;
+float yaw_reference_buffer[25];
 
 #define ROBOT_WAYPOINTS 5
 /*
@@ -73,8 +73,6 @@ struct Device_Manager {
 	// see implementation for more details
 	int sensor_switch;
 	int controller_switch;
-
-	float yaw_ang_err;
 };
 
 #endif

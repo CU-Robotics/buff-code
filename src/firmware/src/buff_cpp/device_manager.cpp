@@ -494,27 +494,22 @@ void Device_Manager::step_controllers(float dt) {
 	float input_buffer[REMOTE_CONTROL_LEN];
 
 	float ysc_gain = -1.0; // 0.8
-	float yaw_speed = 0.0;
-	float ypc_gain = -150.0; //-150
+	float ypc_gain = -250.0; //-150
 	float ppc_gain = 0.0; //50
 
 	float pitch_autonomy_speed = 50 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
 	float yaw_autonomy_speed = 200 * (controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
 	if (!receiver.safety_shutdown) {
-		memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
-		// USER DRIVE
-		if (controller_switch == 1) {
-			yaw_speed = -2*receiver.data[4] - (controller_manager.imu_state[4]*246/17.0);//-receiver.data[4];
-		}
+		memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));	
 		// AUTONOMY
-		else if (controller_switch > 1) {
+		if (controller_switch > 1) {
 			// Sentry
 			if (ref.data.robot_type == 7) {
 				input_buffer[0] = 0;
 				input_buffer[1] = 0;
 				input_buffer[2] = 0;
 				input_buffer[3] = 0;
-				yaw_speed = -(controller_manager.imu_state[4]*246/17.0);
+				input_buffer[4] = 0;
 			}
 			// Infantry, Hero, Standard
 			else {
@@ -522,7 +517,6 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[1] = receiver.data[1];
 				input_buffer[2] = receiver.data[2];
 				input_buffer[3] = receiver.data[3];
-				yaw_speed = -receiver.data[4];// - (controller_manager.imu_state[4]*246/17.0);
 			}
 
 			input_buffer[4] = 0;
@@ -531,7 +525,7 @@ void Device_Manager::step_controllers(float dt) {
 			// Track with gimbal if we are instructed to
 			if (controller_manager.autonomy_input[5]) {
 				input_buffer[3] = pitch_autonomy_speed;
-				yaw_speed = yaw_autonomy_speed;//2*yaw_autonomy_speed - (controller_manager.imu_state[4]*246/17.0);
+				input_buffer[4] = yaw_autonomy_speed;
 
 				// Sentry: fire if we are looking at the target
 				if (ref.data.robot_type == 7) {
@@ -554,26 +548,20 @@ void Device_Manager::step_controllers(float dt) {
 			else input_buffer[5] = 0;
 		}
 
-		controller_manager.global_pitch_reference += input_buffer[3] * dt;
-		float pitch_ang_err = controller_manager.global_pitch_reference - controller_manager.gimbal_pitch_angle;
-		input_buffer[3] += ppc_gain * pitch_ang_err;
-		input_buffer[3] = 0;
+		// controller_manager.global_pitch_reference += input_buffer[3] * dt;
+		// float pitch_ang_err = controller_manager.global_pitch_reference - controller_manager.gimbal_pitch_angle;
+		// input_buffer[3] += ppc_gain * pitch_ang_err;
+		// input_buffer[3] = 0;
 
 		yaw_reference_buffer[yaw_reference_buffer_len-1] = input_buffer[4];
+		for (int b = 0; b < yaw_reference_buffer_len-1; b++) yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
+		controller_manager.global_yaw_reference -= (yaw_reference_buffer[0]*17/246.0) * dt;
+
+		float yaw_speed = -2*input_buffer[4] - (controller_manager.imu_state[4]*246/17.0);
 		input_buffer[4] += ysc_gain * yaw_speed;
-		for (int b = 0; b < yaw_reference_buffer_len-1; b++) {
-			yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
-		}
-		controller_manager.global_yaw_reference -= (yaw_reference_buffer[0]*17/246.0) * dt;//(input_buffer[4]*17/246.0) * dt;
-		float prev_yaw_ang_err = yaw_ang_err;
-		yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
-		float yaw_ang_deriv = (yaw_ang_err-prev_yaw_ang_err) / dt;
-		input_buffer[4] += ypc_gain * yaw_ang_err;// + -5 * yaw_ang_deriv;
-		Serial.println(controller_manager.global_yaw_reference);
-		Serial.println(controller_manager.kee_imu_pos[4]);
-		Serial.println(yaw_ang_err);
-		Serial.println(input_buffer[6]);
-		Serial.println();
+		float yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
+		input_buffer[4] += ypc_gain * yaw_ang_err;
+
 		controller_manager.set_input(input_buffer);
 	} else {
 		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];

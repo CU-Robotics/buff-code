@@ -226,6 +226,7 @@ void Controller_Manager::step_motors() {
 			case 3:
 			case 4:
 			case 5:
+			case 7:
 				output[i] = controllers[i].step(references[i], feedback[i]);
 				break;
 
@@ -236,7 +237,7 @@ void Controller_Manager::step_motors() {
 			// Yaw motors
 			case 6:
 				output[i] = controllers[i].step(references[i], feedback[i]);
-				output[i] = constrain(output[i], -0.7, 0.7); // Prevent these motors from damaging the robot by limiting their current output to 70% (currently used on yaw)
+				output[i] = constrain(output[i], -0.69, 0.69); // Prevent these motors from damaging the robot by limiting their current output to 70% (currently used on yaw)
 				break;
 
 			default:
