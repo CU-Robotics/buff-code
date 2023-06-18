@@ -522,7 +522,7 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[1] = receiver.data[1];
 				input_buffer[2] = receiver.data[2];
 				input_buffer[3] = receiver.data[3];
-				yaw_speed = -receiver.data[4] - (controller_manager.imu_state[4]*246/17.0);
+				yaw_speed = -receiver.data[4];// - (controller_manager.imu_state[4]*246/17.0);
 			}
 
 			input_buffer[4] = 0;
@@ -531,7 +531,7 @@ void Device_Manager::step_controllers(float dt) {
 			// Track with gimbal if we are instructed to
 			if (controller_manager.autonomy_input[5]) {
 				input_buffer[3] = pitch_autonomy_speed;
-				yaw_speed = 2*yaw_autonomy_speed - (controller_manager.imu_state[4]*246/17.0);
+				yaw_speed = yaw_autonomy_speed;//2*yaw_autonomy_speed - (controller_manager.imu_state[4]*246/17.0);
 
 				// Sentry: fire if we are looking at the target
 				if (ref.data.robot_type == 7) {
@@ -560,17 +560,14 @@ void Device_Manager::step_controllers(float dt) {
 		input_buffer[3] = 0;
 
 		input_buffer[4] += ysc_gain * yaw_speed;
-		for (int b = 0; b < 9; b++) {
+		for (int b = 0; b < 19; b++) {
 			Serial.println(b);
 			yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
 			Serial.println(yaw_reference_buffer[b]);
-			// Serial.printf("Inserting idx %d (val %d) into idx %d (val %d)\n", b+1, yaw_reference_buffer[b+1], b, yaw_reference_buffer[b]);
-			// yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
-			// Serial.println("It didn't crash");
 		}
 
-		yaw_reference_buffer[9] = input_buffer[4];
-		controller_manager.global_yaw_reference -= (input_buffer[4]*17/246.0) * dt;
+		yaw_reference_buffer[19] = input_buffer[4];
+		controller_manager.global_yaw_reference -= (yaw_reference_buffer[4]*17/246.0) * dt;//(input_buffer[4]*17/246.0) * dt;
 		float prev_yaw_ang_err = yaw_ang_err;
 		yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
 		float yaw_ang_deriv = (yaw_ang_err-prev_yaw_ang_err) / dt;
