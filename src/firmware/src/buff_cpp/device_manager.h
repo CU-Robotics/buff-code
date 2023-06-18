@@ -70,6 +70,8 @@ struct Device_Manager {
 	// see implementation for more details
 	int sensor_switch;
 	int controller_switch;
+
+	float yaw_ang_err;
 };
 
 #endif

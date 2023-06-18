@@ -146,7 +146,7 @@ Controller_Manager::Controller_Manager() {
 		}
 	}
 
-	imu_yaw.set_gain(0.9);
+	imu_yaw.set_gain(0.7);
 }
 
 void Controller_Manager::reset_controller(int controller_id) {
@@ -349,22 +349,22 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 	kee_imu_pos is the most unreliable as it is an integrated estimate (can amplify errors in the estimate).
 */
 void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
-	// velocity of IMU relative to world in the chassis reference frame
-	if (counter < (int)(CALIBRATION_LOOPS)){
+	// calibrate IMU
+	if (calib_counter < (int)(CALIBRATION_LOOPS)) {
 		yaw_drift += gimbal_imu[5];
-		counter += 1;
+		calib_counter ++;
 	}
-	if(counter == (int)(CALIBRATION_LOOPS)){
-		yaw_drift = yaw_drift/(CALIBRATION_LOOPS);
+	if (calib_counter == (int)(CALIBRATION_LOOPS)) {
+		yaw_drift = yaw_drift/(float)(CALIBRATION_LOOPS);
 		kee_imu_pos[4] = 0;
-		counter += 1;
+		calib_counter ++;
 	}
-	
-	imu_state[4] = gimbal_imu[5] - yaw_drift; //imu_yaw.filter(gimbal_imu[5]); // yaw imu est
 
+	imu_state[4] = imu_yaw.filter(gimbal_imu[5] - yaw_drift); // yaw imu est
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
-		kee_imu_pos[i] += imu_state[i] * dt;
+		kee_imu_pos[i] += imu_state[i] * dt; // integrate yaw imu to a yaw pose
 	}
+
 	// some robots have an encoder, some do not
 	if (encoder_bias[0] > 1000) {
 		gimbal_pitch_angle = wrap_angle(-feedback[int(encoder_bias[0] / 1000.0)][0] * 0.11184210526) + 0.3;

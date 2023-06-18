@@ -2,6 +2,24 @@
 #include <iostream>
 #include "refSystem.h"
 
+uint8_t generateCRC8(byte* data, uint32_t len) {
+	uint8_t CRC8 = 0xFF;
+    while (len-- > 0) {
+        uint8_t curr = CRC8 ^ (*data++);
+        CRC8 = CRC8Lookup[curr];
+    }
+    return CRC8;
+}
+
+uint16_t generateCRC16(byte* data, uint32_t len) {
+	uint16_t CRC16 = 0xFFFF;
+    while (len-- > 0) {
+        uint8_t curr = *data++;
+        CRC16 = (CRC16 >> 8) ^ CRC16Lookup[(CRC16 ^ static_cast<uint16_t>(curr)) & 0x00FF];
+    }
+    return CRC16;
+}
+
 /*
 The methods in this code have been tested on a partial ref system, but this particular code has not been 
 a full ref system. I attempted to test it on a full game mode system using the ref system simulation but, I could
@@ -131,7 +149,7 @@ bool RefSystem::read_serial() {
 
 			}
 
-			else if(cmd_id == 0x201) { //robo stat
+			else if (cmd_id == 0x201) { //robo stat
 
 				////////////////////////////////////////////////////////////////////////////
 
@@ -309,6 +327,10 @@ bool RefSystem::read_serial() {
 				Serial2.readBytes(&temp, 1);
 				data.robot_health = temp;
             }
+
+			else if (cmd_id == 0x301) {
+				Serial.println("Hooray!");
+			}
 		}
 	}
 	return 1;
@@ -318,51 +340,85 @@ void RefSystem::write_serial() {
 	// byte* msg;
 	// msg = generate_client_info_msg();
 
-	byte msg[119] = {0};
+	byte msg[128] = {0};
 
-	msg[0] = 0x01;
-	msg[1] = 0x01;
+	// Frame header, first 5 bytes
+	// cmd_id, 2 bytes
+	// frame tail, 2 bytes
 
-	msg[2] = (data.robot_id >> 8);
-	msg[3] = data.robot_id;
+	byte frame_header[5] = {0};
+	frame_header[0] = 0xA5;
+	frame_header[1] = 7;
+	frame_header[2] = 7 >> 8;
+	frame_header[3] = seq;
+	seq++;
+	frame_header[4] = generateCRC8(frame_header, 4);
 
-	msg[4] = (data.robot_id >> 8);
-	msg[5] = data.robot_id;
+	msg[0] = frame_header[0];
+	msg[1] = frame_header[1];
+	msg[2] = frame_header[2];
+	msg[3] = frame_header[3];
+	msg[4] = frame_header[4];
 
-	byte graphic[15] = {0};
+	// cmd 0x0301
+	msg[5] = 0x01;
+	msg[6] = 0x03;
 
-	graphic[0] = "rbt";
-	graphic[1] = "rbt";
-	graphic[2] = "rbt";
+	// Content ID 0x0200
+	msg[7] = 0x00;
+	msg[8] = 0x02;
 
-	graphic[3] = (1 << 5) | (2 << 2) | (1 >> 2);
-	graphic[4] = (1 << 6) | (1 << 2) | (0 >> 7);
-	graphic[5] = (0 << 2) | (0 >> 8);
-	graphic[6] = (0 << 1);
+	// robot ID 0x0001
+	msg[9] = 0x01;
+	msg[10] = 0x00;
 
-	graphic[7] = (100 >> 2);
-	graphic[8] = (100 << 8) | (100 >> 5);
-	graphic[9] = (100 << 6) | (100 >> 8);
-	graphic[10] = (100 << 3);
+	// reciever ID 0x0003
+	msg[11] = 0x03;
+	msg[12] = 0x00;
 
-	graphic[11] = (100 >> 2);
-	graphic[12] = (100 << 8) | (200 >> 5);
-	graphic[13] = (200 << 6) | (200 >> 8);
-	graphic[14] = (200 << 3);
-	// byte* graphic = generate_graphic("rbt", 1, 2, 1, 1, 0, 0, 0, 100, 100, 100, 0, 0);
-	// Serial.println("test2");
-	for (int i = 0; i < 15; i++) {
-		msg[6+i] = graphic[i];
-	}
-	// Serial.println("test3");
-	// Serial.println(sizeof(msg));
-	int bsent = Serial2.write(msg, 119);	
+	// test data
+	msg[13] = 0xFF;
+
+	// byte graphic[15] = {0};
+
+	// graphic[0] = "rbt";
+	// graphic[1] = "rbt";
+	// graphic[2] = "rbt";
+
+	// graphic[3] = (1 << 5) | (2 << 2) | (1 >> 2);
+	// graphic[4] = (1 << 6) | (1 << 2) | (0 >> 7);
+	// graphic[5] = (0 << 2) | (0 >> 8);
+	// graphic[6] = (0 << 1);
+
+	// graphic[7] = (100 >> 2);
+	// graphic[8] = (100 << 8) | (100 >> 5);
+	// graphic[9] = (100 << 6) | (100 >> 8);
+	// graphic[10] = (100 << 3);
+
+	// graphic[11] = (100 >> 2);
+	// graphic[12] = (100 << 8) | (200 >> 5);
+	// graphic[13] = (200 << 6) | (200 >> 8);
+	// graphic[14] = (200 << 3);
+	// // byte* graphic = generate_graphic("rbt", 1, 2, 1, 1, 0, 0, 0, 100, 100, 100, 0, 0);
+	// // Serial.println("test2");
+	// for (int i = 0; i < 15; i++) {
+	// 	msg[13+i] = graphic[i];
+	// }
+
+	int footerCRC = generateCRC16(msg, 14);
+	msg[14] = (footerCRC >> 8);
+	msg[15] = footerCRC;
+	
+	int bsent = Serial2.write(msg, 128);	
+
+	// Serial.println("==============");
+	// Serial.print("Sent bytes: ");
 	// Serial.println(bsent);
-
-	Serial.println("==============");
-	for (int i = 0; i < 20; i++) {
-		Serial.println(msg[i],HEX);
-	}
+	// for (int i = 0; i < 16; i++) {
+	// 	Serial.print(i);
+	// 	Serial.print(": 0x");
+	// 	Serial.println(msg[i],HEX);
+	// }
 }
 
 byte* RefSystem::generate_client_hud_msg() {
