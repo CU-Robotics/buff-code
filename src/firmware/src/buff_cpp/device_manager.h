@@ -10,7 +10,8 @@
 #ifndef BUFF_DEVICE_MANAGER_H
 #define BUFF_DEVICE_MANAGER_H
 
-float yaw_reference_buffer[20];
+int yaw_reference_buffer_len = 35;
+float yaw_reference_buffer[35];
 
 #define ROBOT_WAYPOINTS 5
 /*

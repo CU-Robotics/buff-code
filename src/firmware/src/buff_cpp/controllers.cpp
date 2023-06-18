@@ -273,7 +273,7 @@ void Controller_Manager::set_reference(int controller_id) {
 	references[controller_id][0] += speed * 0.01; // 10ms this can't be hardcoded
 
 	references[controller_id][1] = speed;
-	if (ctrl_type == 1 && ctrl_type == 3) references[controller_id][1] = 0;
+	if (ctrl_type == 1 || ctrl_type == 3) references[controller_id][1] = 0;
 
 	// bound the reference state to the defined limits
 	controllers[controller_id].bound_reference(references[controller_id]);
