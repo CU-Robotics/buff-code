@@ -254,7 +254,10 @@ int DR16::generate_control(RefData ref_data) {
 			data[6] = 0.0;
 		}
 
-		if (l_stick_y < -0.95) return AUTONOMY_MODE;
+		if (l_stick_y < -0.95) {
+			data[3] = 0;
+			return AUTONOMY_MODE;
+		}
 		else return ROBOT_DEMO_MODE;
 	} else { // Engage SAFETY mode when the switch is in position 1. Also acts as the default.
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {

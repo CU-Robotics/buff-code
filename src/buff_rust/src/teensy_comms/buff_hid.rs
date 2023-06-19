@@ -15,7 +15,7 @@ use std::{
     time::Instant,
 };
 
-static TEENSY_CYCLE_TIME_S: f64 = 0.01;
+static TEENSY_CYCLE_TIME_S: f64 = 0.003;
 static TEENSY_CYCLE_TIME_MS: f64 = TEENSY_CYCLE_TIME_S * 1000.0;
 static TEENSY_CYCLE_TIME_US: f64 = TEENSY_CYCLE_TIME_MS * 1000.0;
 
