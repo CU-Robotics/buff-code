@@ -10,9 +10,6 @@
 #ifndef BUFF_DEVICE_MANAGER_H
 #define BUFF_DEVICE_MANAGER_H
 
-int yaw_reference_buffer_len = 25;
-float yaw_reference_buffer[25];
-
 #define ROBOT_WAYPOINTS 5
 /*
 	An organizer for all the pipelines with the firmware.
@@ -73,6 +70,9 @@ struct Device_Manager {
 	// see implementation for more details
 	int sensor_switch;
 	int controller_switch;
+
+	int yaw_reference_buffer_len = 25;
+	float yaw_reference_buffer[25];
 };
 
 #endif

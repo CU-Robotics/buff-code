@@ -195,9 +195,9 @@ void Device_Manager::control_input_handle() { // 2
 			break;
 
 		case 3: // autonomy control report
-			if (abs(controller_switch) == 1) {	// Only user can put the bot in autonomous mode
-				break;
-			}
+			// if (abs(controller_switch) == 1) {	// Only user can put the bot in autonomous mode
+			// 	break;
+			// }
 
 			// set the input from ros control
 			controller_manager.autonomy_input[0] = input_report.get_float(2);
@@ -207,6 +207,10 @@ void Device_Manager::control_input_handle() { // 2
 			controller_manager.autonomy_input[4] = input_report.get_float(18);
 			controller_manager.autonomy_input[5] = input_report.get_float(22);
 			controller_manager.autonomy_input[6] = input_report.get_float(26);
+
+			Serial.println(controller_manager.autonomy_input[3]);
+			Serial.println(controller_manager.autonomy_input[4]);
+			Serial.println(controller_manager.autonomy_input[5]);
 
 			break;
 
@@ -498,7 +502,7 @@ void Device_Manager::step_controllers(float dt) {
 	float ppc_gain = 0.0; //50
 
 	float pitch_autonomy_speed = 50 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
-	float yaw_autonomy_speed = 200 * (controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
+	float yaw_autonomy_speed = -150 * (controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
 	if (!receiver.safety_shutdown) {
 		memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));	
 		// AUTONOMY
@@ -517,6 +521,7 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[1] = receiver.data[1];
 				input_buffer[2] = receiver.data[2];
 				input_buffer[3] = receiver.data[3];
+				input_buffer[4] = receiver.data[4];
 			}
 
 			input_buffer[4] = 0;
@@ -552,8 +557,6 @@ void Device_Manager::step_controllers(float dt) {
 		// float pitch_ang_err = controller_manager.global_pitch_reference - controller_manager.gimbal_pitch_angle;
 		// input_buffer[3] += ppc_gain * pitch_ang_err;
 		// input_buffer[3] = controller_manager.gimbal_pitch_angle;
-
-		Serial.println(controller_manager.gimbal_pitch_angle);
 
 		yaw_reference_buffer[yaw_reference_buffer_len-1] = input_buffer[4];
 		for (int b = 0; b < yaw_reference_buffer_len-1; b++) yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
