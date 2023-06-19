@@ -226,6 +226,7 @@ void Controller_Manager::step_motors() {
 			case 3:
 			case 4:
 			case 5:
+			case 7:
 				output[i] = controllers[i].step(references[i], feedback[i]);
 				break;
 
@@ -236,7 +237,7 @@ void Controller_Manager::step_motors() {
 			// Yaw motors
 			case 6:
 				output[i] = controllers[i].step(references[i], feedback[i]);
-				output[i] = constrain(output[i], -0.7, 0.7); // Prevent these motors from damaging the robot by limiting their current output to 70% (currently used on yaw)
+				output[i] = constrain(output[i], -0.69, 0.69); // Prevent these motors from damaging the robot by limiting their current output to 70% (currently used on yaw)
 				break;
 
 			default:
@@ -273,7 +274,7 @@ void Controller_Manager::set_reference(int controller_id) {
 	references[controller_id][0] += speed * 0.01; // 10ms this can't be hardcoded
 
 	references[controller_id][1] = speed;
-	if (ctrl_type == 1 && ctrl_type == 3) references[controller_id][1] = 0;
+	if (ctrl_type == 1 || ctrl_type == 3) references[controller_id][1] = 0;
 
 	// bound the reference state to the defined limits
 	controllers[controller_id].bound_reference(references[controller_id]);
@@ -416,16 +417,6 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
   		enc_odm_pos[1] += (2 * sin(d_chassis_heading/2.0) * ((odom_components[1]/d_chassis_heading) + ODOM_AXIS_OFFSET_Y) * cos(-enc_odm_pos[2] + (d_chassis_heading/2.0)))
 			+ (2 * sin(d_chassis_heading/2.0) * ((odom_components[0]/d_chassis_heading) + ODOM_AXIS_OFFSET_X) * sin(-enc_odm_pos[2] + (d_chassis_heading/2.0)));
   	}
-	Serial.print(enc_odm_pos[0]);
-	Serial.print(", ");
-	Serial.print(enc_odm_pos[1]);
-	Serial.print(", ");
-	Serial.print(enc_odm_pos[2]*(180.0/PI));
-	Serial.print(", ");
-	Serial.print(kee_imu_pos[4]*(180.0/PI));
-	Serial.print(", ");
-	Serial.print(gimbal_yaw_angle*(180.0/PI));
-	Serial.println();
 }
 
 void Controller_Manager::set_input(float* control_input) {
