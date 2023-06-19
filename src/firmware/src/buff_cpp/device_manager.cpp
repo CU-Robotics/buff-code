@@ -551,7 +551,9 @@ void Device_Manager::step_controllers(float dt) {
 		// controller_manager.global_pitch_reference += input_buffer[3] * dt;
 		// float pitch_ang_err = controller_manager.global_pitch_reference - controller_manager.gimbal_pitch_angle;
 		// input_buffer[3] += ppc_gain * pitch_ang_err;
-		// input_buffer[3] = 0;
+		// input_buffer[3] = controller_manager.gimbal_pitch_angle;
+
+		Serial.println(controller_manager.gimbal_pitch_angle);
 
 		yaw_reference_buffer[yaw_reference_buffer_len-1] = input_buffer[4];
 		for (int b = 0; b < yaw_reference_buffer_len-1; b++) yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
