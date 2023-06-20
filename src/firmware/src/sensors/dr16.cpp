@@ -151,7 +151,7 @@ int DR16::generate_control(RefData ref_data) {
 	float feedrate_bps_continuous = 8;
 	float feedrate_bps_burst = 16;
 	// Infantry, Standard, and Sentry
-	if (ref_data.robot_type == 3 || ref_data.robot_type == 5 || ref_data.robot_type == 7) {
+	if (ref_data.robot_type == 3 || ref_data.robot_type == 5 || ref_data.robot_type == 7 && ref_data.robot_1_cool_val != -1) {
 		feedrate_bps_continuous = ref_data.robot_1_cool_val/10.0;
 		feedrate_bps_burst = (ref_data.robot_1_cool_val+ref_data.robot_1_barr_heat_lim)/10.0;
 		if (ref_data.robot_type != 5 && feedrate_bps_burst > 10) {
@@ -163,6 +163,7 @@ int DR16::generate_control(RefData ref_data) {
 
 	// Safety Switch
 	safety_shutdown = 0;
+	// GAME MODE
 	if (l_switch == 2.0) {
 		// Sentry -- Fully autonomous
 		if (ref_data.robot_type == 7) {
@@ -230,6 +231,7 @@ int DR16::generate_control(RefData ref_data) {
 			if (r_mouse_button) return AUTONOMY_MODE; // Engage autonomous gimbal when right mouse button is pressed
 			else return USER_DRIVE_MODE;
 		}
+	// DEMO MODE
 	} else if (l_switch == 3.0) {
 		// Chassis translation and spin
 		data[0] = r_stick_x * JOYSTICK_X_SENSITIVITY;

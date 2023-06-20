@@ -150,7 +150,6 @@ bool RefSystem::read_serial() {
 			}
 
 			else if (cmd_id == 0x201) { //robo stat
-
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
@@ -246,7 +245,7 @@ bool RefSystem::read_serial() {
 				temp_stat = temp;
 				while(Serial2.readBytes(&temp, 1) != 1) {} // robot_1 barrel heat limit
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-				data.robot_1_barr_heat_lim = temp_stat;
+				if (temp_stat % 5 == 0) data.robot_1_barr_heat_lim = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
@@ -348,8 +347,8 @@ void RefSystem::write_serial() {
 
 	byte frame_header[5] = {0};
 	frame_header[0] = 0xA5;
-	frame_header[1] = 7;
-	frame_header[2] = 7 >> 8;
+	frame_header[1] = 7 >> 8;
+	frame_header[2] = 7 & 0xFF;
 	frame_header[3] = seq;
 	seq++;
 	frame_header[4] = generateCRC8(frame_header, 4);
@@ -364,52 +363,49 @@ void RefSystem::write_serial() {
 	msg[5] = 0x01;
 	msg[6] = 0x03;
 
-	// Content ID 0x0200
-	msg[7] = 0x00;
-	msg[8] = 0x02;
+	// Content ID 0x0101
+	msg[7] = 0x01;
+	msg[8] = 0x01;
 
-	// robot ID 0x0001
-	msg[9] = 0x01;
+	// sender ID 0x0003
+	msg[9] = 0x03;
 	msg[10] = 0x00;
 
-	// reciever ID 0x0003
+	// reciever ID 0x0103
 	msg[11] = 0x03;
-	msg[12] = 0x00;
+	msg[12] = 0x01;
 
-	// test data
-	msg[13] = 0xFF;
+	byte graphic[15] = {0};
 
-	// byte graphic[15] = {0};
+	graphic[0] = "rbt";
+	graphic[1] = "rbt";
+	graphic[2] = "rbt";
 
-	// graphic[0] = "rbt";
-	// graphic[1] = "rbt";
-	// graphic[2] = "rbt";
+	graphic[3] = (1 << 5) | (2 << 2) | (1 >> 2);
+	graphic[4] = (1 << 6) | (1 << 2) | (0 >> 7);
+	graphic[5] = (0 << 2) | (0 >> 8);
+	graphic[6] = (0 << 1);
 
-	// graphic[3] = (1 << 5) | (2 << 2) | (1 >> 2);
-	// graphic[4] = (1 << 6) | (1 << 2) | (0 >> 7);
-	// graphic[5] = (0 << 2) | (0 >> 8);
-	// graphic[6] = (0 << 1);
+	graphic[7] = (100 >> 2);
+	graphic[8] = (100 << 8) | (115 >> 5);
+	graphic[9] = (115 << 6) | (125 >> 8);
+	graphic[10] = (125 << 3);
 
-	// graphic[7] = (100 >> 2);
-	// graphic[8] = (100 << 8) | (100 >> 5);
-	// graphic[9] = (100 << 6) | (100 >> 8);
-	// graphic[10] = (100 << 3);
+	graphic[11] = (150 >> 2);
+	graphic[12] = (150 << 8) | (200 >> 5);
+	graphic[13] = (200 << 6) | (225 >> 8);
+	graphic[14] = (225 << 3);
+	// byte* graphic = generate_graphic("rbt", 1, 2, 1, 1, 0, 0, 0, 100, 100, 100, 0, 0);
+	// Serial.println("test2");
+	for (int i = 0; i < 15; i++) {
+		msg[13+i] = graphic[i];
+	}
 
-	// graphic[11] = (100 >> 2);
-	// graphic[12] = (100 << 8) | (200 >> 5);
-	// graphic[13] = (200 << 6) | (200 >> 8);
-	// graphic[14] = (200 << 3);
-	// // byte* graphic = generate_graphic("rbt", 1, 2, 1, 1, 0, 0, 0, 100, 100, 100, 0, 0);
-	// // Serial.println("test2");
-	// for (int i = 0; i < 15; i++) {
-	// 	msg[13+i] = graphic[i];
-	// }
-
-	int footerCRC = generateCRC16(msg, 14);
-	msg[14] = (footerCRC >> 8);
-	msg[15] = footerCRC;
+	uint16_t footerCRC = generateCRC16(msg, 28);
+	msg[28] = (footerCRC >> 8);
+	msg[29] = (footerCRC & 0xFF);
 	
-	int bsent = Serial2.write(msg, 128);	
+	int bsent = Serial2.write(msg, 30);	
 
 	// Serial.println("==============");
 	// Serial.print("Sent bytes: ");

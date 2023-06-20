@@ -208,10 +208,6 @@ void Device_Manager::control_input_handle() { // 2
 			controller_manager.autonomy_input[5] = input_report.get_float(22);
 			controller_manager.autonomy_input[6] = input_report.get_float(26);
 
-			Serial.println(controller_manager.autonomy_input[3]);
-			Serial.println(controller_manager.autonomy_input[4]);
-			Serial.println(controller_manager.autonomy_input[5]);
-
 			break;
 
 		case 4: // position override report
@@ -406,12 +402,17 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
+	if (micros() - prev_ref_read_micros > 100) {
+		// Serial.println("READ REF");
+		prev_ref_read_micros = micros();
+		ref.read_serial();
+		ref.write_serial();
+	}
+	controller_manager.team_color = ref.data.team_color;
+	controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
+	controller_manager.power_buffer = ref.data.power_buffer;
 	switch (sensor_switch) {
 		case 0:
-			ref.read_serial();
-			controller_manager.team_color = ref.data.team_color;
-			controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
-			controller_manager.power_buffer = ref.data.power_buffer;
 			sensor_switch += 1;
 			break;
 
@@ -429,7 +430,6 @@ void Device_Manager::read_sensors() {
 			break;
 
 		case 3:
-			ref.write_serial();
 			sensor_switch += 1;
 			break;
 
@@ -494,52 +494,48 @@ void Device_Manager::step_controllers(float dt) {
 	static int prev_shutdown = 1;
 
 	controller_manager.estimate_state(gimbal_imu.data, dt);
-
 	float input_buffer[REMOTE_CONTROL_LEN];
 
 	float ysc_gain = -1.0; // 0.8
-	float ypc_gain = -250.0; //-150
+	float ypc_gain = -400.0; //-150
 	float ppc_gain = 0.0; //50
 
-	float pitch_autonomy_speed = 50 * (controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]);
-	float yaw_autonomy_speed = -150 * (controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]);
+	float pitch_autonomy_speed = 50 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
+	float yaw_autonomy_speed = -50 * wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
+	Serial.println(controller_manager.gimbal_pitch_angle * 180/PI);
 	if (!receiver.safety_shutdown) {
-		memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));	
+		memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
+		yaw_reference_buffer[yaw_reference_buffer_len-1] = input_buffer[4];
+		for (int b = 0; b < yaw_reference_buffer_len-1; b++) yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
 		// AUTONOMY
 		if (controller_switch > 1) {
 			// Sentry
 			if (ref.data.robot_type == 7) {
-				input_buffer[0] = 0;
-				input_buffer[1] = 0;
 				input_buffer[2] = 0;
 				input_buffer[3] = 0;
 				input_buffer[4] = 0;
 			}
-			// Infantry, Hero, Standard
-			else {
-				input_buffer[0] = receiver.data[0];
-				input_buffer[1] = receiver.data[1];
-				input_buffer[2] = receiver.data[2];
-				input_buffer[3] = receiver.data[3];
-				input_buffer[4] = receiver.data[4];
+
+			// Movement
+			if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[5] == 2) {
+				input_buffer[0] = 200 * (controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]);
+				input_buffer[1] = 200 * (controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]);
 			}
 
-			input_buffer[4] = 0;
-			input_buffer[6] = receiver.data[6]; // Always spin the flywheels
-
 			// Track with gimbal if we are instructed to
-			if (controller_manager.autonomy_input[5]) {
+			if (controller_manager.autonomy_input[5] == 1 || controller_manager.autonomy_input[5] == 2) {
 				input_buffer[3] = pitch_autonomy_speed;
 				input_buffer[4] = yaw_autonomy_speed;
+				yaw_reference_buffer[0] = yaw_autonomy_speed;
 
 				// Sentry: fire if we are looking at the target
 				if (ref.data.robot_type == 7) {
 					if (fabs(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]) < 0.3) { // Within 0.3rad on either side
-						input_buffer[5] = controller_manager.autonomy_input[6];
+						input_buffer[5] = 0;
 					}
-				} else {
-					input_buffer[5] = receiver.data[5];
 				}
+			} else if (ref.data.robot_type == 7) {
+				input_buffer[5] = 0;
 			}
 		}
 
@@ -558,8 +554,6 @@ void Device_Manager::step_controllers(float dt) {
 		// input_buffer[3] += ppc_gain * pitch_ang_err;
 		// input_buffer[3] = controller_manager.gimbal_pitch_angle;
 
-		yaw_reference_buffer[yaw_reference_buffer_len-1] = input_buffer[4];
-		for (int b = 0; b < yaw_reference_buffer_len-1; b++) yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
 		controller_manager.global_yaw_reference -= (yaw_reference_buffer[0]*17/246.0) * dt;
 
 		float yaw_speed = -2*input_buffer[4] - (controller_manager.imu_state[4]*246/17.0);
@@ -569,6 +563,10 @@ void Device_Manager::step_controllers(float dt) {
 
 		controller_manager.set_input(input_buffer);
 	} else {
+		// Reset world-relative state when in safety mode
+		controller_manager.enc_odm_pos[0] = 0;
+		controller_manager.enc_odm_pos[1] = 0;
+		controller_manager.enc_odm_pos[4] = 0;
 		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
 	}
 
