@@ -436,16 +436,19 @@ void Device_Manager::read_sensors() {
 		case 4:
 			switch (receiver.read(ref.data)) {
 				case USER_SHUTDOWN:
-					controller_switch = -1;
+					if (safety_counter > 10) controller_switch = -1;
+					safety_counter++;
 					break;
 
 				case ROBOT_DEMO_MODE:
 				case USER_DRIVE_MODE:
 					controller_switch = 1;
+					safety_counter = 0;
 					break;
 
 				case AUTONOMY_MODE:
 					controller_switch = 2;
+					safety_counter = 0;
 					break;
 
 				default:
@@ -502,8 +505,15 @@ void Device_Manager::step_controllers(float dt) {
 
 	float pitch_autonomy_speed = 50 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
 	float yaw_autonomy_speed = -50 * wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
-	Serial.println(controller_manager.gimbal_pitch_angle * 180/PI);
+	
+	for (int i = 0; i < 7; i++) {
+		Serial.print(controller_manager.enc_odm_pos[i]);
+		Serial.print(", ");
+	}
+	Serial.println();
+
 	if (!receiver.safety_shutdown) {
+		controller_manager.imu_calibrated = false;
 		memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
 		yaw_reference_buffer[yaw_reference_buffer_len-1] = input_buffer[4];
 		for (int b = 0; b < yaw_reference_buffer_len-1; b++) yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
@@ -567,7 +577,11 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.enc_odm_pos[0] = 0;
 		controller_manager.enc_odm_pos[1] = 0;
 		controller_manager.enc_odm_pos[4] = 0;
+		controller_manager.kee_imu_pos[4] = 0;
 		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
+
+		// Calibrate when in safety mode
+		if (!controller_manager.imu_calibrated) controller_manager.calib_counter = 0;
 	}
 
 	bool new_reference = timer_info_ms(2) >= 10;

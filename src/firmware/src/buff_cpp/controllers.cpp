@@ -146,7 +146,7 @@ Controller_Manager::Controller_Manager() {
 		}
 	}
 
-	imu_yaw.set_gain(0.7);
+	imu_yaw.set_gain(0.5);
 }
 
 void Controller_Manager::reset_controller(int controller_id) {
@@ -351,31 +351,22 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 */
 void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// calibrate IMU
+	if (calib_counter == 0) {
+		Serial.println("Calibrating IMU...");
+		imu_calibrated = true;
+		yaw_drift = 0;
+	}
 	if (calib_counter < (int)(CALIBRATION_LOOPS)) {
 		yaw_drift += gimbal_imu[5];
-		calib_counter ++;
-		Serial.println(kee_imu_pos[4]*(180.0/PI));		
-	}
-	if (calib_counter == (int)(CALIBRATION_LOOPS)) {
-		Serial.println(kee_imu_pos[4]*(180.0/PI));		
+		calib_counter++;
+	} else if (calib_counter == (int)(CALIBRATION_LOOPS)) {
 		yaw_drift = yaw_drift/(float)(CALIBRATION_LOOPS);
 		kee_imu_pos[4] = 0;
-		calib_counter ++;
-	}
-	if ((calib_counter > (int)(CALIBRATION_LOOPS)) && (calib_counter < (int)(CALIBRATION_LOOPS+50))){
-		Serial.println(calib_counter);
-		calib_counter ++;
-	}
-	if (calib_counter == (int)(CALIBRATION_LOOPS+50)){
-		kee_imu_pos[4] = 0;
-		Serial.println(kee_imu_pos[4]*(180.0/PI));
-		calib_counter ++;
+		calib_counter++;
+		Serial.println("IMU calibrated.");
 	}
 
 	imu_state[4] = imu_yaw.filter(gimbal_imu[5] - yaw_drift); // yaw imu est
-	
-
-
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		kee_imu_pos[i] += imu_state[i] * dt; // integrate yaw imu to a yaw pose
 	}

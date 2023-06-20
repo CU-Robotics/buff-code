@@ -51,8 +51,6 @@ struct Controller_Manager {
 	void estimate_state(float*, float);
 	void set_reference(int);
 
-	int calib_counter;
-
 	float team_color;
 	float projectile_speed;
 	float power_buffer;
@@ -103,6 +101,8 @@ struct Controller_Manager {
 
 	LPFilter imu_yaw;
 	float yaw_drift;
+	int calib_counter;
+	bool imu_calibrated = false;
 	LPFilter enc_filters[MAX_REV_ENCODERS];
 	LPFilter motor_filters[MAX_NUM_RM_MOTORS];
 

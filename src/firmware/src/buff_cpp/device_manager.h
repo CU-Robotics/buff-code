@@ -75,6 +75,8 @@ struct Device_Manager {
 	float yaw_reference_buffer[25];
 
 	int prev_ref_read_micros = 0;
+
+	int safety_counter = 0;
 };
 
 #endif
