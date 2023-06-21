@@ -8,8 +8,9 @@ targets: [celestial.py,
           state_buffer.py,
           target.py,
           world_map.py,
+          circle.py,
           armor-detector-config.json,
           realsense-config.json,
           robot-config.json]
 
-install: ['lib','lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib']
+install: ['lib','lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib']

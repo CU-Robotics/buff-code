@@ -15,7 +15,7 @@ use std::{
     time::Instant,
 };
 
-static TEENSY_CYCLE_TIME_S: f64 = 0.003;
+static TEENSY_CYCLE_TIME_S: f64 = 0.002;
 static TEENSY_CYCLE_TIME_MS: f64 = TEENSY_CYCLE_TIME_S * 1000.0;
 static TEENSY_CYCLE_TIME_US: f64 = TEENSY_CYCLE_TIME_MS * 1000.0;
 
@@ -494,19 +494,19 @@ impl HidROS {
             //     },
             // )
             // .unwrap(),
-            rosrust::subscribe(
-                "robot_waypoints",
-                1,
-                move |msg: std_msgs::Float64MultiArray| {
-                    // assert!(
-                    //     msg.data.len() == 3,
-                    //     "ROS gimbal control msg had a different number of values than there are gimbal actuators",
-                    // );
-                    *cf1_clone.write().unwrap() = 1;
-                    *robot_waypoints.write().unwrap() = msg.data;
-                },
-            )
-            .unwrap(),
+            // rosrust::subscribe(
+            //     "robot_waypoints",
+            //     1,
+            //     move |msg: std_msgs::Float64MultiArray| {
+            //         // assert!(
+            //         //     msg.data.len() == 3,
+            //         //     "ROS gimbal control msg had a different number of values than there are gimbal actuators",
+            //         // );
+            //         *cf1_clone.write().unwrap() = 1;
+            //         *robot_waypoints.write().unwrap() = msg.data;
+            //     },
+            // )
+            // .unwrap(),
             rosrust::subscribe(
                 "control_input",
                 1,
@@ -520,19 +520,19 @@ impl HidROS {
                 },
             )
             .unwrap(),
-            rosrust::subscribe(
-                "estimate_override",
-                1,
-                move |msg: std_msgs::Float64MultiArray| {
-                    assert!(
-                        msg.data.len() == 7,
-                        "ROS control msg had a different number of values than there are inputs",
-                    );
-                    *cf_clone.write().unwrap() = 3;
-                    *celestial_estimate.write().unwrap() = msg.data;
-                },
-            )
-            .unwrap(),
+            // rosrust::subscribe(
+            //     "estimate_override",
+            //     1,
+            //     move |msg: std_msgs::Float64MultiArray| {
+            //         assert!(
+            //             msg.data.len() == 7,
+            //             "ROS control msg had a different number of values than there are inputs",
+            //         );
+            //         *cf_clone.write().unwrap() = 3;
+            //         *celestial_estimate.write().unwrap() = msg.data;
+            //     },
+            // )
+            // .unwrap(),
         ];
 
         HidROS {
@@ -632,21 +632,21 @@ impl HidROS {
         msg.data = self.robot_status.projectile_speed.read().unwrap().clone();
         self.proj_speed_publisher.send(msg).unwrap();
 
-        let mut msg = std_msgs::Float64MultiArray::default();
-        msg.data = self.robot_status.control_input.read().unwrap().clone();
-        self.control_publisher.send(msg).unwrap();
+        // let mut msg = std_msgs::Float64MultiArray::default();
+        // msg.data = self.robot_status.control_input.read().unwrap().clone();
+        // self.control_publisher.send(msg).unwrap();
 
-        let mut msg = std_msgs::Float64MultiArray::default();
-        msg.data = self.robot_status.kee_vel_est.read().unwrap().clone();
-        self.estimate_publishers[0].send(msg).unwrap();
+        // let mut msg = std_msgs::Float64MultiArray::default();
+        // msg.data = self.robot_status.kee_vel_est.read().unwrap().clone();
+        // self.estimate_publishers[0].send(msg).unwrap();
 
-        let mut msg = std_msgs::Float64MultiArray::default();
-        msg.data = self.robot_status.imu_vel_est.read().unwrap().clone();
-        self.estimate_publishers[1].send(msg).unwrap();
+        // let mut msg = std_msgs::Float64MultiArray::default();
+        // msg.data = self.robot_status.imu_vel_est.read().unwrap().clone();
+        // self.estimate_publishers[1].send(msg).unwrap();
 
-        let mut msg = std_msgs::Float64MultiArray::default();
-        msg.data = self.robot_status.kee_imu_pos.read().unwrap().clone();
-        self.estimate_publishers[2].send(msg).unwrap();
+        // let mut msg = std_msgs::Float64MultiArray::default();
+        // msg.data = self.robot_status.kee_imu_pos.read().unwrap().clone();
+        // self.estimate_publishers[2].send(msg).unwrap();
 
         let mut msg = std_msgs::Float64MultiArray::default();
         msg.data = self.robot_status.enc_mag_pos.read().unwrap().clone();
@@ -674,8 +674,8 @@ impl HidROS {
         while rosrust::is_ok() {
             let loopt = Instant::now();
 
-            self.publish_motors();
-            self.publish_sensors();
+            // self.publish_motors();
+            // self.publish_sensors();
 
             if loopt.elapsed().as_millis() > 30 {
                 println!("HID ROS over cycled {}", loopt.elapsed().as_micros());
@@ -724,18 +724,18 @@ impl HidROS {
                 publish_timer = Instant::now();
                 // self.publish_motors();
                 match pub_switch {
+                    // 0 => {
+                    //     self.publish_controllers();
+                    //     pub_switch += 1;
+                    // }
                     0 => {
-                        self.publish_controllers();
-                        pub_switch += 1;
-                    }
-                    1 => {
                         self.publish_controller_manager();
                         pub_switch = 0;
                     }
-                    2 => {
-                        self.publish_sensors();
-                        pub_switch = 0;
-                    }
+                    // 2 => {
+                    //     self.publish_sensors();
+                    //     pub_switch = 0;
+                    // }
                     _ => {}
                 }
             }
@@ -763,16 +763,16 @@ impl HidROS {
 
                 //     *self.control_flag.write().unwrap() = -1;
                 // }
-                1 => {
-                    let mut waypoint_buffer = ByteBuffer::new(64);
+                // 1 => {
+                //     let mut waypoint_buffer = ByteBuffer::new(64);
 
-                    let waypoints = self.robot_waypoints.read().unwrap().clone(); // vector of waypoints (wraped in a shared mem obj)
-                    waypoint_buffer.puts(0, vec![2, 2]);
-                    waypoint_buffer.put_floats(2, waypoints);
-                    control_tx.send(waypoint_buffer.data).unwrap();
+                //     let waypoints = self.robot_waypoints.read().unwrap().clone(); // vector of waypoints (wraped in a shared mem obj)
+                //     waypoint_buffer.puts(0, vec![2, 2]);
+                //     waypoint_buffer.put_floats(2, waypoints);
+                //     control_tx.send(waypoint_buffer.data).unwrap();
 
-                    *self.control_flag.write().unwrap() = -1;
-                }
+                //     *self.control_flag.write().unwrap() = -1;
+                // }
                 2 => {
                     let mut control_buffer = ByteBuffer::new(64);
 
@@ -783,16 +783,16 @@ impl HidROS {
 
                     *self.control_flag.write().unwrap() = -1;
                 }
-                3 => {
-                    let mut control_buffer = ByteBuffer::new(64);
+                // 3 => {
+                //     let mut control_buffer = ByteBuffer::new(64);
 
-                    let robot_reference = self.celestial_estimate.read().unwrap().clone();
-                    control_buffer.puts(0, vec![2, 4]);
-                    control_buffer.put_floats(2, robot_reference);
-                    control_tx.send(control_buffer.data).unwrap();
+                //     let robot_reference = self.celestial_estimate.read().unwrap().clone();
+                //     control_buffer.puts(0, vec![2, 4]);
+                //     control_buffer.put_floats(2, robot_reference);
+                //     control_tx.send(control_buffer.data).unwrap();
 
-                    *self.control_flag.write().unwrap() = -1;
-                }
+                //     *self.control_flag.write().unwrap() = -1;
+                // }
                 _ => {
                     // send a new report request every cycle
                     control_tx.send(reports[current_report].clone()).unwrap();
