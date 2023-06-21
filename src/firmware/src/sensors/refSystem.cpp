@@ -237,7 +237,7 @@ bool RefSystem::read_serial() {
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {} // robot _ 1 cooling value
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-				data.robot_1_cool_val = temp_stat;
+				if (temp_stat % 5 == 0 && temp_stat < 500) data.robot_1_cool_val = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
@@ -245,7 +245,7 @@ bool RefSystem::read_serial() {
 				temp_stat = temp;
 				while(Serial2.readBytes(&temp, 1) != 1) {} // robot_1 barrel heat limit
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
-				if (temp_stat % 5 == 0) data.robot_1_barr_heat_lim = temp_stat;
+				if (temp_stat % 5 == 0 && temp_stat < 2000) data.robot_1_barr_heat_lim = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 

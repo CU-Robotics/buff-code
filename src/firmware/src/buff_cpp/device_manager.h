@@ -71,8 +71,8 @@ struct Device_Manager {
 	int sensor_switch;
 	int controller_switch;
 
-	int yaw_reference_buffer_len = 25;
-	float yaw_reference_buffer[25];
+	int yaw_reference_buffer_len = 20;
+	float yaw_reference_buffer[20];
 
 	int prev_ref_read_micros = 0;
 

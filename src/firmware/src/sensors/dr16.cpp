@@ -183,8 +183,8 @@ int DR16::generate_control(RefData ref_data) {
 			r_prev = key_r;
 
 			// Chassis Translation
-			data[0] = (key_w - key_s) * CHASSIS_SPEED;
-			data[1] = (key_d - key_a) * CHASSIS_SPEED;
+			data[0] = (key_d - key_a) * CHASSIS_SPEED;
+			data[1] = (key_w - key_s) * CHASSIS_SPEED;
 
 			// Chassis Spin
 			if (key_ctrl && !ctrl_prev) beyblade_mode = !beyblade_mode;
@@ -198,7 +198,7 @@ int DR16::generate_control(RefData ref_data) {
 
 			// Gimbal
 			if (!sentry_control_hud) {
-				data[3] = mouse_y * MOUSE_SENSITIVITY;
+				data[3] = -mouse_y * MOUSE_SENSITIVITY;
 				data[4] = mouse_x * MOUSE_SENSITIVITY;
 			} else {
 				data[3] = 0;
@@ -234,13 +234,13 @@ int DR16::generate_control(RefData ref_data) {
 	// DEMO MODE
 	} else if (l_switch == 3.0) {
 		// Chassis translation and spin
-		data[0] = r_stick_x * JOYSTICK_X_SENSITIVITY;
-		data[1] = r_stick_y * JOYSTICK_Y_SENSITIVITY;
+		data[0] = l_stick_x * JOYSTICK_X_SENSITIVITY;
+		data[1] = l_stick_y * JOYSTICK_Y_SENSITIVITY;
 		data[2] = SPINRATE_STILL * wheel;
 
 		// Gimbal
-		data[3] = l_stick_y * JOYSTICK_PITCH_SENSITIVITY;
-		data[4] = l_stick_x * JOYSTICK_PAN_SENSITIVITY;
+		data[3] = r_stick_y * JOYSTICK_PITCH_SENSITIVITY;
+		data[4] = r_stick_x * JOYSTICK_PAN_SENSITIVITY;
 
 		// Shooter/Feeder
 		if (r_switch == 1.0) {
@@ -256,7 +256,7 @@ int DR16::generate_control(RefData ref_data) {
 			data[6] = 0.0;
 		}
 
-		if (l_stick_y < -0.95) {
+		if (r_stick_y < -0.95) {
 			data[3] = 0;
 			return AUTONOMY_MODE;
 		}

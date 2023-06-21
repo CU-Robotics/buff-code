@@ -505,7 +505,7 @@ void Device_Manager::step_controllers(float dt) {
 
 	float pitch_autonomy_speed = 50 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
 	float yaw_autonomy_speed = -50 * wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
-	
+
 	for (int i = 0; i < 7; i++) {
 		Serial.print(controller_manager.enc_odm_pos[i]);
 		Serial.print(", ");
@@ -521,19 +521,21 @@ void Device_Manager::step_controllers(float dt) {
 		if (controller_switch > 1) {
 			// Sentry
 			if (ref.data.robot_type == 7) {
-				input_buffer[2] = 0;
-				input_buffer[3] = 0;
+				input_buffer[3] = 50 * (-controller_manager.enc_odm_pos[3]); // Pitch towards 0
 				input_buffer[4] = 0;
 			}
 
 			// Movement
-			if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[5] == 2) {
-				input_buffer[0] = 200 * (controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]);
-				input_buffer[1] = 200 * (controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]);
+			if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0) {
+				input_buffer[0] = controller_manager.autonomy_input[2] * (controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]);
+				input_buffer[1] = controller_manager.autonomy_input[2] * (controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]);
+				float rotated_input[2];
+				rotate2D(input_buffer, rotated_input, -controller_manager.gimbal_yaw_angle);
+				if (controller_manager.autonomy_input[6] == 1): input_buffer[4] = yaw_autonomy_speed;
 			}
 
 			// Track with gimbal if we are instructed to
-			if (controller_manager.autonomy_input[5] == 1 || controller_manager.autonomy_input[5] == 2) {
+			if (controller_manager.autonomy_input[5] == 1) {
 				input_buffer[3] = pitch_autonomy_speed;
 				input_buffer[4] = yaw_autonomy_speed;
 				yaw_reference_buffer[0] = yaw_autonomy_speed;
@@ -581,7 +583,7 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
 
 		// Calibrate when in safety mode
-		if (!controller_manager.imu_calibrated) controller_manager.calib_counter = 0;
+		// if (!controller_manager.imu_calibrated) controller_manager.calib_counter = 0;
 	}
 
 	bool new_reference = timer_info_ms(2) >= 10;
