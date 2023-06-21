@@ -15,7 +15,7 @@ use std::{
     time::Instant,
 };
 
-static TEENSY_CYCLE_TIME_S: f64 = 0.002;
+static TEENSY_CYCLE_TIME_S: f64 = 0.001;
 static TEENSY_CYCLE_TIME_MS: f64 = TEENSY_CYCLE_TIME_S * 1000.0;
 static TEENSY_CYCLE_TIME_US: f64 = TEENSY_CYCLE_TIME_MS * 1000.0;
 
@@ -715,6 +715,7 @@ impl HidROS {
 
         let mut publish_timer = Instant::now();
         let mut pub_switch = 0;
+        let mut send_switch = 0;
 
         while rosrust::is_ok() && !*self.shutdown.read().unwrap() {
             let loopt = Instant::now();
@@ -744,60 +745,65 @@ impl HidROS {
             // switch control mode to a bool for each rostopic if messages are not getting through
             // send reports based on priority if control_input is true and waypoints is true send control_inputs
             // and set control_input_flag to flase, next loop waypoints_flag should be true and that will send.
-            let control_mode = *self.control_flag.read().unwrap();
-            match control_mode {
-                // switch control mode to a bool for each rostopic if messages are not getting through
-                // 0 => {
-                //     let mut control_buffer = ByteBuffer::new(64);
+            if send_switch > 10 {
+                let control_mode = *self.control_flag.read().unwrap();
+                match control_mode {
+                    // switch control mode to a bool for each rostopic if messages are not getting through
+                    // 0 => {
+                    //     let mut control_buffer = ByteBuffer::new(64);
 
-                //     self.motor_can_output
-                //         .read()
-                //         .unwrap()
-                //         .chunks(4)
-                //         .enumerate()
-                //         .for_each(|(i, block)| {
-                //             control_buffer.puts(0, vec![2, 0, i as u8]);
-                //             control_buffer.put_floats(3, block.to_vec());
-                //             control_tx.send(control_buffer.data.clone()).unwrap();
-                //         });
+                    //     self.motor_can_output
+                    //         .read()
+                    //         .unwrap()
+                    //         .chunks(4)
+                    //         .enumerate()
+                    //         .for_each(|(i, block)| {
+                    //             control_buffer.puts(0, vec![2, 0, i as u8]);
+                    //             control_buffer.put_floats(3, block.to_vec());
+                    //             control_tx.send(control_buffer.data.clone()).unwrap();
+                    //         });
 
-                //     *self.control_flag.write().unwrap() = -1;
-                // }
-                // 1 => {
-                //     let mut waypoint_buffer = ByteBuffer::new(64);
+                    //     *self.control_flag.write().unwrap() = -1;
+                    // }
+                    // 1 => {
+                    //     let mut waypoint_buffer = ByteBuffer::new(64);
 
-                //     let waypoints = self.robot_waypoints.read().unwrap().clone(); // vector of waypoints (wraped in a shared mem obj)
-                //     waypoint_buffer.puts(0, vec![2, 2]);
-                //     waypoint_buffer.put_floats(2, waypoints);
-                //     control_tx.send(waypoint_buffer.data).unwrap();
+                    //     let waypoints = self.robot_waypoints.read().unwrap().clone(); // vector of waypoints (wraped in a shared mem obj)
+                    //     waypoint_buffer.puts(0, vec![2, 2]);
+                    //     waypoint_buffer.put_floats(2, waypoints);
+                    //     control_tx.send(waypoint_buffer.data).unwrap();
 
-                //     *self.control_flag.write().unwrap() = -1;
-                // }
-                2 => {
-                    let mut control_buffer = ByteBuffer::new(64);
+                    //     *self.control_flag.write().unwrap() = -1;
+                    // }
+                    2 => {
+                        let mut control_buffer = ByteBuffer::new(64);
 
-                    let robot_reference = self.control_input.read().unwrap().clone(); // use read().unwrap() to take shared mem lock
-                    control_buffer.puts(0, vec![2, 3, self.autonomy_mode]);
-                    control_buffer.put_floats(2, robot_reference);
-                    control_tx.send(control_buffer.data).unwrap();
+                        let robot_reference = self.control_input.read().unwrap().clone(); // use read().unwrap() to take shared mem lock
+                        control_buffer.puts(0, vec![2, 3, self.autonomy_mode]);
+                        control_buffer.put_floats(2, robot_reference);
+                        control_tx.send(control_buffer.data).unwrap();
 
-                    *self.control_flag.write().unwrap() = -1;
+                        *self.control_flag.write().unwrap() = -1;
+                    }
+                    // 3 => {
+                    //     let mut control_buffer = ByteBuffer::new(64);
+
+                    //     let robot_reference = self.celestial_estimate.read().unwrap().clone();
+                    //     control_buffer.puts(0, vec![2, 4]);
+                    //     control_buffer.put_floats(2, robot_reference);
+                    //     control_tx.send(control_buffer.data).unwrap();
+
+                    //     *self.control_flag.write().unwrap() = -1;
+                    // }
+                    _ => {
+                        // send a new report request every cycle
+                        control_tx.send(reports[current_report].clone()).unwrap();
+                        current_report = (current_report + 1) % reports.len();
+                    }
                 }
-                // 3 => {
-                //     let mut control_buffer = ByteBuffer::new(64);
-
-                //     let robot_reference = self.celestial_estimate.read().unwrap().clone();
-                //     control_buffer.puts(0, vec![2, 4]);
-                //     control_buffer.put_floats(2, robot_reference);
-                //     control_tx.send(control_buffer.data).unwrap();
-
-                //     *self.control_flag.write().unwrap() = -1;
-                // }
-                _ => {
-                    // send a new report request every cycle
-                    control_tx.send(reports[current_report].clone()).unwrap();
-                    current_report = (current_report + 1) % reports.len();
-                }
+                send_switch = 0;
+            } else {
+                send_switch += 1;
             }
 
             // if loopt.elapsed().as_micros() > 1000 {
