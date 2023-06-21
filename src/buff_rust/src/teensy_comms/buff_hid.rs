@@ -19,6 +19,10 @@ static TEENSY_CYCLE_TIME_S: f64 = 0.001;
 static TEENSY_CYCLE_TIME_MS: f64 = TEENSY_CYCLE_TIME_S * 1000.0;
 static TEENSY_CYCLE_TIME_US: f64 = TEENSY_CYCLE_TIME_MS * 1000.0;
 
+static TEENSY_SLOW_TIME_S: f64 = 0.004;
+static TEENSY_SLOW_TIME_MS: f64 = TEENSY_SLOW_TIME_S * 1000.0;
+static TEENSY_SLOW_TIME_US: f64 = TEENSY_SLOW_TIME_MS * 1000.0;
+
 pub fn init_hid_device(hidapi: &mut HidApi, vid: u16, pid: u16) -> HidDevice {
     let dev = hidapi.open(vid, pid).unwrap();
     dev.set_blocking_mode(false).unwrap();
@@ -89,10 +93,10 @@ impl HidWriter {
             self.output.puts(0, reports[report_request].clone());
             self.write();
             report_request = (report_request + 1) % reports.len();
-            if loopt.elapsed().as_micros() > TEENSY_CYCLE_TIME_US as u128 {
+            if loopt.elapsed().as_micros() > TEENSY_SLOW_TIME_US as u128 {
                 println!("HID writer over cycled {}", loopt.elapsed().as_micros());
             }
-            while loopt.elapsed().as_micros() < TEENSY_CYCLE_TIME_US as u128 {}
+            while loopt.elapsed().as_micros() < TEENSY_SLOW_TIME_US as u128 {}
         }
         *self.shutdown.write().unwrap() = true;
     }
@@ -115,8 +119,10 @@ impl HidWriter {
         println!("HID-writer Live");
 
         while !*self.shutdown.read().unwrap() {
+            let loopt = Instant::now();
             self.output.puts(0, control_rx.recv().unwrap_or(vec![0]));
             self.write();
+            while loopt.elapsed().as_micros() < TEENSY_SLOW_TIME_US as u128 {}
         }
     }
 }
@@ -745,8 +751,8 @@ impl HidROS {
             // switch control mode to a bool for each rostopic if messages are not getting through
             // send reports based on priority if control_input is true and waypoints is true send control_inputs
             // and set control_input_flag to flase, next loop waypoints_flag should be true and that will send.
-            if send_switch > 10 {
-                let control_mode = *self.control_flag.read().unwrap();
+            let control_mode = *self.control_flag.read().unwrap();
+            if send_switch > 4 {
                 match control_mode {
                     // switch control mode to a bool for each rostopic if messages are not getting through
                     // 0 => {
