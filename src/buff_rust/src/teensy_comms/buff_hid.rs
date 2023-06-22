@@ -15,7 +15,7 @@ use std::{
     time::Instant,
 };
 
-static TEENSY_CYCLE_TIME_S: f64 = 0.001;
+static TEENSY_CYCLE_TIME_S: f64 = 0.004;
 static TEENSY_CYCLE_TIME_MS: f64 = TEENSY_CYCLE_TIME_S * 1000.0;
 static TEENSY_CYCLE_TIME_US: f64 = TEENSY_CYCLE_TIME_MS * 1000.0;
 
@@ -136,6 +136,7 @@ pub struct HidReader {
     pub teensy: HidDevice,
     pub teensy_lifetime: f64,
     pub rust_lifetime: f64,
+    pub rec_reply: bool,
 }
 
 impl HidReader {
@@ -149,6 +150,7 @@ impl HidReader {
             teensy: device,
             teensy_lifetime: 0.0,
             rust_lifetime: 0.0,
+            rec_reply: false,
         }
     }
 

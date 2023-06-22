@@ -106,6 +106,9 @@ elif [[ "${DOCKER}" == "False" ]]; then
 	sudo apt install librealsense2-dkms
 	sudo apt install librealsense2-utils
 	sudo apt install librealsense2-dev
+
+	sudo apt install libhidapi-libusb0
+
 fi
 
 
