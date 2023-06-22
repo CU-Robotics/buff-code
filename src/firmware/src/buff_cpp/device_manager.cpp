@@ -139,39 +139,39 @@ void Device_Manager::control_input_handle() { // 2
 	// Serial.printf("init %i\n", input_report.get(0))
 
 	switch (input_report.get(1)) {
-		case 0:
-			if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
-				break;
-			}
-			for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
-				// set the control from the robot "robot control"
-				controller_manager.output[block_offset + i] = input_report.get_float((4 * i) + data_offset);
-			}
+		// case 0:
+		// 	if (abs(controller_switch) == 1) {	// Only user can put the bot in auto aim
+		// 		break;
+		// 	}
+		// 	for (int i = 0; i < CAN_MOTOR_BLOCK_SIZE; i++) {
+		// 		// set the control from the robot "robot control"
+		// 		controller_manager.output[block_offset + i] = input_report.get_float((4 * i) + data_offset);
+		// 	}
 
-			controller_switch = 0;												// block "local control"
-			break;
+		// 	controller_switch = 0;												// block "local control"
+		// 	break;
 
 		case 1:	// data requests (don't turn off when motors are off)
 			switch (input_report.get(2)) {
-				case 0:
-					data_offset = 5;
-					controller_manager.get_control_report(input_report.get(3), tmp);
-					controller_manager.get_control_report(input_report.get(4), &tmp[6]);
-					break;
+				// case 0:
+				// 	data_offset = 5;
+				// 	controller_manager.get_control_report(input_report.get(3), tmp);
+				// 	controller_manager.get_control_report(input_report.get(4), &tmp[6]);
+				// 	break;
 
-				case 1:
-					controller_manager.get_vel_est_report(tmp);
-					break;
+				// case 1:
+				// 	controller_manager.get_vel_est_report(tmp);
+				// 	break;
 
 				case 2:
 					controller_manager.get_pos_est_report(tmp);
 					break;
 
-				case 3:
-					data_offset = 4;
-					output_report.put(3, controller_switch);
-					controller_manager.get_manager_report(tmp);
-					break;
+				// case 3:
+				// 	data_offset = 4;
+				// 	output_report.put(3, controller_switch);
+				// 	controller_manager.get_manager_report(tmp);
+				// 	break;
 
 				default:
 					break;
@@ -305,7 +305,7 @@ void Device_Manager::report_switch() {
 
 		case 1:
 			// motor feedback data request
-			feedback_request_handle();
+			// feedback_request_handle();
 			// Serial.println("Motor feedback requested");
 			break;
 
@@ -317,7 +317,7 @@ void Device_Manager::report_switch() {
 
 		case 3:
 			// sensor data request
-			sensor_request_handle();
+			// sensor_request_handle();
 			// Serial.println("Sensor data requested");
 			break;
 
@@ -355,6 +355,8 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 			blink();										// only blink when connected to hid
 			report_switch();
 			output_report.put_float(60, lifetime);
+			output_report.write();
+			output_report.clear();
 			// timer_set(3);
 			break;
 		
@@ -362,9 +364,6 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 			// Serial.println("No report");
 			break;
 	}
-
-	output_report.write();
-	output_report.clear();
 }
 
 /*
@@ -506,12 +505,6 @@ void Device_Manager::step_controllers(float dt) {
 	float pitch_autonomy_speed = 50 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
 	float yaw_autonomy_speed = -50 * wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
 
-	for (int i = 0; i < 7; i++) {
-		Serial.print(controller_manager.enc_odm_pos[i]);
-		Serial.print(", ");
-	}
-	Serial.println();
-
 	if (!receiver.safety_shutdown) {
 		controller_manager.imu_calibrated = false;
 		memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
@@ -531,7 +524,7 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[1] = controller_manager.autonomy_input[2] * (controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]);
 				float rotated_input[2];
 				rotate2D(input_buffer, rotated_input, -controller_manager.gimbal_yaw_angle);
-				if (controller_manager.autonomy_input[6] == 1): input_buffer[4] = yaw_autonomy_speed;
+				if (controller_manager.autonomy_input[6] == 1) input_buffer[4] = yaw_autonomy_speed;
 			}
 
 			// Track with gimbal if we are instructed to

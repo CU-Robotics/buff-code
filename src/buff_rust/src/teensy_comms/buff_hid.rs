@@ -398,7 +398,7 @@ impl HidReader {
         // wait for initializers reply
         self.wait_for_report_reply(255, 50);
 
-        self.spin();
+        // self.spin();
     }
 }
 
@@ -735,10 +735,10 @@ impl HidROS {
                     //     self.publish_controllers();
                     //     pub_switch += 1;
                     // }
-                    0 => {
-                        self.publish_controller_manager();
-                        pub_switch = 0;
-                    }
+                    // 0 => {
+                    //     self.publish_controller_manager();
+                    //     pub_switch = 0;
+                    // }
                     // 2 => {
                     //     self.publish_sensors();
                     //     pub_switch = 0;
@@ -803,8 +803,8 @@ impl HidROS {
                     // }
                     _ => {
                         // send a new report request every cycle
-                        control_tx.send(reports[current_report].clone()).unwrap();
-                        current_report = (current_report + 1) % reports.len();
+                        // control_tx.send(reports[current_report].clone()).unwrap();
+                        // current_report = (current_report + 1) % reports.len();
                     }
                 }
                 send_switch = 0;

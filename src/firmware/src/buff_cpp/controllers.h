@@ -37,6 +37,7 @@ struct Feedback_Controller {
 	control laws.
 */
 struct Controller_Manager {
+	float count = 0;
 	Controller_Manager();
 	void set_gain(int, int, float);
 	void reset_controller(int);

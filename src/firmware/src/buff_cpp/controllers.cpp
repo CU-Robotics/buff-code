@@ -387,6 +387,9 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	enc_odm_pos[2] = wrap_angle(kee_imu_pos[4] - gimbal_yaw_angle);
 	enc_odm_pos[3] = gimbal_pitch_angle;
 	enc_odm_pos[4] = wrap_angle(kee_imu_pos[4]);
+	enc_odm_pos[6] = count;
+	// Serial.println(count);
+	count++;
 
 	float odom[2] = {encoders[2], encoders[3]};
 	float odom_components[2];

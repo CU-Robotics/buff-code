@@ -236,6 +236,7 @@ int8_t Hid_Report::read(){
 		@return:
 			n: number of bytes read
 	*/
+	Serial.println("aaa");
 	return usb_serial_read(&data, 64);
 }
 #endif
