@@ -152,8 +152,8 @@ int DR16::generate_control(RefData ref_data) {
 	float feedrate_bps_burst = 16;
 	// Infantry, Standard, and Sentry
 	if (ref_data.robot_type == 3 || ref_data.robot_type == 5 || ref_data.robot_type == 7 && ref_data.robot_1_cool_val != -1) {
-		feedrate_bps_continuous = ref_data.robot_1_cool_val/10.0;
-		feedrate_bps_burst = (ref_data.robot_1_cool_val+ref_data.robot_1_barr_heat_lim)/10.0;
+		feedrate_bps_continuous = ref_data.robot_1_cool_val/10.0 * 2;
+		feedrate_bps_burst = (ref_data.robot_1_cool_val+ref_data.robot_1_barr_heat_lim)/10.0 * 2;
 		if (ref_data.robot_type != 5 && feedrate_bps_burst > 10) {
 			feedrate_bps_burst = 10;
 		} else if (ref_data.robot_type == 5 && feedrate_bps_burst > 20) {

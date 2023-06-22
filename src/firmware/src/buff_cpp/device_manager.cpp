@@ -153,15 +153,15 @@ void Device_Manager::control_input_handle() { // 2
 
 		case 1:	// data requests (don't turn off when motors are off)
 			switch (input_report.get(2)) {
-				// case 0:
-				// 	data_offset = 5;
-				// 	controller_manager.get_control_report(input_report.get(3), tmp);
-				// 	controller_manager.get_control_report(input_report.get(4), &tmp[6]);
-				// 	break;
+				case 0:
+					data_offset = 5;
+					controller_manager.get_control_report(input_report.get(3), tmp);
+					controller_manager.get_control_report(input_report.get(4), &tmp[6]);
+					break;
 
-				// case 1:
-				// 	controller_manager.get_vel_est_report(tmp);
-				// 	break;
+				case 1:
+					controller_manager.get_vel_est_report(tmp);
+					break;
 
 				case 2:
 					controller_manager.get_pos_est_report(tmp);
@@ -298,7 +298,7 @@ void Device_Manager::report_switch() {
 
 	switch (input_report.get(0)) {
 		case 255:
-			Serial.println("Kinematic initalization");
+			Serial.println("Remote initalization");
 			// configuration / initializers
 			initializer_report_handle();
 			lifetime = 0;
@@ -306,8 +306,8 @@ void Device_Manager::report_switch() {
 
 		case 1:
 			// motor feedback data request
-			// feedback_request_handle();
-			// Serial.println("Motor feedback requested");
+			feedback_request_handle();
+			Serial.println("Motor feedback requested");
 			break;
 
 		case 2:
@@ -318,8 +318,8 @@ void Device_Manager::report_switch() {
 
 		case 3:
 			// sensor data request
-			// sensor_request_handle();
-			// Serial.println("Sensor data requested");
+			sensor_request_handle();
+			Serial.println("Sensor data requested");
 			break;
 
 		default:
@@ -500,7 +500,7 @@ void Device_Manager::step_controllers(float dt) {
 	float input_buffer[REMOTE_CONTROL_LEN];
 
 	float ysc_gain = -1.0; // 0.8
-	float ypc_gain = -400.0; //-150
+	float ypc_gain = -350.0; //-150
 	float ppc_gain = 0.0; //50
 
 	float pitch_autonomy_speed = 50 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
@@ -511,6 +511,7 @@ void Device_Manager::step_controllers(float dt) {
 		memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
 		yaw_reference_buffer[yaw_reference_buffer_len-1] = input_buffer[4];
 		for (int b = 0; b < yaw_reference_buffer_len-1; b++) yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
+
 		// AUTONOMY
 		if (controller_switch > 1) {
 			// Sentry
@@ -521,8 +522,9 @@ void Device_Manager::step_controllers(float dt) {
 
 			// Movement
 			if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0) {
-				input_buffer[0] = controller_manager.autonomy_input[2] * (controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]);
-				input_buffer[1] = controller_manager.autonomy_input[2] * (controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]);
+				float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
+				input_buffer[0] = controller_manager.autonomy_input[2] * cos(angle_to_target);
+				input_buffer[1] = controller_manager.autonomy_input[2] * sin(angle_to_target);
 				float rotated_input[2];
 				rotate2D(input_buffer, rotated_input, -controller_manager.gimbal_yaw_angle);
 				if (controller_manager.autonomy_input[6] == 1) input_buffer[4] = yaw_autonomy_speed;
