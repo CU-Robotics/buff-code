@@ -316,12 +316,12 @@ void Controller_Manager::set_feedback(int controller_id, float* data, float roll
 
 		case 4:
 			feedback[controller_id][0] = -gimbal_pitch_angle * 152 / 17.0;
-			feedback[controller_id][2] = cos(-gimbal_pitch_angle);
+			feedback[controller_id][2] = cos(-gimbal_pitch_angle-0.35);
 			break;
 
 		case 5:
 			feedback[controller_id][0] = gimbal_pitch_angle * 152 / 17.0;
-			feedback[controller_id][2] = cos(gimbal_pitch_angle);
+			feedback[controller_id][2] = cos(gimbal_pitch_angle+0.35);
 			break;
 
 		case 7:
@@ -382,6 +382,8 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// get the encoder angles as radians
 	// gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 	gimbal_yaw_angle = wrap_angle((encoders[1] - encoder_bias[1]) * PI / 180);
+
+	Serial.printf("yaw: %f, pitch: %f\n", gimbal_yaw_angle, gimbal_pitch_angle);
 
 	float prev_chassis_heading = enc_odm_pos[2];
 	enc_odm_pos[2] = wrap_angle(kee_imu_pos[4] - gimbal_yaw_angle);

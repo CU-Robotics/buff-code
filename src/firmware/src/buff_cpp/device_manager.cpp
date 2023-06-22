@@ -167,11 +167,11 @@ void Device_Manager::control_input_handle() { // 2
 					controller_manager.get_pos_est_report(tmp);
 					break;
 
-				// case 3:
-				// 	data_offset = 4;
-				// 	output_report.put(3, controller_switch);
-				// 	controller_manager.get_manager_report(tmp);
-				// 	break;
+				case 3:
+					data_offset = 4;
+					output_report.put(3, controller_switch);
+					controller_manager.get_manager_report(tmp);
+					break;
 
 				default:
 					break;
@@ -298,6 +298,7 @@ void Device_Manager::report_switch() {
 
 	switch (input_report.get(0)) {
 		case 255:
+			Serial.println("Kinematic initalization");
 			// configuration / initializers
 			initializer_report_handle();
 			lifetime = 0;
@@ -359,7 +360,7 @@ void Device_Manager::hid_input_switch(uint32_t cycle_time_us){
 			output_report.clear();
 			// timer_set(3);
 			break;
-		
+
 		default:
 			// Serial.println("No report");
 			break;
