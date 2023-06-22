@@ -21,7 +21,7 @@ void setup() {
 
 	if (Serial) {
 		Serial.println("\n\n-- TEENSY SERIAL START --\n\n");
-		Serial.println("\033[0;33m                             .^~^.                                    ");
+		Serial.println("\033[1;33m                             .^~^.                                    ");
 		Serial.println("                     .:^~7JY5PPPPP5?!:                                ");
 		Serial.println("               .~!?Y5PPPP5J?!^:.:~?5BG555Y~                           ");
 		Serial.println("             :?PG5Y?7~^..          .!!!!7PG5!.                        ");
