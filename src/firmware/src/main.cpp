@@ -20,8 +20,34 @@ void setup() {
 	Serial.begin(1000000);							// the serial monitor is actually always active (for debug use Serial.println & tycmd)
 
 	if (Serial) {
-		Serial.println("-- TEENSY SERIAL START --");
-		Serial.println("-- new build... who dis? --");
+		Serial.println("\n\n-- TEENSY SERIAL START --\n\n");
+		Serial.println("\033[0;33m                             .^~^.                                    ");
+		Serial.println("                     .:^~7JY5PPPPP5?!:                                ");
+		Serial.println("               .~!?Y5PPPP5J?!^:.:~?5BG555Y~                           ");
+		Serial.println("             :?PG5Y?7~^..          .!!!!7PG5!.                        ");
+		Serial.println("            ^GGY:                        .!5G5!.                      ");
+		Serial.println("            ^GGJ^~~~~!^                     ~5GP7.                    ");
+		Serial.println("             !PGGGGGGP?                       ~YGP7^^::....           ");
+		Serial.println("            JPP5Y?!^:.                          ~YPPPPPPPPP555YYJ?~   ");
+		Serial.println("           ~GG!        .~?JYYJ?~: ^JJ~     ~JJ~   ...::^^~~~!!77JGGJ  ");
+		Serial.println("           JGP.      :JPGPYJJYPG! !GG7     7GG7                 7GG~  ");
+		Serial.println("          .PGJ      :PGP~.    .:  !GG7     !GG7  ~?77!!~^^~???7?PG?   ");
+		Serial.println("   :!?Y55Y5GG^      JGG~          !GG7     !GG7  !YYY55PPPPGGGGGGY:   ");
+		Serial.println(" ^YGPY?7!7J5J       ?GG!          !GG?     7GG7        ...::::^!YGP?. ");
+		Serial.println("~PGJ.               .YGG?^.  .^!  :PGP!:.:!PGP:                  ^5GY.");
+		Serial.println("JGP.                  !YGGP55PGG7  :?PGGPGGPJ:                    ^GG7");
+		Serial.println("?GP:         .~~:       :~!77!~:     .^~~~^.                      .PGY");
+		Serial.println(":PGJ         !GGP5J7^.                                            !GG!");
+		Serial.println(" ~PGJ.      .YG5~7J5PP5J!^.                                   .:!YGP7 ");
+		Serial.println("  ^YGP?~^^~75G5^    :~7JGG5.                            .:!?Y5PPPY7:  ");
+		Serial.println("    ^?5PPPP5J~.        .PGJ                :7Y5YJ7!^:~?YPGPY?!~^.     ");
+		Serial.println("       ....            .5GY             ^75GPJ!7JY5PPP5J!^.           ");
+		Serial.println("                        !GG!           ~GGY~.      .:.                ");
+		Serial.println("                         ?GP~          YG5.                           ");
+		Serial.println("                          ?GG?:      :JGP~                            ");
+		Serial.println("                           ^YGGY?77?YGGJ:                             ");
+		Serial.println("                             :!?YYYJ?!:                               \033[0m");
+		Serial.println("\n\033[1;92mFW Ver. 0.9.0\033[0m\n");
 	}
 }
 

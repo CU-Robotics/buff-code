@@ -97,6 +97,8 @@ alias br="cd ${PROJECT_ROOT}/src/buff_rust"
 alias fw="cd ${PROJECT_ROOT}/src/firmware"
 alias bn="cd ${PROJECT_ROOT}/src/rknn_buffnet"
 
+alias monitor="tycmd monitor --reconnect"
+
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
 	export ROS_IP=$(/sbin/ip -o -4 addr list wlan0 | awk '{print $4}' | cut -d/ -f1)
