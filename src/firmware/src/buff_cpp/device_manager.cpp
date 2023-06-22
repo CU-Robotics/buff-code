@@ -500,7 +500,7 @@ void Device_Manager::step_controllers(float dt) {
 	float input_buffer[REMOTE_CONTROL_LEN];
 
 	float ysc_gain = -1.0; // 0.8
-	float ypc_gain = -400.0; //-150
+	float ypc_gain = -350.0; //-150
 	float ppc_gain = 0.0; //50
 
 	float pitch_autonomy_speed = 50 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
@@ -511,6 +511,7 @@ void Device_Manager::step_controllers(float dt) {
 		memcpy(input_buffer, receiver.data, REMOTE_CONTROL_LEN * sizeof(float));
 		yaw_reference_buffer[yaw_reference_buffer_len-1] = input_buffer[4];
 		for (int b = 0; b < yaw_reference_buffer_len-1; b++) yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
+
 		// AUTONOMY
 		if (controller_switch > 1) {
 			// Sentry

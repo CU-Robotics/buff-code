@@ -12,7 +12,7 @@ robot_type: sentry
 # spinup perception and comms here
 buff_nodes:
   buff_rust:
-    files: [comms_node, celestial.py]
+    files: [comms_node]
   # buffnet:
     # sudo: True
     # files: []

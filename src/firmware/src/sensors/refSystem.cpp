@@ -410,7 +410,7 @@ void RefSystem::write_serial() {
 	// Serial.println("==============");
 	// Serial.print("Sent bytes: ");
 	// Serial.println(bsent);
-	// for (int i = 0; i < 16; i++) {
+	// for (int i = 0; i < 30; i++) {
 	// 	Serial.print(i);
 	// 	Serial.print(": 0x");
 	// 	Serial.println(msg[i],HEX);
