@@ -8,6 +8,7 @@ import rospy
 import shutil
 import roslaunch
 import subprocess as sb
+import signal
 
 from buffpy_tools import *
 from robot_description import Robot_Description
@@ -129,7 +130,8 @@ class Robot_Spawner:
 			for (i, cmd) in enumerate(self.commands):
 				proc = self.pool[''.join(cmd)]
 				if not proc is None:
-					proc.terminate()
+					proc.send_signal(signal.SIGINT)
+					proc.kill()
 
 		if not self.roscore is None:
 			self.roscore.terminate()

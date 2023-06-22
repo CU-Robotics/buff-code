@@ -19,7 +19,7 @@ static TEENSY_CYCLE_TIME_S: f64 = 0.001;
 static TEENSY_CYCLE_TIME_MS: f64 = TEENSY_CYCLE_TIME_S * 1000.0;
 static TEENSY_CYCLE_TIME_US: f64 = TEENSY_CYCLE_TIME_MS * 1000.0;
 
-static TEENSY_SLOW_TIME_S: f64 = 0.004;
+static TEENSY_SLOW_TIME_S: f64 = 0.001;
 static TEENSY_SLOW_TIME_MS: f64 = TEENSY_SLOW_TIME_S * 1000.0;
 static TEENSY_SLOW_TIME_US: f64 = TEENSY_SLOW_TIME_MS * 1000.0;
 
@@ -136,6 +136,7 @@ pub struct HidReader {
     pub teensy: HidDevice,
     pub teensy_lifetime: f64,
     pub rust_lifetime: f64,
+    pub rec_reply: bool,
 }
 
 impl HidReader {
@@ -149,6 +150,7 @@ impl HidReader {
             teensy: device,
             teensy_lifetime: 0.0,
             rust_lifetime: 0.0,
+            rec_reply: false,
         }
     }
 
@@ -398,7 +400,7 @@ impl HidReader {
         // wait for initializers reply
         self.wait_for_report_reply(255, 50);
 
-        // self.spin();
+        self.spin();
     }
 }
 
@@ -781,16 +783,16 @@ impl HidROS {
 
                     //     *self.control_flag.write().unwrap() = -1;
                     // }
-                    2 => {
-                        let mut control_buffer = ByteBuffer::new(64);
+                    // 2 => {
+                    //     let mut control_buffer = ByteBuffer::new(64);
 
-                        let robot_reference = self.control_input.read().unwrap().clone(); // use read().unwrap() to take shared mem lock
-                        control_buffer.puts(0, vec![2, 3, self.autonomy_mode]);
-                        control_buffer.put_floats(2, robot_reference);
-                        control_tx.send(control_buffer.data).unwrap();
+                    //     let robot_reference = self.control_input.read().unwrap().clone(); // use read().unwrap() to take shared mem lock
+                    //     control_buffer.puts(0, vec![2, 3, self.autonomy_mode]);
+                    //     control_buffer.put_floats(2, robot_reference);
+                    //     control_tx.send(control_buffer.data).unwrap();
 
-                        *self.control_flag.write().unwrap() = -1;
-                    }
+                    //     *self.control_flag.write().unwrap() = -1;
+                    // }
                     // 3 => {
                     //     let mut control_buffer = ByteBuffer::new(64);
 

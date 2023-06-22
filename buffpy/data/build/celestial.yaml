@@ -9,8 +9,10 @@ targets: [celestial.py,
           target.py,
           world_map.py,
           circle.py,
+          hid_manager.py,
+          path_follower.py,
           armor-detector-config.json,
           realsense-config.json,
           robot-config.json]
 
-install: ['lib','lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib']
+install: ['lib','lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib', 'lib']
