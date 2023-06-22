@@ -443,7 +443,8 @@ impl RobotStatus {
     pub fn clone(&self) -> RobotStatus {
         RobotStatus {
             motors: self.motors.iter().map(|motor| motor.clone()).collect(),
-            sensors: self.sensors.iter().map(|sensor| sensor.clone()).collect(),
+            se
+            nsors: self.sensors.iter().map(|sensor| sensor.clone()).collect(),
             controllers: self
                 .controllers
                 .iter()
