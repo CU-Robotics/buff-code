@@ -119,6 +119,11 @@ class Robot_Spawner:
 								spawn_nodes(self.commands[i])
 
 		except KeyboardInterrupt as e:
+			for (i, cmd) in enumerate(self.commands):
+				proc = self.pool[''.join(cmd)]
+				if not proc is None:
+					proc.send_signal(signal.SIGINT)
+					proc.kill()
 			print(e)
 			print('Terminate Recieved')
 
