@@ -253,7 +253,7 @@ void Controller_Manager::set_reference(int controller_id) {
 	float rotated_input[2];
 
 	// control is relative to yaw angle (gimbal heading wrt chassis)
-	rotate2D(input, rotated_input, gimbal_yaw_angle);
+	rotate2D(input, rotated_input, -gimbal_yaw_angle);
 
 	for (int j = 0; j < 2; j++) {
 		speed += chassis_inverse_kinematics[controller_id][j] * rotated_input[j];
