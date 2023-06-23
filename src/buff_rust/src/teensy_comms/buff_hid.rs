@@ -394,6 +394,7 @@ impl HidReader {
     pub fn pipeline(&mut self, shutdown: Arc<RwLock<bool>>, feedback_tx: Sender<RobotStatus>) {
         self.shutdown = shutdown;
 
+        println!("SENDING INITIALIZER");
         feedback_tx.send(self.robot_status.clone()).unwrap();
         println!("HID-reader Live");
 

@@ -98,6 +98,7 @@ alias fw="cd ${PROJECT_ROOT}/src/firmware"
 alias bn="cd ${PROJECT_ROOT}/src/rknn_buffnet"
 
 alias monitor="tycmd monitor --reconnect"
+alias reboot-teensy="python3 \${PROJECT_ROOT}/buffpy/src/reset_teensy.py"
 
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
