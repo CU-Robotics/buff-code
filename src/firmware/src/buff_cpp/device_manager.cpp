@@ -296,6 +296,8 @@ void Device_Manager::report_switch() {
 	// reply to the report with the same id
 	output_report.put(0, input_report.get(0));
 
+	Serial.println(input_report.get(0));
+
 	switch (input_report.get(0)) {
 		case 255:
 			Serial.println("Remote initalization");
@@ -307,7 +309,7 @@ void Device_Manager::report_switch() {
 		case 1:
 			// motor feedback data request
 			feedback_request_handle();
-			Serial.println("Motor feedback requested");
+			// Serial.println("Motor feedback requested");
 			break;
 
 		case 2:
@@ -319,8 +321,12 @@ void Device_Manager::report_switch() {
 		case 3:
 			// sensor data request
 			sensor_request_handle();
-			Serial.println("Sensor data requested");
+			// Serial.println("Sensor data requested");
 			break;
+
+		case 4:
+			// reset teensy
+			SCB_AIRCR = 0x05FA0004;
 
 		default:
 			break;
@@ -503,8 +509,8 @@ void Device_Manager::step_controllers(float dt) {
 	float ypc_gain = -350.0; //-150
 	float ppc_gain = 0.0; //50
 
-	float pitch_autonomy_speed = 50 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
-	float yaw_autonomy_speed = -50 * wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
+	float pitch_autonomy_speed = 100 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
+	float yaw_autonomy_speed = -100 * wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
 
 	if (!receiver.safety_shutdown) {
 		controller_manager.imu_calibrated = false;
