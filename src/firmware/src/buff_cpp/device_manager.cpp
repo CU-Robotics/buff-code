@@ -522,19 +522,22 @@ void Device_Manager::step_controllers(float dt) {
 		if (controller_switch > 1) {
 			// Sentry
 			if (ref.data.robot_type == 7) {
-				input_buffer[3] = 50 * (-controller_manager.enc_odm_pos[3]); // Pitch towards 0
+				input_buffer[3] = 150 * (-controller_manager.enc_odm_pos[3]); // Pitch towards 0
 				input_buffer[4] = 0;
 			}
 
 			// Movement
-			if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0) {
-				float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
-				input_buffer[0] = controller_manager.autonomy_input[2] * cos(angle_to_target);
-				input_buffer[1] = controller_manager.autonomy_input[2] * sin(angle_to_target);
-				float rotated_input[2];
-				rotate2D(input_buffer, rotated_input, -controller_manager.gimbal_yaw_angle);
-				if (controller_manager.autonomy_input[6] == 1) input_buffer[4] = yaw_autonomy_speed;
-			}
+			// if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0) {
+			// 	float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
+			// 	input_buffer[0] = controller_manager.autonomy_input[2] * cos(angle_to_target);
+			// 	input_buffer[1] = controller_manager.autonomy_input[2] * sin(angle_to_target);
+			// 	float rotated_input[2];
+			// 	rotate2D(input_buffer, rotated_input, -controller_manager.gimbal_yaw_angle);
+			// 	if (controller_manager.autonomy_input[6] == 1) input_buffer[4] = yaw_autonomy_speed;
+			// } else {
+				input_buffer[0] = receiver.data[0];
+				input_buffer[1] = receiver.data[1];
+			// }
 
 			// Track with gimbal if we are instructed to
 			if (controller_manager.autonomy_input[5] == 1) {
