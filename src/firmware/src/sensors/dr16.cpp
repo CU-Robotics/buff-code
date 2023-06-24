@@ -234,8 +234,8 @@ int DR16::generate_control(RefData ref_data) {
 	// DEMO MODE
 	} else if (l_switch == 3.0) {
 		// Chassis translation and spin
-		data[0] = l_stick_x * JOYSTICK_X_SENSITIVITY;
-		data[1] = l_stick_y * JOYSTICK_Y_SENSITIVITY;
+		data[0] = l_stick_y * JOYSTICK_X_SENSITIVITY;
+		data[1] = l_stick_x * JOYSTICK_Y_SENSITIVITY;
 		data[2] = SPINRATE_STILL * wheel;
 
 		// Gimbal

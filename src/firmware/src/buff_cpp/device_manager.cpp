@@ -296,8 +296,6 @@ void Device_Manager::report_switch() {
 	// reply to the report with the same id
 	output_report.put(0, input_report.get(0));
 
-	Serial.println(input_report.get(0));
-
 	switch (input_report.get(0)) {
 		case 255:
 			Serial.println("Remote initalization");
@@ -442,7 +440,7 @@ void Device_Manager::read_sensors() {
 		case 4:
 			switch (receiver.read(ref.data)) {
 				case USER_SHUTDOWN:
-					if (safety_counter > 10) controller_switch = -1;
+					if (safety_counter > 100) controller_switch = -1;
 					safety_counter++;
 					break;
 
@@ -527,17 +525,23 @@ void Device_Manager::step_controllers(float dt) {
 			}
 
 			// Movement
-			// if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0) {
-			// 	float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
-			// 	input_buffer[0] = controller_manager.autonomy_input[2] * cos(angle_to_target);
-			// 	input_buffer[1] = controller_manager.autonomy_input[2] * sin(angle_to_target);
-			// 	float rotated_input[2];
-			// 	rotate2D(input_buffer, rotated_input, -controller_manager.gimbal_yaw_angle);
-			// 	if (controller_manager.autonomy_input[6] == 1) input_buffer[4] = yaw_autonomy_speed;
-			// } else {
-				input_buffer[0] = receiver.data[0];
-				input_buffer[1] = receiver.data[1];
-			// }
+			if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0) {
+				float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
+				Serial.println(angle_to_target);
+				input_buffer[0] = controller_manager.autonomy_input[2] * cos(controller_manager.enc_odm_pos[4] - angle_to_target);
+				input_buffer[1] = controller_manager.autonomy_input[2] * sin(controller_manager.enc_odm_pos[4] - angle_to_target);
+				/*
+				input_buffer[0] = -controller_manager.autonomy_input[2] * cos(angle_to_target);
+				input_buffer[1] = controller_manager.autonomy_input[2] * sin(angle_to_target);
+				float rotated_input[2];
+				rotate2D(input_buffer, rotated_input, controller_manager.gimbal_yaw_angle);
+				if (controller_manager.autonomy_input[6] == 1) input_buffer[4] = yaw_autonomy_speed;
+				input_buffer[0] = rotated_input[0];
+				input_buffer[1] = rotated_input[1];*/
+				Serial.println(input_buffer[0]);
+				Serial.println(input_buffer[1]);
+				Serial.println();
+			}
 
 			// Track with gimbal if we are instructed to
 			if (controller_manager.autonomy_input[5] == 1) {
