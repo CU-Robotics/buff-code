@@ -508,8 +508,8 @@ void Device_Manager::step_controllers(float dt) {
 	float ypc_gain = -350.0; //-150
 	float ppc_gain = 0.0; //50
 
-	float pitch_autonomy_speed = 100 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
-	float yaw_autonomy_speed = -100 * wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
+	float pitch_autonomy_speed = 120 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
+	float yaw_autonomy_speed = -80 * wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
 
 	if (!receiver.safety_shutdown) {
 		controller_manager.imu_calibrated = false;
@@ -548,7 +548,7 @@ void Device_Manager::step_controllers(float dt) {
 		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && ref.data.curr_stage == 'C' && !receiver.no_path) {
 			float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
 			if (controller_manager.autonomy_input[2] == 0) {
-				float dist = sqrt(sq(controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]) + sq(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]))
+				float dist = sqrt(sq(controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]) + sq(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
 				input_buffer[0] = 1000.0 * dist * cos(controller_manager.enc_odm_pos[4] - angle_to_target);
 				input_buffer[1] = 1000.0 * dist * sin(controller_manager.enc_odm_pos[4] - angle_to_target);
 			} else {
