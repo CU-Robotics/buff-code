@@ -49,7 +49,7 @@ sensor_config:
   - [0.0]
   - [0.0]
   # rev encoders [offset1, filter_gain1, offset2, filter_gain2, offset3, filter_gain3...] offset > 1000 => use motor encode at offset / 1000 instead
-  - [4000.0, 0.0, 300.0, 0.99, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
+  - [4000.0, 0.0, 316, 0.0, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
 
 ##############################
 #
@@ -77,15 +77,15 @@ motor_index:
 # this behavior will be available system wide.
 # [can bus, esc type, esc id] see datasheets if you don't understand
 motor_can_index:
-  - [1, 1, 4]     # Sets CAN config for V0
-  - [1, 1, 1]     # Sets CAN config for V1
-  - [1, 1, 2]     # Sets CAN config for V3
-  - [1, 1, 3]     # Sets CAN config for V2
-  - [2, 1, 1]
+  - [1, 1, 1]     # Sets CAN config for V0
+  - [1, 1, 2]     # Sets CAN config for V1
+  - [1, 1, 3]     # Sets CAN config for V3
+  - [1, 1, 4]     # Sets CAN config for V2
   - [1, 1, 5]
   - [1, 1, 6]
-  - [2, 1, 3]     
-  - [2, 0, 2]     
+  - [2, 1, 1]  
+  - [2, 0, 2]    
+  - [2, 1, 3]    
 
 
 ##############################
@@ -115,13 +115,13 @@ motor_can_index:
 # [Vx, Vy, Omega, dPhi, dPsi, dGamma, dShooter] -> [V0, V1, V2, V3, V4, V5, V6, V7, V8]
 # [V0, V1, V2, V3, V4, V5, V6, V7, V8] defined by the motor_index
 inverse_kinematics: # (N_controller_inputs X N_motors) = (N_robot_states X N_motors) = (rows X Cols)
-  - [ -1.0,    0.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V0 = -Vx - omega
-  - [  0.0,   -1.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V1 =  Vy - omega
-  - [  1.0,    0.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V2 =  Vx - omega
-  - [  0.0,    1.0,   -1.0,    0.0,    0.0,    0.0,    0.0] # V3 =  Vx - omega
+  - [ -1.0,    0.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V0 = -Vx - omega
+  - [  0.0,   -1.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V1 =  Vy - omega
+  - [  1.0,    0.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V2 =  Vx - omega
+  - [  0.0,    1.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V3 =  Vx - omega
   - [  0.0,    0.0,    0.0,   -1.0,    0.0,    0.0,    0.0] # V4 =  -dPhi 
-  - [  0.0,    0.0,   -0.0,   0.0,    1.0,    0.0,    0.0] # V5 =  dPsi - omega
-  - [  0.0,    0.0,   -0.0,   0.0,    1.0,    0.0,    0.0] # V6 =  dPsi - omega
+  - [  0.0,    0.0,    0.2,    0.0,    1.0,    0.0,    0.0] # V5 =  dPsi - omega
+  - [  0.0,    0.0,    0.2,    0.0,    1.0,    0.0,    0.0] # V6 =  dPsi - omega
   - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0] # V7 =  const
   - [  0.0,    0.0,    0.0,    0.0,    0.0,   -1.0,    0.0] # V8 =  -dGamma
 
@@ -170,10 +170,10 @@ motor_controller_types:
 # where K[i] is the ith row (1x3) and '*' is a vector inner product ((1x3)(3x1)).
 #         Kp,         Kd,   (Kpow/Kpend) # Motor the output is routed to
 motor_gains: 
-  - [0.0, 0.01, 0.0]       # motor 0 
-  - [0.0, 0.01, 0.0]       # motor 1 
-  - [0.0, 0.01, 0.0]       # motor 2
-  - [0.0, 0.01, 0.0]       # motor 3
+  - [0.0, 0.005, 0.0]       # motor 0 
+  - [0.0, 0.005, 0.0]       # motor 1 
+  - [0.0, 0.005, 0.0]       # motor 2
+  - [0.0, 0.005, 0.0]       # motor 3
   - [0.1, 0.0075, 0.175]       # motor 4
   - [0.0, 0.005, 0.0]       # motor 5
   - [0.0, 0.005, 0.0]       # motor 6
