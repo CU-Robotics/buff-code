@@ -108,7 +108,7 @@ void DR16::print_control_data(){
 		6: yaw
 	*/
 
-int DR16::generate_control(RefData ref_data) {
+int DR16::generate_control(RefSystem ref) {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
 
@@ -148,15 +148,22 @@ int DR16::generate_control(RefData ref_data) {
 	bool l_mouse_button = tmp[12];
 	bool r_mouse_button = tmp[13];
 
+	// Send autonomy command
+	if (key_b && !b_prev) {
+		Serial.println("Writing ref serial");
+		ref.write_serial();
+	}
+	b_prev = key_b;
+
 	float feedrate_bps_continuous = 8;
 	float feedrate_bps_burst = 16;
 	// Infantry, Standard, and Sentry
-	if (ref_data.robot_type == 3 || ref_data.robot_type == 5 || ref_data.robot_type == 7 && ref_data.robot_1_cool_val != -1) {
-		feedrate_bps_continuous = ref_data.robot_1_cool_val/10.0 * 2;
-		feedrate_bps_burst = (ref_data.robot_1_cool_val+ref_data.robot_1_barr_heat_lim)/10.0 * 2;
-		if (ref_data.robot_type != 5 && feedrate_bps_burst > 10) {
+	if (ref.data.robot_type == 3 || ref.data.robot_type == 5 || ref.data.robot_type == 7 && ref.data.robot_1_cool_val != -1) {
+		feedrate_bps_continuous = ref.data.robot_1_cool_val/10.0 * 2;
+		feedrate_bps_burst = (ref.data.robot_1_cool_val+ref.data.robot_1_barr_heat_lim)/10.0 * 2;
+		if (ref.data.robot_type != 5 && feedrate_bps_burst > 10) {
 			feedrate_bps_burst = 10;
-		} else if (ref_data.robot_type == 5 && feedrate_bps_burst > 20) {
+		} else if (ref.data.robot_type == 5 && feedrate_bps_burst > 20) {
 			feedrate_bps_burst = 20;
 		}
 	}
@@ -166,9 +173,11 @@ int DR16::generate_control(RefData ref_data) {
 	// GAME MODE
 	if (l_switch == 2.0) {
 		// Sentry -- Fully autonomous
-		if (ref_data.robot_type == 7) {
+		if (ref.data.robot_type == 7) {
 			data[2] = SPINRATE_IDLE;
+			data[5] = feedrate_bps_continuous * 45.24;
 			data[6] = FLYWHEEL_SPEED;
+			no_path = false;
 		} 
 		// Infantry, Standard, and Hero -- User driving
 		else {
@@ -176,25 +185,29 @@ int DR16::generate_control(RefData ref_data) {
 			if (key_f && !f_prev) sentry_control_hud = !sentry_control_hud;
 			f_prev = key_f;
 
-			// Send autonomy command
-			if (key_r && !r_prev) {
-				// TODO: Send autonomy command
+			if (ref.data.robot_type == 3 && key_r && !r_prev) {
+				no_path = false;
+				autonomy_pos[0] = 0.5;
+				autonomy_pos[1] = 7.5;
+				autonomy_pos[2] = 0.0;
 			}
-			r_prev = key_r;
+
+			if (key_f && !f_prev) no_path = true;
 
 			// Chassis Translation
 			data[0] = (key_d - key_a) * CHASSIS_SPEED;
 			data[1] = (key_w - key_s) * CHASSIS_SPEED;
 
 			// Chassis Spin
-			if (key_ctrl && !ctrl_prev) beyblade_mode = !beyblade_mode;
-			ctrl_prev = key_ctrl;
-			if (beyblade_mode || key_shift) {
+			if (key_shift && !shift_prev) beyblade_mode = !beyblade_mode;
+			shift_prev = key_shift;
+			if (beyblade_mode) {
 				if (key_w || key_s || key_d || key_a) data[2] = SPINRATE_TRANSLATE; // Spin slower while translating
 				else data[2] = SPINRATE_STILL; // Spin fast when still
 			} else {
 				data[2] = (key_x - key_z) * SPINRATE_TRANSLATE + SPINRATE_IDLE;
 			}
+			if (key_ctrl) data[2] = 0; // Crouch mode
 
 			// Gimbal
 			if (!sentry_control_hud) {
@@ -212,13 +225,13 @@ int DR16::generate_control(RefData ref_data) {
 			if (l_mouse_button && !sentry_control_hud) {
 				switch (shooter_mode) {
 					case 0:
-						if (ref_data.robot_type == 3 || ref_data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
-						else if (ref_data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
+						if (ref.data.robot_type == 3 || ref.data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
+						else if (ref.data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
 						else data[5] = FEEDSPEED_DEFAULT;
 						break;
 					case 1:
-						if (ref_data.robot_type == 3 || ref_data.robot_type == 7) data[5] = feedrate_bps_burst * 45.24;
-						else if (ref_data.robot_type == 5) data[5] = feedrate_bps_burst * 28.27;
+						if (ref.data.robot_type == 3 || ref.data.robot_type == 7) data[5] = feedrate_bps_burst * 45.24;
+						else if (ref.data.robot_type == 5) data[5] = feedrate_bps_burst * 28.27;
 						else data[5] = FEEDSPEED_DEFAULT;
 						break;
 					default:
@@ -244,8 +257,8 @@ int DR16::generate_control(RefData ref_data) {
 
 		// Shooter/Feeder
 		if (r_switch == 1.0) {
-			if (ref_data.robot_type == 3 || ref_data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
-			else if (ref_data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
+			if (ref.data.robot_type == 3 || ref.data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
+			else if (ref.data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
 			else data[5] = FEEDSPEED_DEFAULT;
 			data[6] = FLYWHEEL_SPEED;
 		} else if (r_switch == 3.0) {
@@ -270,10 +283,10 @@ int DR16::generate_control(RefData ref_data) {
 	}
 }
 
-int DR16::read(RefData ref_data) {
+int DR16::read(RefSystem ref) {
 	if (serial->available() == 18) {
 		timer_set(1);
-		return generate_control(ref_data);
+		return generate_control(ref);
 	}
 
 	if (serial->available() > 18) {

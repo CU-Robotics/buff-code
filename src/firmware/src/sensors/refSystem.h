@@ -118,7 +118,7 @@ struct RefData {
     int shooter_on = -1;
 };
 
-class RefSystem{
+class RefSystem {
     public:
         RefSystem();
         void init();

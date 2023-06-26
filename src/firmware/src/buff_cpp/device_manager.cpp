@@ -34,6 +34,8 @@ void Device_Manager::initializer_report_handle() {	// 255
 	float gains[MOTOR_FEEDBACK_SIZE];
 	byte tmp[3];
 
+	Serial.println("initialize");
+
 	output_report.put(1, input_report.get(1));
 	output_report.put(2, input_report.get(2));
 
@@ -410,7 +412,6 @@ void Device_Manager::read_sensors() {
 		// Serial.println("READ REF");
 		prev_ref_read_micros = micros();
 		ref.read_serial();
-		ref.write_serial();
 	}
 	controller_manager.team_color = ref.data.team_color;
 	controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
@@ -438,7 +439,7 @@ void Device_Manager::read_sensors() {
 			break;
 
 		case 4:
-			switch (receiver.read(ref.data)) {
+			switch (receiver.read(ref)) {
 				case USER_SHUTDOWN:
 					if (safety_counter > 100) controller_switch = -1;
 					safety_counter++;
@@ -516,31 +517,12 @@ void Device_Manager::step_controllers(float dt) {
 		yaw_reference_buffer[yaw_reference_buffer_len-1] = input_buffer[4];
 		for (int b = 0; b < yaw_reference_buffer_len-1; b++) yaw_reference_buffer[b] = yaw_reference_buffer[b+1];
 
-		// AUTONOMY
+		// AUTOAIM
 		if (controller_switch > 1) {
 			// Sentry
 			if (ref.data.robot_type == 7) {
 				input_buffer[3] = 150 * (-controller_manager.enc_odm_pos[3]); // Pitch towards 0
 				input_buffer[4] = 0;
-			}
-
-			// Movement
-			if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0) {
-				float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
-				Serial.println(angle_to_target);
-				input_buffer[0] = controller_manager.autonomy_input[2] * cos(controller_manager.enc_odm_pos[4] - angle_to_target);
-				input_buffer[1] = controller_manager.autonomy_input[2] * sin(controller_manager.enc_odm_pos[4] - angle_to_target);
-				/*
-				input_buffer[0] = -controller_manager.autonomy_input[2] * cos(angle_to_target);
-				input_buffer[1] = controller_manager.autonomy_input[2] * sin(angle_to_target);
-				float rotated_input[2];
-				rotate2D(input_buffer, rotated_input, controller_manager.gimbal_yaw_angle);
-				if (controller_manager.autonomy_input[6] == 1) input_buffer[4] = yaw_autonomy_speed;
-				input_buffer[0] = rotated_input[0];
-				input_buffer[1] = rotated_input[1];*/
-				Serial.println(input_buffer[0]);
-				Serial.println(input_buffer[1]);
-				Serial.println();
 			}
 
 			// Track with gimbal if we are instructed to
@@ -551,12 +533,27 @@ void Device_Manager::step_controllers(float dt) {
 
 				// Sentry: fire if we are looking at the target
 				if (ref.data.robot_type == 7) {
-					if (fabs(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]) < 0.3) { // Within 0.3rad on either side
+					if (fabs(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]) > 0.3) { // Within 0.3rad on either side
 						input_buffer[5] = 0;
 					}
 				}
 			} else if (ref.data.robot_type == 7) {
 				input_buffer[5] = 0;
+			}
+		}
+		// AUTO MOVEMENT
+		controller_manager.autonomy_goal[0] = receiver.autonomy_pos[0];
+		controller_manager.autonomy_goal[1] = receiver.autonomy_pos[1];
+		controller_manager.autonomy_goal[4] = receiver.autonomy_pos[2];
+		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && ref.data.curr_stage == 'C' && !receiver.no_path) {
+			float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
+			if (controller_manager.autonomy_input[2] == 0) {
+				float dist = sqrt(sq(controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]) + sq(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]))
+				input_buffer[0] = 1000.0 * dist * cos(controller_manager.enc_odm_pos[4] - angle_to_target);
+				input_buffer[1] = 1000.0 * dist * sin(controller_manager.enc_odm_pos[4] - angle_to_target);
+			} else {
+				input_buffer[0] = controller_manager.autonomy_input[2] * cos(controller_manager.enc_odm_pos[4] - angle_to_target);
+				input_buffer[1] = controller_manager.autonomy_input[2] * sin(controller_manager.enc_odm_pos[4] - angle_to_target);
 			}
 		}
 

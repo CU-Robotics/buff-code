@@ -47,9 +47,9 @@ struct DR16 {
 		DR16(HardwareSerial*);
 		void print_receiver_input(byte*);
 		void print_control_data();
-		int generate_control(RefData ref_data);
+		int generate_control(RefSystem ref);
 		void control_test();
-		int read(RefData ref_data); 	// return the user mode input (different from the control mode)
+		int read(RefSystem ref); 	// return the user mode input (different from the control mode)
 
 		float numBytes;
 		unsigned long lastTime;
@@ -58,12 +58,18 @@ struct DR16 {
 		float data[7];
 		int safety_shutdown;
 
+		float autonomy_pos[3] = {0};
+		bool no_path = true;
+
 		bool beyblade_mode = 0;
 		int shooter_mode = 0;
 		bool sentry_control_hud = 0;
-		bool ctrl_prev = 0;
+
+		bool shift_prev = 0;
 		bool f_prev = 0;
 		bool r_prev = 0;
+		bool g_prev = 0;
+		bool b_prev = 0;
 		
 		HardwareSerial* serial;
 };

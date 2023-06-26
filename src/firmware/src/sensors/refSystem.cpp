@@ -347,8 +347,8 @@ void RefSystem::write_serial() {
 
 	byte frame_header[5] = {0};
 	frame_header[0] = 0xA5;
-	frame_header[1] = 7 >> 8;
-	frame_header[2] = 7 & 0xFF;
+	frame_header[1] = 21;
+	frame_header[2] = 0x00;
 	frame_header[3] = seq;
 	seq++;
 	frame_header[4] = generateCRC8(frame_header, 4);
@@ -363,38 +363,38 @@ void RefSystem::write_serial() {
 	msg[5] = 0x01;
 	msg[6] = 0x03;
 
-	// Content ID 0x0101
-	msg[7] = 0x01;
-	msg[8] = 0x01;
+	// Content ID 0x0101 0x0200
+	msg[7] = 0x00;
+	msg[8] = 0x02;
 
 	// sender ID 0x0003
 	msg[9] = 0x03;
 	msg[10] = 0x00;
 
-	// reciever ID 0x0103
-	msg[11] = 0x03;
-	msg[12] = 0x01;
+	// reciever ID 0x0103 0x0003
+	msg[11] = 0x01;
+	msg[12] = 0x00;
 
 	byte graphic[15] = {0};
 
-	graphic[0] = "rbt";
-	graphic[1] = "rbt";
-	graphic[2] = "rbt";
+	graphic[0] = "rbt"[0];
+	graphic[1] = "rbt"[1];
+	graphic[2] = "rbt"[2];
 
-	graphic[3] = (1 << 5) | (2 << 2) | (1 >> 2);
-	graphic[4] = (1 << 6) | (1 << 2) | (0 >> 7);
-	graphic[5] = (0 << 2) | (0 >> 8);
-	graphic[6] = (0 << 1);
+	graphic[6] = 0x00; //(1 << 5) | (1 << 2) | (1 >> 2);
+	graphic[5] = 0x00; //(1 << 6) | (1 << 2) | (0 >> 7);
+	graphic[4] = 0x04; //(0 << 2) | (0 >> 8);
+	graphic[3] = 0x49; //(0 << 1);
 
-	graphic[7] = (100 >> 2);
-	graphic[8] = (100 << 8) | (115 >> 5);
-	graphic[9] = (115 << 6) | (125 >> 8);
-	graphic[10] = (125 << 3);
+	graphic[10] = 0x08; //(100 >> 2);
+	graphic[9] = 0x00; //(100 << 8) | (115 >> 5);
+	graphic[8] = 0x80; //(115 << 6) | (125 >> 8);
+	graphic[7] = 0x10; //(125 << 3);
 
-	graphic[11] = (150 >> 2);
-	graphic[12] = (150 << 8) | (200 >> 5);
-	graphic[13] = (200 << 6) | (225 >> 8);
-	graphic[14] = (225 << 3);
+	graphic[14] = 0x40; //(150 >> 2);
+	graphic[13] = 0x04; //(150 << 8) | (200 >> 5);
+	graphic[12] = 0x00; //(200 << 6) | (225 >> 8);
+	graphic[11] = 0x00; //(225 << 3);
 	// byte* graphic = generate_graphic("rbt", 1, 2, 1, 1, 0, 0, 0, 100, 100, 100, 0, 0);
 	// Serial.println("test2");
 	for (int i = 0; i < 15; i++) {
@@ -402,19 +402,19 @@ void RefSystem::write_serial() {
 	}
 
 	uint16_t footerCRC = generateCRC16(msg, 28);
-	msg[28] = (footerCRC >> 8);
-	msg[29] = (footerCRC & 0xFF);
+	msg[28] = (footerCRC & 0x00FF); //(footerCRC >> 8);
+	msg[29] = (footerCRC >> 8); //(footerCRC & 0xFF);
 	
 	int bsent = Serial2.write(msg, 30);	
 
-	// Serial.println("==============");
-	// Serial.print("Sent bytes: ");
-	// Serial.println(bsent);
-	// for (int i = 0; i < 30; i++) {
-	// 	Serial.print(i);
-	// 	Serial.print(": 0x");
-	// 	Serial.println(msg[i],HEX);
-	// }
+	Serial.println("==============");
+	Serial.print("Sent bytes: ");
+	Serial.println(bsent);
+	for (int i = 0; i < 30; i++) {
+		Serial.print(i);
+		Serial.print(": 0x");
+		Serial.println(msg[i],HEX);
+	}
 }
 
 byte* RefSystem::generate_client_hud_msg() {
