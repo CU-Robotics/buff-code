@@ -150,8 +150,7 @@ int DR16::generate_control(RefSystem ref) {
 
 	// Send autonomy command
 	if (key_b && !b_prev) {
-		Serial.println("Writing ref serial");
-		ref.write_serial();
+		ref.send_graphics = true;
 	}
 	b_prev = key_b;
 
@@ -185,18 +184,28 @@ int DR16::generate_control(RefSystem ref) {
 			if (key_f && !f_prev) sentry_control_hud = !sentry_control_hud;
 			f_prev = key_f;
 
-			if (ref.data.robot_type == 3 && key_r && !r_prev) {
-				no_path = false;
-				autonomy_pos[0] = 0.5;
-				autonomy_pos[1] = 7.5;
-				autonomy_pos[2] = 0.0;
+			if (key_r && !r_prev) {
+				ref.data.sentry_send_goal[0] = 0.5;
+				ref.data.sentry_send_goal[1] = 7.5;
+				ref.data.sentry_send_goal[2] = 0.0;
+				ref.data.pending_sentry_send = false;
+				Serial.println("Init recall command (dr16.cpp 192)");
 			}
+			r_prev = key_r;
 
-			if (key_f && !f_prev) no_path = true;
+			if (key_g && !g_prev) no_path = true;
+			g_prev = key_g;
+			if (ref.data.robot_type == 3 && key_c && !c_prev) {
+				no_path = false;
+				ref.data.autonomy_pos[0] = 0.5;
+				ref.data.autonomy_pos[1] = 7.5;
+				ref.data.autonomy_pos[2] = 0.0;
+			}
+			c_prev = key_c;
 
 			// Chassis Translation
-			data[0] = (key_d - key_a) * CHASSIS_SPEED;
-			data[1] = (key_w - key_s) * CHASSIS_SPEED;
+			data[0] = (key_w - key_s) * CHASSIS_SPEED;
+			data[1] = (key_d - key_a) * CHASSIS_SPEED;
 
 			// Chassis Spin
 			if (key_shift && !shift_prev) beyblade_mode = !beyblade_mode;

@@ -409,9 +409,9 @@ void Device_Manager::push_can(){
 */
 void Device_Manager::read_sensors() {
 	if (micros() - prev_ref_read_micros > 100) {
-		// Serial.println("READ REF");
 		prev_ref_read_micros = micros();
 		ref.read_serial();
+		ref.write_serial(controller_manager.enc_odm_pos);
 	}
 	controller_manager.team_color = ref.data.team_color;
 	controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
@@ -542,9 +542,9 @@ void Device_Manager::step_controllers(float dt) {
 			}
 		}
 		// AUTO MOVEMENT
-		controller_manager.autonomy_goal[0] = receiver.autonomy_pos[0];
-		controller_manager.autonomy_goal[1] = receiver.autonomy_pos[1];
-		controller_manager.autonomy_goal[4] = receiver.autonomy_pos[2];
+		controller_manager.autonomy_goal[0] = ref.data.autonomy_pos[0];
+		controller_manager.autonomy_goal[1] = ref.data.autonomy_pos[1];
+		controller_manager.autonomy_goal[4] = ref.data.autonomy_pos[2];
 		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && ref.data.curr_stage == 'C' && !receiver.no_path) {
 			float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
 			if (controller_manager.autonomy_input[2] == 0) {
@@ -590,6 +590,11 @@ void Device_Manager::step_controllers(float dt) {
 
 		// Calibrate when in safety mode
 		// if (!controller_manager.imu_calibrated) controller_manager.calib_counter = 0;
+	}
+
+	if (ref.data.robot_type == 1 || ref.data.robot_type == 5) {
+		controller_manager.enc_odm_pos[0] = 0;
+		controller_manager.enc_odm_pos[0] = 0;
 	}
 
 	bool new_reference = timer_info_ms(2) >= 10;
