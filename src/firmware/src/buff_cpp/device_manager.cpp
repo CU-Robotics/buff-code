@@ -218,6 +218,7 @@ void Device_Manager::control_input_handle() { // 2
 			controller_manager.enc_odm_pos[0] = input_report.get_float(2); // x pos
 			controller_manager.enc_odm_pos[1] = input_report.get_float(6); // y pos
 			controller_manager.kee_imu_pos[4] = input_report.get_float(10); // gimbal heading
+			Serial.println("Position Override");
 			// timestamp (same as waypoint report)
 
 			break;
