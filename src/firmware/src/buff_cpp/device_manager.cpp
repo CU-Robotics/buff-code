@@ -563,7 +563,7 @@ void Device_Manager::step_controllers(float dt) {
 				controller_manager.hero_feed_bias += 2*PI*36;
 				controller_manager.hero_firing = true;
 			}
-			if (controller_manager.hero_firing) input_buffer[5] = 500;
+			if (controller_manager.hero_firing) input_buffer[5] = -500;
 			else input_buffer[5] = 0;
 		}
 
