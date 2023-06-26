@@ -328,6 +328,33 @@ bool RefSystem::read_serial() {
             }
 
 			else if (cmd_id == 0x301) {
+				while(Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp;
+				while(Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp_stat | (temp<<8);   
+				int command = temp_stat;
+
+				uint32_t tmp_float;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				tmp_float = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				tmp_float = tmp_float | (temp<<8);
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				tmp_float = tmp_float | (temp<<16);
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				tmp_float = tmp_float | (temp<<24);
+				
+				uint32_t tmp_float_2;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				tmp_float_2 = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				tmp_float_2 = tmp_float_2 | (temp<<8);
+				while (Serial2.tmp_float_2(&temp, 1) != 1) {}
+				tmp_float_2 = tmp_float_2 | (temp<<16);
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				tmp_float_2 = tmp_float_2 | (temp<<24);
+
+				Serial.println(tmp_float);
 				Serial.println("Hooray!");
 			}
 		}
@@ -364,8 +391,8 @@ void RefSystem::write_serial() {
 	msg[6] = 0x03;
 
 	// Content ID 0x0101 0x0200
-	msg[7] = 0x00;
-	msg[8] = 0x02;
+	msg[7] = 0x01;
+	msg[8] = 0x01;
 
 	// sender ID 0x0003
 	msg[9] = 0x03;
@@ -373,7 +400,7 @@ void RefSystem::write_serial() {
 
 	// reciever ID 0x0103 0x0003
 	msg[11] = 0x01;
-	msg[12] = 0x00;
+	msg[12] = 0x03;
 
 	byte graphic[15] = {0};
 

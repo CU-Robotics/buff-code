@@ -116,6 +116,11 @@ struct RefData {
     int chassis_on = -1;
     int gimbal_on = -1;
     int shooter_on = -1;
+
+    float sentry_pos[3];
+    float infantry_pos[3];
+    float sentry_goal[3];
+    float infantry_goal[3];
 };
 
 class RefSystem {

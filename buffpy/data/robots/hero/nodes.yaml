@@ -182,10 +182,10 @@ motor_gains:
   - [0.0, 0.005, 0.0]       # motor 1
   - [0.0, 0.005, 0.0]       # motor 2
   - [0.0, 0.005, 0.0]       # motor 3
-  - [0.0, 0.008, 0.0]       # motor 4 yaw 1
-  - [0.0, 0.008, 0.0]       # motor 5 yaw 2
-  - [0.0, 0.0175, 0.06]       # motor 6 pitch l
-  - [0.0, 0.0175, -0.06]       # motor 7 pitch r
+  - [0.0, 0.005, 0.0]       # motor 4 yaw 1
+  - [0.0, 0.005, 0.0]       # motor 5 yaw 2
+  - [0.0, 0.0175, 0.15]       # motor 6 pitch l
+  - [0.0, 0.0175, -0.15]       # motor 7 pitch r
   - [0.0, 0.008, 0.0]       # motor 8 flywheel l
   - [0.0, 0.008, 0.0]       # motor 9 flywheel r
   - [0.0, 0.008, 0.0]       # motor 10 feeder l
