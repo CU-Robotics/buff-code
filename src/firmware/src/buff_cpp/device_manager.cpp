@@ -215,9 +215,9 @@ void Device_Manager::control_input_handle() { // 2
 		case 4: // position override report
 			// Do not be afraid of buff_rust, it might not be readable but uses a similar function
 			// signature to build the packets see buff_hid.rs:HidROS::new() and buff_hid.rs:HidROS::pipeline()
-			// controller_manager.enc_odm_pos[0] = input_report.get_float(2); // x pos
-			// controller_manager.enc_odm_pos[1] = input_report.get_float(6); // y pos
-			// controller_manager.enc_odm_pos[3] = input_report.get_float(6); // gimbal heading
+			controller_manager.enc_odm_pos[0] = input_report.get_float(2); // x pos
+			controller_manager.enc_odm_pos[1] = input_report.get_float(6); // y pos
+			controller_manager.kee_imu_pos[4] = input_report.get_float(10); // gimbal heading
 			// timestamp (same as waypoint report)
 
 			break;
@@ -441,8 +441,7 @@ void Device_Manager::read_sensors() {
 		case 4:
 			switch (receiver.read(ref)) {
 				case USER_SHUTDOWN:
-					if (safety_counter > 100) controller_switch = -1;
-					safety_counter++;
+					controller_switch = -1;
 					break;
 
 				case ROBOT_DEMO_MODE:
@@ -582,11 +581,14 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.set_input(input_buffer);
 	} else {
 		// Reset world-relative state when in safety mode
-		controller_manager.enc_odm_pos[0] = 0;
-		controller_manager.enc_odm_pos[1] = 0;
-		controller_manager.enc_odm_pos[4] = 0;
-		controller_manager.kee_imu_pos[4] = 0;
-		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
+		if (safety_counter >= 500) {
+			controller_manager.enc_odm_pos[0] = 0;
+			controller_manager.enc_odm_pos[1] = 0;
+			controller_manager.enc_odm_pos[4] = 0;
+			controller_manager.kee_imu_pos[4] = 0;
+			controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
+		}
+		safety_counter++;
 
 		// Calibrate when in safety mode
 		// if (!controller_manager.imu_calibrated) controller_manager.calib_counter = 0;
