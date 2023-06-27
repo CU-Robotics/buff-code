@@ -215,9 +215,10 @@ void Device_Manager::control_input_handle() { // 2
 		case 4: // position override report
 			// Do not be afraid of buff_rust, it might not be readable but uses a similar function
 			// signature to build the packets see buff_hid.rs:HidROS::new() and buff_hid.rs:HidROS::pipeline()
-			// controller_manager.enc_odm_pos[0] = input_report.get_float(2); // x pos
-			// controller_manager.enc_odm_pos[1] = input_report.get_float(6); // y pos
-			// controller_manager.enc_odm_pos[3] = input_report.get_float(6); // gimbal heading
+			controller_manager.enc_odm_pos[0] = input_report.get_float(2); // x pos
+			controller_manager.enc_odm_pos[1] = input_report.get_float(6); // y pos
+			controller_manager.kee_imu_pos[4] = input_report.get_float(10); // gimbal heading
+			Serial.println("Position Override");
 			// timestamp (same as waypoint report)
 
 			break;
@@ -409,9 +410,9 @@ void Device_Manager::push_can(){
 */
 void Device_Manager::read_sensors() {
 	if (micros() - prev_ref_read_micros > 100) {
-		// Serial.println("READ REF");
 		prev_ref_read_micros = micros();
 		ref.read_serial();
+		ref.write_serial(controller_manager.enc_odm_pos);
 	}
 	controller_manager.team_color = ref.data.team_color;
 	controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
@@ -441,8 +442,7 @@ void Device_Manager::read_sensors() {
 		case 4:
 			switch (receiver.read(ref)) {
 				case USER_SHUTDOWN:
-					if (safety_counter > 100) controller_switch = -1;
-					safety_counter++;
+					controller_switch = -1;
 					break;
 
 				case ROBOT_DEMO_MODE:
@@ -542,9 +542,9 @@ void Device_Manager::step_controllers(float dt) {
 			}
 		}
 		// AUTO MOVEMENT
-		controller_manager.autonomy_goal[0] = receiver.autonomy_pos[0];
-		controller_manager.autonomy_goal[1] = receiver.autonomy_pos[1];
-		controller_manager.autonomy_goal[4] = receiver.autonomy_pos[2];
+		controller_manager.autonomy_goal[0] = ref.data.autonomy_pos[0];
+		controller_manager.autonomy_goal[1] = ref.data.autonomy_pos[1];
+		controller_manager.autonomy_goal[4] = ref.data.autonomy_pos[2];
 		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && ref.data.curr_stage == 'C' && !receiver.no_path) {
 			float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
 			if (controller_manager.autonomy_input[2] == 0) {
@@ -563,10 +563,10 @@ void Device_Manager::step_controllers(float dt) {
 				controller_manager.hero_feed_bias += 2*PI*36;
 				controller_manager.hero_firing = true;
 			}
-			if (controller_manager.hero_firing) input_buffer[5] = 500;
+			if (controller_manager.hero_firing) input_buffer[5] = -500;
 			else input_buffer[5] = 0;
 		}
-
+ 
 		// controller_manager.global_pitch_reference += input_buffer[3] * dt;
 		// float pitch_ang_err = controller_manager.global_pitch_reference - controller_manager.gimbal_pitch_angle;
 		// input_buffer[3] += ppc_gain * pitch_ang_err;
@@ -582,14 +582,25 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.set_input(input_buffer);
 	} else {
 		// Reset world-relative state when in safety mode
-		controller_manager.enc_odm_pos[0] = 0;
-		controller_manager.enc_odm_pos[1] = 0;
-		controller_manager.enc_odm_pos[4] = 0;
-		controller_manager.kee_imu_pos[4] = 0;
-		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
+		if (safety_counter >= 500) {
+			controller_manager.enc_odm_pos[0] = 0;
+			controller_manager.enc_odm_pos[1] = 0;
+			controller_manager.enc_odm_pos[4] = 0;
+			controller_manager.kee_imu_pos[4] = 0;
+			controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
+		}
+		safety_counter++;
+	}
 
-		// Calibrate when in safety mode
-		// if (!controller_manager.imu_calibrated) controller_manager.calib_counter = 0;
+	// Reset gimbal integrator when robot is dead
+	if (!ref.data.gimbal_on) {
+		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
+	}
+
+	// Don't use odom positionintegration on robots without the hardware for it
+	if (ref.data.robot_type == 1 || ref.data.robot_type == 5) {
+		controller_manager.enc_odm_pos[0] = 0;
+		controller_manager.enc_odm_pos[0] = 0;
 	}
 
 	bool new_reference = timer_info_ms(2) >= 10;

@@ -58,7 +58,6 @@ struct DR16 {
 		float data[7];
 		int safety_shutdown;
 
-		float autonomy_pos[3] = {0};
 		bool no_path = true;
 
 		bool beyblade_mode = 0;
@@ -70,6 +69,7 @@ struct DR16 {
 		bool r_prev = 0;
 		bool g_prev = 0;
 		bool b_prev = 0;
+		bool c_prev = 0;
 		
 		HardwareSerial* serial;
 };
