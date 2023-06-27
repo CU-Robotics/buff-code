@@ -217,7 +217,9 @@ void Device_Manager::control_input_handle() { // 2
 			// signature to build the packets see buff_hid.rs:HidROS::new() and buff_hid.rs:HidROS::pipeline()
 			controller_manager.enc_odm_pos[0] = input_report.get_float(2); // x pos
 			controller_manager.enc_odm_pos[1] = input_report.get_float(6); // y pos
+			// float yaw_est_err = input_report.get_float(10) - wrap_angle(kee_imu_pos[4]);
 			controller_manager.kee_imu_pos[4] = input_report.get_float(10); // gimbal heading
+			controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
 			Serial.println("Position Override");
 			// timestamp (same as waypoint report)
 
@@ -440,7 +442,7 @@ void Device_Manager::read_sensors() {
 			break;
 
 		case 4:
-			switch (receiver.read(ref)) {
+			switch (receiver.read(&ref)) {
 				case USER_SHUTDOWN:
 					controller_switch = -1;
 					break;
@@ -550,7 +552,9 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.autonomy_goal[0] = ref.data.autonomy_pos[0];
 		controller_manager.autonomy_goal[1] = ref.data.autonomy_pos[1];
 		controller_manager.autonomy_goal[4] = ref.data.autonomy_pos[2];
-		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && ref.data.curr_stage == 'C' && !receiver.no_path) {
+		// Serial.println(controller_manager.autonomy_goal[0]);
+		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && !receiver.no_path) { // && ref.data.curr_stage == 'C'
+			Serial.println("Following path");
 			float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
 			if (controller_manager.autonomy_input[2] == 0) {
 				float dist = sqrt(sq(controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]) + sq(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
