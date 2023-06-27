@@ -209,6 +209,7 @@ void Device_Manager::control_input_handle() { // 2
 			controller_manager.autonomy_input[4] = input_report.get_float(18);
 			controller_manager.autonomy_input[5] = input_report.get_float(22);
 			controller_manager.autonomy_input[6] = input_report.get_float(26);
+			last_autonomy_read = millis();
 
 			break;
 
@@ -506,15 +507,18 @@ void Device_Manager::step_controllers(float dt) {
 	controller_manager.estimate_state(gimbal_imu.data, dt);
 	float input_buffer[REMOTE_CONTROL_LEN];
 
+	// If we haven't recieved an autonomy input in a while, set to all zeros
+	if (millis() - last_autonomy_read > 1000) for (int i = 0; i < 7; i++) controller_manager.autonomy_input[i] = 0;
+
 	float ysc_gain = -1.0; // 0.8
 	float ypc_gain = -350.0; //-150
 	float ppc_gain = 0.0; //50
 
-	float pitch_autonomy_speed = 120 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
+	float pitch_autonomy_speed = 150 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
 	
 	float yaw_autonomy_err = wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
 	float yaw_autonomy_speed = -100 * yaw_autonomy_err;
-	yaw_autonomy_speed += -0 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt;
+	yaw_autonomy_speed += -0.5 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt;
 	prev_yaw_autonomy_err = yaw_autonomy_err;
 
 	if (!receiver.safety_shutdown) {
@@ -552,8 +556,7 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.autonomy_goal[0] = ref.data.autonomy_pos[0];
 		controller_manager.autonomy_goal[1] = ref.data.autonomy_pos[1];
 		controller_manager.autonomy_goal[4] = ref.data.autonomy_pos[2];
-		// Serial.println(controller_manager.autonomy_goal[0]);
-		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && !receiver.no_path) { // && ref.data.curr_stage == 'C'
+		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && !receiver.no_path) {
 			Serial.println("Following path");
 			float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]),(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
 			if (controller_manager.autonomy_input[2] == 0) {
@@ -572,7 +575,7 @@ void Device_Manager::step_controllers(float dt) {
 				controller_manager.hero_feed_bias += 2*PI*36;
 				controller_manager.hero_firing = true;
 			}
-			if (controller_manager.hero_firing) input_buffer[5] = -500;
+			if (controller_manager.hero_firing) input_buffer[5] = 500;
 			else input_buffer[5] = 0;
 		}
  

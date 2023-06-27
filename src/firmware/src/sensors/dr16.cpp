@@ -154,15 +154,6 @@ int DR16::generate_control(RefSystem *ref) {
 	}
 	b_prev = key_b;
 
-	if (ref->data.robot_type == 3 && key_c && !c_prev) {
-		Serial.println("Recall");
-		no_path = false;
-		ref->data.autonomy_pos[0] = 0.5;
-		ref->data.autonomy_pos[1] = 7.5;
-		ref->data.autonomy_pos[2] = 0.0;
-	}
-	c_prev = key_c;
-
 	float feedrate_bps_continuous = 8;
 	float feedrate_bps_burst = 16;
 	// Infantry, Standard, and Sentry
@@ -178,8 +169,8 @@ int DR16::generate_control(RefSystem *ref) {
 
 	// Determine flywheel speed
 	float flywheel_radps = FLYWHEEL_SPEED;
-	if (ref->data.robot_type == 5 || ref->data.robot_type == 7) {
-		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-1.0) + 15;
+	if (ref->data.robot_type == 3 || ref->data.robot_type == 7) {
+		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-1.0) + 15; // Equation to match flywheel speed to exit velocity
 	}
 
 	// Safety Switch
@@ -191,7 +182,8 @@ int DR16::generate_control(RefSystem *ref) {
 			data[2] = SPINRATE_IDLE;
 			data[5] = feedrate_bps_continuous * 45.24;
 			data[6] = flywheel_radps;
-			no_path = false;
+			if (ref->data.curr_stage == 'C') no_path = false;
+			else no_path = true;
 		} 
 		// Infantry, Standard, and Hero -- User driving
 		else {
@@ -210,7 +202,7 @@ int DR16::generate_control(RefSystem *ref) {
 
 			if (key_g && !g_prev) no_path = true;
 			g_prev = key_g;
-			if (ref->data.robot_type == 3 && key_c && !c_prev) {
+			if (ref->data.robot_type == 3 && ((key_c && !c_prev) || r_switch == 1.0)) {
 				no_path = false;
 				ref->data.autonomy_pos[0] = 0.5;
 				ref->data.autonomy_pos[1] = 7.5;
