@@ -397,9 +397,6 @@ bool RefSystem::read_serial() {
 					data.infantry_goal[2] = tmp_float_3;
 					if (data.robot_type == 1) memcpy(data.autonomy_pos, data.infantry_goal, 3);
 				}
-
-				Serial.println(tmp_float_1);
-				Serial.println("Hooray!");
 			}
 		}
 	}

@@ -509,7 +509,11 @@ void Device_Manager::step_controllers(float dt) {
 	float ppc_gain = 0.0; //50
 
 	float pitch_autonomy_speed = 120 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
-	float yaw_autonomy_speed = -80 * wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
+	
+	float yaw_autonomy_err = wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
+	float yaw_autonomy_speed = -100 * yaw_autonomy_err;
+	yaw_autonomy_speed += -0 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt;
+	prev_yaw_autonomy_err = yaw_autonomy_err;
 
 	if (!receiver.safety_shutdown) {
 		controller_manager.imu_calibrated = false;
@@ -539,6 +543,7 @@ void Device_Manager::step_controllers(float dt) {
 				}
 			} else if (ref.data.robot_type == 7) {
 				input_buffer[5] = 0;
+			} else {
 			}
 		}
 		// AUTO MOVEMENT
@@ -600,7 +605,7 @@ void Device_Manager::step_controllers(float dt) {
 	// Don't use odom positionintegration on robots without the hardware for it
 	if (ref.data.robot_type == 1 || ref.data.robot_type == 5) {
 		controller_manager.enc_odm_pos[0] = 0;
-		controller_manager.enc_odm_pos[0] = 0;
+		controller_manager.enc_odm_pos[1] = 0;
 	}
 
 	bool new_reference = timer_info_ms(2) >= 10;
