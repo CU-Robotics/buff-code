@@ -158,8 +158,8 @@ class RefSystem {
 
         uint8_t seq = 0;
 
-        uint8_t send_sw = 0;
-        uint8_t graphics_sw;
+        int send_sw;
+        int graphics_sw;
 
         bool send_graphics = false;
         bool graphics_init = false;

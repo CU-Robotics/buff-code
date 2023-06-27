@@ -167,6 +167,12 @@ int DR16::generate_control(RefSystem ref) {
 		}
 	}
 
+	// Determine flywheel speed
+	float flywheel_radps = FLYWHEEL_SPEED;
+	if (ref.data.robot_type == 5 || ref.data.robot_type == 7) {
+		flywheel_radps = 32.54 * (ref.data.robot_1_speed_lim-1.0) + 15;
+	}
+
 	// Safety Switch
 	safety_shutdown = 0;
 	// GAME MODE
@@ -175,7 +181,7 @@ int DR16::generate_control(RefSystem ref) {
 		if (ref.data.robot_type == 7) {
 			data[2] = SPINRATE_IDLE;
 			data[5] = feedrate_bps_continuous * 45.24;
-			data[6] = FLYWHEEL_SPEED;
+			data[6] = flywheel_radps;
 			no_path = false;
 		} 
 		// Infantry, Standard, and Hero -- User driving
@@ -248,7 +254,7 @@ int DR16::generate_control(RefSystem ref) {
 				}
 			} else data[5] = 0;
 
-			data[6] = FLYWHEEL_SPEED; // Always keep the flywheel on
+			data[6] = flywheel_radps; // Always keep the flywheel on
 
 			if (r_mouse_button) return AUTONOMY_MODE; // Engage autonomous gimbal when right mouse button is pressed
 			else return USER_DRIVE_MODE;
@@ -272,7 +278,7 @@ int DR16::generate_control(RefSystem ref) {
 			data[6] = FLYWHEEL_SPEED;
 		} else if (r_switch == 3.0) {
 			data[5] = 0.0;
-			data[6] = FLYWHEEL_SPEED;
+			data[6] = flywheel_radps;
 		} else {
 			data[5] = 0.0;
 			data[6] = 0.0;

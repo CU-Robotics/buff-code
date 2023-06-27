@@ -566,7 +566,7 @@ void Device_Manager::step_controllers(float dt) {
 			if (controller_manager.hero_firing) input_buffer[5] = -500;
 			else input_buffer[5] = 0;
 		}
-
+ 
 		// controller_manager.global_pitch_reference += input_buffer[3] * dt;
 		// float pitch_ang_err = controller_manager.global_pitch_reference - controller_manager.gimbal_pitch_angle;
 		// input_buffer[3] += ppc_gain * pitch_ang_err;
@@ -590,11 +590,14 @@ void Device_Manager::step_controllers(float dt) {
 			controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
 		}
 		safety_counter++;
-
-		// Calibrate when in safety mode
-		// if (!controller_manager.imu_calibrated) controller_manager.calib_counter = 0;
 	}
 
+	// Reset gimbal integrator when robot is dead
+	if (!ref.data.gimbal_on) {
+		controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
+	}
+
+	// Don't use odom positionintegration on robots without the hardware for it
 	if (ref.data.robot_type == 1 || ref.data.robot_type == 5) {
 		controller_manager.enc_odm_pos[0] = 0;
 		controller_manager.enc_odm_pos[0] = 0;
