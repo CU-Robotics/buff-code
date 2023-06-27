@@ -328,6 +328,77 @@ bool RefSystem::read_serial() {
             }
 
 			else if (cmd_id == 0x301) {
+				int8_t f_bytes[4] = {0};
+
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp_stat | (temp<<8);   
+				int command = temp_stat;
+
+				float tmp_float_1;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[3] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[2] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[1] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[0] = temp;
+				memcpy(&tmp_float_1, f_bytes, 4);
+				
+				float tmp_float_2;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[3] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[2] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[1] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[0] = temp;
+				memcpy(&tmp_float_2, f_bytes, 4);
+
+				float tmp_float_3;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[3] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[2] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[1] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[0] = temp;
+				memcpy(&tmp_float_3, f_bytes, 4);
+
+				// Sentry state update
+				if (command == 0x0207) {
+					data.sentry_pos[0] = tmp_float_1;
+					data.sentry_pos[1] = tmp_float_2;
+					data.sentry_pos[2] = tmp_float_3;
+				}
+				// Infantry state update
+				else if (command == 0x0203) {
+					data.infantry_pos[0] = tmp_float_1;
+					data.infantry_pos[1] = tmp_float_2;
+					data.infantry_pos[2] = tmp_float_3;
+				}
+				// Sentry goal update
+				else if (command == 0x0208) {
+					Serial.println("Recieved Sentry goal update");
+					data.sentry_goal[0] = tmp_float_1;
+					data.sentry_goal[1] = tmp_float_2;
+					data.sentry_goal[2] = tmp_float_3;
+					if (data.robot_type == 7) memcpy(data.autonomy_pos, data.sentry_goal, 3);
+				}
+				// Infantry goal update
+				else if (command == 0x0204) {
+					Serial.println("Recieved Infantry goal update");
+					data.infantry_goal[0] = tmp_float_1;
+					data.infantry_goal[1] = tmp_float_2;
+					data.infantry_goal[2] = tmp_float_3;
+					if (data.robot_type == 1) memcpy(data.autonomy_pos, data.infantry_goal, 3);
+				}
+
+				Serial.println(tmp_float_1);
 				Serial.println("Hooray!");
 			}
 		}
@@ -335,143 +406,199 @@ bool RefSystem::read_serial() {
 	return 1;
 }
 
-void RefSystem::write_serial() {
-	// byte* msg;
-	// msg = generate_client_info_msg();
-
+void RefSystem::write_serial(float* enc_odm_pos) {
 	byte msg[128] = {0};
+	int msg_len = 0;
 
-	// Frame header, first 5 bytes
-	// cmd_id, 2 bytes
-	// frame tail, 2 bytes
+	if (data.pending_sentry_send) {
+		Serial.println("Sending recall command (refSystem.cpp 412)");
+		uint16_t content_id = 0x0208;
+		uint16_t rec_id = 0x0007;
+		rec_id = rec_id | (data.robot_id & 0xFF00);
+		float d[3] = {0};
+		d[0] = data.sentry_send_goal[0];
+		d[1] = data.sentry_send_goal[1];
+		d[2] = data.sentry_send_goal[2];
+		write_update(msg, &msg_len, content_id, rec_id, d);
+		if (Serial2.write(msg, msg_len)) data.pending_sentry_send = false;
+		return;
+	};
 
-	byte frame_header[5] = {0};
-	frame_header[0] = 0xA5;
-	frame_header[1] = 7 >> 8;
-	frame_header[2] = 7 & 0xFF;
-	frame_header[3] = seq;
-	seq++;
-	frame_header[4] = generateCRC8(frame_header, 4);
+	uint16_t content_id = 0x0200 | data.robot_type;
+	float d[3] = {0};
+	if (send_sw == 0) {
+		// Send state update to hero (Sentry, Infantry)
+		content_id = content_id | data.robot_type;
+		uint16_t hero_rec_id = 0x0001;
+		hero_rec_id = hero_rec_id | (data.robot_id & 0xFF00);
+		d[0] = enc_odm_pos[0];
+		d[1] = enc_odm_pos[1];
+		d[2] = enc_odm_pos[4];
+		write_update(msg, &msg_len, content_id, hero_rec_id, d);
+		send_sw++;
+	} else if (send_sw == 1) {
+		// Send state update to infantry (Sentry)
+		content_id = content_id | data.robot_type;
+		uint16_t inf_rec_id = 0x0003;
+		inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
+		d[0] = enc_odm_pos[0];
+		d[1] = enc_odm_pos[1];
+		d[2] = enc_odm_pos[4];
+		write_update(msg, &msg_len, content_id, inf_rec_id, d);
+		send_sw = 0;
+	}
 
-	msg[0] = frame_header[0];
-	msg[1] = frame_header[1];
-	msg[2] = frame_header[2];
-	msg[3] = frame_header[3];
-	msg[4] = frame_header[4];
+	if (send_graphics) {
+		byte msg_graphics[128] = {0};
+		int msg_graphics_len;
+		switch (graphics_sw) {
+			// Update primary graphics
+			case 0:
+				write_primary_graphics_update(msg_graphics, &msg_graphics_len);
+				graphics_sw++;
+				break;
+			case 1:
+				write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
+				graphics_sw = 0;
+				break;
+			default:
+				graphics_sw = 0;
+		}
+		if (Serial2.write(msg_graphics, msg_graphics_len)) graphics_init = true;
+	}
+}
+
+// Send an update out to another robot
+void RefSystem::write_update(byte* msg, int* msg_len, uint16_t content_id, int rec_id, float* update_data) {
+	// frame header
+	msg[0] = 0xA5;
+	msg[1] = 20;
+	msg[2] = 0x00;
+	msg[3] = get_seq();
+	msg[4] = generateCRC8(msg, 4);
 
 	// cmd 0x0301
 	msg[5] = 0x01;
 	msg[6] = 0x03;
 
-	// Content ID 0x0101
-	msg[7] = 0x01;
+	// content ID
+	msg[7] = content_id;
+	msg[8] = content_id >> 8;
+
+	// sender ID
+	msg[9] = data.robot_id;
+	msg[10] = data.robot_id >> 8;
+
+	// receiver ID
+	msg[11] = rec_id;
+	msg[12] = rec_id >> 8;
+
+	for (int i = 0; i < 3; i++) {
+		byte* f_bytes = (byte*)&update_data[i];
+		msg[13+i*4] = f_bytes[3];
+		msg[14+i*4] = f_bytes[2];
+		msg[15+i*4] = f_bytes[1];
+		msg[16+i*4] = f_bytes[0];
+	}
+
+	uint16_t footerCRC = generateCRC16(msg, 25);
+	msg[25] = (footerCRC & 0x00FF);
+	msg[26] = (footerCRC >> 8);
+	
+	*msg_len = 27;
+}
+
+void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
+	// frame header
+	msg[0] = 0xA5;
+	msg[1] = 20;
+	msg[2] = 0x00;
+	msg[3] = get_seq();
+	msg[4] = generateCRC8(msg, 4);
+
+	// cmd 0x0301
+	msg[5] = 0x01;
+	msg[6] = 0x03;
+
+	// content ID
+	msg[7] = 0x04; // Draw 7 graphics
 	msg[8] = 0x01;
 
-	// sender ID 0x0003
-	msg[9] = 0x03;
-	msg[10] = 0x00;
+	// sender ID
+	msg[9] = data.robot_id;
+	msg[10] = data.robot_id >> 8;
 
-	// reciever ID 0x0103
-	msg[11] = 0x03;
+	// reciever ID
+	if (data.robot_id >> 8) {
+		// blue
+		msg[11] = data.robot_type+100; // DJI Moment
+	} else {
+		// red
+		msg[11] = data.robot_type;
+	}
 	msg[12] = 0x01;
 
-	byte graphic[15] = {0};
+	// generate graphics
+	byte* graphic = {0};
+	uint8_t operation = graphics_init ? 2 : 1;
 
-	graphic[0] = "rbt";
-	graphic[1] = "rbt";
-	graphic[2] = "rbt";
+	//generate_graphic(graphic, "name", operation, type, num_layers, color, start_angle, end_angle, width, start_x, start_y, radius, end_x, end_y);
+	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
+	// Copy lines 531-532 up to 6 more times
 
-	graphic[3] = (1 << 5) | (2 << 2) | (1 >> 2);
-	graphic[4] = (1 << 6) | (1 << 2) | (0 >> 7);
-	graphic[5] = (0 << 2) | (0 >> 8);
-	graphic[6] = (0 << 1);
-
-	graphic[7] = (100 >> 2);
-	graphic[8] = (100 << 8) | (115 >> 5);
-	graphic[9] = (115 << 6) | (125 >> 8);
-	graphic[10] = (125 << 3);
-
-	graphic[11] = (150 >> 2);
-	graphic[12] = (150 << 8) | (200 >> 5);
-	graphic[13] = (200 << 6) | (225 >> 8);
-	graphic[14] = (225 << 3);
-	// byte* graphic = generate_graphic("rbt", 1, 2, 1, 1, 0, 0, 0, 100, 100, 100, 0, 0);
-	// Serial.println("test2");
-	for (int i = 0; i < 15; i++) {
-		msg[13+i] = graphic[i];
-	}
-
-	uint16_t footerCRC = generateCRC16(msg, 28);
-	msg[28] = (footerCRC >> 8);
-	msg[29] = (footerCRC & 0xFF);
+	uint16_t footerCRC = generateCRC16(msg, 118);
+	msg[118] = (footerCRC & 0x00FF);
+	msg[119] = (footerCRC >> 8);
 	
-	int bsent = Serial2.write(msg, 30);	
-
-	// Serial.println("==============");
-	// Serial.print("Sent bytes: ");
-	// Serial.println(bsent);
-	// for (int i = 0; i < 30; i++) {
-	// 	Serial.print(i);
-	// 	Serial.print(": 0x");
-	// 	Serial.println(msg[i],HEX);
-	// }
+	*msg_len = 119;
 }
 
-byte* RefSystem::generate_client_hud_msg() {
-	byte msg[119];
-	msg[0] = 0x01;
-	msg[1] = 0x01;
+void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
+	// frame header
+	msg[0] = 0xA5;
+	msg[1] = 20;
 	msg[2] = 0x00;
-	msg[3] = data.robot_id;
-	msg[4] = 0x00;
-	msg[5] = data.robot_id;
-	msg[6] = 0x00;
-	msg[7] = 0x00;
+	msg[3] = get_seq();
+	msg[4] = generateCRC8(msg, 4);
+
+	// cmd 0x0301
+	msg[5] = 0x01;
+	msg[6] = 0x03;
+
+	// content ID
+	msg[7] = 0x04; // Draw 7 graphics
 	msg[8] = 0x01;
-	msg[9] = 0b01000100;
-	msg[10] = 0b10010000;
-	msg[16] = 0xFF;
-	msg[18] = 0xFF;
-}
 
-byte* RefSystem::generate_client_info_msg() {
-	byte msg[119] = {0};
+	// sender ID
+	msg[9] = data.robot_id;
+	msg[10] = data.robot_id >> 8;
 
-	msg[0] = 0x01;
-	msg[1] = 0x01;
-
-	msg[2] = (data.robot_id >> 8);
-	msg[3] = data.robot_id;
-
-	msg[4] = (data.robot_id >> 8);
-	msg[5] = data.robot_id;
-
-	byte* graphic = generate_graphic("rbt", 1, 2, 1, 1, 0, 0, 0, 100, 100, 100, 0, 0);
-	for (int i = 0; i < 15; i++) {
-		msg[6+i] = graphic[i];
+	// reciever ID
+	if (data.robot_id >> 8) {
+		// blue
+		msg[11] = data.robot_type+100; // DJI Moment
+	} else {
+		// red
+		msg[11] = data.robot_type;
 	}
+	msg[12] = 0x01;
 
-	Serial.println(sizeof(msg));
+	// generate graphics
+	byte* graphic = {0};
+	uint8_t operation = graphics_init ? 2 : 1;
 
-	return msg;
+	// generate_graphic(graphic, "name", operation, type, num_layers, color, start_angle, end_angle, width, start_x, start_y, radius, end_x, end_y);
+	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
+	// Copy lines 531-532 up to 6 more times
+
+	uint16_t footerCRC = generateCRC16(msg, 118);
+	msg[118] = (footerCRC & 0x00FF);
+	msg[119] = (footerCRC >> 8);
+	
+	*msg_len = 119;
 }
 
-// Generates a movemement command for the Sentry
-byte* RefSystem::generate_movement_command_msg() {
-	byte msg[119] = {0};
-	msg[0] = 0x02;
-	msg[1] = retrieve_message_id();
-	msg[2] = 0x00;
-	msg[3] = data.robot_id;
-	msg[4] = 0x00;
-	msg[5] = 0x07; // Sentry
-	msg[6] = 2;
-	// msg[20] = ((byte*)&f)[0]
-}
-
-byte* RefSystem::generate_graphic(char name[3], int operation, int type, int num_layers, int color, int start_angle, int end_angle, int width, int start_x, int start_y, int radius, int end_x, int end_y) {
-	byte graphic[15] = {0};
-
+void RefSystem::generate_graphic(byte* graphic, char name[3], int operation, int type, int num_layers, int color, int start_angle, int end_angle, int width, int start_x, int start_y, int radius, int end_x, int end_y) {
 	graphic[0] = name[0];
 	graphic[1] = name[1];
 	graphic[2] = name[2];
@@ -494,7 +621,7 @@ byte* RefSystem::generate_graphic(char name[3], int operation, int type, int num
 	return graphic;
 }
 
-uint8_t RefSystem::retrieve_message_id() {
-	message_id++;
-	return message_id;
+uint8_t RefSystem::get_seq() {
+	seq++;
+	return seq;
 }
