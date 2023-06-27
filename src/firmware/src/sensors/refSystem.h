@@ -116,6 +116,16 @@ struct RefData {
     int chassis_on = -1;
     int gimbal_on = -1;
     int shooter_on = -1;
+
+    float sentry_pos[3];
+    float infantry_pos[3];
+    float sentry_goal[3];
+    float infantry_goal[3];
+
+    float autonomy_pos[3];
+
+    float sentry_send_goal[3];
+    bool pending_sentry_send = false;
 };
 
 class RefSystem {
@@ -123,17 +133,15 @@ class RefSystem {
         RefSystem();
         void init();
         bool read_serial();
-        void write_serial();
+        void write_serial(float*);
 
-        byte* generate_client_hud_msg();
-        byte* generate_client_info_msg();
-        byte* generate_movement_command_msg();
-        byte* generate_state_msg();
-        byte* generate_graphic(char[3], int, int, int, int, int, int, int, int, int, int, int, int);
-        uint8_t retrieve_message_id();
+        void write_update(byte*, int*, uint16_t, int, float*);
+        void generate_graphic(byte*, char[3], int, int, int, int, int, int, int, int, int, int, int, int);
+        void write_primary_graphics_update(byte*, int*);
+        void write_secondary_graphics_update(byte*, int*);
+        uint8_t get_seq();
 
         RefData data;
-        uint8_t message_id = 0;
 
         // Display rendering
         bool mapMode = false;
@@ -149,6 +157,12 @@ class RefSystem {
         float infantryWaypoints[8][2];
 
         uint8_t seq = 0;
+
+        int send_sw;
+        int graphics_sw;
+
+        bool send_graphics = false;
+        bool graphics_init = false;
 };
 
 #endif
