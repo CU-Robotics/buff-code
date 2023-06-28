@@ -1,0 +1,199 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="buffbot">
+  <material name="black">
+    <color rgba="0 0 0 1"/>
+  </material>
+
+  <material name="white">
+    <color rgba="1 1 1 1"/>
+  </material>
+
+  <material name="dark-gray">
+    <color rgba="0.33 0.35 0.36 1"/>
+  </material>
+
+  <material name="light-gray">
+    <color rgba="0.63 0.64 0.63 1"/>
+  </material>
+
+  <material name="gold">
+    <color rgba="0.81 0.72 0.48 1"/>
+  </material>
+
+  <xacro:macro name="default_cylinder_link" params="link_name radius length color mass">
+    <link name="${link_name}">
+        <visual>
+         <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+           <cylinder radius="${radius}" length="${length}"/>
+         </geometry>
+         <material name="${color}"/>
+       </visual>
+
+       <collision>
+         <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+           <cylinder radius="${radius}" length="${length}"/>
+         </geometry>
+       </collision>
+
+       <inertial>
+         <origin xyz="0 0 0" rpy="0 0 0"/>
+         <mass value="${mass}"/>
+         <inertia ixx="${(1/12) * ((length * length) + (3 * (radius * radius))) * mass}"  ixy="0"  ixz="0" 
+          iyy="${(1/12) * ((length * length) + (3 * (radius * radius))) * mass}" iyz="0" izz="${(1/2) * mass * radius * radius}" />
+       </inertial>
+      </link>
+  </xacro:macro>
+
+  <xacro:macro name="no_collision_cylinder_link" params="link_name radius length color mass">
+    <link name="${link_name}">
+        <visual>
+         <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+           <cylinder radius="${radius}" length="${length}"/>
+         </geometry>
+         <material name="${color}"/>
+       </visual>
+
+       <inertial>
+         <origin xyz="0 0 0" rpy="0 0 0"/>
+         <mass value="${mass}"/>
+         <inertia ixx="${(1/12) * ((length * length) + (3 * (radius * radius))) * mass}"  ixy="0"  ixz="0" 
+          iyy="${(1/12) * ((length * length) + (3 * (radius * radius))) * mass}" iyz="0" izz="${(1/2) * mass * radius * radius}" />
+       </inertial>
+      </link>
+  </xacro:macro>
+
+  <xacro:macro name="default_box_link" params="link_name x y z color mass">
+    <link name="${link_name}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${x} ${y} ${z}"/>
+        </geometry>
+       <material name="${color}"/>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${x} ${y} ${z}"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass}"/>
+        <inertia ixx="${(1/12) * ((z * z) + (y * y)) * mass}"  ixy="0"  ixz="0" 
+          iyy="${(1/12) * ((x * x) + (z * z)) * mass}" iyz="0" izz="${(1/12) * ((x * x) + (y * y)) * mass}" />
+      </inertial>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="swerve_hub" params="id l w x y a">
+    <xacro:default_cylinder_link link_name="${id}_swerve" radius="${w*0.3}" length="0.06" color="black" mass="5"/>
+    <gazebo reference="${id}_swerve"> 
+      <material>Gazebo/Black</material>
+      <selfCollide>true</selfCollide>
+      <static>false</static>
+    </gazebo>
+
+    <joint name="${id}_steer" type="continuous">
+      <parent link="base_link"/>
+      <child link="${id}_swerve"/>
+      <origin xyz="${x * l} ${y * w} 0" rpy="0 0 ${a}"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+
+    <transmission name="trans_${id}">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${id}_steer">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint> 
+      <actuator name="${id}_steer_motor">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  </xacro:macro>
+
+  <xacro:macro name="swerve_indicator" params="l w x y">
+    <xacro:no_collision_cylinder_link link_name="swerve_ind" radius="${w*0.26}" length="0.075" color="gold" mass="0"/>
+    <gazebo reference="swerve_ind"> 
+      <material>Gazebo/Gold</material>
+      <selfCollide>true</selfCollide>
+      <static>false</static>
+    </gazebo>
+    <joint name="swerve_xy" type="fixed">
+      <parent link="base_link"/>
+      <child link="swerve_ind"/>
+      <origin xyz="${x * l} ${y * w} 0"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="swerve_wheel" params="id l w x y">
+    <xacro:default_cylinder_link link_name="${id}_wheel" radius="${w*0.15}" length="0.025" color="light-gray" mass="5"/>
+
+    <gazebo reference="${id}_wheel"> 
+      <material>Gazebo/White</material>
+      <selfCollide>true</selfCollide>
+      <static>false</static>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
+    </gazebo>
+
+    <joint name="${id}_drive" type="continuous">
+      <parent link="${id}_swerve"/>
+      <child link="${id}_wheel"/>
+      <origin xyz="0 0 ${w*-0.16}" rpy="${pi / 2.0} 0 0"/>
+      <axis xyz="0 0 1"/>
+    </joint>   
+
+    <transmission name="trand_${id}">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${id}_drive">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint> 
+      <actuator name="${id}_drive_motor">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  </xacro:macro>
+
+  <xacro:macro name="swerve" params="id l w x y a">
+    <xacro:swerve_hub id="${id}" l="${l}" w="${w}" x="${x}" y="${y}" a="${a}"/>
+    <xacro:swerve_wheel id="${id}" l="${l}" w="${w}" x="${x}" y="${y}"/>
+       
+  </xacro:macro>
+
+  <xacro:macro name="swerve_chassis" params="w l g">
+    <xacro:default_box_link link_name="base_link" x="${l * 2}" y="${w * 2}" z="${0.025}" color="black" mass="10"/>
+    <gazebo reference="base_link"> 
+      <material>Gazebo/Black</material>
+      <selfCollide>true</selfCollide>
+      <static>false</static>
+      <mu1>0.5</mu1>
+      <mu2>0.5</mu2>
+    </gazebo>
+
+    <xacro:swerve id="fl" l="${l}" w="${w}" x="1" y="1" a="${pi / 4}"/>
+    <xacro:swerve id="fr" l="${l}" w="${w}" x="1" y="-1" a="${-pi / 4}"/>
+    <xacro:swerve id="rr" l="${l}" w="${w}" x="-1" y="-1" a="${-pi / 4 * 3}"/>
+    <xacro:swerve id="rl" l="${l}" w="${w}" x="-1" y="1" a="${pi / 4 * 3}"/>
+
+    <xacro:swerve_indicator l="${l}" w="${w}" x="1" y="1"/>
+
+  </xacro:macro>
+
+  <xacro:swerve_chassis w="0.17" l="0.17" g="0.1"/>
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/buffbot</robotNamespace>
+    </plugin>
+  </gazebo>
+</robot>
