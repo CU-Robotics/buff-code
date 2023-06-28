@@ -1,0 +1,227 @@
+##############################
+#
+#
+#       The Buff-Stuff  
+#
+#
+##############################
+
+robot_type: infantry
+
+# Specify our nodes from buffpy/lib
+# spinup perception and comms here
+buff_nodes:
+  buff_rust:
+    files: [comms_node, celestial.py, path_manager.py, ralphie.py]
+  # buffnet:
+    # sudo: True
+    # files: []
+
+# Examle of includig ros
+# Maybe some kind of option to shut this down via cmdline
+#ros-nodes:
+#   rqt_plot:
+#     files: [rqt_plot]
+#     package: rqt_plot
+
+# The Teensy... Ti-ta-ti-ti-ta-ti-ti-ta-ta-ta-la-ba-ba-ba-ba-ba-da-la-ba-ba-ba-ba-da-la-ba-ba-baa, Ti-ta-ti-li-ta-ti-li-ti-taa, Ti-ta-ti-li... /*o*)/ (gasps) Ti-ta-ti-li-ta-ti-li-ta-ti-li-ta-ti-li-ta-ti-li-ti-ta-ti-ti-ta-ti-ti-taaaaa♪ PEPARING THE KRABBY PATTY!
+teensy_vid: 0x16C0
+teensy_pid: 0x0486
+
+# Defines the sensor index for
+# HID packets. String is the topic
+sensor_index:
+  - lsm6dsox
+  - icm20649
+  - dr16
+  - refsys
+  - revEnc
+
+# So HID knows what size buffer
+sensor_buffers:
+  - 9
+  - 6
+  - 7
+  - 8
+  - 4
+
+sensor_config:
+  - [0.0]
+  - [0.0]
+  - [0.0]
+  - [0.0]
+  # rev encoders [offset1, filter_gain1, offset2, filter_gain2, offset3, filter_gain3...] offset > 1000 => use motor encoder[offset / 1000] instead
+  - [151.1, 0.0, 163.0, 0.0, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
+
+##############################
+#
+#
+#       RM CAN Interface  
+#
+#
+##############################
+
+# This defines the indices of all the motors
+# on the CAN bus (index = row, starts at zero)
+motor_index:
+  - yp_drive    # V0
+  - xp_drive    # V1
+  - yn_drive    # V2
+  - xn_drive    # V3
+  - yaw_1       # V4
+  - yaw_2       # V5
+  - pitch_l     # V6
+  - pitch_r     # V7
+  - flywheel_l  # V8
+  - flywheel_r  # V9
+  - feeder_l    # V10
+  - feeder_r    # V11
+
+#   Uses the motor indices to determine a can output packet index and device return value.
+# Once this is configured properly CAN protocol should be abstracted into motor_<op>(index, *args),
+# this behavior will be available system wide.
+# [can bus, esc type, esc id] see datasheets if you don't understand
+motor_can_index:
+  - [1, 1, 1]
+  - [1, 1, 2]
+  - [1, 1, 3]
+  - [1, 1, 4]
+  - [1, 1, 5]
+  - [1, 1, 6]
+  - [2, 1, 1]
+  - [2, 1, 2]
+  - [2, 1, 3]
+  - [2, 1, 4]
+  - [2, 0, 5]
+  - [2, 0, 6]
+
+
+##############################
+#uh 
+#
+#         Controllers
+#
+#
+##############################
+
+#
+#     Kinematic Transforms
+#
+#   These transforms are used to convert a control input into motor references [[angle; speed]: n],
+# or sensor feedback into a state estimate [x,y,theta,phi,psi,gamma] (inverse, forward).
+# Motor controls are a linear combo of the state and reference: U = Nr - Kx
+# reference comes from a control input (user/hybrid/auto)
+# states come from the various onboard sensors & estimators.
+
+#   Inverse
+#  least squares kinematic gains
+# [Vx, Vy, Omega, dPhi, dPsi1, dGamma, dShooter] -> [V0, V1, V2, V3, V4, V5, V6, V7, V8]
+inverse_kinematics:
+  - [  0.0,   -1.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V0
+  - [ -1.0,    0.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V1
+  - [  0.0,    1.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V2
+  - [  1.0,    0.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V3
+  - [  0.0,    0.0,    0.2,    0.0,    1.0,    0.0,    0.0] # V4
+  - [  0.0,    0.0,    0.2,    0.0,    1.0,    0.0,    0.0] # V5
+  - [  0.0,    0.0,    0.0,   -1.0,    0.0,    0.0,    0.0] # V6
+  - [  0.0,    0.0,    0.0,    1.0,    0.0,    0.0,    0.0] # V7
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0] # V8
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   -1.0] # V9
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    1.0,    0.0] # V10
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,   -1.0,    0.0] # V11
+
+#   Forward
+# Used by encoder estimator (kee)
+# [V0, V1, V2, V3, V4, V5, V6, V7, V8] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma, dShooter]
+forward_kinematics:
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vy = (V1 - V3) / 2
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPhi = V4
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
+
+#
+#     Motor Controllers
+#
+#   Information to control the operation of 
+# on board motors. The goal of these vectors
+# is to track the motor references faster than
+# they can update.
+
+#    Motor Controlelr Types
+#   Motor controllers will set their third feedback term to either a system power value or a
+# gravitational offset. The idea is we can efficiently conrol and reconfig a system invovling
+# power sensitive actuation and inverse pendulum like linkages.
+# 0 = full state feedback, 1 = no velocity reference fsb, 2 = power limited fsb, 3 = fsb w/ grav compensation (pendulum), 4/5 = pitch (use rev encoder), 6 = yaw, 7 = hero
+motor_controller_types:
+  - [2]
+  - [2]
+  - [2]
+  - [2]
+  - [6]
+  - [-4]
+  - [4]
+  - [5]
+  - [0]
+  - [0]
+  - [0]
+  - [0]
+
+
+#    Motor Controller Gains
+#   Motor gains are multiplied by the motor feedback to produce a control signal. The control law
+# this imposes on the system is 
+#     ui = K[i] * ([ref_angle; ref_speed; 0] - [angle_fb; speed_fb; Fpow/pend])
+#
+# where K[i] is the ith row (1x3) and '*' is a vector inner product ((1x3)(3x1)).
+#         Kp,         Kd,   (Kpow/Kpend) # Motor the output is routed to
+motor_gains:
+  - [0.0, 0.005, 0.0]       # motor 0
+  - [0.0, 0.005, 0.0]       # motor 1
+  - [0.0, 0.005, 0.0]       # motor 2
+  - [0.0, 0.005, 0.0]       # motor 3
+  - [0.0, 0.005, 0.0]       # motor 4 yaw 1
+  - [0.0, 0.005, 0.0]       # motor 5 yaw 2
+  - [0.0, 0.007, 0.19]       # motor 6 pitch l
+  - [0.0, 0.007, -0.19]       # motor 7 pitch r
+  - [0.0, 0.008, 0.0]       # motor 8 flywheel l
+  - [0.0, 0.008, 0.0]       # motor 9 flywheel r
+  - [0.0, 0.005, 0.0]       # motor 10 feeder l
+  - [0.0, 0.005, 0.0]       # motor 11 feeder r
+
+motor_filters:
+  - [0.5]
+  - [0.5]
+  - [0.5]
+  - [0.5]
+  - [0.25]
+  - [0.25]
+  - [0.5]
+  - [0.5]
+  - [0.5]
+  - [0.5]
+  - [0.5]
+  - [0.5]
+
+#    Motor output Limits
+#   All our actuators are continous DC motors. All of the outputs are in terms of radians.
+# We can set limits on the output by limiting our input. The reference for the ith motor's 
+# controller is bounded by row i. This is not sufficient to gaurantee the motor will not 
+# leave these boundaries. IFF The closed loop system is stable => bounded(r) -> bounded(y).
+# Set the low boundary greater or equal to the high boundary to disable the limit check.
+#   [ low roll over limit, high roll over limit, low angle, high angle]
+motor_limits:
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0] #-2.68, 2.68]
+  - [0.0, 0.0, 0.0, 0.0] #-2.68, 2.68]
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0]
