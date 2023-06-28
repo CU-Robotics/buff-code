@@ -73,12 +73,12 @@ struct Device_Manager {
 
 	int yaw_reference_buffer_len = 20;
 	float yaw_reference_buffer[20];
+	float prev_yaw_autonomy_err = 0;
 
 	int prev_ref_read_micros = 0;
-
 	int safety_counter = 0;
 
-	float prev_yaw_autonomy_err = 0;
+	unsigned long last_autonomy_read;
 };
 
 #endif
