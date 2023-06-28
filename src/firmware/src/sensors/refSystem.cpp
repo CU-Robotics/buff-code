@@ -445,24 +445,23 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		send_sw = 0;
 	}
 
-	if (send_graphics) {
-		byte msg_graphics[128] = {0};
-		int msg_graphics_len;
-		switch (graphics_sw) {
-			// Update primary graphics
-			case 0:
-				write_primary_graphics_update(msg_graphics, &msg_graphics_len);
-				graphics_sw++;
-				break;
-			case 1:
-				write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
-				graphics_sw = 0;
-				break;
-			default:
-				graphics_sw = 0;
-		}
-		if (Serial2.write(msg_graphics, msg_graphics_len)) graphics_init = true;
-	}
+	byte msg_graphics[128] = {0};
+	int msg_graphics_len;
+	// switch (graphics_sw) {
+	// 	// Update primary graphics
+	// 	case 0:
+	// 		write_primary_graphics_update(msg_graphics, &msg_graphics_len);
+	// 		graphics_sw++;
+	// 		break;
+	// 	case 1:
+	// 		write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
+	// 		graphics_sw = 0;
+	// 		break;
+	// 	default:
+	// 		graphics_sw = 0;
+	// }
+	write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
+	Serial2.write(msg_graphics, msg_graphics_len);
 }
 
 // Send an update out to another robot
@@ -506,6 +505,10 @@ void RefSystem::write_update(byte* msg, int* msg_len, uint16_t content_id, int r
 }
 
 void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
+
+
+	// YOU ARE IN THE WRONG PLACE
+
 	// frame header
 	msg[0] = 0xA5;
 	msg[1] = 20;
@@ -553,7 +556,7 @@ void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
 void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	// frame header
 	msg[0] = 0xA5;
-	msg[1] = 20;
+	msg[1] = 21; // CHANGE
 	msg[2] = 0x00;
 	msg[3] = get_seq();
 	msg[4] = generateCRC8(msg, 4);
@@ -563,58 +566,70 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	msg[6] = 0x03;
 
 	// content ID
-	msg[7] = 0x04; // Draw 7 graphics
+	msg[7] = 0x01; // Draw 7 graphics // CHANGE
 	msg[8] = 0x01;
 
 	// sender ID
+	//Serial.println(data.robot_id, HEX);
 	msg[9] = data.robot_id;
-	msg[10] = data.robot_id >> 8;
+	msg[10] = 0x00;
 
 	// reciever ID
-	if (data.robot_id >> 8) {
+	/*if (data.robot_id >> 8) {
 		// blue
 		msg[11] = data.robot_type+100; // DJI Moment
 	} else {
 		// red
 		msg[11] = data.robot_type;
-	}
+	}*/
+	msg[11] = data.robot_id;
 	msg[12] = 0x01;
 
 	// generate graphics
-	byte* graphic = {0};
-	uint8_t operation = graphics_init ? 2 : 1;
-
-	// generate_graphic(graphic, "name", operation, type, num_layers, color, start_angle, end_angle, width, start_x, start_y, radius, end_x, end_y);
+	byte graphic[15] = {0};
+	uint8_t operation = graphics_init ? 1 : 2;
+	int type = 2;
+	int num_layers = 9;
+	int color = 1;
+	int start_angle = 0;
+	int end_angle = 0;
+	int width = 4;
+	int start_x = 1920/2 + selector_pos[0];
+	int start_y = 1080/2 + selector_pos[1];
+	int radius = 10;
+	int end_x = 0;
+	int end_y = 0;
+	generate_graphic(graphic, "rbt", operation, type, num_layers, color, start_angle, end_angle, width, start_x, start_y, radius, end_x, end_y);
 	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
 	// Copy lines 531-532 up to 6 more times
 
-	uint16_t footerCRC = generateCRC16(msg, 118);
-	msg[118] = (footerCRC & 0x00FF);
-	msg[119] = (footerCRC >> 8);
+	uint16_t footerCRC = generateCRC16(msg, 28); // CHANGE
+	msg[28] = (footerCRC & 0x00FF); // CHANGE
+	msg[29] = (footerCRC >> 8); // CHANGE
 	
-	*msg_len = 119;
+	*msg_len = 30;
 }
 
 void RefSystem::generate_graphic(byte* graphic, char name[3], int operation, int type, int num_layers, int color, int start_angle, int end_angle, int width, int start_x, int start_y, int radius, int end_x, int end_y) {
 	graphic[0] = name[0];
 	graphic[1] = name[1];
 	graphic[2] = name[2];
-
-	graphic[3] = (operation << 5) | (type << 2) | (num_layers >> 2);
-	graphic[4] = (num_layers << 6) | (color << 2) | (start_angle >> 7);
-	graphic[5] = (start_angle << 2) | (end_angle >> 8);
-	graphic[6] = (end_angle << 1);
-
-	graphic[7] = (width >> 2);
-	graphic[8] = (width << 8) | (start_x >> 5);
-	graphic[9] = (start_x << 6) | (start_y >> 8);
-	graphic[10] = (start_y << 3);
-
-	graphic[11] = (radius >> 2);
-	graphic[12] = (radius << 8) | (end_x >> 5);
-	graphic[13] = (end_x << 6) | (end_y >> 8);
-	graphic[14] = (end_y << 3);
-
+	
+	graphic[3] = (operation) | (type << 3) | (num_layers << 6); //0x49;
+	graphic[4] = (num_layers >> 2) | (color << 2) | (start_angle << 6); //0x04;
+	graphic[5] = (start_angle >> 2) | (end_angle << 7); //0x00;
+	graphic[6] = (end_angle >> 1); //0x00;
+	
+	graphic[7] = (width);
+	graphic[8] = (width >> 8) | (start_x << 2);
+	graphic[9] = (start_x >> 6) | (start_y << 5);
+	graphic[10] = (start_y >> 3);
+	
+	graphic[11] = (radius);
+	graphic[12] = (radius >> 8) | (end_x << 2);
+	graphic[13] = (end_x >> 6) | (end_y << 5);
+	graphic[14] = (end_y >> 3);
+	
 	return graphic;
 }
 

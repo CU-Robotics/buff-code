@@ -149,10 +149,48 @@ int DR16::generate_control(RefSystem *ref) {
 	bool r_mouse_button = tmp[13];
 
 	// Send autonomy command
-	if (key_b && !b_prev) {
-		ref->send_graphics = true;
+	if (key_b) {
+		Serial.println("pressing B");
+		ref->graphics_init = true;
+	} else {
+		ref->graphics_init = false;
 	}
 	b_prev = key_b;
+
+	// Toggle Sentry Control HUD
+	if (key_f && !f_prev) sentry_control_hud = !sentry_control_hud;
+	f_prev = key_f;
+
+	if (sentry_control_hud) {
+		ref->selector_pos[0] += int(mouse_x * 1.0);
+		ref->selector_pos[1] -= int(mouse_y * 1.0);
+		if (r_mouse_button) selecting_rts_pos = false; // Cancel command
+		else if (l_mouse_button && !selecting_rts_pos) {
+			temp_rts_pos[0] = (ref->selector_pos[0]+300)/50.0;
+			temp_rts_pos[1] = (ref->selector_pos[1]+200)/50.0;
+			selecting_rts_pos = true;
+		} else if (!l_mouse_button && l_mouse_button_prev && selecting_rts_pos) {
+			float point_to[2] = {0};
+			point_to[0] = (ref->selector_pos[0]+300)/50.0;
+			point_to[1] = (ref->selector_pos[0]+200)/50.0;
+			ref->data.sentry_send_goal[0] = temp_rts_pos[0];
+			ref->data.sentry_send_goal[1] = temp_rts_pos[1];
+			ref->data.sentry_send_goal[2] = atan2(point_to[1]-temp_rts_pos[1], point_to[0]-temp_rts_pos[0]);
+			selecting_rts_pos = false;
+			Serial.println(ref->data.sentry_send_goal[0]);
+			Serial.println(ref->data.sentry_send_goal[1]);
+			Serial.println(ref->data.sentry_send_goal[2]);
+		} else if (!selecting_rts_pos) {
+			if (ref->selector_pos[0] > 300) ref->selector_pos[0] = 300;
+			else if (ref->selector_pos[0] < -300) ref->selector_pos[0] = -300;
+			if (ref->selector_pos[1] > 200) ref->selector_pos[1] = 200;
+			else if (ref->selector_pos[1] < -200) ref->selector_pos[1] = -200;
+		}
+	} else {
+		ref->selector_pos[0] = -1000;
+		ref->selector_pos[1] = -1000;
+	}
+	l_mouse_button_prev = l_mouse_button;
 
 	float feedrate_bps_continuous = 8;
 	float feedrate_bps_burst = 16;
@@ -187,10 +225,6 @@ int DR16::generate_control(RefSystem *ref) {
 		} 
 		// Infantry, Standard, and Hero -- User driving
 		else {
-			// Toggle Sentry Control HUD
-			if (key_f && !f_prev) sentry_control_hud = !sentry_control_hud;
-			f_prev = key_f;
-
 			if (key_r && !r_prev) {
 				ref->data.sentry_send_goal[0] = 0.5;
 				ref->data.sentry_send_goal[1] = 7.5;
@@ -203,6 +237,7 @@ int DR16::generate_control(RefSystem *ref) {
 			if (key_g && !g_prev) no_path = true;
 			g_prev = key_g;
 			if (ref->data.robot_type == 3 && ((key_c && !c_prev) || r_switch == 1.0)) {
+				Serial.println("Lets recall");
 				no_path = false;
 				ref->data.autonomy_pos[0] = 0.5;
 				ref->data.autonomy_pos[1] = 7.5;
@@ -255,7 +290,7 @@ int DR16::generate_control(RefSystem *ref) {
 				}
 			} else data[5] = 0;
 
-			data[6] = flywheel_radps; // Always keep the flywheel on
+			data[6] = 0;//flywheel_radps; // Always keep the flywheel on
 
 			if (r_mouse_button) return AUTONOMY_MODE; // Engage autonomous gimbal when right mouse button is pressed
 			else return USER_DRIVE_MODE;
@@ -291,6 +326,7 @@ int DR16::generate_control(RefSystem *ref) {
 		}
 		else return ROBOT_DEMO_MODE;
 	} else { // Engage SAFETY mode when the switch is in position 1. Also acts as the default.
+		no_path = true;
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 			data[i] = 0;
 		}

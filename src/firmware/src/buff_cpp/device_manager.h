@@ -79,6 +79,8 @@ struct Device_Manager {
 	int safety_counter = 0;
 
 	unsigned long last_autonomy_read;
+
+	
 };
 
 #endif
