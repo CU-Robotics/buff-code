@@ -545,13 +545,12 @@ void Device_Manager::step_controllers(float dt) {
 
 				// Sentry: fire if we are looking at the target
 				if (ref.data.robot_type == 7) {
-					if (fabs(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]) > 0.3) { // Within 0.3rad on either side
+					if (fabs(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]) > 0.3 || controller_manager.autonomy_input[6] > 0) { // Within 0.3rad on either side
 						input_buffer[5] = 0;
 					}
 				}
 			} else if (ref.data.robot_type == 7) {
 				input_buffer[5] = 0;
-			} else {
 			}
 		}
 		// AUTO MOVEMENT
