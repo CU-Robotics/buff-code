@@ -562,6 +562,7 @@ void Device_Manager::step_controllers(float dt) {
 			Serial.println("Following path");
 			Serial.println(controller_manager.autonomy_input[0]);
 			Serial.println(controller_manager.autonomy_input[1]);
+			
 			float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]), (controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
 			if (controller_manager.autonomy_input[6] == 2) {
 				float dist = sqrt(sq(controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]) + sq(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
