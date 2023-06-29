@@ -164,7 +164,7 @@ motor_controller_types:
   - [5]
   - [0]
   - [0]
-  - [7]
+  - [0]
 
 
 #    Motor Controller Gains

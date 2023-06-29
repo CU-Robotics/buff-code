@@ -164,6 +164,7 @@ class RefSystem {
         bool graphics_init = false;
 
         int selector_pos[2] = {0};
+        float temp_rts_pos[2] = {0};
 };
 
 #endif

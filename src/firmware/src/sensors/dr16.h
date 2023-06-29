@@ -73,7 +73,6 @@ struct DR16 {
 		bool l_mouse_button_prev = 0;
 
 		bool selecting_rts_pos = false;
-		float temp_rts_pos[2] = {0};
 		
 		HardwareSerial* serial;
 };

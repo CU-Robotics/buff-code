@@ -166,17 +166,18 @@ int DR16::generate_control(RefSystem *ref) {
 		ref->selector_pos[1] -= int(mouse_y * 1.0);
 		if (r_mouse_button) selecting_rts_pos = false; // Cancel command
 		else if (l_mouse_button && !selecting_rts_pos) {
-			temp_rts_pos[0] = (ref->selector_pos[0]+300)/50.0;
-			temp_rts_pos[1] = (ref->selector_pos[1]+200)/50.0;
+			ref->temp_rts_pos[0] = (ref->selector_pos[0]+300)/50.0;
+			ref->temp_rts_pos[1] = (ref->selector_pos[1]+200)/50.0;
 			selecting_rts_pos = true;
 		} else if (!l_mouse_button && l_mouse_button_prev && selecting_rts_pos) {
 			float point_to[2] = {0};
 			point_to[0] = (ref->selector_pos[0]+300)/50.0;
 			point_to[1] = (ref->selector_pos[0]+200)/50.0;
-			ref->data.sentry_send_goal[0] = temp_rts_pos[0];
-			ref->data.sentry_send_goal[1] = temp_rts_pos[1];
-			ref->data.sentry_send_goal[2] = atan2(point_to[1]-temp_rts_pos[1], point_to[0]-temp_rts_pos[0]);
+			ref->data.sentry_send_goal[0] = ref->temp_rts_pos[0];
+			ref->data.sentry_send_goal[1] = ref->temp_rts_pos[1];
+			ref->data.sentry_send_goal[2] = atan2(point_to[1]-ref->temp_rts_pos[1], point_to[0]-ref->temp_rts_pos[0]);
 			selecting_rts_pos = false;
+			ref->data.pending_sentry_send = true;
 			Serial.println(ref->data.sentry_send_goal[0]);
 			Serial.println(ref->data.sentry_send_goal[1]);
 			Serial.println(ref->data.sentry_send_goal[2]);
@@ -185,6 +186,8 @@ int DR16::generate_control(RefSystem *ref) {
 			else if (ref->selector_pos[0] < -300) ref->selector_pos[0] = -300;
 			if (ref->selector_pos[1] > 200) ref->selector_pos[1] = 200;
 			else if (ref->selector_pos[1] < -200) ref->selector_pos[1] = -200;
+			ref->temp_rts_pos[0] = -1000;
+			ref->temp_rts_pos[1] = -1000;
 		}
 	} else {
 		ref->selector_pos[0] = -1000;
@@ -229,7 +232,7 @@ int DR16::generate_control(RefSystem *ref) {
 				ref->data.sentry_send_goal[0] = 0.5;
 				ref->data.sentry_send_goal[1] = 7.5;
 				ref->data.sentry_send_goal[2] = 0.0;
-				ref->data.pending_sentry_send = false;
+				ref->data.pending_sentry_send = true;
 				Serial.println("Init recall command (dr16.cpp 192)");
 			}
 			r_prev = key_r;
@@ -290,7 +293,7 @@ int DR16::generate_control(RefSystem *ref) {
 				}
 			} else data[5] = 0;
 
-			data[6] = 0;//flywheel_radps; // Always keep the flywheel on
+			data[6] = flywheel_radps; // Always keep the flywheel on
 
 			if (r_mouse_button) return AUTONOMY_MODE; // Engage autonomous gimbal when right mouse button is pressed
 			else return USER_DRIVE_MODE;
