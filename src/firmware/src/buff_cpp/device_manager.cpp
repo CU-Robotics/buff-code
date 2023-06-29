@@ -518,8 +518,8 @@ void Device_Manager::step_controllers(float dt) {
 	float pitch_autonomy_speed = 150 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
 	
 	float yaw_autonomy_err = wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
-	float yaw_autonomy_speed = -100 * yaw_autonomy_err;
-	yaw_autonomy_speed += -0.5 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt;
+	float yaw_autonomy_speed = -90 * yaw_autonomy_err;
+	yaw_autonomy_speed += 0.0 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt;
 	prev_yaw_autonomy_err = yaw_autonomy_err;
 	//Serial.println(controller_manager.kee_imu_pos[4]);
 
@@ -545,13 +545,12 @@ void Device_Manager::step_controllers(float dt) {
 
 				// Sentry: fire if we are looking at the target
 				if (ref.data.robot_type == 7) {
-					if (fabs(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]) > 0.3) { // Within 0.3rad on either side
+					if (fabs(controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]) > 0.3 || controller_manager.autonomy_input[6] > 0) { // Within 0.3rad on either side
 						input_buffer[5] = 0;
 					}
 				}
 			} else if (ref.data.robot_type == 7) {
 				input_buffer[5] = 0;
-			} else {
 			}
 		}
 		// AUTO MOVEMENT
@@ -559,9 +558,6 @@ void Device_Manager::step_controllers(float dt) {
 		controller_manager.autonomy_goal[1] = ref.data.autonomy_pos[1];
 		controller_manager.autonomy_goal[4] = ref.data.autonomy_pos[2];
 		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && !receiver.no_path) {
-			Serial.println("Following path");
-			Serial.println(controller_manager.autonomy_input[0]);
-			Serial.println(controller_manager.autonomy_input[1]);
 			float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]), (controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
 			if (controller_manager.autonomy_input[6] == 2) {
 				float dist = sqrt(sq(controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]) + sq(controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
@@ -572,21 +568,6 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[1] = controller_manager.autonomy_input[2] * sin(controller_manager.enc_odm_pos[4] - angle_to_target);
 			}
 		}
-
-		// Hero firing logic (in conjunction with controller_manager.set_feedback())
-		// if (ref.data.robot_type == 1) {
-		// 	if (!controller_manager.hero_firing && input_buffer[5]) {
-		// 		controller_manager.hero_feed_bias += 2*PI*36;
-		// 		controller_manager.hero_firing = true;
-		// 	}
-		// 	if (controller_manager.hero_firing) input_buffer[5] = 500;
-		// 	else input_buffer[5] = 0;
-		// }
- 
-		// controller_manager.global_pitch_reference += input_buffer[3] * dt;
-		// float pitch_ang_err = controller_manager.global_pitch_reference - controller_manager.gimbal_pitch_angle;
-		// input_buffer[3] += ppc_gain * pitch_ang_err;
-		// input_buffer[3] = controller_manager.gimbal_pitch_angle;
 
 		controller_manager.global_yaw_reference -= (yaw_reference_buffer[0]*17/246.0) * dt;
 
