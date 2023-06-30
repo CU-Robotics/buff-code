@@ -567,6 +567,10 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[0] = controller_manager.autonomy_input[2] * cos(controller_manager.enc_odm_pos[4] - angle_to_target);
 				input_buffer[1] = controller_manager.autonomy_input[2] * sin(controller_manager.enc_odm_pos[4] - angle_to_target);
 			}
+			if (controller_manager.autonomy_input[5]) {
+				input_buffer[4] = yaw_autonomy_speed;
+				yaw_reference_buffer[0] = yaw_autonomy_speed;
+			}
 		}
 
 		controller_manager.global_yaw_reference -= (yaw_reference_buffer[0]*17/246.0) * dt;
