@@ -328,6 +328,7 @@ bool RefSystem::read_serial() {
             }
 
 			else if (cmd_id == 0x301) {
+				Serial.println("fortnite!!!");
 				int8_t f_bytes[4] = {0};
 
 				while (Serial2.readBytes(&temp, 1) != 1) {}
