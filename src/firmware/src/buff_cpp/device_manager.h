@@ -76,6 +76,7 @@ struct Device_Manager {
 	float prev_yaw_autonomy_err = 0;
 
 	int prev_ref_read_micros = 0;
+	int prev_ref_write_micros = 0;
 	int safety_counter = 0;
 
 	unsigned long last_autonomy_read;
