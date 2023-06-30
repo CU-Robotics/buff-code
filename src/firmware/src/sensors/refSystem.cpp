@@ -328,77 +328,88 @@ bool RefSystem::read_serial() {
             }
 
 			else if (cmd_id == 0x301) {
-				Serial.println(data_length);
-				// int8_t f_bytes[4] = {0};
+				int8_t f_bytes[4] = {0};
 
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// temp_stat = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// temp_stat = temp_stat | (temp<<8);   
-				// int command = temp_stat;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp_stat | (temp<<8);   
+				int command = temp_stat;
 
-				// float tmp_float_1;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[0] = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[1] = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[2] = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[3] = temp;
-				// memcpy(&tmp_float_1, f_bytes, 4);
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp_stat | (temp<<8);   
+				int send_id = temp_stat;
+
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				temp_stat = temp_stat | (temp<<8);   
+				int rec_id = temp_stat;
+
+				float tmp_float_1;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[3] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[2] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[1] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[0] = temp;
+				memcpy(&tmp_float_1, f_bytes, 4);
 				
-				// float tmp_float_2;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[0] = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[1] = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[2] = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[3] = temp;
-				// memcpy(&tmp_float_2, f_bytes, 4);
+				float tmp_float_2;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[3] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[2] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[1] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[0] = temp;
+				memcpy(&tmp_float_2, f_bytes, 4);
 
-				// float tmp_float_3;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[0] = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[1] = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[2] = temp;
-				// while (Serial2.readBytes(&temp, 1) != 1) {}
-				// f_bytes[3] = temp;
-				// memcpy(&tmp_float_3, f_bytes, 4);
+				float tmp_float_3;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[3] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[2] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[1] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				f_bytes[0] = temp;
+				memcpy(&tmp_float_3, f_bytes, 4);
 
-				// // Sentry state update
-				// if (command == 0x0207) {
-				// 	data.sentry_pos[0] = tmp_float_1;
-				// 	data.sentry_pos[1] = tmp_float_2;
-				// 	data.sentry_pos[2] = tmp_float_3;
-				// }
-				// // Infantry state update
-				// else if (command == 0x0203) {
-				// 	data.infantry_pos[0] = tmp_float_1;
-				// 	data.infantry_pos[1] = tmp_float_2;
-				// 	data.infantry_pos[2] = tmp_float_3;
-				// }
-				// // Sentry goal update
-				// else if (command == 0x0208) {
-				// 	data.sentry_goal[0] = tmp_float_1;
-				// 	data.sentry_goal[1] = tmp_float_2;
-				// 	data.sentry_goal[2] = tmp_float_3;
-				// 	Serial.print(data.sentry_goal[0]);
-				// 	Serial.print(data.sentry_goal[1]);
-				// 	Serial.print(data.sentry_goal[2]);
-				// 	if (data.robot_type == 7) memcpy(data.autonomy_pos, data.sentry_goal, 3);
-				// }
-				// // Infantry goal update
-				// else if (command == 0x0204) {
-				// 	data.infantry_goal[0] = tmp_float_1;
-				// 	data.infantry_goal[1] = tmp_float_2;
-				// 	data.infantry_goal[2] = tmp_float_3;
-				// 	if (data.robot_type == 1) memcpy(data.autonomy_pos, data.infantry_goal, 3);
-				// }
+				// Sentry state update
+				if (command == 0x0207) {
+					data.sentry_pos[0] = tmp_float_1;
+					data.sentry_pos[1] = tmp_float_2;
+					data.sentry_pos[2] = tmp_float_3;
+				}
+				// Infantry state update
+				else if (command == 0x0203) {
+					data.infantry_pos[0] = tmp_float_1;
+					data.infantry_pos[1] = tmp_float_2;
+					data.infantry_pos[2] = tmp_float_3;
+				}
+				// Sentry goal update
+				else if (command == 0x0208) {
+					data.sentry_goal[0] = tmp_float_1;
+					data.sentry_goal[1] = tmp_float_2;
+					data.sentry_goal[2] = tmp_float_3;
+					Serial.print(data.sentry_goal[0]);
+					Serial.print(data.sentry_goal[1]);
+					Serial.print(data.sentry_goal[2]);
+					if (data.robot_type == 7) memcpy(data.autonomy_pos, data.sentry_goal, 3);
+				}
+				// Infantry goal update
+				else if (command == 0x0204) {
+					data.infantry_goal[0] = tmp_float_1;
+					data.infantry_goal[1] = tmp_float_2;
+					data.infantry_goal[2] = tmp_float_3;
+					if (data.robot_type == 1) memcpy(data.autonomy_pos, data.infantry_goal, 3);
+				}
 			}
 		}
 	}
