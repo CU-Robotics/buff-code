@@ -570,9 +570,11 @@ void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
 }
 
 void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
+	int num_graphics = 1;
+	uint8_t operation = graphics_init ? 1 : 2;
 	// frame header
 	msg[0] = 0xA5;
-	msg[1] = 21; // CHANGE
+	msg[1] = 6+15*num_graphics; // CHANGE
 	msg[2] = 0x00;
 	msg[3] = get_seq();
 	msg[4] = generateCRC8(msg, 4);
@@ -582,38 +584,28 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	msg[6] = 0x03;
 
 	// content ID
-	int graphic_counter = 1;
-	if (graphic_counter == 1){
+	if (num_graphics == 1){
 		msg[7] = 0x01;
-	}else if (graphic_counter == 2){
+	}else if (num_graphics == 2){
 		msg[7] = 0x02;
-	}else if (graphic_counter == 5){
+	}else if (num_graphics == 5){
 		msg[7] = 0x03; // Draw 7 graphics // CHANGE
-	}else if (graphic_counter == 7){
+	}else if (num_graphics == 7){
 		msg[7] = 0x04;
 	}	
 	msg[8] = 0x01;
 
 	// sender ID
-	//Serial.println(data.robot_id, HEX);
 	msg[9] = data.robot_id;
 	msg[10] = 0x00;
 
 	// reciever ID
-	/*if (data.robot_id >> 8) {
-		// blue
-		msg[11] = data.robot_type+100; // DJI Moment
-	} else {
-		// red
-		msg[11] = data.robot_type;
-	}*/
 	msg[11] = data.robot_id;
 	msg[12] = 0x01;
 
 	int j = 0;
 	// generate graphics
 	byte graphic[15] = {0};
-	uint8_t operation = graphics_init ? 1 : 2;
 	generate_graphic(graphic, 
 		"csr", //namer
 		operation, //Operation
@@ -628,7 +620,7 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		10, //radius
 		0, //end_x
 		0); //ednd_y
-	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
+	for (int i = 0; i < 15; i++) msg[13+15*j+i] = graphic[i];
 	j++;
 	/*
 	graphic[15] = {0};
@@ -705,11 +697,11 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	0); //ednd_y
 	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
 	*/
-	uint16_t footerCRC = generateCRC16(msg, 28); // CHANGE
-	msg[28] = (footerCRC & 0x00FF); // CHANGE
-	msg[29] = (footerCRC >> 8); // CHANGE
+	uint16_t footerCRC = generateCRC16(msg, 13+15*num_graphics); // CHANGE
+	msg[13+15*num_graphics] = (footerCRC & 0x00FF); // CHANGE
+	msg[14+15*num_graphics] = (footerCRC >> 8); // CHANGE
 	
-	*msg_len = 30;
+	*msg_len = 9+6+15*num_graphics;
 }
 
 void RefSystem::generate_graphic(byte* graphic, char name[3], int operation, int type, int num_layers, int color, int start_angle, int end_angle, int width, int start_x, int start_y, int radius, int end_x, int end_y) {
