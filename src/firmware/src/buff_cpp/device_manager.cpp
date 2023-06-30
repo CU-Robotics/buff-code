@@ -517,7 +517,7 @@ void Device_Manager::step_controllers(float dt) {
 
 	float pitch_autonomy_speed = 150 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
 	
-	float yaw_autonomy_err = wrap_angle((controller_manager.autonomy_input[4] - controller_manager.enc_odm_pos[4]));
+	float yaw_autonomy_err = wrap_angle((wrap_angle(controller_manager.autonomy_input[4]) - controller_manager.enc_odm_pos[4]));
 	float yaw_autonomy_speed = -90 * yaw_autonomy_err;
 	yaw_autonomy_speed += 0.0 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt;
 	prev_yaw_autonomy_err = yaw_autonomy_err;
