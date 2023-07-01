@@ -639,8 +639,8 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 			0, //start_angle
 			0, //end_angle
 			8, //width
-			1920/2 + temp_rts_pos[0], //start_x
-			1080/2 + temp_rts_pos[1], //stary_y
+			1920/2 + (temp_rts_pos[0]*50)-300, //start_x
+			1080/2 + (temp_rts_pos[1]*50)-200, //stary_y
 			15, //radius
 			0, //end_x
 			0); //ednd_y
@@ -654,19 +654,19 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	
 	if (num_graphics > 2){
 		generate_graphic(graphic, 
-			"cyw", //namer
+			"map", //namer
 			operation, //Operation
-			0, //type
-			7, //num_layer
-			3, //color
+			1, //type
+			9, //num_layer
+			8, //color
 			0, //start_angle
 			0, //end_angle
-			4, //width
-			(1920/2)-15, // + temp_rts_pos[0], //start_x
-			(1080/2)-15, //+ temp_rts_pos[1], //stary_y
+			400, //width
+			(1920/2)-300, // + temp_rts_pos[0], //start_x
+			(1080/2)-200, //+ temp_rts_pos[1], //stary_y
 			0, //radius
-			(1920/2)+15, //end_x
-			(1080/2)+15); //ednd_y
+			(1920/2)+300, //end_x
+			(1080/2)+200); //ednd_y
 		for (int i = 0; i < 15; i++){
 				msg[13+15*j+i] = graphic[i];
 				graphic[i] = 0;
@@ -674,7 +674,7 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		j++;
 		
 		generate_graphic(graphic, 
-			"gyw", //namer
+			"wl1", //namer
 			operation, //Operation
 			0, //type
 			8, //num_layer
