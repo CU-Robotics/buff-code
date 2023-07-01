@@ -413,7 +413,7 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
-	if (micros() - prev_ref_read_micros > 10) {
+	if (micros() - prev_ref_read_micros > 5) {
 		prev_ref_read_micros = micros();
 		ref.read_serial();
 		controller_manager.team_color = ref.data.team_color;
