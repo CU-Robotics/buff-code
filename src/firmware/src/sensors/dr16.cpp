@@ -109,6 +109,7 @@ void DR16::print_control_data(){
 	*/
 
 int DR16::generate_control(RefSystem *ref) {
+	Serial.println("Generate Control");
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
 	// debugging (bitwise view)
@@ -339,6 +340,7 @@ int DR16::generate_control(RefSystem *ref) {
 
 int DR16::read(RefSystem* ref) {
 	if ((serial->available() == 18)) {
+	//if ((serial->available() % 18) == 0) {
 		timer_set(1);
 		return generate_control(ref);
 	}

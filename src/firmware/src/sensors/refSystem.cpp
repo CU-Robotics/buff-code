@@ -571,7 +571,7 @@ void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
 
 void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	//Serial.println("Trying to print");
-	int num_graphics = 1;
+	int num_graphics = 5;
 	uint8_t operation = graphics_init ? 1 : 2;
 	// frame header
 	msg[0] = 0xA5;
