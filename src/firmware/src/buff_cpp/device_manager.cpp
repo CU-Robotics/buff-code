@@ -507,6 +507,7 @@ void Device_Manager::read_sensors() {
 	Author: Mitchell Scott
 */
 void Device_Manager::step_controllers(float dt) {
+	Serial.println(dt);
 	static int prev_shutdown = 1;
 
 	controller_manager.estimate_state(gimbal_imu.data, dt);
