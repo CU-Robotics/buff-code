@@ -31,10 +31,12 @@ accurately test the code when I have a fully up and running ref system.
 
 RefSystem::RefSystem() {
 	Serial2.begin(115200);
+	Serial2.setTimeout(50);
 }
 
 void RefSystem::init() {
 	Serial2.begin(115200);
+	Serial2.setTimeout(50);
 }
 
 bool RefSystem::read_serial() {
@@ -437,29 +439,29 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		return;
 	};
 
-	uint16_t content_id = 0x0200 | data.robot_type;
-	float d[3] = {0};
-	if (send_sw == 0) {
-		// Send state update to hero (Sentry, Infantry)
-		content_id = content_id | data.robot_type;
-		uint16_t hero_rec_id = 0x0001;
-		hero_rec_id = hero_rec_id | (data.robot_id & 0xFF00);
-		d[0] = enc_odm_pos[0];
-		d[1] = enc_odm_pos[1];
-		d[2] = enc_odm_pos[4];
-		write_update(msg, &msg_len, content_id, hero_rec_id, d);
-		send_sw++;
-	} else if (send_sw == 1) {
-		// Send state update to infantry (Sentry)
-		content_id = content_id | data.robot_type;
-		uint16_t inf_rec_id = 0x0003;
-		inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
-		d[0] = enc_odm_pos[0];
-		d[1] = enc_odm_pos[1];
-		d[2] = enc_odm_pos[4];
-		write_update(msg, &msg_len, content_id, inf_rec_id, d);
-		send_sw = 0;
-	}
+	// uint16_t content_id = 0x0200 | data.robot_type;
+	// float d[3] = {0};
+	// if (send_sw == 0) {
+	// 	// Send state update to hero (Sentry, Infantry)
+	// 	content_id = content_id | data.robot_type;
+	// 	uint16_t hero_rec_id = 0x0001;
+	// 	hero_rec_id = hero_rec_id | (data.robot_id & 0xFF00);
+	// 	d[0] = enc_odm_pos[0];
+	// 	d[1] = enc_odm_pos[1];
+	// 	d[2] = enc_odm_pos[4];
+	// 	write_update(msg, &msg_len, content_id, hero_rec_id, d);
+	// 	send_sw++;
+	// } else if (send_sw == 1) {
+	// 	// Send state update to infantry (Sentry)
+	// 	content_id = content_id | data.robot_type;
+	// 	uint16_t inf_rec_id = 0x0003;
+	// 	inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
+	// 	d[0] = enc_odm_pos[0];
+	// 	d[1] = enc_odm_pos[1];
+	// 	d[2] = enc_odm_pos[4];
+	// 	write_update(msg, &msg_len, content_id, inf_rec_id, d);
+	// 	send_sw = 0;
+	// }
 
 	byte msg_graphics[128] = {0};
 	int msg_graphics_len;
