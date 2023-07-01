@@ -56,12 +56,12 @@ struct Controller_Manager {
 	float projectile_speed;
 	float power_buffer;
 
-	float pitch_angle;
-	float pitch_offset;
-	float gimbal_pitch_angle;
-	float gimbal_yaw_angle;
-	float global_yaw_reference;
-	float global_pitch_reference;
+	double pitch_angle;
+	double pitch_offset;
+	double gimbal_pitch_angle;
+	double gimbal_yaw_angle;
+	double global_yaw_reference;
+	double global_pitch_reference;
 
 	float imu_offset_angle;
 	float xPod;

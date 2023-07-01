@@ -47,9 +47,9 @@ struct DR16 {
 		DR16(HardwareSerial*);
 		void print_receiver_input(byte*);
 		void print_control_data();
-		int generate_control(RefSystem ref);
+		int generate_control(RefSystem* ref);
 		void control_test();
-		int read(RefSystem ref); 	// return the user mode input (different from the control mode)
+		int read(RefSystem* ref); 	// return the user mode input (different from the control mode)
 
 		float numBytes;
 		unsigned long lastTime;
@@ -70,6 +70,9 @@ struct DR16 {
 		bool g_prev = 0;
 		bool b_prev = 0;
 		bool c_prev = 0;
+		bool l_mouse_button_prev = 0;
+
+		bool selecting_rts_pos = false;
 		
 		HardwareSerial* serial;
 };

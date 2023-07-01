@@ -6,13 +6,13 @@
 #
 ##############################
 
-robot_type: hero
+robot_type: infantry
 
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
 buff_nodes:
   buff_rust:
-    files: [comms_node, celestial.py]
+    files: [comms_node, celestial.py, path_manager.py, ralphie.py]
   # buffnet:
     # sudo: True
     # files: []
@@ -51,7 +51,7 @@ sensor_config:
   - [0.0]
   - [0.0]
   # rev encoders [offset1, filter_gain1, offset2, filter_gain2, offset3, filter_gain3...] offset > 1000 => use motor encoder[offset / 1000] instead
-  - [44.5, 0.99, 60.0, 0.99, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
+  - [151.1, 0.0, 163.0, 0.0, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
 
 ##############################
 #
@@ -75,6 +75,7 @@ motor_index:
   - flywheel_l  # V8
   - flywheel_r  # V9
   - feeder_l    # V10
+  - feeder_r    # V11
 
 #   Uses the motor indices to determine a can output packet index and device return value.
 # Once this is configured properly CAN protocol should be abstracted into motor_<op>(index, *args),
@@ -117,28 +118,29 @@ motor_can_index:
 # [Vx, Vy, Omega, dPhi, dPsi1, dGamma, dShooter] -> [V0, V1, V2, V3, V4, V5, V6, V7, V8]
 inverse_kinematics:
   - [  0.0,   -1.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V0
-  - [  1.0,    0.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V1
+  - [ -1.0,    0.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V1
   - [  0.0,    1.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V2
-  - [ -1.0,    0.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V3
-  - [  0.0,    0.0,    0.0,    0.0,    1.0,    0.0,    0.0] # V4
-  - [  0.0,    0.0,    0.0,    0.0,    1.0,    0.0,    0.0] # V5
+  - [  1.0,    0.0,    1.0,    0.0,    0.0,    0.0,    0.0] # V3
+  - [  0.0,    0.0,    0.2,    0.0,    1.0,    0.0,    0.0] # V4
+  - [  0.0,    0.0,    0.2,    0.0,    1.0,    0.0,    0.0] # V5
   - [  0.0,    0.0,    0.0,   -1.0,    0.0,    0.0,    0.0] # V6
   - [  0.0,    0.0,    0.0,    1.0,    0.0,    0.0,    0.0] # V7
   - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0] # V8
   - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   -1.0] # V9
   - [  0.0,    0.0,    0.0,    0.0,    0.0,    1.0,    0.0] # V10
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,   -1.0,    0.0] # V11
 
 #   Forward
 # Used by encoder estimator (kee)
 # [V0, V1, V2, V3, V4, V5, V6, V7, V8] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma, dShooter]
 forward_kinematics:
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vy = (V1 - V3) / 2
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPhi = V4
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vy = (V1 - V3) / 2
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPhi = V4
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
 
 #
 #     Motor Controllers
@@ -152,7 +154,7 @@ forward_kinematics:
 #   Motor controllers will set their third feedback term to either a system power value or a
 # gravitational offset. The idea is we can efficiently conrol and reconfig a system invovling
 # power sensitive actuation and inverse pendulum like linkages.
-# 0 = full state feedback, 1 = no velocity reference fsb, 2 = power limited fsb, 3 = fsb w/ grav compensation (pendulum)
+# 0 = full state feedback, 1 = no velocity reference fsb, 2 = power limited fsb, 3 = fsb w/ grav compensation (pendulum), 4/5 = pitch (use rev encoder), 6 = yaw, 7 = hero
 motor_controller_types:
   - [2]
   - [2]
@@ -162,6 +164,7 @@ motor_controller_types:
   - [-4]
   - [4]
   - [5]
+  - [0]
   - [0]
   - [0]
   - [0]
@@ -181,11 +184,12 @@ motor_gains:
   - [0.0, 0.005, 0.0]       # motor 3
   - [0.0, 0.005, 0.0]       # motor 4 yaw 1
   - [0.0, 0.005, 0.0]       # motor 5 yaw 2
-  - [0.0, 0.0175, 0.15]       # motor 6 pitch l
-  - [0.0, 0.0175, -0.15]       # motor 7 pitch r
+  - [0.0, 0.007, 0.19]       # motor 6 pitch l
+  - [0.0, 0.007, -0.19]       # motor 7 pitch r
   - [0.0, 0.008, 0.0]       # motor 8 flywheel l
   - [0.0, 0.008, 0.0]       # motor 9 flywheel r
-  - [0.0, 0.008, 0.0]       # motor 10 feeder l
+  - [0.0, 0.005, 0.0]       # motor 10 feeder l
+  - [0.0, 0.005, 0.0]       # motor 11 feeder r
 
 motor_filters:
   - [0.5]
@@ -194,6 +198,7 @@ motor_filters:
   - [0.5]
   - [0.25]
   - [0.25]
+  - [0.5]
   - [0.5]
   - [0.5]
   - [0.5]
@@ -214,7 +219,8 @@ motor_limits:
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
-  - [0.0, 0.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.0, 0.0] #-2.68, 2.68]
+  - [0.0, 0.0, 0.0, 0.0] #-2.68, 2.68]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
