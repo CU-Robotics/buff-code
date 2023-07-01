@@ -570,6 +570,7 @@ void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
 }
 
 void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
+	//Serial.println("Trying to print");
 	int num_graphics = 1;
 	uint8_t operation = graphics_init ? 1 : 2;
 	// frame header
@@ -620,88 +621,106 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		10, //radius
 		0, //end_x
 		0); //ednd_y
-	for (int i = 0; i < 15; i++) msg[13+15*j+i] = graphic[i];
+	for (int i = 0; i < 15; i++){
+		msg[13+15*j+i] = graphic[i];
+		graphic[i] = 0;
+	}
 	j++;
-	/*
-	graphic[15] = {0};
-	//uint8_t operation = graphics_init ? 1 : 2;
-	generate_graphic(graphic, 
-	"gol", //namer
-	operation, //Operation
-	2, //type
-	8, //num_layer
-	2, //color
-	0, //start_angle
-	0, //end_angle
-	8, //width
-	1920/2 + temp_rts_pos[0], //start_x
-	1080/2 + temp_rts_pos[1], //stary_y
-	15, //radius
-	0, //end_x
-	0); //ednd_y
-	for (int i = 13; i < 28; i++) msg[18*j+i] = graphic[i];
-	j++;
-	*/
-	/*
-	byte graphic[15] = {0};
-	uint8_t operation = graphics_init ? 1 : 2;
-	generate_graphic(graphic, 
-	"rbt", //namer
-	operation, //Operation
-	2, //type
-	9, //num_layer
-	1, //color
-	0, //start_angle
-	0, //end_angle
-	4, //width
-	1920/2 + selector_pos[0], //start_x
-	1080/2 + selector_pos[1], //stary_y
-	10, //radius
-	0, //end_x
-	0); //ednd_y
-	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
 
-	byte graphic[15] = {0};
-	uint8_t operation = graphics_init ? 1 : 2;
-	generate_graphic(graphic, 
-	"rbt", //namer
-	operation, //Operation
-	2, //type
-	9, //num_layer
-	1, //color
-	0, //start_angle
-	0, //end_angle
-	4, //width
-	1920/2 + selector_pos[0], //start_x
-	1080/2 + selector_pos[1], //stary_y
-	10, //radius
-	0, //end_x
-	0); //ednd_y
-	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
+	if (num_graphics > 1){
+		generate_graphic(graphic, 
+			"gol", //namer
+			operation, //Operation
+			2, //type
+			8, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			8, //width
+			1920/2 + temp_rts_pos[0], //start_x
+			1080/2 + temp_rts_pos[1], //stary_y
+			15, //radius
+			0, //end_x
+			0); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;		
+		
+	}
+	
+	if (num_graphics > 2){
+		generate_graphic(graphic, 
+			"cyw", //namer
+			operation, //Operation
+			0, //type
+			7, //num_layer
+			3, //color
+			0, //start_angle
+			0, //end_angle
+			4, //width
+			(1920/2)-15, // + temp_rts_pos[0], //start_x
+			(1080/2)-15, //+ temp_rts_pos[1], //stary_y
+			0, //radius
+			(1920/2)+15, //end_x
+			(1080/2)+15); //ednd_y
+		for (int i = 0; i < 15; i++){
+				msg[13+15*j+i] = graphic[i];
+				graphic[i] = 0;
+		}
+		j++;
+		
+		generate_graphic(graphic, 
+			"gyw", //namer
+			operation, //Operation
+			0, //type
+			8, //num_layer
+			4, //color
+			0, //start_angle
+			0, //end_angle
+			4, //width
+			(1920/2)+15, // + temp_rts_pos[0], //start_x
+			(1080/2)-15, //+ temp_rts_pos[1], //stary_y
+			15, //radius
+			(1920/2)-15, //end_x
+			(1080/2)+15); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+		
+		generate_graphic(graphic, 
+			"rbt", //namer
+			operation, //Operation
+			1, //type
+			6, //num_layer
+			5, //color
+			0, //start_angle
+			0, //end_angle
+			6, //width
+			(1920/2)-15, //start_x
+			(1080/2)-15, //stary_y
+			10, //radius
+			(1920/2)+15, //end_x
+			(1080/2)+15); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
 
-	byte graphic[15] = {0};
-	uint8_t operation = graphics_init ? 1 : 2;
-	generate_graphic(graphic, 
-	"rbt", //namer
-	operation, //Operation
-	2, //type
-	9, //num_layer
-	1, //color
-	0, //start_angle
-	0, //end_angle
-	4, //width
-	1920/2 + selector_pos[0], //start_x
-	1080/2 + selector_pos[1], //stary_y
-	10, //radius
-	0, //end_x
-	0); //ednd_y
-	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
-	*/
+	}
+	
+	
+
 	uint16_t footerCRC = generateCRC16(msg, 13+15*num_graphics); // CHANGE
 	msg[13+15*num_graphics] = (footerCRC & 0x00FF); // CHANGE
 	msg[14+15*num_graphics] = (footerCRC >> 8); // CHANGE
 	
 	*msg_len = 9+6+15*num_graphics;
+	//Serial.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 }
 
 void RefSystem::generate_graphic(byte* graphic, char name[3], int operation, int type, int num_layers, int color, int start_angle, int end_angle, int width, int start_x, int start_y, int radius, int end_x, int end_y) {

@@ -424,6 +424,7 @@ void Device_Manager::read_sensors() {
 	controller_manager.team_color = ref.data.team_color;
 	controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
 	controller_manager.power_buffer = ref.data.power_buffer;
+	
 	switch (sensor_switch) {
 		case 0:
 			sensor_switch += 1;

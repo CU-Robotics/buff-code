@@ -111,7 +111,6 @@ void DR16::print_control_data(){
 int DR16::generate_control(RefSystem *ref) {
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
-
 	// debugging (bitwise view)
 	// print_receiver_input(tmp);
 
@@ -339,20 +338,18 @@ int DR16::generate_control(RefSystem *ref) {
 }
 
 int DR16::read(RefSystem* ref) {
-	if (serial->available() == 18) {
+	if ((serial->available() == 18)) {
 		timer_set(1);
 		return generate_control(ref);
 	}
-
 	if (serial->available() > 18) {
 		serial->clear();
 	}
-
 	if (timer_info_ms(1) > 200) {
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 			data[i] = 0;
 		}
-		
+	
 		safety_shutdown = 1;
 		return USER_SHUTDOWN;
 	}
