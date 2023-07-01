@@ -477,7 +477,12 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 	// 		graphics_sw = 0;
 	// }
 	write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
+	int start_writing = millis();
 	Serial2.write(msg_graphics, msg_graphics_len);
+	int diff = millis() - start_writing;
+	Serial.print("Wrote graphics, took ");
+	Serial.print(diff);
+	Serial.println("ms");
 }
 
 // Send an update out to another robot
