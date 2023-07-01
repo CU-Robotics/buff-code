@@ -424,6 +424,26 @@ void Device_Manager::read_sensors() {
 		prev_ref_write_micros = micros();
 		ref.write_serial(controller_manager.enc_odm_pos);
 	}
+
+	switch (receiver.read(&ref)) {
+		case USER_SHUTDOWN:
+			controller_switch = -1;
+			break;
+
+		case ROBOT_DEMO_MODE:
+		case USER_DRIVE_MODE:
+			controller_switch = 1;
+			safety_counter = 0;
+			break;
+
+		case AUTONOMY_MODE:
+			controller_switch = 2;
+			safety_counter = 0;
+			break;
+
+		default:
+			break;
+	}
 	
 	switch (sensor_switch) {
 		case 0:
@@ -448,26 +468,6 @@ void Device_Manager::read_sensors() {
 			break;
 
 		case 4:
-			switch (receiver.read(&ref)) {
-				case USER_SHUTDOWN:
-					controller_switch = -1;
-					break;
-
-				case ROBOT_DEMO_MODE:
-				case USER_DRIVE_MODE:
-					controller_switch = 1;
-					safety_counter = 0;
-					break;
-
-				case AUTONOMY_MODE:
-					controller_switch = 2;
-					safety_counter = 0;
-					break;
-
-				default:
-					break;
-			}
-
 			sensor_switch = 0;
 			break;
 
