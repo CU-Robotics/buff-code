@@ -31,12 +31,10 @@ accurately test the code when I have a fully up and running ref system.
 
 RefSystem::RefSystem() {
 	Serial2.begin(115200);
-	Serial2.setTimeout(1);
 }
 
 void RefSystem::init() {
 	Serial2.begin(115200);
-	Serial2.setTimeout(1);
 }
 
 bool RefSystem::read_serial() {
