@@ -43,29 +43,41 @@ bool RefSystem::read_serial() {
 	uint8_t seq, crc, comp_stat, warning_level, robo_id, robot_level;
 	uint32_t temp_launch_speed;
 
+	int num_packets = 0;
 	while (Serial2.available() > 1) {
 		enter_code = Serial2.read();
 
 		if(enter_code == 0xA5) { // It looks for this value that signifies that there is about to be a transmission of data
-
-			Serial2.readBytes(&temp, 1); // Get the length of the packet
+			num_packets++;
+			byte header[4] = {0};
+			header[0] = enter_code;
+			while(Serial2.readBytes(&temp, 1) != 1) {} // Get the length of the packet
 			data_length = temp;
-			Serial2.readBytes(&temp, 1);
+			header[1] = temp;
+			while(Serial2.readBytes(&temp, 1) != 1) {}
 			data_length = data_length | (temp << 8);
+			header[2] = temp;
 
-			Serial2.readBytes(&temp, 1);
+			while(Serial2.readBytes(&temp, 1) != 1) {}
 			seq = temp;
-			Serial2.readBytes(&temp, 1);
-
+			header[3] = temp;
+			while(Serial2.readBytes(&temp, 1) != 1) {}
 			crc = temp;
+			
+			if (temp != generateCRC8(header, 4)){
+				Serial.println("Bad Packet");
+				//Serial.println(cmd_id, HEX);
+				continue;
+			}
 
 			while(Serial2.readBytes(&temp, 1) != 1) {}
 			cmd_id = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 			while(Serial2.readBytes(&temp, 1) != 1) {}
 			cmd_id = cmd_id | (temp << 8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
-			int bytes_read;
-
+			int bytes_read = 0;
+			//Serial.print("Command id: ");
+			//Serial.println(cmd_id, HEX);
 			if(cmd_id == 0x202) {   //power and heat data
 
 				////////////////////////////////////////////////////////////////////////////
@@ -106,9 +118,11 @@ bool RefSystem::read_serial() {
 				bytes_read++;
 				data.power_buffer = temp_stat | (temp<<8);
 
-				while (bytes_read < data_length) Serial2.readBytes(&temp, 1);
+				while (bytes_read < data_length) {
+					bytes_read++;
+					Serial2.readBytes(&temp, 1);
+				}
 				Serial2.readBytes(&temp, 2);
-
 			}
 
 			else if(cmd_id == 0x1) {  //stage 1
@@ -116,7 +130,7 @@ bool RefSystem::read_serial() {
 				// Serial.println("received cmd_id inside 1"); 
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}        //This waits till another byte of data is available
-
+				bytes_read++;
 				comp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				comp_stat = comp_stat >> 4;
 
@@ -139,17 +153,25 @@ bool RefSystem::read_serial() {
 					data.curr_stage = 'R';   //calc comp results
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				unix_time = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				unix_time = unix_time | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				data.rem_time = int(unix_time);
-									
+
+				while (bytes_read < data_length) {
+					bytes_read++;
+					Serial2.readBytes(&temp, 1);
+				}
+				Serial2.readBytes(&temp, 2);
 			}
 
 			else if(cmd_id == 0x2) {   //results for 2
 
 				//Serial.println("received cmd_id inside 2"); 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				comp_stat = temp;
 
 				if(comp_stat == 0)
@@ -161,31 +183,42 @@ bool RefSystem::read_serial() {
 				else if(comp_stat == 2)
 					data.comp_result = 'B';
 
+				while (bytes_read < data_length) {
+					bytes_read++;
+					Serial2.readBytes(&temp, 1);
+				}
+				Serial2.readBytes(&temp, 2);
 			}
 
 			else if (cmd_id == 0x201) { //robo stat
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				data.robot_id = temp;
 				data.robot_type = data.robot_id % 100;
 				if (data.robot_id < 100) data.team_color = 0;
 				else data.team_color = 1;
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				data.robot_level = temp;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_hp = temp;
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_hp = temp_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
 				////////////////////////////////////////////////////////////////////////////
 				
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_max_hp = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_max_hp = temp_max_hp | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
 				////////////////////////////////////////////////////////////////////////////
@@ -248,24 +281,30 @@ bool RefSystem::read_serial() {
 				////////////////////////////////////////////////////////////////////////////
 			
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {} // robot _ 1 cooling value
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				if (temp_stat % 5 == 0 && temp_stat < 500) data.robot_1_cool_val = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;
 				while(Serial2.readBytes(&temp, 1) != 1) {} // robot_1 barrel heat limit
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				if (temp_stat % 5 == 0 && temp_stat < 2000) data.robot_1_barr_heat_lim = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {} // setting robot 1 speed
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				if (temp_stat <= 30.0 && temp_stat > 0.0) {
 					data.robot_1_speed_lim = temp_stat;
@@ -274,132 +313,203 @@ bool RefSystem::read_serial() {
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {} // robot_2 cooling value
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				data.robot_2_cool_val = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {} 	// robot 2 barrel heat limit
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				data.robot_2_barr_heat_lim = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {} 	//robot 2 speed limit
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				data.robot_2_speed_lim = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {} 	// 42mm cooling value
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				data.robot_42_cool_val = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {}	// 42mm barrel heat limit
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				data.robot_42_heat_lim = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {}		// robot 42mm speed limit
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				data.robot_42_speed_lim = temp_stat;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				while(Serial2.readBytes(&temp, 1) != 1) {} // robot power limit
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 				data.robot_power_lim = temp_stat;
 
 				/////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;     //Reading in a byte of data and bit shifting it 8 bits to the left
 				data.chassis_on = (temp_stat >> 0) & 1;
 		  		data.gimbal_on = (temp_stat >> 1) & 1;
 				data.shooter_on = (temp_stat >> 2) & 1;
+
+				while (bytes_read < data_length) {
+					bytes_read++;
+					Serial2.readBytes(&temp, 1);
+				}
+				Serial2.readBytes(&temp, 2);
 			}
 
 			else if (cmd_id == 0x204) {
 				Serial2.readBytes(&temp, 1);
+				bytes_read++;
 				data.robot_health = temp;
+
+				while (bytes_read < data_length) {
+					bytes_read++;
+					Serial2.readBytes(&temp, 1);
+				}
+				Serial2.readBytes(&temp, 2);
             }
 
 			else if (cmd_id == 0x301) {
-				Serial.println("fortnite!!!");
+				byte msg[18] = {0};
+				//Serial.println(header[1]);
+				//Serial.println(header[2]);
+				//Serial.println(data_length);
 				int8_t f_bytes[4] = {0};
 
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;
+				msg[0] = temp;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp_stat | (temp<<8);   
+				msg[1] = temp;
 				int command = temp_stat;
 
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;
+				msg[2] = temp;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
-				temp_stat = temp_stat | (temp<<8);   
+				bytes_read++;
+				temp_stat = temp_stat | (temp<<8); 
+				msg[3] = temp; 
 				int send_id = temp_stat;
 
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;
+				msg[4] = temp;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
-				temp_stat = temp_stat | (temp<<8);   
+				bytes_read++;
+				temp_stat = temp_stat | (temp<<8); 
+				msg[5] = temp; 
 				int rec_id = temp_stat;
+
+				for (int i = 0; i < 7; i++){ //Read 7 bytes cuz dji decided to slap in a good ol 0x00007856341210, you know, cuz why not
+					while (Serial2.readBytes(&temp, 1) != 1) {}
+					//Serial.println(temp, HEX); // In case you want to see the bs for yourself	
+				}
 
 				float tmp_float_1;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				f_bytes[3] = temp;
-				Serial.println(temp);
+				msg[6] = temp;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				f_bytes[2] = temp;
-				Serial.println(temp);
+				msg[7] = temp;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				f_bytes[1] = temp;
-				Serial.println(temp);
+				msg[8] = temp;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				f_bytes[0] = temp;
-				Serial.println(temp);
+				msg[9] = temp;
 				memcpy(&tmp_float_1, f_bytes, 4);
 				Serial.println(tmp_float_1);
 				
 				float tmp_float_2;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				f_bytes[3] = temp;
+				msg[10] = temp;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				f_bytes[2] = temp;
+				msg[11] = temp;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				f_bytes[1] = temp;
+				msg[12] = temp;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				f_bytes[0] = temp;
+				msg[13] = temp;
 				memcpy(&tmp_float_2, f_bytes, 4);
+				Serial.println(tmp_float_2);
 
 				float tmp_float_3;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
-				f_bytes[3] = temp;
-				while (Serial2.readBytes(&temp, 1) != 1) {}
-				f_bytes[2] = temp;
-				while (Serial2.readBytes(&temp, 1) != 1) {}
-				f_bytes[1] = temp;
-				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				f_bytes[0] = temp;
+				msg[14] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
+				f_bytes[1] = temp;
+				msg[15] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
+				f_bytes[2] = temp;
+				msg[16] = temp;
+				while (Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
+				f_bytes[3] = temp;
+				msg[17] = temp;
 				memcpy(&tmp_float_3, f_bytes, 4);
+				Serial.println(tmp_float_3);
+
 
 				// Sentry state update
 				if (command == 0x0207) {
@@ -418,13 +528,13 @@ bool RefSystem::read_serial() {
 					data.sentry_goal[0] = tmp_float_1;
 					data.sentry_goal[1] = tmp_float_2;
 					data.sentry_goal[2] = tmp_float_3;
-					Serial.print("Sender:");
-					Serial.println(send_id);
-					Serial.print("Receiver:");
-					Serial.println(rec_id);
-					Serial.print(data.sentry_goal[0]);
-					Serial.print(data.sentry_goal[1]);
-					Serial.print(data.sentry_goal[2]);
+					// Serial.print("Sender:");
+					// Serial.println(send_id);
+					// Serial.print("Receiver:");
+					// Serial.println(rec_id);
+					// Serial.print(data.sentry_goal[0]);
+					// Serial.print(data.sentry_goal[1]);
+					// Serial.print(data.sentry_goal[2]);
 					if (data.robot_type == 7) memcpy(data.autonomy_pos, data.sentry_goal, 3);
 				}
 				// Infantry goal update
@@ -434,10 +544,23 @@ bool RefSystem::read_serial() {
 					data.infantry_goal[2] = tmp_float_3;
 					if (data.robot_type == 1) memcpy(data.autonomy_pos, data.infantry_goal, 3);
 				}
+
+				//Serial.println("I bet I made it here");
+				while (bytes_read < data_length) {
+					bytes_read++;
+					Serial2.readBytes(&temp, 1);
+					//Serial.println(temp, HEX);
+				}
+				//Serial.println("Probably an infinite while loop");
+				Serial2.readBytes(&temp, 2);
 			}
-		Serial2.clear();
 		}
 	}
+	//if (num_packets > 1){
+		//Serial.print("num packets");
+		//Serial.println(num_packets);
+	//}
+	//Serial2.clear();
 	return 1;
 }
 
@@ -450,14 +573,25 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		uint16_t content_id = 0x0208;
 		uint16_t rec_id = 7;
 		rec_id = 100 * data.team_color + rec_id;
-		Serial.println(rec_id);
-		Serial.println(data.robot_id);
 		float d[3] = {0};
 		d[0] = data.sentry_send_goal[0];
 		d[1] = data.sentry_send_goal[1];
 		d[2] = data.sentry_send_goal[2];
+		//for (int i = 0; i < 3; i++){
+		//	Serial.println(d[i]);
+		//}
 		write_update(msg, &msg_len, content_id, rec_id, d);
-		if (Serial2.write(msg, msg_len)) data.pending_sentry_send = false;
+		for (int i = 0; i < msg_len; i++){
+			Serial.println(msg[i], HEX);
+		}
+		Serial.println();
+		if (Serial2.write(msg, msg_len)) {
+			sentry_send_counter++;
+			if (sentry_send_counter >= 1){
+				data.pending_sentry_send = false;
+				sentry_send_counter = 0;
+			}
+		}
 		return;
 	};
 
@@ -507,8 +641,9 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 // Send an update out to another robot
 void RefSystem::write_update(byte* msg, int* msg_len, uint16_t content_id, int rec_id, float* update_data) {
 	// frame header
+	int data_bytes = 16;
 	msg[0] = 0xA5;
-	msg[1] = 18;
+	msg[1] = 6+data_bytes;
 	msg[2] = 0x00;
 	msg[3] = get_seq();
 	msg[4] = generateCRC8(msg, 4);
@@ -531,17 +666,27 @@ void RefSystem::write_update(byte* msg, int* msg_len, uint16_t content_id, int r
 
 	for (int i = 0; i < 3; i++) {
 		byte* f_bytes = (byte*)&update_data[i];
+		float temp = update_data[i];
+		//Serial.println(temp);
+		//Serial.print(f_bytes[0], HEX);
+		//Serial.print(f_bytes[1], HEX);
+		//Serial.print(f_bytes[2], HEX);
+		//Serial.println(f_bytes[3], HEX);
 		msg[13+i*4] = f_bytes[3];
 		msg[14+i*4] = f_bytes[2];
 		msg[15+i*4] = f_bytes[1];
 		msg[16+i*4] = f_bytes[0];
 	}
 
-	uint16_t footerCRC = generateCRC16(msg, 25);
-	msg[25] = (footerCRC & 0x00FF);
-	msg[26] = (footerCRC >> 8);
+	uint16_t footerCRC = generateCRC16(msg, 13+data_bytes);
+	msg[13+data_bytes] = (footerCRC & 0x00FF);
+	msg[14+data_bytes] = (footerCRC >> 8);
 	
-	*msg_len = 27;
+	//for (int i = 7; i < 25; i++){
+	//	Serial.println(msg[i], HEX);
+	//}
+	//Serial.println();
+	*msg_len = 15+data_bytes;
 }
 
 void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
