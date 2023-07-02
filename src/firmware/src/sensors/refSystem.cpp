@@ -64,36 +64,50 @@ bool RefSystem::read_serial() {
 			while(Serial2.readBytes(&temp, 1) != 1) {}
 			cmd_id = cmd_id | (temp << 8);       //Performing a bitwise or to join the 2 bytes into an 16 bit integer
 
+			int bytes_read;
+
 			if(cmd_id == 0x202) {   //power and heat data
-				 
 
 				////////////////////////////////////////////////////////////////////////////
 
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				temp_stat = temp;
 				while(Serial2.readBytes(&temp, 1) != 1) {}
+				bytes_read++;
 				data.chassis_voltage = temp_stat | (temp<<8);
 
 				////////////////////////////////////////////////////////////////////////////
 
 				Serial2.readBytes(&temp, 1);
+				bytes_read++;
 				temp_stat = temp;
 				Serial2.readBytes(&temp, 1);    // Setting chasis output current
+				bytes_read++;
 				data.chassis_current = temp_stat | (temp<<8);
 
 				////////////////////////////////////////////////////////////////////////////
 
 				Serial2.readBytes(&temp, 1);
+				bytes_read++;
 				Serial2.readBytes(&temp, 1);
+				bytes_read++;
 				Serial2.readBytes(&temp, 1);
+				bytes_read++;
 				Serial2.readBytes(&temp, 1);
+				bytes_read++;
 
 				////////////////////////////////////////////////////////////////////////////
 
 				Serial2.readBytes(&temp, 1);
+				bytes_read++;
 				temp_stat = temp;
 				Serial2.readBytes(&temp, 1);
+				bytes_read++;
 				data.power_buffer = temp_stat | (temp<<8);
+
+				while (bytes_read < data_length) Serial2.readBytes(&temp, 1);
+				Serial2.readBytes(&temp, 2);
 
 			}
 
