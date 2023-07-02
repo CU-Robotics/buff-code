@@ -109,7 +109,7 @@ void DR16::print_control_data(){
 	*/
 
 int DR16::generate_control(RefSystem *ref) {
-	Serial.println("Generate Control");
+	//Serial.println("Generate Control");
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
 	// debugging (bitwise view)
