@@ -476,13 +476,13 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 	// 	default:
 	// 		graphics_sw = 0;
 	// }
-	write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
-	int start_writing = millis();
-	Serial2.write(msg_graphics, msg_graphics_len);
-	int diff = millis() - start_writing;
+	//write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
+	int start_writing = micros();
+	Serial2.write(msg_graphics, 39);
+	int diff = micros() - start_writing;
 	Serial.print("Wrote graphics, took ");
 	Serial.print(diff);
-	Serial.println("ms");
+	Serial.println("us");
 }
 
 // Send an update out to another robot
@@ -576,7 +576,7 @@ void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
 
 void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	//Serial.println("Trying to print");
-	int num_graphics = 5;
+	int num_graphics = 1;
 	uint8_t operation = graphics_init ? 1 : 2;
 	// frame header
 	msg[0] = 0xA5;

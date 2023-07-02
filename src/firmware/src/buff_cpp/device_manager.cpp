@@ -413,18 +413,17 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
-	// if (micros() - prev_ref_read_micros > 5) {
+	//if (micros() - prev_ref_read_micros > 5) {
 		prev_ref_read_micros = micros();
 		ref.read_serial();
 		controller_manager.team_color = ref.data.team_color;
 		controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
 		controller_manager.power_buffer = ref.data.power_buffer;
-	// }
-	// if (micros() - prev_ref_write_micros > 300) {
+	//}
+	//if (micros() - prev_ref_write_micros > 100000) {
 	// 	prev_ref_write_micros = micros();
 	// 	ref.write_serial(controller_manager.enc_odm_pos);
-	// }
-	
+	//}
 	switch (sensor_switch) {
 		case 0:
 			sensor_switch += 1;
@@ -506,7 +505,7 @@ void Device_Manager::read_sensors() {
 	Author: Mitchell Scott
 */
 void Device_Manager::step_controllers(float dt) {
-	Serial.println(dt * 1000);
+	//Serial.println(dt * 1000);
 	static int prev_shutdown = 1;
 
 	controller_manager.estimate_state(gimbal_imu.data, dt);

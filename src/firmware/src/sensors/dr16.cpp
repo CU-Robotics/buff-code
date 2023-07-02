@@ -339,6 +339,8 @@ int DR16::generate_control(RefSystem *ref) {
 }
 
 int DR16::read(RefSystem* ref) {
+	Serial.println(serial->available());
+	//if (serial->available() != 0) 
 	if ((serial->available() == 18)) {
 	//if ((serial->available() % 18) == 0) {
 		timer_set(1);
