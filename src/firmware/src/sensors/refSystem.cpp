@@ -352,13 +352,18 @@ bool RefSystem::read_serial() {
 				float tmp_float_1;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
 				f_bytes[3] = temp;
+				Serial.println(temp);
 				while (Serial2.readBytes(&temp, 1) != 1) {}
 				f_bytes[2] = temp;
+				Serial.println(temp);
 				while (Serial2.readBytes(&temp, 1) != 1) {}
 				f_bytes[1] = temp;
+				Serial.println(temp);
 				while (Serial2.readBytes(&temp, 1) != 1) {}
 				f_bytes[0] = temp;
+				Serial.println(temp);
 				memcpy(&tmp_float_1, f_bytes, 4);
+				Serial.println(tmp_float_1);
 				
 				float tmp_float_2;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
@@ -399,6 +404,10 @@ bool RefSystem::read_serial() {
 					data.sentry_goal[0] = tmp_float_1;
 					data.sentry_goal[1] = tmp_float_2;
 					data.sentry_goal[2] = tmp_float_3;
+					Serial.print("Sender:");
+					Serial.println(send_id);
+					Serial.print("Receiver:");
+					Serial.println(rec_id);
 					Serial.print(data.sentry_goal[0]);
 					Serial.print(data.sentry_goal[1]);
 					Serial.print(data.sentry_goal[2]);
