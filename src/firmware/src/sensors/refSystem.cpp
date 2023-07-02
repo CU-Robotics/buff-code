@@ -72,7 +72,7 @@ bool RefSystem::read_serial() {
 				while(Serial2.readBytes(&temp, 1) != 1) {}
 				temp_stat = temp;
 				while(Serial2.readBytes(&temp, 1) != 1) {}
-				data.chassis_voltage = temp_stat | (temp<<8);    
+				data.chassis_voltage = temp_stat | (temp<<8);
 
 				////////////////////////////////////////////////////////////////////////////
 
@@ -421,6 +421,7 @@ bool RefSystem::read_serial() {
 					if (data.robot_type == 1) memcpy(data.autonomy_pos, data.infantry_goal, 3);
 				}
 			}
+		Serial2.clear();
 		}
 	}
 	return 1;
