@@ -413,14 +413,14 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
-	if (micros() - prev_ref_read_micros > 5) {
+	if (micros() - prev_ref_read_micros > 100) {
 		prev_ref_read_micros = micros();
 		ref.read_serial();
 		controller_manager.team_color = ref.data.team_color;
 		controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
 		controller_manager.power_buffer = ref.data.power_buffer;
 	}
-	if (micros() - prev_ref_write_micros > 100000) {
+	if (micros() - prev_ref_write_micros > 33333) { // Send data at 30Hz
 	 	prev_ref_write_micros = micros();
 	 	ref.write_serial(controller_manager.enc_odm_pos);
 	}
