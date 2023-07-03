@@ -108,10 +108,10 @@ void DR16::print_control_data(){
 		6: yaw
 	*/
 
-int DR16::generate_control(RefSystem ref) {
+int DR16::generate_control(RefSystem *ref) {
+	//Serial.println("Generate Control");
 	byte tmp[18];
 	serial->readBytes(tmp, 18);
-
 	// debugging (bitwise view)
 	// print_receiver_input(tmp);
 
@@ -149,28 +149,71 @@ int DR16::generate_control(RefSystem ref) {
 	bool r_mouse_button = tmp[13];
 
 	// Send autonomy command
-	if (key_b && !b_prev) {
-		ref.send_graphics = true;
+	if (key_b) {
+	 	Serial.println(ref->graphics_init[2]);
+	// 	ref->graphics_init[2] = true;
 	}
+	//} else {
+	// 	ref->graphics_init[2] = false;
+	//}
 	b_prev = key_b;
+
+	// Toggle Sentry Control HUD
+	if (key_f && !f_prev){
+		Serial.println("pressing f");
+		ref->show_map = !ref->show_map;
+		ref->field_graphics_update_pending = true;
+	}
+	f_prev = key_f;
+
+	if (ref->show_map) {
+		ref->selector_pos[0] += int(mouse_x * 1.0);
+		ref->selector_pos[1] -= int(mouse_y * 1.0);
+		if (r_mouse_button) selecting_rts_pos = false; // Cancel command
+		else if (l_mouse_button && !selecting_rts_pos) {
+			ref->temp_rts_pos[0] = (ref->selector_pos[0]+300)/50.0;
+			ref->temp_rts_pos[1] = (ref->selector_pos[1]+200)/50.0;
+			selecting_rts_pos = true;
+		} else if (!l_mouse_button && l_mouse_button_prev && selecting_rts_pos) {
+			float point_to[2] = {0};
+			point_to[0] = (ref->selector_pos[0]+300)/50.0;
+			point_to[1] = (ref->selector_pos[1]+200)/50.0;
+			ref->data.sentry_send_goal[0] = ref->temp_rts_pos[0];
+			ref->data.sentry_send_goal[1] = ref->temp_rts_pos[1];
+			ref->data.sentry_send_goal[2] = atan2(point_to[1]-ref->temp_rts_pos[1], point_to[0]-ref->temp_rts_pos[0]);
+			selecting_rts_pos = false;
+			ref->data.pending_sentry_send = true;
+			Serial.println(ref->data.sentry_send_goal[0]);
+			Serial.println(ref->data.sentry_send_goal[1]);
+			Serial.println(ref->data.sentry_send_goal[2]);
+		} else if (!selecting_rts_pos) {
+			if (ref->selector_pos[0] > 300) ref->selector_pos[0] = 300;
+			else if (ref->selector_pos[0] < -300) ref->selector_pos[0] = -300;
+			if (ref->selector_pos[1] > 200) ref->selector_pos[1] = 200;
+			else if (ref->selector_pos[1] < -200) ref->selector_pos[1] = -200;
+			//ref->temp_rts_pos[0] = -1000;
+			//ref->temp_rts_pos[1] = -1000;
+		}
+	}
+	l_mouse_button_prev = l_mouse_button;
 
 	float feedrate_bps_continuous = 8;
 	float feedrate_bps_burst = 16;
 	// Infantry, Standard, and Sentry
-	if (ref.data.robot_type == 3 || ref.data.robot_type == 5 || ref.data.robot_type == 7 && ref.data.robot_1_cool_val != -1) {
-		feedrate_bps_continuous = ref.data.robot_1_cool_val/10.0 * 2;
-		feedrate_bps_burst = (ref.data.robot_1_cool_val+ref.data.robot_1_barr_heat_lim)/10.0 * 2;
-		if (ref.data.robot_type != 5 && feedrate_bps_burst > 10) {
+	if (ref->data.robot_type == 3 || ref->data.robot_type == 5 || ref->data.robot_type == 7 && ref->data.robot_1_cool_val != -1) {
+		feedrate_bps_continuous = ref->data.robot_1_cool_val/10.0 * 2;
+		feedrate_bps_burst = (ref->data.robot_1_cool_val+ref->data.robot_1_barr_heat_lim)/10.0 * 2;
+		if (ref->data.robot_type != 5 && feedrate_bps_burst > 10) {
 			feedrate_bps_burst = 10;
-		} else if (ref.data.robot_type == 5 && feedrate_bps_burst > 20) {
+		} else if (ref->data.robot_type == 5 && feedrate_bps_burst > 20) {
 			feedrate_bps_burst = 20;
 		}
 	}
 
 	// Determine flywheel speed
 	float flywheel_radps = FLYWHEEL_SPEED;
-	if (ref.data.robot_type == 5 || ref.data.robot_type == 7) {
-		flywheel_radps = 32.54 * (ref.data.robot_1_speed_lim-1.0) + 15;
+	if (ref->data.robot_type == 3 || ref->data.robot_type == 7) {
+		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-1.0) + 15; // Equation to match flywheel speed to exit velocity
 	}
 
 	// Safety Switch
@@ -178,34 +221,32 @@ int DR16::generate_control(RefSystem ref) {
 	// GAME MODE
 	if (l_switch == 2.0) {
 		// Sentry -- Fully autonomous
-		if (ref.data.robot_type == 7) {
+		if (ref->data.robot_type == 7) {
 			data[2] = SPINRATE_IDLE;
 			data[5] = feedrate_bps_continuous * 45.24;
 			data[6] = flywheel_radps;
-			no_path = false;
+			if (ref->data.curr_stage == 'C') no_path = false;
+			else no_path = true;
 		} 
 		// Infantry, Standard, and Hero -- User driving
 		else {
-			// Toggle Sentry Control HUD
-			if (key_f && !f_prev) sentry_control_hud = !sentry_control_hud;
-			f_prev = key_f;
-
 			if (key_r && !r_prev) {
-				ref.data.sentry_send_goal[0] = 0.5;
-				ref.data.sentry_send_goal[1] = 7.5;
-				ref.data.sentry_send_goal[2] = 0.0;
-				ref.data.pending_sentry_send = false;
+				ref->data.sentry_send_goal[0] = 0.5;
+				ref->data.sentry_send_goal[1] = 7.5;
+				ref->data.sentry_send_goal[2] = 0.0;
+				ref->data.pending_sentry_send = true;
 				Serial.println("Init recall command (dr16.cpp 192)");
 			}
 			r_prev = key_r;
 
 			if (key_g && !g_prev) no_path = true;
 			g_prev = key_g;
-			if (ref.data.robot_type == 3 && key_c && !c_prev) {
+			if (ref->data.robot_type == 3 && ((key_c && !c_prev) || r_switch == 1.0)) {
+				Serial.println("Lets recall");
 				no_path = false;
-				ref.data.autonomy_pos[0] = 0.5;
-				ref.data.autonomy_pos[1] = 7.5;
-				ref.data.autonomy_pos[2] = 0.0;
+				ref->data.autonomy_pos[0] = 0.5;
+				ref->data.autonomy_pos[1] = 7.5;
+				ref->data.autonomy_pos[2] = 0.0;
 			}
 			c_prev = key_c;
 
@@ -225,7 +266,7 @@ int DR16::generate_control(RefSystem ref) {
 			if (key_ctrl) data[2] = 0; // Crouch mode
 
 			// Gimbal
-			if (!sentry_control_hud) {
+			if (!ref->show_map) {
 				data[3] = -mouse_y * MOUSE_SENSITIVITY;
 				data[4] = mouse_x * MOUSE_SENSITIVITY;
 			} else {
@@ -237,16 +278,16 @@ int DR16::generate_control(RefSystem ref) {
 			if (key_q) shooter_mode = 0;
 			if (key_e) shooter_mode = 1;
 
-			if (l_mouse_button && !sentry_control_hud) {
+			if (l_mouse_button && !ref->show_map) {
 				switch (shooter_mode) {
 					case 0:
-						if (ref.data.robot_type == 3 || ref.data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
-						else if (ref.data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
+						if (ref->data.robot_type == 3 || ref->data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
+						else if (ref->data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
 						else data[5] = FEEDSPEED_DEFAULT;
 						break;
 					case 1:
-						if (ref.data.robot_type == 3 || ref.data.robot_type == 7) data[5] = feedrate_bps_burst * 45.24;
-						else if (ref.data.robot_type == 5) data[5] = feedrate_bps_burst * 28.27;
+						if (ref->data.robot_type == 3 || ref->data.robot_type == 7) data[5] = feedrate_bps_burst * 45.24;
+						else if (ref->data.robot_type == 5) data[5] = feedrate_bps_burst * 28.27;
 						else data[5] = FEEDSPEED_DEFAULT;
 						break;
 					default:
@@ -272,8 +313,8 @@ int DR16::generate_control(RefSystem ref) {
 
 		// Shooter/Feeder
 		if (r_switch == 1.0) {
-			if (ref.data.robot_type == 3 || ref.data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
-			else if (ref.data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
+			if (ref->data.robot_type == 3 || ref->data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
+			else if (ref->data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
 			else data[5] = FEEDSPEED_DEFAULT;
 			data[6] = FLYWHEEL_SPEED;
 		} else if (r_switch == 3.0) {
@@ -290,6 +331,7 @@ int DR16::generate_control(RefSystem ref) {
 		}
 		else return ROBOT_DEMO_MODE;
 	} else { // Engage SAFETY mode when the switch is in position 1. Also acts as the default.
+		no_path = true;
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 			data[i] = 0;
 		}
@@ -298,21 +340,22 @@ int DR16::generate_control(RefSystem ref) {
 	}
 }
 
-int DR16::read(RefSystem ref) {
-	if (serial->available() == 18) {
+int DR16::read(RefSystem* ref) {
+	//Serial.println(serial->available());
+	//if (serial->available() != 0) 
+	if ((serial->available() == 18)) {
+	//if ((serial->available() % 18) == 0) {
 		timer_set(1);
 		return generate_control(ref);
 	}
-
 	if (serial->available() > 18) {
 		serial->clear();
 	}
-
 	if (timer_info_ms(1) > 200) {
 		for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 			data[i] = 0;
 		}
-		
+	
 		safety_shutdown = 1;
 		return USER_SHUTDOWN;
 	}

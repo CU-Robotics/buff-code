@@ -237,7 +237,21 @@ void Controller_Manager::step_motors() {
 			// Yaw motors
 			case 6:
 				output[i] = controllers[i].step(references[i], feedback[i]);
-				output[i] = constrain(output[i], -0.69, 0.69); // Prevent these motors from damaging the robot by limiting their current output to 70% (currently used on yaw)
+				output[i] = constrain(output[i], -0.65, 0.65); // Prevent these motors from damaging the robot by limiting their current output to 70% (currently used on yaw)
+				if (feedback[i][1] > 8000) {
+					Serial.println("!!! ANOMALY EVENT DEBUG !!!");
+					Serial.println(i);
+					Serial.println(ctrl_type);
+					Serial.println(feedback[i][0]);
+					Serial.println(feedback[i][1]);
+					Serial.println(feedback[i][2]);
+					Serial.println(output[i]);
+					Serial.println(references[i][0]);
+					Serial.println(references[i][1]);
+					Serial.println(references[i][2]);
+					Serial.println();
+					output[i] = 0;
+				}
 				break;
 
 			default:

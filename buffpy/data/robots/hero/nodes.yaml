@@ -75,7 +75,6 @@ motor_index:
   - flywheel_l  # V8
   - flywheel_r  # V9
   - feeder_l    # V10
-  - feeder_r    # V11
 
 #   Uses the motor indices to determine a can output packet index and device return value.
 # Once this is configured properly CAN protocol should be abstracted into motor_<op>(index, *args),
@@ -128,19 +127,18 @@ inverse_kinematics:
   - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    1.0] # V8
   - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   -1.0] # V9
   - [  0.0,    0.0,    0.0,    0.0,    0.0,    1.0,    0.0] # V10
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,   -1.0,    0.0] # V11
 
 #   Forward
 # Used by encoder estimator (kee)
 # [V0, V1, V2, V3, V4, V5, V6, V7, V8] -> [Vx, Vy, Omega, dPhi, dPsi, dGamma, dShooter]
 forward_kinematics:
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vy = (V1 - V3) / 2
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPhi = V4
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
-  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vx = (-V0 + V2) / 2 # average X speed
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Vy = (V1 - V3) / 2
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # Omega = -mean(V[0:4]) # average of all wheel speeds
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPhi = V4
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dPsi = -mean(V[0:4]) + V5 # (V5 + V6) / 2 when the secon motor is on
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dGgamma = 0
+  - [  0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0]  # dShooter = 0
 
 #
 #     Motor Controllers
@@ -167,7 +165,6 @@ motor_controller_types:
   - [0]
   - [0]
   - [0]
-  - [0]
 
 
 #    Motor Controller Gains
@@ -189,7 +186,6 @@ motor_gains:
   - [0.0, 0.008, 0.0]       # motor 8 flywheel l
   - [0.0, 0.008, 0.0]       # motor 9 flywheel r
   - [0.0, 0.008, 0.0]       # motor 10 feeder l
-  - [0.0, 0.008, 0.0]       # motor 11 feeder r
 
 motor_filters:
   - [0.5]
@@ -198,8 +194,7 @@ motor_filters:
   - [0.5]
   - [0.25]
   - [0.25]
-  - [0.25]
-  - [0.25]
+  - [0.5]
   - [0.5]
   - [0.5]
   - [0.5]
@@ -219,8 +214,7 @@ motor_limits:
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
-  - [0.0, 0.0, 0.0, 0.0] #-2.68, 2.68]
-  - [0.0, 0.0, 0.0, 0.0] #-2.68, 2.68]
+  - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]
   - [0.0, 0.0, 0.0, 0.0]

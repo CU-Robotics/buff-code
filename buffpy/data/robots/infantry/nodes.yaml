@@ -6,7 +6,7 @@
 #
 ##############################
 
-robot_type: sentry
+robot_type: infantry
 
 # Specify our nodes from buffpy/lib
 # spinup perception and comms here
@@ -51,7 +51,7 @@ sensor_config:
   - [0.0]
   - [0.0]
   # rev encoders [offset1, filter_gain1, offset2, filter_gain2, offset3, filter_gain3...] offset > 1000 => use motor encoder[offset / 1000] instead
-  - [34.3, 0.0, 156.0, 0.0, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
+  - [151.1, 0.0, 163.0, 0.0, 0.0, 0.0, 0.0, 0.0] # filter gains helps smooth any glitches
 
 ##############################
 #
