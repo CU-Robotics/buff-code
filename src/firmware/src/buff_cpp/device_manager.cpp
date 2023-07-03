@@ -420,6 +420,8 @@ void Device_Manager::read_sensors() {
 		controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
 		controller_manager.power_buffer = ref.data.power_buffer;
 	}
+	//Serial.print("1st");
+	//Serial.println(Serial2.available());
 	if (micros() - prev_ref_write_micros > 50000) { // Send data at 30Hz
 	 	prev_ref_write_micros = micros();
 	 	ref.write_serial(controller_manager.enc_odm_pos);

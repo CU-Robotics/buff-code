@@ -45,7 +45,7 @@ bool RefSystem::read_serial() {
 	uint16_t data_length, cmd_id, unix_time, temp_hp, rem_proj, temp_max_hp, temp_stat;  
 	uint8_t seq, crc, comp_stat, warning_level, robo_id, robot_level;
 	uint32_t temp_launch_speed;
-
+	//Serial.print("read_serial");
 	int num_packets = 0;
 	while (Serial2.available() > 1) {
 		enter_code = Serial2.read();
@@ -195,7 +195,6 @@ bool RefSystem::read_serial() {
 
 			else if (cmd_id == 0x201) { //robo stat
 				////////////////////////////////////////////////////////////////////////////
-
 				while(Serial2.readBytes(&temp, 1) != 1) {}
 				bytes_read++;
 				data.robot_id = temp;
@@ -571,7 +570,6 @@ bool RefSystem::read_serial() {
 void RefSystem::write_serial(float* enc_odm_pos) {
 	byte msg[128] = {0};
 	int msg_len = 0;
-
 	if (data.pending_sentry_send) {
 		Serial.println("Sending goal update");
 		uint16_t content_id = 0x0208;
@@ -605,35 +603,52 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		field_graphics_update_pending = false;
 		write_field_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
+		for (int i = 0; i < msg_graphics_len; i++){
+			Serial.println(msg_graphics[i], HEX);
+		}
+		Serial.println();
 		return;
 	}else if (primary_graphics_update_pending){
 		primary_graphics_update_pending = false;
 		write_primary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
 		return;
-	}else if (!graphics_init[2]){
+	}else if (!graphics_init[2] && send_sw == 0){
 		write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
+		Serial.println("a");
+		if (data.robot_type == 7){
+			send_sw++;
+		}
+		send_sw++;
+	}else if (data.robot_type == 7 && send_sw == 1){ //Send sentry position to infantry
+		Serial.println("b");
+		uint16_t content_id = 0x0200 | data.robot_type;
+		float d[3] = {0};
+		content_id = content_id | data.robot_type;
+		uint16_t inf_rec_id = 0x0003;
+		inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
+		d[0] = enc_odm_pos[0];
+		d[1] = enc_odm_pos[1];
+		d[2] = enc_odm_pos[4];
+		write_update(msg, &msg_len, content_id, inf_rec_id, d);
+		Serial.println("c");
+		Serial2.write(msg, msg_len);
+		Serial.println("d");
+		send_sw = 0;
 	}
-	/*
-	uint16_t content_id = 0x0200 | data.robot_type;
-	float d[3] = {0};
-	content_id = content_id | data.robot_type;
-	Serial.println(content_id);
-	uint16_t inf_rec_id = 0x0003;
-	inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
-	d[0] = enc_odm_pos[0];
-	d[1] = enc_odm_pos[1];
-	d[2] = enc_odm_pos[4];
-	write_update(msg, &msg_len, content_id, inf_rec_id, d);
 	
-
+	/*
+	//Serial.println(send_sw);
 	switch (send_sw){
 		case 0:
+			Serial.println("It is here");
 			Serial2.write(msg_graphics, msg_graphics_len);
-			//send_sw++;
+			send_sw++;
 		case 1:
+			Serial.println("Also here");
 			Serial2.write(msg, msg_len);
+			Serial.println("Here too");
 			send_sw = 0;		
 	}*/
 

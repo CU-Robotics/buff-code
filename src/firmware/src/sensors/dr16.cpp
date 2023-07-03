@@ -160,6 +160,7 @@ int DR16::generate_control(RefSystem *ref) {
 
 	// Toggle Sentry Control HUD
 	if (key_f && !f_prev){
+		Serial.println("pressing f");
 		ref->show_map = !ref->show_map;
 		ref->field_graphics_update_pending = true;
 	}
