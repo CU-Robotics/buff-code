@@ -596,7 +596,6 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		}
 		return;
 	};
-
 	byte msg_graphics[128] = {0};
 	int msg_graphics_len;
 	if (field_graphics_update_pending){
@@ -604,9 +603,9 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		write_field_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
 		for (int i = 0; i < msg_graphics_len; i++){
-			Serial.println(msg_graphics[i], HEX);
+			//Serial.println(msg_graphics[i], HEX);
 		}
-		Serial.println();
+		//Serial.println();
 		return;
 	}else if (primary_graphics_update_pending){
 		primary_graphics_update_pending = false;
@@ -616,13 +615,12 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 	}else if (!graphics_init[2] && send_sw == 0){
 		write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
-		Serial.println("a");
+		//Serial.println("a");
 		if (data.robot_type == 7){
 			send_sw++;
 		}
-		send_sw++;
 	}else if (data.robot_type == 7 && send_sw == 1){ //Send sentry position to infantry
-		Serial.println("b");
+		//Serial.println("b");
 		uint16_t content_id = 0x0200 | data.robot_type;
 		float d[3] = {0};
 		content_id = content_id | data.robot_type;
@@ -632,9 +630,9 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		d[1] = enc_odm_pos[1];
 		d[2] = enc_odm_pos[4];
 		write_update(msg, &msg_len, content_id, inf_rec_id, d);
-		Serial.println("c");
+		//Serial.println("c");
 		Serial2.write(msg, msg_len);
-		Serial.println("d");
+		//Serial.println("d");
 		send_sw = 0;
 	}
 	
@@ -915,7 +913,6 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 			graphic[i] = 0;
 		}
 		j++;
-
 		generate_graphic(graphic, 
 			"csr", //namer
 			operation, //Operation
