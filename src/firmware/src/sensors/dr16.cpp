@@ -293,7 +293,7 @@ int DR16::generate_control(RefSystem *ref) {
 				}
 			} else data[5] = 0;
 
-			data[6] = 0;//flywheel_radps; // Always keep the flywheel on
+			data[6] = flywheel_radps; // Always keep the flywheel on
 
 			if (r_mouse_button) return AUTONOMY_MODE; // Engage autonomous gimbal when right mouse button is pressed
 			else return USER_DRIVE_MODE;

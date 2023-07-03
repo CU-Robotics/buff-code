@@ -519,11 +519,13 @@ void Device_Manager::step_controllers(float dt) {
 	float ypc_gain = -350.0; //-150
 	float ppc_gain = 0.0; //50
 
+	float pitch_autonomy_err = wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
 	float pitch_autonomy_speed = 150 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
-	
+
 	float yaw_autonomy_err = wrap_angle((wrap_angle(controller_manager.autonomy_input[4]) - controller_manager.enc_odm_pos[4]));
-	float yaw_autonomy_speed = -80 * yaw_autonomy_err;
-	yaw_autonomy_speed += -0.5 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt;
+	float yaw_autonomy_speed = -90 * yaw_autonomy_err; //80 (163 Pu)
+	yaw_autonomy_speed += -1.2 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt; //0.5
+
 	prev_yaw_autonomy_err = yaw_autonomy_err;
 	//Serial.println(controller_manager.kee_imu_pos[4]);
 
@@ -543,6 +545,8 @@ void Device_Manager::step_controllers(float dt) {
 
 			// Track with gimbal if we are instructed to
 			if (controller_manager.autonomy_input[5] == 1) {
+				yaw_autonomy_speed += -0.3 * (yaw_autonomy_err * dt); //i term
+				pitch_autonomy_speed += 1 * (pitch_autonomy_err * dt); //i term
 				input_buffer[3] = pitch_autonomy_speed;
 				input_buffer[4] = yaw_autonomy_speed;
 				yaw_reference_buffer[0] = yaw_autonomy_speed;
