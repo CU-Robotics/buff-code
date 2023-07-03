@@ -150,18 +150,23 @@ int DR16::generate_control(RefSystem *ref) {
 
 	// Send autonomy command
 	if (key_b) {
-		Serial.println("pressing B");
-		ref->graphics_init = true;
-	} else {
-		ref->graphics_init = false;
+	 	Serial.println(ref->graphics_init[2]);
+	// 	ref->graphics_init[2] = true;
 	}
+	//} else {
+	// 	ref->graphics_init[2] = false;
+	//}
 	b_prev = key_b;
 
 	// Toggle Sentry Control HUD
-	if (key_f && !f_prev) sentry_control_hud = !sentry_control_hud;
+	if (key_f && !f_prev){
+		Serial.println("pressing f");
+		ref->show_map = !ref->show_map;
+		ref->field_graphics_update_pending = true;
+	}
 	f_prev = key_f;
 
-	if (sentry_control_hud) {
+	if (ref->show_map) {
 		ref->selector_pos[0] += int(mouse_x * 1.0);
 		ref->selector_pos[1] -= int(mouse_y * 1.0);
 		if (r_mouse_button) selecting_rts_pos = false; // Cancel command
@@ -172,7 +177,7 @@ int DR16::generate_control(RefSystem *ref) {
 		} else if (!l_mouse_button && l_mouse_button_prev && selecting_rts_pos) {
 			float point_to[2] = {0};
 			point_to[0] = (ref->selector_pos[0]+300)/50.0;
-			point_to[1] = (ref->selector_pos[0]+200)/50.0;
+			point_to[1] = (ref->selector_pos[1]+200)/50.0;
 			ref->data.sentry_send_goal[0] = ref->temp_rts_pos[0];
 			ref->data.sentry_send_goal[1] = ref->temp_rts_pos[1];
 			ref->data.sentry_send_goal[2] = atan2(point_to[1]-ref->temp_rts_pos[1], point_to[0]-ref->temp_rts_pos[0]);
@@ -186,12 +191,9 @@ int DR16::generate_control(RefSystem *ref) {
 			else if (ref->selector_pos[0] < -300) ref->selector_pos[0] = -300;
 			if (ref->selector_pos[1] > 200) ref->selector_pos[1] = 200;
 			else if (ref->selector_pos[1] < -200) ref->selector_pos[1] = -200;
-			ref->temp_rts_pos[0] = -1000;
-			ref->temp_rts_pos[1] = -1000;
+			//ref->temp_rts_pos[0] = -1000;
+			//ref->temp_rts_pos[1] = -1000;
 		}
-	} else {
-		ref->selector_pos[0] = -1000;
-		ref->selector_pos[1] = -1000;
 	}
 	l_mouse_button_prev = l_mouse_button;
 
@@ -264,7 +266,7 @@ int DR16::generate_control(RefSystem *ref) {
 			if (key_ctrl) data[2] = 0; // Crouch mode
 
 			// Gimbal
-			if (!sentry_control_hud) {
+			if (!ref->show_map) {
 				data[3] = -mouse_y * MOUSE_SENSITIVITY;
 				data[4] = mouse_x * MOUSE_SENSITIVITY;
 			} else {
@@ -276,7 +278,7 @@ int DR16::generate_control(RefSystem *ref) {
 			if (key_q) shooter_mode = 0;
 			if (key_e) shooter_mode = 1;
 
-			if (l_mouse_button && !sentry_control_hud) {
+			if (l_mouse_button && !ref->show_map) {
 				switch (shooter_mode) {
 					case 0:
 						if (ref->data.robot_type == 3 || ref->data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
@@ -339,6 +341,8 @@ int DR16::generate_control(RefSystem *ref) {
 }
 
 int DR16::read(RefSystem* ref) {
+	//Serial.println(serial->available());
+	//if (serial->available() != 0) 
 	if ((serial->available() == 18)) {
 	//if ((serial->available() % 18) == 0) {
 		timer_set(1);

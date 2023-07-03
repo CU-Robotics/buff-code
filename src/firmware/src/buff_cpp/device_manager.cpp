@@ -420,11 +420,12 @@ void Device_Manager::read_sensors() {
 		controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
 		controller_manager.power_buffer = ref.data.power_buffer;
 	}
-	if (micros() - prev_ref_write_micros > 100000) {
+	//Serial.print("1st");
+	//Serial.println(Serial2.available());
+	if (micros() - prev_ref_write_micros > 50000) { // Send data at 30Hz
 	 	prev_ref_write_micros = micros();
 	 	ref.write_serial(controller_manager.enc_odm_pos);
-	 }
-	
+	}
 	switch (sensor_switch) {
 		case 0:
 			sensor_switch += 1;
@@ -506,6 +507,7 @@ void Device_Manager::read_sensors() {
 	Author: Mitchell Scott
 */
 void Device_Manager::step_controllers(float dt) {
+	//Serial.println(dt * 1000);
 	//Serial.println(dt * 1000);
 	static int prev_shutdown = 1;
 
