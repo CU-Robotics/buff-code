@@ -201,7 +201,7 @@ int DR16::generate_control(RefSystem *ref) {
 	float feedrate_bps_burst = 16;
 	// Infantry, Standard, and Sentry
 	if (ref->data.robot_type == 3 || ref->data.robot_type == 5 || ref->data.robot_type == 7 && ref->data.robot_1_cool_val != -1) {
-		feedrate_bps_continuous = ref->data.robot_1_cool_val/10.0 * 2;
+		feedrate_bps_continuous = ref->data.robot_1_cool_val/10.0 * 2 * 0.5;
 		feedrate_bps_burst = (ref->data.robot_1_cool_val+ref->data.robot_1_barr_heat_lim)/10.0 * 2;
 		if (ref->data.robot_type != 5 && feedrate_bps_burst > 10) {
 			feedrate_bps_burst = 10;
@@ -213,7 +213,7 @@ int DR16::generate_control(RefSystem *ref) {
 	// Determine flywheel speed
 	float flywheel_radps = FLYWHEEL_SPEED;
 	if (ref->data.robot_type == 3 || ref->data.robot_type == 7) {
-		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-1.0) + 15; // Equation to match flywheel speed to exit velocity
+		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-5.0) + 15; // Equation to match flywheel speed to exit velocity
 	}
 
 	// Safety Switch
@@ -222,11 +222,30 @@ int DR16::generate_control(RefSystem *ref) {
 	if (l_switch == 2.0) {
 		// Sentry -- Fully autonomous
 		if (ref->data.robot_type == 7) {
-			data[2] = SPINRATE_IDLE;
 			data[5] = feedrate_bps_continuous * 45.24;
 			data[6] = flywheel_radps;
-			if (ref->data.curr_stage == 'C') no_path = false;
-			else no_path = true;
+			if (ref->data.curr_stage == 'C') {
+				no_path = false;
+				data[2] = SPINRATE_IDLE;
+			}
+			else {
+				no_path = true;
+				data[2] = 0;
+			}
+
+			Serial.print("Current stage is: ");
+			Serial.println(ref->data.curr_stage);
+			Serial.print("Desired X pos is: ");
+			Serial.println(ref->data.autonomy_pos[0]);
+			Serial.println();
+			if ((key_c && !c_prev) || r_switch == 1.0) {
+				Serial.println("Lets recall");
+				ref->data.autonomy_pos[0] = 0.5;
+				ref->data.autonomy_pos[1] = 7.5;
+				ref->data.autonomy_pos[2] = 0.0;
+			}
+			c_prev = key_c;
+			return AUTONOMY_MODE;
 		} 
 		// Infantry, Standard, and Hero -- User driving
 		else {

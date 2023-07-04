@@ -194,7 +194,7 @@ void Controller_Manager::get_pos_est_report(float* data) {
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		data[i] = autonomy_goal[i];
 		data[i + REMOTE_CONTROL_LEN] = enc_odm_pos[i];
-	}
+		}
 }
 
 void Controller_Manager::get_manager_report(float* data) {
