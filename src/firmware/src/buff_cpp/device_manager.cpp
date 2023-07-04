@@ -563,6 +563,7 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[5] = 0;
 			}
 		}
+
 		// AUTO MOVEMENT
 		controller_manager.autonomy_goal[0] = ref.data.autonomy_pos[0];
 		controller_manager.autonomy_goal[1] = ref.data.autonomy_pos[1];

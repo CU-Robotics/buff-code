@@ -227,6 +227,7 @@ int DR16::generate_control(RefSystem *ref) {
 			data[6] = flywheel_radps;
 			if (ref->data.curr_stage == 'C') no_path = false;
 			else no_path = true;
+			return AUTONOMY_MODE;
 		} 
 		// Infantry, Standard, and Hero -- User driving
 		else {
