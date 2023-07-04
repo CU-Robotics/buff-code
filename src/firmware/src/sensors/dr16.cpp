@@ -232,6 +232,14 @@ int DR16::generate_control(RefSystem *ref) {
 				no_path = true;
 				data[2] = 0;
 			}
+
+			if ((key_c && !c_prev) || r_switch == 1.0) {
+				Serial.println("Lets recall");
+				ref->data.autonomy_pos[0] = 0.5;
+				ref->data.autonomy_pos[1] = 7.5;
+				ref->data.autonomy_pos[2] = 0.0;
+			}
+			c_prev = key_c;
 			return AUTONOMY_MODE;
 		} 
 		// Infantry, Standard, and Hero -- User driving
