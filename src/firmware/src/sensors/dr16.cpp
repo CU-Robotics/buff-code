@@ -222,11 +222,16 @@ int DR16::generate_control(RefSystem *ref) {
 	if (l_switch == 2.0) {
 		// Sentry -- Fully autonomous
 		if (ref->data.robot_type == 7) {
-			data[2] = SPINRATE_IDLE;
 			data[5] = feedrate_bps_continuous * 45.24;
 			data[6] = flywheel_radps;
-			if (ref->data.curr_stage == 'C') no_path = false;
-			else no_path = true;
+			if (ref->data.curr_stage == 'C') {
+				no_path = false;
+				data[2] = SPINRATE_IDLE;
+			}
+			else {
+				no_path = true;
+				data[2] = 0;
+			}
 			return AUTONOMY_MODE;
 		} 
 		// Infantry, Standard, and Hero -- User driving
