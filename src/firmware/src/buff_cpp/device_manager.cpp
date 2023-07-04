@@ -546,7 +546,7 @@ void Device_Manager::step_controllers(float dt) {
 			}
 
 			// Track with gimbal if we are instructed to
-			if (controller_manager.autonomy_input[5] == 1) {
+			if (controller_manager.autonomy_input[5] == 1 || controller_manager.autonomy_input[6] > 0) {
 				//yaw_autonomy_speed += -0.3 * (yaw_autonomy_err * dt); //i term
 				pitch_autonomy_speed += 1 * (pitch_autonomy_err * dt); //i term
 				input_buffer[3] = pitch_autonomy_speed;
