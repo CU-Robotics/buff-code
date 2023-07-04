@@ -229,7 +229,7 @@ int DR16::generate_control(RefSystem *ref) {
 				data[2] = SPINRATE_IDLE;
 			}
 			else {
-				no_path = true;
+				no_path = false;
 				data[2] = 0;
 			}
 
