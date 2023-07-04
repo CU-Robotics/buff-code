@@ -447,10 +447,10 @@ bool RefSystem::read_serial() {
 				msg[5] = temp; 
 				int rec_id = temp_stat;
 
-				for (int i = 0; i < 7; i++){ //Read 7 bytes cuz dji decided to slap in a good ol 0x00007856341210, you know, cuz why not
-					while (Serial2.readBytes(&temp, 1) != 1) {}
+				//for (int i = 0; i < 7; i++){ //Read 7 bytes cuz dji decided to slap in a good ol 0x00007856341210, you know, cuz why not
+				//	while (Serial2.readBytes(&temp, 1) != 1) {}
 					//Serial.println(temp, HEX); // In case you want to see the bs for yourself	
-				}
+				//}
 
 				float tmp_float_1;
 				while (Serial2.readBytes(&temp, 1) != 1) {}
@@ -538,14 +538,14 @@ bool RefSystem::read_serial() {
 					Serial.print("m, theta:");
 					Serial.print(data.sentry_goal[2]);
 					Serial.println("rad");
-					if (data.robot_type == 7) memcpy(data.autonomy_pos, data.sentry_goal, 3);
+					if (data.robot_type == 7) memcpy(data.autonomy_pos, data.sentry_goal, 12);
 				}
 				// Infantry goal update
 				else if (command == 0x0204) {
 					data.infantry_goal[0] = tmp_float_1;
 					data.infantry_goal[1] = tmp_float_2;
 					data.infantry_goal[2] = tmp_float_3;
-					if (data.robot_type == 1) memcpy(data.autonomy_pos, data.infantry_goal, 3);
+					if (data.robot_type == 1) memcpy(data.autonomy_pos, data.infantry_goal, 12);
 				}
 
 				//Serial.println("I bet I made it here");
