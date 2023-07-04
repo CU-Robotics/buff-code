@@ -233,8 +233,11 @@ int DR16::generate_control(RefSystem *ref) {
 				data[2] = 0;
 			}
 
-			Serial.print("Right switch is: ");
-			Serial.println(r_switch);
+			Serial.print("Current stage is: ");
+			Serial.println(ref->data.curr_stage);
+			Serial.print("Desired X pos is: ");
+			Serial.println(ref->data.autonomy_pos[0]);
+			Serial.println();
 			if ((key_c && !c_prev) || r_switch == 1.0) {
 				Serial.println("Lets recall");
 				ref->data.autonomy_pos[0] = 0.5;
