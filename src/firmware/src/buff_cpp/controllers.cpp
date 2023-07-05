@@ -194,7 +194,7 @@ void Controller_Manager::get_pos_est_report(float* data) {
 	for (int i = 0; i < REMOTE_CONTROL_LEN; i++) {
 		data[i] = autonomy_goal[i];
 		data[i + REMOTE_CONTROL_LEN] = enc_odm_pos[i];
-	}
+		}
 }
 
 void Controller_Manager::get_manager_report(float* data) {
@@ -396,7 +396,6 @@ void Controller_Manager::estimate_state(float* gimbal_imu, float dt) {
 	// get the encoder angles as radians
 	// gimbal_yaw_angle = wrap_angle(enc_filters[1].filter((encoders[1] - encoder_bias[1]) * PI / 180));
 	gimbal_yaw_angle = wrap_angle((encoders[1] - encoder_bias[1]) * PI / 180);
-
 	// Serial.printf("yaw: %f, pitch: %f\n", gimbal_yaw_angle, gimbal_pitch_angle);
 
 	float prev_chassis_heading = enc_odm_pos[2];

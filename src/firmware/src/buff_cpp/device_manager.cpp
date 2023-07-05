@@ -420,11 +420,12 @@ void Device_Manager::read_sensors() {
 		controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
 		controller_manager.power_buffer = ref.data.power_buffer;
 	}
-	if (micros() - prev_ref_write_micros > 100000) {
+	//Serial.print("1st");
+	//Serial.println(Serial2.available());
+	if (micros() - prev_ref_write_micros > 50000) { // Send data at 30Hz
 	 	prev_ref_write_micros = micros();
 	 	ref.write_serial(controller_manager.enc_odm_pos);
-	 }
-	
+	}
 	switch (sensor_switch) {
 		case 0:
 			sensor_switch += 1;
@@ -507,6 +508,7 @@ void Device_Manager::read_sensors() {
 */
 void Device_Manager::step_controllers(float dt) {
 	//Serial.println(dt * 1000);
+	//Serial.println(dt * 1000);
 	static int prev_shutdown = 1;
 
 	controller_manager.estimate_state(gimbal_imu.data, dt);
@@ -519,11 +521,13 @@ void Device_Manager::step_controllers(float dt) {
 	float ypc_gain = -350.0; //-150
 	float ppc_gain = 0.0; //50
 
+	float pitch_autonomy_err = wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
 	float pitch_autonomy_speed = 150 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
-	
+
 	float yaw_autonomy_err = wrap_angle((wrap_angle(controller_manager.autonomy_input[4]) - controller_manager.enc_odm_pos[4]));
-	float yaw_autonomy_speed = -80 * yaw_autonomy_err;
-	yaw_autonomy_speed += -0.5 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt;
+	float yaw_autonomy_speed = -80 * yaw_autonomy_err; //80 (163 Pu)
+	yaw_autonomy_speed += -2 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt; //0.5
+
 	prev_yaw_autonomy_err = yaw_autonomy_err;
 	//Serial.println(controller_manager.kee_imu_pos[4]);
 
@@ -542,14 +546,16 @@ void Device_Manager::step_controllers(float dt) {
 			}
 
 			// Track with gimbal if we are instructed to
-			if (controller_manager.autonomy_input[5] == 1) {
+			if (controller_manager.autonomy_input[5] == 1 || controller_manager.autonomy_input[6] > 0) {
+				//yaw_autonomy_speed += -0.3 * (yaw_autonomy_err * dt); //i term
+				pitch_autonomy_speed += 1 * (pitch_autonomy_err * dt); //i term
 				input_buffer[3] = pitch_autonomy_speed;
 				input_buffer[4] = yaw_autonomy_speed;
 				yaw_reference_buffer[0] = yaw_autonomy_speed;
 
 				// Sentry: fire if we are looking at the target
 				if (ref.data.robot_type == 7) {
-					if (wrap_angle((wrap_angle(controller_manager.autonomy_input[4]) - controller_manager.enc_odm_pos[4])) > 0.3) { // Within 0.3rad on either side
+					if (wrap_angle((wrap_angle(controller_manager.autonomy_input[4]) - controller_manager.enc_odm_pos[4])) > 0.3 || !controller_manager.autonomy_input[5]) { // Within 0.3rad on either side
 						input_buffer[5] = 0;
 					}
 				}
@@ -557,10 +563,12 @@ void Device_Manager::step_controllers(float dt) {
 				input_buffer[5] = 0;
 			}
 		}
+
 		// AUTO MOVEMENT
 		controller_manager.autonomy_goal[0] = ref.data.autonomy_pos[0];
 		controller_manager.autonomy_goal[1] = ref.data.autonomy_pos[1];
 		controller_manager.autonomy_goal[4] = ref.data.autonomy_pos[2];
+
 		if ((ref.data.robot_type == 7 || ref.data.robot_type == 3) && controller_manager.autonomy_input[6] > 0 && !receiver.no_path) {
 			float angle_to_target = atan2((controller_manager.autonomy_input[1] - controller_manager.enc_odm_pos[1]), (controller_manager.autonomy_input[0] - controller_manager.enc_odm_pos[0]));
 			if (controller_manager.autonomy_input[6] == 2) {
