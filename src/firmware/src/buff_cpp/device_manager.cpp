@@ -413,6 +413,8 @@ void Device_Manager::push_can(){
 	Author: Mitchell Scott
 */
 void Device_Manager::read_sensors() {
+
+	Serial.println("pitch encoder: ", pitchEncoder.getAngle());
 	if (micros() - prev_ref_read_micros > 5) {
 		prev_ref_read_micros = micros();
 		ref.read_serial();
@@ -517,16 +519,54 @@ void Device_Manager::step_controllers(float dt) {
 	// If we haven't recieved an autonomy input in a while, set to all zeros
 	if (millis() - last_autonomy_read > 1000) for (int i = 0; i < 7; i++) controller_manager.autonomy_input[i] = 0;
 
-	float ysc_gain = -1.0; // 0.8
-	float ypc_gain = -350.0; //-150
+	float ysc_gain = 0.0; // 0.8
+	float ypc_gain = 0.0; //-150
 	float ppc_gain = 0.0; //50
 
+	float pitch_autonomy_p = 0.0;
+	float yaw_autonomy_p = 0.0;
+	float yaw_autonomy_d = 0.0;
+
+	if (ref.data.robot_type == 1) {
+		float ysc_gain = -1.0; // 0.8
+		float ypc_gain = -350.0; //-150
+		float ppc_gain = 0.0; //50
+
+		float pitch_autonomy_p = 150;
+		float yaw_autonomy_p = -80;
+		float yaw_autonomy_d = -0.5;
+	} else if (ref.data.robot_type == 3) {
+		float ysc_gain = -1.0; // 0.8
+		float ypc_gain = -350.0; //-150
+		float ppc_gain = 0.0; //50
+
+		float pitch_autonomy_p = 150;
+		float yaw_autonomy_p = -80;
+		float yaw_autonomy_d = -0.5;
+	} else if (ref.data.robot_type == 5) {
+		float ysc_gain = -1.0; // 0.8
+		float ypc_gain = -350.0; //-150
+		float ppc_gain = 0.0; //50
+
+		float pitch_autonomy_p = 150;
+		float yaw_autonomy_p = -80;
+		float yaw_autonomy_d = -0.5;
+	} else if (ref.data.robot_type == 7) {
+		float ysc_gain = -1.0; // 0.8
+		float ypc_gain = -350.0; //-150
+		float ppc_gain = 0.0; //50
+
+		float pitch_autonomy_p = 150;
+		float yaw_autonomy_p = -80;
+		float yaw_autonomy_d = -0.5;
+	}
+
 	float pitch_autonomy_err = wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
-	float pitch_autonomy_speed = 150 * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
+	float pitch_autonomy_speed = pitch_autonomy_p * wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
 
 	float yaw_autonomy_err = wrap_angle((wrap_angle(controller_manager.autonomy_input[4]) - controller_manager.enc_odm_pos[4]));
-	float yaw_autonomy_speed = -80 * yaw_autonomy_err; //80 (163 Pu)
-	yaw_autonomy_speed += -2 * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt; //0.5
+	float yaw_autonomy_speed = yaw_autonomy_p * yaw_autonomy_err; //80 (163 Pu)
+	yaw_autonomy_speed += yaw_autonomy_d * (yaw_autonomy_err - prev_yaw_autonomy_err) / dt; //0.5
 
 	prev_yaw_autonomy_err = yaw_autonomy_err;
 	//Serial.println(controller_manager.kee_imu_pos[4]);
