@@ -103,7 +103,7 @@ alias reboot-teensy="python3 \${PROJECT_ROOT}/buffpy/src/reset_teensy.py"
 if [[ "${HOSTNAME}" == "edge"* ]]; then
 	export OPENBLAS_CORETYPE=ARMV8
 	export ROS_IP=$(/sbin/ip -o -4 addr list wlan0 | awk '{print $4}' | cut -d/ -f1)
-	export ROS_MASTER_URI=http://${ROS_IP}:11311
+	export ROS_MASTER_URI=http://localhost:11311
 else
 	# if not on jetson set the user IP
 	# should figure out how to set it if it is on the jetson
