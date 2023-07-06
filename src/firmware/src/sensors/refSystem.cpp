@@ -35,9 +35,9 @@ RefSystem::RefSystem() {
 
 void RefSystem::init() {
 	Serial2.begin(115200);
-	graphics_init[0] = true;
-	graphics_init[1] = true;
-	graphics_init[2] = true;
+	//graphics_init[0] = true;
+	//graphics_init[1] = true;
+	//graphics_init[2] = true;
 }
 
 bool RefSystem::read_serial() {
@@ -598,7 +598,12 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 	};
 	byte msg_graphics[128] = {0};
 	int msg_graphics_len;
-	if (field_graphics_update_pending){
+	if (robot_logo_graphics_init < 2){
+		robot_logo_graphics_init++;
+		write_robot_logo_graphics_update(msg_graphics, msg_graphics_len);
+		Serial2.write(msg_graphics, msg_graphics_len);
+		return;
+	}else if (field_graphics_update_pending){
 		field_graphics_update_pending = false;
 		write_field_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
@@ -612,7 +617,7 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		write_primary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
 		return;
-	}else if (!graphics_init[2] && send_sw == 0){
+	}else if (!graphics_init && send_sw == 0){
 		write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
 		//Serial.println("a");
@@ -763,13 +768,13 @@ void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
 
 	// generate graphics
 	byte* graphic = {0};
-	uint8_t operation;
-	if (graphics_init[0]){
+	uint8_t operation = graphics_init ? 1 : 2;
+	/*if (graphics_init[0]){
 		graphics_init[0]= false;
 		operation = 1;
 	}else{
 		operation = 2;
-	}
+	}*/
 
 	//generate_graphic(graphic, "name", operation, type, num_layers, color, start_angle, end_angle, width, start_x, start_y, radius, end_x, end_y);
 	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
@@ -817,13 +822,13 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	msg[12] = 0x01;
 
 
-	uint8_t operation;
-	if (graphics_init[1]){
+	uint8_t operation = graphics_init ? 1 : 2;
+	/*if (graphics_init[1]){
 		graphics_init[1]= false;
 		operation = 1;
 	}else{
 		operation = 2;
-	}
+	}*/
 	int j = 0;
 	// generate graphics
 	byte graphic[15] = {0};
@@ -979,14 +984,14 @@ void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
 	msg[12] = 0x01;
 
 
-	uint8_t operation;
-	if (graphics_init[2]){
+	uint8_t operation = graphics_init ? 1 : 2;
+	/*if (graphics_init[2]){
 		graphics_init[2]= false;
 		operation = 1;
 		Serial.println("Initializing Field Graphics");
 	}else{
 		operation = 2;
-	}
+	}*/
 	int j = 0;
 	// generate graphics
 	byte graphic[15] = {0};
@@ -1145,6 +1150,274 @@ void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
 	
 	*msg_len = 9+6+15*num_graphics;
 	//Serial.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+}
+
+void RefSystem::write_robot_logo_graphics_update(byte* msg, int* msg_len) {
+	/*
+	 Infantry:
+Body:
+1 - 0 - 2 - 0 - 0 - 10 - 0 - 20 - 20 - 180 - 40
+1 - 0 - 2 - 0 - 0 - 10 - 0 - 50 - 20 - 150 - 110
+0 - 0 - 2 - 0 - 0 - 10 - 0 - 20 - 40 - 50 - 110
+0 - 0 - 2 - 0 - 0 - 10 - 0 - 150 - 110 - 180 - 40
+Gimbal:
+1 - 0 - 2 - 0 - 0 - 10 - 0 - 20 - 130 - 80 - 180
+1 - 0 - 2 - 0 - 0 - 10 - 0 - 80 - 110 - 120 - 180
+0 - 0 - 2 - 0 - 0 - 10 - 0 - 120 - 120 - 150 - 140
+0 - 0 - 2 - 0 - 0 - 10 - 0 - 120 - 140 - 170 - 140
+0 - 0 - 2 - 0 - 0 - 10 - 0 - 170 - 140 - 180 - 160
+0 - 0 - 2 - 0 - 0 - 10 - 0 - 120 - 160 - 180 - 160
+0 - 0 - 2 - 0 - 0 - 10 - 0 - 120 - 120 - 150 - 140
+Letter:
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 80 - 90 - 120 - 100
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 95 - 60 - 105 - 90
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 80 - 50 - 120 - 60 
+ Standard:
+Body:
+1 - 0 - 3 - 0 - 0 - 10 - 0 - 20 - 20 - 180 - 40
+1 - 0 - 3 - 0 - 0 - 10 - 0 - 50 - 20 - 150 - 110
+0 - 0 - 3 - 0 - 0 - 10 - 0 - 20 - 40 - 50 - 110
+0 - 0 - 3 - 0 - 0 - 10 - 0 - 150 - 110 - 180 - 40
+Gimbal:
+1 - 0 - 3 - 0 - 0 - 10 - 0 - 40 - 130 - 90 - 170
+1 - 0 - 3 - 0 - 0 - 10 - 0 - 90 - 110 - 110 - 170
+0 - 0 - 3 - 0 - 0 - 10 - 0 - 110 - 140 - 150 - 140
+0 - 0 - 3 - 0 - 0 - 10 - 0 - 150 - 140 - 160 - 160
+0 - 0 - 3 - 0 - 0 - 10 - 0 - 110 - 160 - 160 - 160
+Letter:
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 90 - 90 - 120 - 100
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 80 - 70 - 90 - 100
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 90 - 70 - 110 - 80
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 50 - 110 - 120 - 80
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 80 - 50 - 110 - 60 
+ Hero:
+Body:
+1 - 0 - 6 - 0 - 0 - 10 - 0 - 0 - 20 - 200 - 40
+1 - 0 - 6 - 0 - 0 - 10 - 0 - 30 - 20 - 170 - 110
+0 - 0 - 6 - 0 - 0 - 10 - 0 - 0 - 40 - 30 - 110
+0 - 0 - 6 - 0 - 0 - 10 - 0 - 170 - 110 - 200 - 40
+Gimbal:
+1 - 0 - 6 - 0 - 0 - 10 - 0 - 30 - 130 - 70 - 140
+1 - 0 - 6 - 0 - 0 - 10 - 0 - 20 - 140 - 80 - 180
+1 - 0 - 6 - 0 - 0 - 10 - 0 - 80 - 110 - 120 - 180
+0 - 0 - 6 - 0 - 0 - 10 - 0 - 120 - 140 - 170 - 140
+0 - 0 - 6 - 0 - 0 - 10 - 0 - 170 - 140 - 180 - 170
+0 - 0 - 6 - 0 - 0 - 10 - 0 - 120 - 170 - 180 - 170
+Letter:
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 80 - 50 - 90 - 100
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 90 - 70 - 110 - 80
+1 - 1 - 0 - 0 - 0 - 10 - 0 - 110 - 50 - 120 - 100*/
+	//Serial.println("Trying to print");
+	if (robot_logo_graphics_init == 1){
+		int num_graphics = 7;
+		int x_pos = 0;
+		int y_pos = 0;
+		// frame header
+		msg[0] = 0xA5;
+		msg[1] = 6+15*num_graphics; // CHANGE
+		msg[2] = 0x00;
+		msg[3] = get_seq();
+		msg[4] = generateCRC8(msg, 4);
+
+		// cmd 0x0301
+		msg[5] = 0x01;
+		msg[6] = 0x03;
+
+		// content ID
+		if (num_graphics == 1){
+			msg[7] = 0x01;
+		}else if (num_graphics == 2){
+			msg[7] = 0x02;
+		}else if (num_graphics == 5){
+			msg[7] = 0x03; // Draw 7 graphics // CHANGE
+		}else if (num_graphics == 7){
+			msg[7] = 0x04;
+		}	
+		msg[8] = 0x01;
+
+		// sender ID
+		msg[9] = data.robot_id;
+		msg[10] = 0x00;
+
+		// reciever ID
+		msg[11] = data.robot_id;
+		msg[12] = 0x01;
+
+
+		uint8_t operation = graphics_init ? 0 : 1;
+		int j = 0;
+		// generate graphics
+		byte graphic[15] = {0};
+		if (data.robot_id == 3){
+			const int X_OFFSET = 50;
+			const int Y_OFFSET = 50;
+
+			// Infantry
+			generate_graphic(graphic, "In1", 1, 0, 2, 0, 0, 10, 20 + X_OFFSET, 20 + Y_OFFSET, 0, 180 + X_OFFSET, 40 + Y_OFFSET);
+			for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+			}
+			j++;
+			
+
+			if (num_graphics > 1){
+				generate_graphic(graphic, "In2", 1, 0, 2, 0, 0, 10, 50 + X_OFFSET, 20 + Y_OFFSET, 0, 150 + X_OFFSET, 110 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}
+				j++;
+				
+			}
+			
+			if (num_graphics > 2){
+				generate_graphic(graphic, "In3", 0, 0, 2, 0, 0, 10, 20 + X_OFFSET, 40 + Y_OFFSET, 0, 50 + X_OFFSET, 110 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}
+				j++;
+				
+				generate_graphic(graphic, "In4", 0, 0, 2, 0, 0, 10, 150 + X_OFFSET, 110 + Y_OFFSET, 0, 180 + X_OFFSET, 40 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}
+				j++;
+
+
+				generate_graphic(graphic, "In5", 1, 0, 2, 0, 0, 10, 20 + X_OFFSET, 130 + Y_OFFSET, 0, 80 + X_OFFSET, 180 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}
+				j++;
+			}
+
+			if (num_graphics > 5){
+				generate_graphic(graphic, "In6", 1, 0, 2, 0, 0, 10, 80 + X_OFFSET, 110 + Y_OFFSET, 0, 120 + X_OFFSET, 180 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}
+				j++;
+
+				generate_graphic(graphic, "In7", 0, 0, 2, 0, 0, 10, 120 + X_OFFSET, 120 + Y_OFFSET, 0, 150 + X_OFFSET, 140 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}
+			}	
+		}else if(data.robot_id == 5){
+			
+		}
+		
+		
+
+		uint16_t footerCRC = generateCRC16(msg, 13+15*num_graphics); // CHANGE
+		msg[13+15*num_graphics] = (footerCRC & 0x00FF); // CHANGE
+		msg[14+15*num_graphics] = (footerCRC >> 8); // CHANGE
+		
+		*msg_len = 9+6+15*num_graphics;
+		//Serial.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+	else if (robot_logo_graphics_init == 2){
+		int num_graphics = 7;
+		int x_pos = 0;
+		int y_pos = 0;
+		// frame header
+		msg[0] = 0xA5;
+		msg[1] = 6+15*num_graphics; // CHANGE
+		msg[2] = 0x00;
+		msg[3] = get_seq();
+		msg[4] = generateCRC8(msg, 4);
+
+		// cmd 0x0301
+		msg[5] = 0x01;
+		msg[6] = 0x03;
+
+		// content ID
+		if (num_graphics == 1){
+			msg[7] = 0x01;
+		}else if (num_graphics == 2){
+			msg[7] = 0x02;
+		}else if (num_graphics == 5){
+			msg[7] = 0x03; // Draw 7 graphics // CHANGE
+		}else if (num_graphics == 7){
+			msg[7] = 0x04;
+		}	
+		msg[8] = 0x01;
+
+		// sender ID
+		msg[9] = data.robot_id;
+		msg[10] = 0x00;
+
+		// reciever ID
+		msg[11] = data.robot_id;
+		msg[12] = 0x01;
+
+
+		uint8_t operation = graphics_init ? 0 : 1;
+		int j = 0;
+		// generate graphics
+		byte graphic[15] = {0};
+		if (data.robot_id == 3){
+			generate_graphic(graphic, "In8", 0, 0, 2, 0, 0, 10, 120 + X_OFFSET, 140 + Y_OFFSET, 0, 170 + X_OFFSET, 140 + Y_OFFSET);
+			for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+			}
+			j++;
+
+			if (num_graphics > 1){
+				generate_graphic(graphic, "In9", 0, 0, 2, 0, 0, 10, 170 + X_OFFSET, 140 + Y_OFFSET, 0, 180 + X_OFFSET, 160 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}
+				j++;	
+			}
+
+			if (num_graphics > 2){
+				generate_graphic(graphic, "In10", 0, 0, 2, 0, 0, 10, 120 + X_OFFSET, 160 + Y_OFFSET, 0, 180 + X_OFFSET, 160 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}
+				j++;	
+
+				generate_graphic(graphic, "In11", 0, 0, 2, 0, 0, 10, 120 + X_OFFSET, 120 + Y_OFFSET, 0, 150 + X_OFFSET, 140 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}
+				j++;	
+
+				generate_graphic(graphic, "In12", 1, 1, 0, 0, 0, 10, 80 + X_OFFSET, 90 + Y_OFFSET, 0, 120 + X_OFFSET, 100 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}	
+			}
+
+			if (num_graphics > 5){
+				generate_graphic(graphic, "In13", 1, 1, 0, 0, 0, 10, 95 + X_OFFSET, 60 + Y_OFFSET, 0, 105 + X_OFFSET, 90 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}	
+
+				j++;	
+
+				generate_graphic(graphic, "In14", 1, 1, 0, 0, 0, 10, 80 + X_OFFSET, 50 + Y_OFFSET, 0, 120 + X_OFFSET, 60 + Y_OFFSET);
+				for (int i = 0; i < 15; i++){
+					msg[13+15*j+i] = graphic[i];
+					graphic[i] = 0;
+				}	
+				j++;	
+			} 
+		}	
+	}
 }
 
 void RefSystem::generate_graphic(byte* graphic, char name[3], int operation, int type, int num_layers, int color, int start_angle, int end_angle, int width, int start_x, int start_y, int radius, int end_x, int end_y) {

@@ -149,13 +149,12 @@ int DR16::generate_control(RefSystem *ref) {
 	bool r_mouse_button = tmp[13];
 
 	// Send autonomy command
-	if (key_b) {
-	 	Serial.println(ref->graphics_init[2]);
-	// 	ref->graphics_init[2] = true;
+	if (key_b && !b_prev) {
+	 	ref->graphics_init = true;//[2] = true;
 	}
-	//} else {
-	// 	ref->graphics_init[2] = false;
-	//}
+	} else {
+	 	ref->graphics_init = false; //[2] = false;
+	}
 	b_prev = key_b;
 
 	// Toggle Sentry Control HUD
