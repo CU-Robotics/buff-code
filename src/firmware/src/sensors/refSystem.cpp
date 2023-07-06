@@ -1208,6 +1208,8 @@ Letter:
 1 - 1 - 0 - 0 - 0 - 10 - 0 - 90 - 70 - 110 - 80
 1 - 1 - 0 - 0 - 0 - 10 - 0 - 110 - 50 - 120 - 100*/
 	//Serial.println("Trying to print");
+	const int x_pos = 50;
+	const int y_pos = 50;
 	if (robot_logo_graphics_init == 1){
 		int num_graphics = 7;
 		int x_pos = 0;
@@ -1249,11 +1251,9 @@ Letter:
 		// generate graphics
 		byte graphic[15] = {0};
 		if (data.robot_id == 3){
-			const int X_OFFSET = 50;
-			const int Y_OFFSET = 50;
 
 			// Infantry
-			generate_graphic(graphic, "In1", 1, 0, 2, 0, 0, 10, 20 + X_OFFSET, 20 + Y_OFFSET, 0, 180 + X_OFFSET, 40 + Y_OFFSET);
+			generate_graphic(graphic, "In1", 1, 0, 0, 2, 0, 0, 10, 20 + x_pos, 20 + y_pos, 0, 180 + x_pos, 40 + y_pos);
 			for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
@@ -1262,7 +1262,7 @@ Letter:
 			
 
 			if (num_graphics > 1){
-				generate_graphic(graphic, "In2", 1, 0, 2, 0, 0, 10, 50 + X_OFFSET, 20 + Y_OFFSET, 0, 150 + X_OFFSET, 110 + Y_OFFSET);
+				generate_graphic(graphic, "In2", 1, 0, 0, 2, 0, 0, 10, 50 + x_pos, 20 + y_pos, 0, 150 + x_pos, 110 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
@@ -1272,14 +1272,14 @@ Letter:
 			}
 			
 			if (num_graphics > 2){
-				generate_graphic(graphic, "In3", 0, 0, 2, 0, 0, 10, 20 + X_OFFSET, 40 + Y_OFFSET, 0, 50 + X_OFFSET, 110 + Y_OFFSET);
+				generate_graphic(graphic, "In3", 0, 0, 2, 0, 0, 10, 20 + x_pos, 40 + y_pos, 0, 50 + x_pos, 110 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
 				}
 				j++;
 				
-				generate_graphic(graphic, "In4", 0, 0, 2, 0, 0, 10, 150 + X_OFFSET, 110 + Y_OFFSET, 0, 180 + X_OFFSET, 40 + Y_OFFSET);
+				generate_graphic(graphic, "In4", 0, 0, 2, 0, 0, 10, 150 + x_pos, 110 + y_pos, 0, 180 + x_pos, 40 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
@@ -1287,7 +1287,7 @@ Letter:
 				j++;
 
 
-				generate_graphic(graphic, "In5", 1, 0, 2, 0, 0, 10, 20 + X_OFFSET, 130 + Y_OFFSET, 0, 80 + X_OFFSET, 180 + Y_OFFSET);
+				generate_graphic(graphic, "In5", 1, 0, 2, 0, 0, 10, 20 + x_pos, 130 + y_pos, 0, 80 + x_pos, 180 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
@@ -1296,14 +1296,14 @@ Letter:
 			}
 
 			if (num_graphics > 5){
-				generate_graphic(graphic, "In6", 1, 0, 2, 0, 0, 10, 80 + X_OFFSET, 110 + Y_OFFSET, 0, 120 + X_OFFSET, 180 + Y_OFFSET);
+				generate_graphic(graphic, "In6", 1, 0, 2, 0, 0, 10, 80 + x_pos, 110 + y_pos, 0, 120 + x_pos, 180 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
 				}
 				j++;
 
-				generate_graphic(graphic, "In7", 0, 0, 2, 0, 0, 10, 120 + X_OFFSET, 120 + Y_OFFSET, 0, 150 + X_OFFSET, 140 + Y_OFFSET);
+				generate_graphic(graphic, "In7", 0, 0, 2, 0, 0, 10, 120 + x_pos, 120 + y_pos, 0, 150 + x_pos, 140 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
@@ -1321,7 +1321,7 @@ Letter:
 		
 		*msg_len = 9+6+15*num_graphics;
 		//Serial.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-	else if (robot_logo_graphics_init == 2){
+	}else if (robot_logo_graphics_init == 2){
 		int num_graphics = 7;
 		int x_pos = 0;
 		int y_pos = 0;
@@ -1362,7 +1362,7 @@ Letter:
 		// generate graphics
 		byte graphic[15] = {0};
 		if (data.robot_id == 3){
-			generate_graphic(graphic, "In8", 0, 0, 2, 0, 0, 10, 120 + X_OFFSET, 140 + Y_OFFSET, 0, 170 + X_OFFSET, 140 + Y_OFFSET);
+			generate_graphic(graphic, "In8", 0, 0, 2, 0, 0, 10, 120 + x_pos, 140 + y_pos, 0, 170 + x_pos, 140 + y_pos);
 			for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
@@ -1370,7 +1370,7 @@ Letter:
 			j++;
 
 			if (num_graphics > 1){
-				generate_graphic(graphic, "In9", 0, 0, 2, 0, 0, 10, 170 + X_OFFSET, 140 + Y_OFFSET, 0, 180 + X_OFFSET, 160 + Y_OFFSET);
+				generate_graphic(graphic, "In9", 0, 0, 2, 0, 0, 10, 170 + x_pos, 140 + y_pos, 0, 180 + x_pos, 160 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
@@ -1379,21 +1379,21 @@ Letter:
 			}
 
 			if (num_graphics > 2){
-				generate_graphic(graphic, "In10", 0, 0, 2, 0, 0, 10, 120 + X_OFFSET, 160 + Y_OFFSET, 0, 180 + X_OFFSET, 160 + Y_OFFSET);
+				generate_graphic(graphic, "I10", 0, 0, 2, 0, 0, 10, 120 + x_pos, 160 + y_pos, 0, 180 + x_pos, 160 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
 				}
 				j++;	
 
-				generate_graphic(graphic, "In11", 0, 0, 2, 0, 0, 10, 120 + X_OFFSET, 120 + Y_OFFSET, 0, 150 + X_OFFSET, 140 + Y_OFFSET);
+				generate_graphic(graphic, "I11", 0, 0, 2, 0, 0, 10, 120 + x_pos, 120 + y_pos, 0, 150 + x_pos, 140 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
 				}
 				j++;	
 
-				generate_graphic(graphic, "In12", 1, 1, 0, 0, 0, 10, 80 + X_OFFSET, 90 + Y_OFFSET, 0, 120 + X_OFFSET, 100 + Y_OFFSET);
+				generate_graphic(graphic, "I12", 1, 1, 0, 0, 0, 10, 80 + x_pos, 90 + y_pos, 0, 120 + x_pos, 100 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
@@ -1401,7 +1401,7 @@ Letter:
 			}
 
 			if (num_graphics > 5){
-				generate_graphic(graphic, "In13", 1, 1, 0, 0, 0, 10, 95 + X_OFFSET, 60 + Y_OFFSET, 0, 105 + X_OFFSET, 90 + Y_OFFSET);
+				generate_graphic(graphic, "I13", 1, 1, 0, 0, 0, 10, 95 + x_pos, 60 + y_pos, 0, 105 + x_pos, 90 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;
@@ -1409,7 +1409,7 @@ Letter:
 
 				j++;	
 
-				generate_graphic(graphic, "In14", 1, 1, 0, 0, 0, 10, 80 + X_OFFSET, 50 + Y_OFFSET, 0, 120 + X_OFFSET, 60 + Y_OFFSET);
+				generate_graphic(graphic, "I14", 1, 1, 0, 0, 0, 10, 80 + x_pos, 50 + y_pos, 0, 120 + x_pos, 60 + y_pos);
 				for (int i = 0; i < 15; i++){
 					msg[13+15*j+i] = graphic[i];
 					graphic[i] = 0;

@@ -151,8 +151,7 @@ int DR16::generate_control(RefSystem *ref) {
 	// Send autonomy command
 	if (key_b && !b_prev) {
 	 	ref->graphics_init = true;//[2] = true;
-	}
-	} else {
+	}else {
 	 	ref->graphics_init = false; //[2] = false;
 	}
 	b_prev = key_b;
