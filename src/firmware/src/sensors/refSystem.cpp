@@ -35,9 +35,6 @@ RefSystem::RefSystem() {
 
 void RefSystem::init() {
 	Serial2.begin(115200);
-	graphics_init[0] = true;
-	graphics_init[1] = true;
-	graphics_init[2] = true;
 }
 
 bool RefSystem::read_serial() {
@@ -612,7 +609,7 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		write_primary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
 		return;
-	}else if (!graphics_init[2] && send_sw == 0){
+	}else if (!map_drawn && send_sw == 0){
 		write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
 		//Serial.println("a");
@@ -763,13 +760,7 @@ void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
 
 	// generate graphics
 	byte* graphic = {0};
-	uint8_t operation;
-	if (graphics_init[0]){
-		graphics_init[0]= false;
-		operation = 1;
-	}else{
-		operation = 2;
-	}
+	uint8_t operation = graphics_init ? 1 : 2;
 
 	//generate_graphic(graphic, "name", operation, type, num_layers, color, start_angle, end_angle, width, start_x, start_y, radius, end_x, end_y);
 	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
@@ -817,13 +808,7 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	msg[12] = 0x01;
 
 
-	uint8_t operation;
-	if (graphics_init[1]){
-		graphics_init[1]= false;
-		operation = 1;
-	}else{
-		operation = 2;
-	}
+	uint8_t operation = graphics_init ? 1 : 2;
 	int j = 0;
 	// generate graphics
 	byte graphic[15] = {0};
@@ -978,15 +963,11 @@ void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
 	msg[11] = data.robot_id;
 	msg[12] = 0x01;
 
-
-	uint8_t operation;
-	if (graphics_init[2]){
-		graphics_init[2]= false;
-		operation = 1;
-		Serial.println("Initializing Field Graphics");
-	}else{
-		operation = 2;
+	if (graphics_init == true){
+		map_drawn = true;
 	}
+	uint8_t operation = graphics_init ? 1 : 2;
+
 	int j = 0;
 	// generate graphics
 	byte graphic[15] = {0};

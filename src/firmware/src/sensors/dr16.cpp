@@ -150,12 +150,10 @@ int DR16::generate_control(RefSystem *ref) {
 
 	// Send autonomy command
 	if (key_b) {
-	 	Serial.println(ref->graphics_init[2]);
-	// 	ref->graphics_init[2] = true;
+	 	ref->graphics_init = true;
+	} else{
+	 	ref->graphics_init = false;
 	}
-	//} else {
-	// 	ref->graphics_init[2] = false;
-	//}
 	b_prev = key_b;
 
 	// Toggle Sentry Control HUD

@@ -219,9 +219,11 @@ void Device_Manager::control_input_handle() { // 2
 			controller_manager.enc_odm_pos[0] = input_report.get_float(2); // x pos
 			controller_manager.enc_odm_pos[1] = input_report.get_float(6); // y pos
 			// float yaw_est_err = input_report.get_float(10) - wrap_angle(kee_imu_pos[4]);
-			float reloc_yaw_err = wrap_angle(input_report.get_float(10) - wrap_angle(controller_manager.kee_imu_pos[4]));
-			controller_manager.kee_imu_pos[4] += reloc_yaw_err; // gimbal heading
-			controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
+			if (ref.data.curr_stage != 'C') {
+				float reloc_yaw_err = wrap_angle(input_report.get_float(10) - wrap_angle(controller_manager.kee_imu_pos[4]));
+				controller_manager.kee_imu_pos[4] += reloc_yaw_err; // gimbal heading
+				controller_manager.global_yaw_reference = controller_manager.kee_imu_pos[4];
+			}
 			Serial.println("Position Override");
 			// timestamp (same as waypoint report)
 

@@ -162,7 +162,8 @@ class RefSystem {
         int send_sw;
         int graphics_sw;
 
-        bool graphics_init[3];
+        bool graphics_init = false;
+        bool map_drawn = false;
 
         bool show_map = 0;
         bool field_graphics_update_pending = 0;
