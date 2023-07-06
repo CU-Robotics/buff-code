@@ -212,6 +212,8 @@ int DR16::generate_control(RefSystem *ref) {
 	float flywheel_radps = FLYWHEEL_SPEED;
 	if (ref->data.robot_type == 3 || ref->data.robot_type == 7) {
 		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-5.0) + 15; // Equation to match flywheel speed to exit velocity
+	} else if (ref->data.robot_type == 1) {
+		flywheel_radps = 700;
 	}
 
 	// Safety Switch
@@ -231,11 +233,6 @@ int DR16::generate_control(RefSystem *ref) {
 				data[2] = 0;
 			}
 
-			Serial.print("Current stage is: ");
-			Serial.println(ref->data.curr_stage);
-			Serial.print("Desired X pos is: ");
-			Serial.println(ref->data.autonomy_pos[0]);
-			Serial.println();
 			if ((key_c && !c_prev) || r_switch == 1.0) {
 				Serial.println("Lets recall");
 				ref->data.autonomy_pos[0] = 0.5;
