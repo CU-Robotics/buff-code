@@ -151,7 +151,7 @@ int DR16::generate_control(RefSystem *ref) {
 	// Send autonomy command
 	if (key_b) {
 	 	ref->graphics_init = true;
-	} else{
+	} else {
 	 	ref->graphics_init = false;
 	}
 	b_prev = key_b;
@@ -250,7 +250,7 @@ int DR16::generate_control(RefSystem *ref) {
 			if (key_r && !r_prev) {
 				ref->data.sentry_send_goal[0] = 0.5;
 				ref->data.sentry_send_goal[1] = 7.5;
-				ref->data.sentry_send_goal[2] = 0.0;
+				ref->data.sentry_send_goal[2] = 1.0;
 				ref->data.pending_sentry_send = true;
 				Serial.println("Init recall command (dr16.cpp 192)");
 			}
@@ -263,7 +263,7 @@ int DR16::generate_control(RefSystem *ref) {
 				no_path = false;
 				ref->data.autonomy_pos[0] = 0.5;
 				ref->data.autonomy_pos[1] = 7.5;
-				ref->data.autonomy_pos[2] = 0.0;
+				ref->data.autonomy_pos[2] = 1.0;
 			}
 			c_prev = key_c;
 
@@ -272,9 +272,7 @@ int DR16::generate_control(RefSystem *ref) {
 			data[1] = (key_d - key_a) * CHASSIS_SPEED;
 
 			// Chassis Spin
-			if (key_shift && !shift_prev) beyblade_mode = !beyblade_mode;
-			shift_prev = key_shift;
-			if (beyblade_mode) {
+			if (key_shift) {
 				if (key_w || key_s || key_d || key_a) data[2] = SPINRATE_TRANSLATE; // Spin slower while translating
 				else data[2] = SPINRATE_STILL; // Spin fast when still
 			} else {
@@ -300,11 +298,13 @@ int DR16::generate_control(RefSystem *ref) {
 					case 0:
 						if (ref->data.robot_type == 3 || ref->data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
 						else if (ref->data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
+						else if (ref->data.robot_type == 1) data[5] = FEEDSPEED_DEFAULT;
 						else data[5] = FEEDSPEED_DEFAULT;
 						break;
 					case 1:
 						if (ref->data.robot_type == 3 || ref->data.robot_type == 7) data[5] = feedrate_bps_burst * 45.24;
 						else if (ref->data.robot_type == 5) data[5] = feedrate_bps_burst * 28.27;
+						else if (ref->data.robot_type == 1) data[5] = FEEDSPEED_DEFAULT * 1.75;
 						else data[5] = FEEDSPEED_DEFAULT;
 						break;
 					default:
