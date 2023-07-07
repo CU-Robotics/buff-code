@@ -594,7 +594,7 @@ void Device_Manager::step_controllers(float dt) {
 				yaw_reference_buffer[0] = yaw_autonomy_speed;
 
 				// Sentry: fire if we are looking at the target
-				if (ref.data.robot_type == 7 && controller_manager.autonomy_input[5] == 1) {
+				if (ref.data.robot_type == 7) {
 					if (wrap_angle((wrap_angle(controller_manager.autonomy_input[4]) - controller_manager.enc_odm_pos[4])) > 0.3 || !controller_manager.autonomy_input[5]) { // Within 0.3rad on either side
 						input_buffer[5] = 0;
 					}
