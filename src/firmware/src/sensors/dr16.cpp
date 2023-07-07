@@ -211,7 +211,7 @@ int DR16::generate_control(RefSystem *ref) {
 	// Determine flywheel speed
 	float flywheel_radps = FLYWHEEL_SPEED;
 	if (ref->data.robot_type == 3 || ref->data.robot_type == 7) {
-		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-5.0) + 15; // Equation to match flywheel speed to exit velocity
+		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-0.5) + 15; // Equation to match flywheel speed to exit velocity
 	} else if (ref->data.robot_type == 1) {
 		flywheel_radps = 500;
 	}
@@ -330,7 +330,7 @@ int DR16::generate_control(RefSystem *ref) {
 			if (ref->data.robot_type == 3 || ref->data.robot_type == 7) data[5] = feedrate_bps_continuous * 45.24;
 			else if (ref->data.robot_type == 5) data[5] = feedrate_bps_continuous * 28.27;
 			else data[5] = FEEDSPEED_DEFAULT;
-			data[6] = FLYWHEEL_SPEED;
+			data[6] = flywheel_radps;
 		} else if (r_switch == 3.0) {
 			data[5] = 0.0;
 			data[6] = flywheel_radps;
