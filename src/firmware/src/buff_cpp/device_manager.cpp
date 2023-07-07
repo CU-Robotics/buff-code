@@ -586,15 +586,15 @@ void Device_Manager::step_controllers(float dt) {
 			}
 
 			// Track with gimbal if we are instructed to
-			if (controller_manager.autonomy_input[5] == 1 || controller_manager.autonomy_input[6] > 0) {
+			if (controller_manager.autonomy_input[5] == 1 || (controller_manager.autonomy_input[6] > 0 && ref.data.curr_stage == 'C')) {
 				//yaw_autonomy_speed += -0.3 * (yaw_autonomy_err * dt); //i term
-				pitch_autonomy_speed += 1 * (pitch_autonomy_err * dt); //i term
+				//pitch_autonomy_speed += 1 * (pitch_autonomy_err * dt); //i term
 				input_buffer[3] = pitch_autonomy_speed;
 				input_buffer[4] = yaw_autonomy_speed;
 				yaw_reference_buffer[0] = yaw_autonomy_speed;
 
 				// Sentry: fire if we are looking at the target
-				if (ref.data.robot_type == 7) {
+				if (ref.data.robot_type == 7 && controller_manager.autonomy_input[5] == 1) {
 					if (wrap_angle((wrap_angle(controller_manager.autonomy_input[4]) - controller_manager.enc_odm_pos[4])) > 0.3 || !controller_manager.autonomy_input[5]) { // Within 0.3rad on either side
 						input_buffer[5] = 0;
 					}
@@ -618,10 +618,6 @@ void Device_Manager::step_controllers(float dt) {
 			} else {
 				input_buffer[0] = controller_manager.autonomy_input[2] * cos(controller_manager.enc_odm_pos[4] - angle_to_target);
 				input_buffer[1] = controller_manager.autonomy_input[2] * sin(controller_manager.enc_odm_pos[4] - angle_to_target);
-			}
-			if (controller_manager.autonomy_input[5]) {
-				input_buffer[4] = yaw_autonomy_speed;
-				yaw_reference_buffer[0] = yaw_autonomy_speed;
 			}
 		}
 
