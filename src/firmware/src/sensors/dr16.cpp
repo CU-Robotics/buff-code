@@ -151,7 +151,6 @@ int DR16::generate_control(RefSystem *ref) {
 	// Send autonomy command
 	if (key_b) {
 	 	ref->graphics_init = true;
-		ref->field_graphics_update_pending = true;
 	} else {
 	 	ref->graphics_init = false;
 	}

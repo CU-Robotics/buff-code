@@ -597,9 +597,16 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 	byte msg_graphics[128] = {0};
 	int msg_graphics_len;
 	if (field_graphics_update_pending) {
-		field_graphics_update_pending = false;
-		write_field_graphics_update(msg_graphics, &msg_graphics_len);
-		Serial2.write(msg_graphics, msg_graphics_len);
+		if (draw_sw == 0) {
+			write_crosshair_graphics_update(msg_graphics, &msg_graphics_len);
+			Serial2.write(msg_graphics, msg_graphics_len);
+			draw_sw++;
+		} else {
+			field_graphics_update_pending = false;
+			write_field_graphics_update(msg_graphics, &msg_graphics_len);
+			Serial2.write(msg_graphics, msg_graphics_len);
+			draw_sw = 0;
+		}
 		//for (int i = 0; i < msg_graphics_len; i++){
 		//	Serial.println(msg_graphics[i], HEX);
 		//}
@@ -773,11 +780,11 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	// content ID
 	if (num_graphics == 1){
 		msg[7] = 0x01;
-	}else if (num_graphics == 2){
+	} else if (num_graphics == 2){
 		msg[7] = 0x02;
-	}else if (num_graphics == 5){
+	} else if (num_graphics == 5){
 		msg[7] = 0x03; // Draw 7 graphics // CHANGE
-	}else if (num_graphics == 7){
+	} else if (num_graphics == 7){
 		msg[7] = 0x04;
 	}	
 	msg[8] = 0x01;
@@ -901,8 +908,6 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		}
 		j++;
 	}
-	
-	
 
 	uint16_t footerCRC = generateCRC16(msg, 13+15*num_graphics); // CHANGE
 	msg[13+15*num_graphics] = (footerCRC & 0x00FF); // CHANGE
@@ -1049,6 +1054,201 @@ void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
 			0, //radius
 			(1920/2)+(int(3.231*50)-300)-1000*!show_map, //end_x
 			(1080/2)+(int(1.5*50)-200)-1000*!show_map); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+	}
+	if (num_graphics > 5){
+		generate_graphic(graphic, 
+			"cw3", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			7, //color
+			0, //start_angle
+			0, //end_angle
+			int(0.25*50), //width
+			(1920/2)+(int(8.769*50)-300)-1000*!show_map, //start_x
+			(1080/2)+(int(6.5*50)-200)-1000*!show_map, //stary_y
+			0, //radius
+			(1920/2)+(int(8.769*50)-300)-1000*!show_map, //end_x
+			(1080/2)+(int(8*50)-200)-1000*!show_map); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+
+		generate_graphic(graphic, 
+			"cw4", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			7, //color
+			0, //start_angle
+			0, //end_angle
+			int(0.25*50), //width
+			(1920/2)+(int(10.5*50)-300)-1000*!show_map, //start_x
+			(1080/2)+(int(4.769*50)-200)-1000*!show_map, //stary_y
+			0, //radius
+			(1920/2)+(int(12*50)-300)-1000*!show_map, //end_x
+			(1080/2)+(int(4.769*50)-200)-1000*!show_map); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;	
+	}
+	
+	
+
+	uint16_t footerCRC = generateCRC16(msg, 13+15*num_graphics); // CHANGE
+	msg[13+15*num_graphics] = (footerCRC & 0x00FF); // CHANGE
+	msg[14+15*num_graphics] = (footerCRC >> 8); // CHANGE
+	
+	*msg_len = 9+6+15*num_graphics;
+	//Serial.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+}
+
+void RefSystem::write_crosshair_graphics_update(byte* msg, int* msg_len) {
+	int num_graphics = 5;
+	// frame header
+	msg[0] = 0xA5;
+	msg[1] = 6+15*num_graphics; // CHANGE
+	msg[2] = 0x00;
+	msg[3] = get_seq();
+	msg[4] = generateCRC8(msg, 4);
+
+	// cmd 0x0301
+	msg[5] = 0x01;
+	msg[6] = 0x03;
+
+	// content ID
+	if (num_graphics == 1){
+		msg[7] = 0x01;
+	}else if (num_graphics == 2){
+		msg[7] = 0x02;
+	}else if (num_graphics == 5){
+		msg[7] = 0x03; // Draw 7 graphics // CHANGE
+	}else if (num_graphics == 7){
+		msg[7] = 0x04;
+	}	
+	msg[8] = 0x01;
+
+	// sender ID
+	msg[9] = data.robot_id;
+	msg[10] = 0x00;
+
+	// reciever ID
+	msg[11] = data.robot_id;
+	msg[12] = 0x01;
+
+
+	uint8_t operation = graphics_init ? 1 : 1;
+	int j = 0;
+	// generate graphics
+	byte graphic[15] = {0};
+	
+	generate_graphic(graphic, 
+			"ret", //namer
+			operation, //Operation
+			2, //type
+			9, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2), // + temp_rts_pos[0], //start_x
+			(1080/2), //+ temp_rts_pos[1], //stary_y
+			16, //radius
+			(1920/2), //end_x
+			(1080/2)); //ednd_y
+	for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+	}
+	j++;
+	
+	if (num_graphics > 1){
+		generate_graphic(graphic, 
+			"aln", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2)+1, //start_x
+			(1080/2)-30, //stary_y
+			0, //radius
+			(1920/2)+1, //end_x
+			(1080/2)-150); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+		
+	}
+	
+	if (num_graphics > 2){
+		generate_graphic(graphic, 
+			"ah1", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2)-10, //start_x
+			(1080/2)-50, //stary_y
+			0, //radius
+			(1920/2)+12, //end_x
+			(1080/2)-50); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+		
+		generate_graphic(graphic, 
+			"ah2", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2)-10, //start_x
+			(1080/2)-90, //stary_y
+			0, //radius
+			(1920/2)+12, //end_x
+			(1080/2)-90); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+
+		generate_graphic(graphic, 
+			"ah3", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2)-10, //start_x
+			(1080/2)-130, //stary_y
+			0, //radius
+			(1920/2)+12, //end_x
+			(1080/2)-130); //ednd_y
 		for (int i = 0; i < 15; i++){
 			msg[13+15*j+i] = graphic[i];
 			graphic[i] = 0;

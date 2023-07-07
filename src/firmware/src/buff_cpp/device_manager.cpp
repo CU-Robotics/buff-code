@@ -424,7 +424,7 @@ void Device_Manager::read_sensors() {
 	}
 	//Serial.print("1st");
 	//Serial.println(Serial2.available());
-	if (micros() - prev_ref_write_micros > 50000) { // Send data at 30Hz
+	if (micros() - prev_ref_write_micros > 30000) { // Send data at 30Hz
 	 	prev_ref_write_micros = micros();
 	 	ref.write_serial(controller_manager.enc_odm_pos);
 	}
@@ -533,32 +533,32 @@ void Device_Manager::step_controllers(float dt) {
 		ppc_gain = 0.0; //50
 
 		pitch_autonomy_p = 150;
-		yaw_autonomy_p = -80;
-		yaw_autonomy_d = -0.2;
+		yaw_autonomy_p = -120;
+		yaw_autonomy_d = -0.0;
 	} else if (ref.data.robot_type == 3) {
 		ysc_gain = -1.0; // 0.8
 		ypc_gain = -350.0; //-150
 		ppc_gain = 0.0; //50
 
 		pitch_autonomy_p = 150;
-		yaw_autonomy_p = -80;
-		yaw_autonomy_d = -0.2;
+		yaw_autonomy_p = -120;
+		yaw_autonomy_d = -0.0;
 	} else if (ref.data.robot_type == 5) {
 		ysc_gain = -1.0; // 0.8
 		ypc_gain = -350.0; //-150
 		ppc_gain = 0.0; //50
 
 		pitch_autonomy_p = 150;
-		yaw_autonomy_p = -80;
-		yaw_autonomy_d = -0.2;
+		yaw_autonomy_p = -120;
+		yaw_autonomy_d = -0.0;
 	} else if (ref.data.robot_type == 7) {
 		ysc_gain = -1.0; // 0.8
 		ypc_gain = -350.0; //-150
 		ppc_gain = 0.0; //50
 
 		pitch_autonomy_p = 150;
-		yaw_autonomy_p = -80;
-		yaw_autonomy_d = -0.2;
+		yaw_autonomy_p = -120;
+		yaw_autonomy_d = -0.0;
 	}
 
 	float pitch_autonomy_err = wrap_angle((controller_manager.autonomy_input[3] - controller_manager.enc_odm_pos[3]));
