@@ -593,66 +593,50 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		}
 		return;
 	};
+
 	byte msg_graphics[128] = {0};
 	int msg_graphics_len;
-	if (field_graphics_update_pending){
+	if (field_graphics_update_pending) {
 		field_graphics_update_pending = false;
 		write_field_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
-		for (int i = 0; i < msg_graphics_len; i++){
-			//Serial.println(msg_graphics[i], HEX);
-		}
+		//for (int i = 0; i < msg_graphics_len; i++){
+		//	Serial.println(msg_graphics[i], HEX);
+		//}
 		//Serial.println();
-		return;
-	}else if (primary_graphics_update_pending){
+	} else if (primary_graphics_update_pending) {
 		primary_graphics_update_pending = false;
 		write_primary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
-		return;
-	}else if (!map_drawn && send_sw == 0){
+	} else if (!map_drawn && send_sw == 0) {
 		write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
-		//Serial.println("a");
 		if (data.robot_type == 7){
 			send_sw++;
 		}
-	}else if (data.robot_type == 7 && send_sw == 1){ //Send sentry position to infantry
-		//Serial.println("b");
-		uint16_t content_id = 0x0200 | data.robot_type;
-		float d[3] = {0};
-		content_id = content_id | data.robot_type;
-		uint16_t inf_rec_id = 0x0003;
-		inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
-		d[0] = enc_odm_pos[0];
-		d[1] = enc_odm_pos[1];
-		d[2] = enc_odm_pos[4];
-		write_update(msg, &msg_len, content_id, inf_rec_id, d);
-		//Serial.println("c");
-		Serial2.write(msg, msg_len);
-		//Serial.println("d");
-		send_sw = 0;
 	}
-	
-	/*
-	//Serial.println(send_sw);
-	switch (send_sw){
-		case 0:
-			Serial.println("It is here");
-			Serial2.write(msg_graphics, msg_graphics_len);
-			send_sw++;
-		case 1:
-			Serial.println("Also here");
-			Serial2.write(msg, msg_len);
-			Serial.println("Here too");
-			send_sw = 0;		
-	}*/
+	//  else if (data.robot_type == 7 && send_sw == 1) { // Send sentry position to infantry
+	// 	//Serial.println("b");
+	// 	uint16_t content_id = 0x0200 | data.robot_type;
+	// 	float d[3] = {0};
+	// 	content_id = content_id | data.robot_type;
+	// 	uint16_t inf_rec_id = 0x0003;
+	// 	inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
+	// 	d[0] = enc_odm_pos[0];
+	// 	d[1] = enc_odm_pos[1];
+	// 	d[2] = enc_odm_pos[4];
+	// 	write_update(msg, &msg_len, content_id, inf_rec_id, d);
+	// 	//Serial.println("c");
+	// 	Serial2.write(msg, msg_len);
+	// 	//Serial.println("d");
+	// 	send_sw = 0;
+	// }
 
-	/*
 	if (send_sw == 0) {
 	 	// Send state update to hero (Sentry, Infantry)
-	 	content_id = content_id | data.robot_type;
-		uint16_t hero_rec_id = 0x0001;
-		hero_rec_id = hero_rec_id | (data.robot_id & 0xFF00);
+	 	uint16_t content_id = 0x0200 | data.robot_type;
+		uint16_t hero_rec_id = 0x0001 | (data.robot_id & 0xFF00);
+		float d[3];
 		d[0] = enc_odm_pos[0];
 		d[1] = enc_odm_pos[1];
 		d[2] = enc_odm_pos[4];
@@ -660,17 +644,16 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		send_sw++;
 	} else if (send_sw == 1) {
 		// Send state update to infantry (Sentry)
-		content_id = content_id | data.robot_type;
-		uint16_t inf_rec_id = 0x0003;
-		inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
+		uint16_t content_id = 0x0200 | data.robot_type;
+		uint16_t inf_rec_id = 0x0003 | (data.robot_id & 0xFF00);
+		float d[3];
 		d[0] = enc_odm_pos[0];
 		d[1] = enc_odm_pos[1];
 		d[2] = enc_odm_pos[4];
 		write_update(msg, &msg_len, content_id, inf_rec_id, d);
 		send_sw = 0;
-	}*/
-	
-	
+	}
+	Serial2.write(msg, msg_len);
 }
 
 // Send an update out to another robot
@@ -817,7 +800,7 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		operation, //Operation
 		1, //type
 		8, //num_layer
-		8, //color
+		0, //color
 		0, //start_angle
 		0, //end_angle
 		12, //width
@@ -842,7 +825,7 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 			2, //color
 			0, //start_angle
 			0, //end_angle
-			12, //width
+			6, //width
 			1920/2 + (temp_rts_pos[0]*50)-300-1000*!show_map, //start_x
 			1080/2 + (temp_rts_pos[1]*50)-200-1000*!show_map, //stary_y
 			6, //radius
@@ -860,19 +843,19 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		
 		
 		generate_graphic(graphic, 
-			"wl1", //namer
+			"lok", //namer
 			operation, //Operation
-			0, //type
+			2, //type
 			8, //num_layer
-			7, //color
+			6, //color
 			0, //start_angle
 			0, //end_angle
-			int(0.25*50), //width
-			(1920/2)+(int(4.675*50)-300)-1000*!show_map, //start_x
-			(1080/2)+(int(2.728*50)-200)-1000*!show_map, //stary_y
-			0, //radius
-			(1920/2)+(int(4.675*50)-300)-1000*!show_map, //end_x
-			(1080/2)+(int(5.728*50)-200)-1000*!show_map); //ednd_y
+			int(0.125*50), //width
+			(1920/2)+(int(point_to[0]*50)-300)-1000*!show_map, //start_x
+			(1080/2)+(int(point_to[1]*50)-200)-1000*!show_map, //stary_y
+			3, //radius
+			(1920/2)+(int(point_to[0]*50)-300)-1000*!show_map, //end_x
+			(1080/2)+(int(point_to[1]*50)-200)-1000*!show_map); //ednd_y
 		for (int i = 0; i < 15; i++){
 			msg[13+15*j+i] = graphic[i];
 			graphic[i] = 0;
@@ -880,19 +863,19 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		j++;
 		
 		generate_graphic(graphic, 
-			"rbt", //namer
-			0, //Operation
+			"sty", //namer
+			operation, //Operation
 			1, //type
 			8, //num_layer
 			5, //color
 			0, //start_angle
 			0, //end_angle
-			6, //width
-			(1920/2)-15-1000*!show_map, //start_x
-			(1080/2)-15-1000*!show_map, //stary_y
-			10, //radius
-			(1920/2)+15-1000*!show_map, //end_x
-			(1080/2)+15-1000*!show_map); //ednd_y
+			12, //width
+			(1920/2)-15+(int(data.sentry_pos[0]*50)-300)-1000*!show_map, //start_x
+			(1080/2)-15+(int(data.sentry_pos[1]*50)-200)-1000*!show_map, //stary_y
+			6, //radius
+			(1920/2)+15+(int(data.sentry_pos[0]*50)-300)-1000*!show_map, //end_x
+			(1080/2)+15+(int(data.sentry_pos[1]*50)-200)-1000*!show_map); //ednd_y
 		for (int i = 0; i < 15; i++){
 			msg[13+15*j+i] = graphic[i];
 			graphic[i] = 0;
@@ -930,7 +913,6 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 }
 
 void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
-	//Serial.println("Trying to print");
 	int num_graphics = 7;
 	// frame header
 	msg[0] = 0xA5;
@@ -963,14 +945,12 @@ void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
 	msg[11] = data.robot_id;
 	msg[12] = 0x01;
 
-	if (graphics_init == true){
-		map_drawn = true;
-	}
-	uint8_t operation = graphics_init ? 1 : 2;
 
+	uint8_t operation = graphics_init ? 1 : 2;
 	int j = 0;
 	// generate graphics
 	byte graphic[15] = {0};
+	
 	generate_graphic(graphic, 
 			"map", //namer
 			operation, //Operation
@@ -991,7 +971,6 @@ void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
 	}
 	j++;
 	
-
 	if (num_graphics > 1){
 		generate_graphic(graphic, 
 			"wl1", //namer

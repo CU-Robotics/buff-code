@@ -632,7 +632,7 @@ void Device_Manager::step_controllers(float dt) {
 		float yaw_ang_err = controller_manager.global_yaw_reference - controller_manager.kee_imu_pos[4];
 		input_buffer[4] += ypc_gain * yaw_ang_err;
 
-		if (millis() - last_autonomy_read > 1000 && ref.data.robot_type == 7) input_buffer[2] = 900;
+		if (millis() - last_autonomy_read > 1000 && ref.data.robot_type == 7 && ref.data.curr_stage == 'C') input_buffer[2] = 900;
 
 		controller_manager.set_input(input_buffer);
 	} else {

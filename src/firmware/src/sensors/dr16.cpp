@@ -151,6 +151,7 @@ int DR16::generate_control(RefSystem *ref) {
 	// Send autonomy command
 	if (key_b) {
 	 	ref->graphics_init = true;
+		ref->field_graphics_update_pending = true;
 	} else {
 	 	ref->graphics_init = false;
 	}
@@ -174,11 +175,11 @@ int DR16::generate_control(RefSystem *ref) {
 			selecting_rts_pos = true;
 		} else if (!l_mouse_button && l_mouse_button_prev && selecting_rts_pos) {
 			float point_to[2] = {0};
-			point_to[0] = (ref->selector_pos[0]+300)/50.0;
-			point_to[1] = (ref->selector_pos[1]+200)/50.0;
+			ref->point_to[0] = (ref->selector_pos[0]+300)/50.0;
+			ref->point_to[1] = (ref->selector_pos[1]+200)/50.0;
 			ref->data.sentry_send_goal[0] = ref->temp_rts_pos[0];
 			ref->data.sentry_send_goal[1] = ref->temp_rts_pos[1];
-			ref->data.sentry_send_goal[2] = atan2(point_to[1]-ref->temp_rts_pos[1], point_to[0]-ref->temp_rts_pos[0]);
+			ref->data.sentry_send_goal[2] = atan2(ref->point_to[1]-ref->temp_rts_pos[1], ref->point_to[0]-ref->temp_rts_pos[0]);
 			selecting_rts_pos = false;
 			ref->data.pending_sentry_send = true;
 			Serial.println(ref->data.sentry_send_goal[0]);
@@ -213,7 +214,7 @@ int DR16::generate_control(RefSystem *ref) {
 	if (ref->data.robot_type == 3 || ref->data.robot_type == 7) {
 		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-5.0) + 15; // Equation to match flywheel speed to exit velocity
 	} else if (ref->data.robot_type == 1) {
-		flywheel_radps = 700;
+		flywheel_radps = 500;
 	}
 
 	// Safety Switch

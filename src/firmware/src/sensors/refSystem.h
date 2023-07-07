@@ -170,6 +170,7 @@ class RefSystem {
         bool primary_graphics_update_pending = 0;
         int selector_pos[2] = {0};
         float temp_rts_pos[2] = {0};
+        float point_to[2] = {0};
 
         int tmp_counter = 0;
         short sentry_send_counter = 0;
