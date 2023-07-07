@@ -533,7 +533,7 @@ void Device_Manager::step_controllers(float dt) {
 		ppc_gain = 0.0; //50
 
 		pitch_autonomy_p = 150;
-		yaw_autonomy_p = -100;
+		yaw_autonomy_p = -80;
 		yaw_autonomy_d = -0.0;
 	} else if (ref.data.robot_type == 3) {
 		ysc_gain = -1.0; // 0.8
@@ -541,15 +541,15 @@ void Device_Manager::step_controllers(float dt) {
 		ppc_gain = 0.0; //50
 
 		pitch_autonomy_p = 150;
-		yaw_autonomy_p = -100;
+		yaw_autonomy_p = -80;
 		yaw_autonomy_d = -0.0;
 	} else if (ref.data.robot_type == 5) {
 		ysc_gain = -1.0; // 0.8
 		ypc_gain = -350.0; //-150
 		ppc_gain = 0.0; //50
 
-		pitch_autonomy_p = 150;
-		yaw_autonomy_p = -100;
+		pitch_autonomy_p = 75;
+		yaw_autonomy_p = -80;
 		yaw_autonomy_d = -0.0;
 	} else if (ref.data.robot_type == 7) {
 		ysc_gain = -1.0; // 0.8
@@ -557,7 +557,7 @@ void Device_Manager::step_controllers(float dt) {
 		ppc_gain = 0.0; //50
 
 		pitch_autonomy_p = 150;
-		yaw_autonomy_p = -100;
+		yaw_autonomy_p = -80;
 		yaw_autonomy_d = -0.0;
 	}
 
