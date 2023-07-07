@@ -509,9 +509,13 @@ bool RefSystem::read_serial() {
 
 				// Sentry state update
 				if (command == 0x0207) {
+					Serial.println("Sentry pos update");
 					data.sentry_pos[0] = tmp_float_1;
 					data.sentry_pos[1] = tmp_float_2;
 					data.sentry_pos[2] = tmp_float_3;
+					Serial.println(data.sentry_pos[0]);
+					Serial.println(data.sentry_pos[1]);
+					Serial.println(data.sentry_pos[2]);
 				}
 				// Infantry state update
 				else if (command == 0x0203) {
@@ -639,18 +643,7 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 	// 	send_sw = 0;
 	// }
 
-	if (send_sw == 0) {
-	 	// Send state update to hero (Sentry, Infantry)
-	 	uint16_t content_id = 0x0200 | data.robot_type;
-		uint16_t hero_rec_id = 0x0001 | (data.robot_id & 0xFF00);
-		float d[3];
-		d[0] = enc_odm_pos[0];
-		d[1] = enc_odm_pos[1];
-		d[2] = enc_odm_pos[4];
-		write_update(msg, &msg_len, content_id, hero_rec_id, d);
-		send_sw++;
-	} else if (send_sw == 1) {
-		// Send state update to infantry (Sentry)
+	if (data.robot_type == 7) {
 		uint16_t content_id = 0x0200 | data.robot_type;
 		uint16_t inf_rec_id = 0x0003 | (data.robot_id & 0xFF00);
 		float d[3];
@@ -658,9 +651,36 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		d[1] = enc_odm_pos[1];
 		d[2] = enc_odm_pos[4];
 		write_update(msg, &msg_len, content_id, inf_rec_id, d);
-		send_sw = 0;
+		Serial2.write(msg, msg_len);
 	}
-	Serial2.write(msg, msg_len);
+
+	if (data.robot_type == 3) {
+		data.infantry_pos[0] = enc_odm_pos[0];
+		data.infantry_pos[1] = enc_odm_pos[1];
+		data.infantry_pos[2] = enc_odm_pos[4];
+	}
+
+	// if (send_sw == 0) {
+	//  	// Send state update to hero (Sentry, Infantry)
+	//  	uint16_t content_id = 0x0200 | data.robot_type;
+	// 	uint16_t hero_rec_id = 0x0001 | (data.robot_id & 0xFF00);
+	// 	float d[3];
+	// 	d[0] = enc_odm_pos[0];
+	// 	d[1] = enc_odm_pos[1];
+	// 	d[2] = enc_odm_pos[4];
+	// 	write_update(msg, &msg_len, content_id, hero_rec_id, d);
+	// 	send_sw++;
+	// } else if (send_sw == 1) {
+	// 	// Send state update to infantry (Sentry)
+	// 	uint16_t content_id = 0x0200 | data.robot_type;
+	// 	uint16_t inf_rec_id = 0x0003 | (data.robot_id & 0xFF00);
+	// 	float d[3];
+	// 	d[0] = enc_odm_pos[0];
+	// 	d[1] = enc_odm_pos[1];
+	// 	d[2] = enc_odm_pos[4];
+	// 	write_update(msg, &msg_len, content_id, inf_rec_id, d);
+	// 	send_sw = 0;
+	// }
 }
 
 // Send an update out to another robot
@@ -810,12 +830,12 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		0, //color
 		0, //start_angle
 		0, //end_angle
-		12, //width
-		(1920/2)-6+(int(data.infantry_pos[0]*50)-300)-1000*!show_map, // + temp_rts_pos[0], //start_x
-		(1080/2)-6+(int(data.infantry_pos[1]*50)-200)-1000*!show_map, //+ temp_rts_pos[1], //stary_y
+		6, //width
+		(1920/2)-10+(int(data.infantry_pos[0]*50)-300)-1000*!show_map, // + temp_rts_pos[0], //start_x
+		(1080/2)-10+(int(data.infantry_pos[1]*50)-200)-1000*!show_map, //+ temp_rts_pos[1], //stary_y
 		0, //radius
-		(1920/2)+6+(int(data.infantry_pos[0]*50)-300)-1000*!show_map, //end_x
-		(1080/2)+6+(int(data.infantry_pos[1]*50)-200)-1000*!show_map); //ednd_y
+		(1920/2)+10+(int(data.infantry_pos[0]*50)-300)-1000*!show_map, //end_x
+		(1080/2)+10+(int(data.infantry_pos[1]*50)-200)-1000*!show_map); //ednd_y
 	for (int i = 0; i < 15; i++){
 			msg[13+15*j+i] = graphic[i];
 			graphic[i] = 0;
@@ -877,12 +897,12 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 			5, //color
 			0, //start_angle
 			0, //end_angle
-			12, //width
-			(1920/2)-15+(int(data.sentry_pos[0]*50)-300)-1000*!show_map, //start_x
-			(1080/2)-15+(int(data.sentry_pos[1]*50)-200)-1000*!show_map, //stary_y
+			6, //width
+			(1920/2)-10+(int(data.sentry_pos[0]*50)-300)-1000*!show_map, //start_x
+			(1080/2)-10+(int(data.sentry_pos[1]*50)-200)-1000*!show_map, //stary_y
 			6, //radius
-			(1920/2)+15+(int(data.sentry_pos[0]*50)-300)-1000*!show_map, //end_x
-			(1080/2)+15+(int(data.sentry_pos[1]*50)-200)-1000*!show_map); //ednd_y
+			(1920/2)+10+(int(data.sentry_pos[0]*50)-300)-1000*!show_map, //end_x
+			(1080/2)+10+(int(data.sentry_pos[1]*50)-200)-1000*!show_map); //ednd_y
 		for (int i = 0; i < 15; i++){
 			msg[13+15*j+i] = graphic[i];
 			graphic[i] = 0;

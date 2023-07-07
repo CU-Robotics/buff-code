@@ -241,7 +241,7 @@ int DR16::generate_control(RefSystem *ref) {
 			}
 			c_prev = key_c;
 			return AUTONOMY_MODE;
-		} 
+		}
 		// Infantry, Standard, and Hero -- User driving
 		else {
 			if (key_r && !r_prev) {
