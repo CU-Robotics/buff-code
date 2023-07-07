@@ -233,7 +233,7 @@ int DR16::generate_control(RefSystem *ref) {
 				data[2] = 0;
 			}
 
-			if ((key_c && !c_prev) || r_switch == 1.0) {
+			if ((key_c && !c_prev) || r_switch == 1.0 || ref->data.robot_health < 200) {
 				Serial.println("Lets recall");
 				ref->data.autonomy_pos[0] = 0.5;
 				ref->data.autonomy_pos[1] = 7.5;
