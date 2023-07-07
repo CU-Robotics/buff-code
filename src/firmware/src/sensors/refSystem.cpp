@@ -35,9 +35,6 @@ RefSystem::RefSystem() {
 
 void RefSystem::init() {
 	Serial2.begin(115200);
-	graphics_init[0] = true;
-	graphics_init[1] = true;
-	graphics_init[2] = true;
 }
 
 bool RefSystem::read_serial() {
@@ -596,66 +593,57 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		}
 		return;
 	};
+
 	byte msg_graphics[128] = {0};
 	int msg_graphics_len;
-	if (field_graphics_update_pending){
-		field_graphics_update_pending = false;
-		write_field_graphics_update(msg_graphics, &msg_graphics_len);
-		Serial2.write(msg_graphics, msg_graphics_len);
-		for (int i = 0; i < msg_graphics_len; i++){
-			//Serial.println(msg_graphics[i], HEX);
+	if (field_graphics_update_pending) {
+		if (draw_sw == 0) {
+			write_crosshair_graphics_update(msg_graphics, &msg_graphics_len);
+			Serial2.write(msg_graphics, msg_graphics_len);
+			draw_sw++;
+		} else {
+			field_graphics_update_pending = false;
+			write_field_graphics_update(msg_graphics, &msg_graphics_len);
+			Serial2.write(msg_graphics, msg_graphics_len);
+			draw_sw = 0;
 		}
+		//for (int i = 0; i < msg_graphics_len; i++){
+		//	Serial.println(msg_graphics[i], HEX);
+		//}
 		//Serial.println();
-		return;
-	}else if (primary_graphics_update_pending){
+	} else if (primary_graphics_update_pending) {
 		primary_graphics_update_pending = false;
 		write_primary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
-		return;
-	}else if (!graphics_init[2] && send_sw == 0){
+	} else if (!map_drawn && send_sw == 0) {
 		write_secondary_graphics_update(msg_graphics, &msg_graphics_len);
 		Serial2.write(msg_graphics, msg_graphics_len);
-		//Serial.println("a");
 		if (data.robot_type == 7){
 			send_sw++;
 		}
-	}else if (data.robot_type == 7 && send_sw == 1){ //Send sentry position to infantry
-		//Serial.println("b");
-		uint16_t content_id = 0x0200 | data.robot_type;
-		float d[3] = {0};
-		content_id = content_id | data.robot_type;
-		uint16_t inf_rec_id = 0x0003;
-		inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
-		d[0] = enc_odm_pos[0];
-		d[1] = enc_odm_pos[1];
-		d[2] = enc_odm_pos[4];
-		write_update(msg, &msg_len, content_id, inf_rec_id, d);
-		//Serial.println("c");
-		Serial2.write(msg, msg_len);
-		//Serial.println("d");
-		send_sw = 0;
 	}
-	
-	/*
-	//Serial.println(send_sw);
-	switch (send_sw){
-		case 0:
-			Serial.println("It is here");
-			Serial2.write(msg_graphics, msg_graphics_len);
-			send_sw++;
-		case 1:
-			Serial.println("Also here");
-			Serial2.write(msg, msg_len);
-			Serial.println("Here too");
-			send_sw = 0;		
-	}*/
+	//  else if (data.robot_type == 7 && send_sw == 1) { // Send sentry position to infantry
+	// 	//Serial.println("b");
+	// 	uint16_t content_id = 0x0200 | data.robot_type;
+	// 	float d[3] = {0};
+	// 	content_id = content_id | data.robot_type;
+	// 	uint16_t inf_rec_id = 0x0003;
+	// 	inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
+	// 	d[0] = enc_odm_pos[0];
+	// 	d[1] = enc_odm_pos[1];
+	// 	d[2] = enc_odm_pos[4];
+	// 	write_update(msg, &msg_len, content_id, inf_rec_id, d);
+	// 	//Serial.println("c");
+	// 	Serial2.write(msg, msg_len);
+	// 	//Serial.println("d");
+	// 	send_sw = 0;
+	// }
 
-	/*
 	if (send_sw == 0) {
 	 	// Send state update to hero (Sentry, Infantry)
-	 	content_id = content_id | data.robot_type;
-		uint16_t hero_rec_id = 0x0001;
-		hero_rec_id = hero_rec_id | (data.robot_id & 0xFF00);
+	 	uint16_t content_id = 0x0200 | data.robot_type;
+		uint16_t hero_rec_id = 0x0001 | (data.robot_id & 0xFF00);
+		float d[3];
 		d[0] = enc_odm_pos[0];
 		d[1] = enc_odm_pos[1];
 		d[2] = enc_odm_pos[4];
@@ -663,17 +651,16 @@ void RefSystem::write_serial(float* enc_odm_pos) {
 		send_sw++;
 	} else if (send_sw == 1) {
 		// Send state update to infantry (Sentry)
-		content_id = content_id | data.robot_type;
-		uint16_t inf_rec_id = 0x0003;
-		inf_rec_id = inf_rec_id | (data.robot_id & 0xFF00);
+		uint16_t content_id = 0x0200 | data.robot_type;
+		uint16_t inf_rec_id = 0x0003 | (data.robot_id & 0xFF00);
+		float d[3];
 		d[0] = enc_odm_pos[0];
 		d[1] = enc_odm_pos[1];
 		d[2] = enc_odm_pos[4];
 		write_update(msg, &msg_len, content_id, inf_rec_id, d);
 		send_sw = 0;
-	}*/
-	
-	
+	}
+	Serial2.write(msg, msg_len);
 }
 
 // Send an update out to another robot
@@ -763,13 +750,7 @@ void RefSystem::write_primary_graphics_update(byte* msg, int* msg_len) {
 
 	// generate graphics
 	byte* graphic = {0};
-	uint8_t operation;
-	if (graphics_init[0]){
-		graphics_init[0]= false;
-		operation = 1;
-	}else{
-		operation = 2;
-	}
+	uint8_t operation = graphics_init ? 1 : 2;
 
 	//generate_graphic(graphic, "name", operation, type, num_layers, color, start_angle, end_angle, width, start_x, start_y, radius, end_x, end_y);
 	for (int i = 0; i < 15; i++) msg[13+i] = graphic[i];
@@ -799,11 +780,11 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	// content ID
 	if (num_graphics == 1){
 		msg[7] = 0x01;
-	}else if (num_graphics == 2){
+	} else if (num_graphics == 2){
 		msg[7] = 0x02;
-	}else if (num_graphics == 5){
+	} else if (num_graphics == 5){
 		msg[7] = 0x03; // Draw 7 graphics // CHANGE
-	}else if (num_graphics == 7){
+	} else if (num_graphics == 7){
 		msg[7] = 0x04;
 	}	
 	msg[8] = 0x01;
@@ -817,13 +798,7 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 	msg[12] = 0x01;
 
 
-	uint8_t operation;
-	if (graphics_init[1]){
-		graphics_init[1]= false;
-		operation = 1;
-	}else{
-		operation = 2;
-	}
+	uint8_t operation = graphics_init ? 1 : 2;
 	int j = 0;
 	// generate graphics
 	byte graphic[15] = {0};
@@ -832,7 +807,7 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		operation, //Operation
 		1, //type
 		8, //num_layer
-		8, //color
+		0, //color
 		0, //start_angle
 		0, //end_angle
 		12, //width
@@ -857,7 +832,7 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 			2, //color
 			0, //start_angle
 			0, //end_angle
-			12, //width
+			6, //width
 			1920/2 + (temp_rts_pos[0]*50)-300-1000*!show_map, //start_x
 			1080/2 + (temp_rts_pos[1]*50)-200-1000*!show_map, //stary_y
 			6, //radius
@@ -875,19 +850,19 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		
 		
 		generate_graphic(graphic, 
-			"wl1", //namer
+			"lok", //namer
 			operation, //Operation
-			0, //type
+			2, //type
 			8, //num_layer
-			7, //color
+			6, //color
 			0, //start_angle
 			0, //end_angle
-			int(0.25*50), //width
-			(1920/2)+(int(4.675*50)-300)-1000*!show_map, //start_x
-			(1080/2)+(int(2.728*50)-200)-1000*!show_map, //stary_y
-			0, //radius
-			(1920/2)+(int(4.675*50)-300)-1000*!show_map, //end_x
-			(1080/2)+(int(5.728*50)-200)-1000*!show_map); //ednd_y
+			int(0.125*50), //width
+			(1920/2)+(int(point_to[0]*50)-300)-1000*!show_map, //start_x
+			(1080/2)+(int(point_to[1]*50)-200)-1000*!show_map, //stary_y
+			3, //radius
+			(1920/2)+(int(point_to[0]*50)-300)-1000*!show_map, //end_x
+			(1080/2)+(int(point_to[1]*50)-200)-1000*!show_map); //ednd_y
 		for (int i = 0; i < 15; i++){
 			msg[13+15*j+i] = graphic[i];
 			graphic[i] = 0;
@@ -895,19 +870,19 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		j++;
 		
 		generate_graphic(graphic, 
-			"rbt", //namer
-			0, //Operation
+			"sty", //namer
+			operation, //Operation
 			1, //type
 			8, //num_layer
 			5, //color
 			0, //start_angle
 			0, //end_angle
-			6, //width
-			(1920/2)-15-1000*!show_map, //start_x
-			(1080/2)-15-1000*!show_map, //stary_y
-			10, //radius
-			(1920/2)+15-1000*!show_map, //end_x
-			(1080/2)+15-1000*!show_map); //ednd_y
+			12, //width
+			(1920/2)-15+(int(data.sentry_pos[0]*50)-300)-1000*!show_map, //start_x
+			(1080/2)-15+(int(data.sentry_pos[1]*50)-200)-1000*!show_map, //stary_y
+			6, //radius
+			(1920/2)+15+(int(data.sentry_pos[0]*50)-300)-1000*!show_map, //end_x
+			(1080/2)+15+(int(data.sentry_pos[1]*50)-200)-1000*!show_map); //ednd_y
 		for (int i = 0; i < 15; i++){
 			msg[13+15*j+i] = graphic[i];
 			graphic[i] = 0;
@@ -933,8 +908,6 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 		}
 		j++;
 	}
-	
-	
 
 	uint16_t footerCRC = generateCRC16(msg, 13+15*num_graphics); // CHANGE
 	msg[13+15*num_graphics] = (footerCRC & 0x00FF); // CHANGE
@@ -945,7 +918,6 @@ void RefSystem::write_secondary_graphics_update(byte* msg, int* msg_len) {
 }
 
 void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
-	//Serial.println("Trying to print");
 	int num_graphics = 7;
 	// frame header
 	msg[0] = 0xA5;
@@ -979,17 +951,11 @@ void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
 	msg[12] = 0x01;
 
 
-	uint8_t operation;
-	if (graphics_init[2]){
-		graphics_init[2]= false;
-		operation = 1;
-		Serial.println("Initializing Field Graphics");
-	}else{
-		operation = 2;
-	}
+	uint8_t operation = graphics_init ? 1 : 2;
 	int j = 0;
 	// generate graphics
 	byte graphic[15] = {0};
+	
 	generate_graphic(graphic, 
 			"map", //namer
 			operation, //Operation
@@ -1010,7 +976,6 @@ void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
 	}
 	j++;
 	
-
 	if (num_graphics > 1){
 		generate_graphic(graphic, 
 			"wl1", //namer
@@ -1089,6 +1054,201 @@ void RefSystem::write_field_graphics_update(byte* msg, int* msg_len) {
 			0, //radius
 			(1920/2)+(int(3.231*50)-300)-1000*!show_map, //end_x
 			(1080/2)+(int(1.5*50)-200)-1000*!show_map); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+	}
+	if (num_graphics > 5){
+		generate_graphic(graphic, 
+			"cw3", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			7, //color
+			0, //start_angle
+			0, //end_angle
+			int(0.25*50), //width
+			(1920/2)+(int(8.769*50)-300)-1000*!show_map, //start_x
+			(1080/2)+(int(6.5*50)-200)-1000*!show_map, //stary_y
+			0, //radius
+			(1920/2)+(int(8.769*50)-300)-1000*!show_map, //end_x
+			(1080/2)+(int(8*50)-200)-1000*!show_map); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+
+		generate_graphic(graphic, 
+			"cw4", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			7, //color
+			0, //start_angle
+			0, //end_angle
+			int(0.25*50), //width
+			(1920/2)+(int(10.5*50)-300)-1000*!show_map, //start_x
+			(1080/2)+(int(4.769*50)-200)-1000*!show_map, //stary_y
+			0, //radius
+			(1920/2)+(int(12*50)-300)-1000*!show_map, //end_x
+			(1080/2)+(int(4.769*50)-200)-1000*!show_map); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;	
+	}
+	
+	
+
+	uint16_t footerCRC = generateCRC16(msg, 13+15*num_graphics); // CHANGE
+	msg[13+15*num_graphics] = (footerCRC & 0x00FF); // CHANGE
+	msg[14+15*num_graphics] = (footerCRC >> 8); // CHANGE
+	
+	*msg_len = 9+6+15*num_graphics;
+	//Serial.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+}
+
+void RefSystem::write_crosshair_graphics_update(byte* msg, int* msg_len) {
+	int num_graphics = 5;
+	// frame header
+	msg[0] = 0xA5;
+	msg[1] = 6+15*num_graphics; // CHANGE
+	msg[2] = 0x00;
+	msg[3] = get_seq();
+	msg[4] = generateCRC8(msg, 4);
+
+	// cmd 0x0301
+	msg[5] = 0x01;
+	msg[6] = 0x03;
+
+	// content ID
+	if (num_graphics == 1){
+		msg[7] = 0x01;
+	}else if (num_graphics == 2){
+		msg[7] = 0x02;
+	}else if (num_graphics == 5){
+		msg[7] = 0x03; // Draw 7 graphics // CHANGE
+	}else if (num_graphics == 7){
+		msg[7] = 0x04;
+	}	
+	msg[8] = 0x01;
+
+	// sender ID
+	msg[9] = data.robot_id;
+	msg[10] = 0x00;
+
+	// reciever ID
+	msg[11] = data.robot_id;
+	msg[12] = 0x01;
+
+
+	uint8_t operation = graphics_init ? 1 : 1;
+	int j = 0;
+	// generate graphics
+	byte graphic[15] = {0};
+	
+	generate_graphic(graphic, 
+			"ret", //namer
+			operation, //Operation
+			2, //type
+			9, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2), // + temp_rts_pos[0], //start_x
+			(1080/2), //+ temp_rts_pos[1], //stary_y
+			16, //radius
+			(1920/2), //end_x
+			(1080/2)); //ednd_y
+	for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+	}
+	j++;
+	
+	if (num_graphics > 1){
+		generate_graphic(graphic, 
+			"aln", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2)+1, //start_x
+			(1080/2)-30, //stary_y
+			0, //radius
+			(1920/2)+1, //end_x
+			(1080/2)-150); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+		
+	}
+	
+	if (num_graphics > 2){
+		generate_graphic(graphic, 
+			"ah1", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2)-10, //start_x
+			(1080/2)-50, //stary_y
+			0, //radius
+			(1920/2)+12, //end_x
+			(1080/2)-50); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+		
+		generate_graphic(graphic, 
+			"ah2", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2)-10, //start_x
+			(1080/2)-90, //stary_y
+			0, //radius
+			(1920/2)+12, //end_x
+			(1080/2)-90); //ednd_y
+		for (int i = 0; i < 15; i++){
+			msg[13+15*j+i] = graphic[i];
+			graphic[i] = 0;
+		}
+		j++;
+
+		generate_graphic(graphic, 
+			"ah3", //namer
+			operation, //Operation
+			0, //type
+			0, //num_layer
+			2, //color
+			0, //start_angle
+			0, //end_angle
+			2, //width
+			(1920/2)-10, //start_x
+			(1080/2)-130, //stary_y
+			0, //radius
+			(1920/2)+12, //end_x
+			(1080/2)-130); //ednd_y
 		for (int i = 0; i < 15; i++){
 			msg[13+15*j+i] = graphic[i];
 			graphic[i] = 0;

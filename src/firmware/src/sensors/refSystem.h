@@ -140,6 +140,7 @@ class RefSystem {
         void write_primary_graphics_update(byte*, int*);
         void write_secondary_graphics_update(byte*, int*);
         void write_field_graphics_update(byte*, int*);
+        void write_crosshair_graphics_update(byte*, int*);
         uint8_t get_seq();
 
         RefData data;
@@ -162,16 +163,20 @@ class RefSystem {
         int send_sw;
         int graphics_sw;
 
-        bool graphics_init[3];
+        bool graphics_init = false;
+        bool map_drawn = false;
 
         bool show_map = 0;
         bool field_graphics_update_pending = 0;
         bool primary_graphics_update_pending = 0;
         int selector_pos[2] = {0};
         float temp_rts_pos[2] = {0};
+        float point_to[2] = {0};
 
         int tmp_counter = 0;
         short sentry_send_counter = 0;
+
+        int draw_sw = 0;
 };
 
 #endif

@@ -47,7 +47,7 @@ void setup() {
 		Serial.println("                          ?GG?:      :JGP~                            ");
 		Serial.println("                           ^YGGY?77?YGGJ:                             ");
 		Serial.println("                             :!?YYYJ?!:                               \033[0m");
-		Serial.println("\n\033[1;92mFW Ver. 1.0.0");
+		Serial.println("\n\033[1;92mFW Ver. 1.1.0");
 		Serial.print("Boot timehash: 0x");
 		unsigned long time = micros();
 		Serial.print(time & 0xFFFF, HEX);
