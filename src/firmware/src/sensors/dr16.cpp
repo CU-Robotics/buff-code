@@ -198,22 +198,25 @@ int DR16::generate_control(RefSystem *ref) {
 	float feedrate_bps_continuous = 8;
 	float feedrate_bps_burst = 16;
 	// Infantry, Standard, and Sentry
-	if (ref->data.robot_type == 3 || ref->data.robot_type == 5 || ref->data.robot_type == 7 && ref->data.robot_1_cool_val != -1) {
-		feedrate_bps_continuous = ref->data.robot_1_cool_val/10.0 * 2 * 0.5;
+	if (ref->data.robot_type == 3 || ref->data.robot_type == 7 && ref->data.robot_1_cool_val != -1) {
+		feedrate_bps_continuous = ref->data.robot_1_cool_val/10.0;
 		feedrate_bps_burst = (ref->data.robot_1_cool_val+ref->data.robot_1_barr_heat_lim)/10.0 * 2;
 		if (ref->data.robot_type != 5 && feedrate_bps_burst > 10) {
 			feedrate_bps_burst = 10;
 		} else if (ref->data.robot_type == 5 && feedrate_bps_burst > 20) {
 			feedrate_bps_burst = 20;
 		}
+	} else if (ref->data.robot_type == 5) {
+		feedrate_bps_continuous = ref->data.robot_1_cool_val/3.0;
+		feedrate_bps_burst = (ref->data.robot_1_cool_val+ref->data.robot_1_barr_heat_lim)/3.0 * 2;
 	}
 
 	// Determine flywheel speed
 	float flywheel_radps = FLYWHEEL_SPEED;
 	if (ref->data.robot_type == 3 || ref->data.robot_type == 7) {
-		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-0.5) + 15; // Equation to match flywheel speed to exit velocity
+		flywheel_radps = 32.54 * (ref->data.robot_1_speed_lim-1.5) + 15; // Equation to match flywheel speed to exit velocity
 	} else if (ref->data.robot_type == 1) {
-		flywheel_radps = 500;
+		flywheel_radps = 410;
 	}
 
 	// Safety Switch
@@ -223,13 +226,13 @@ int DR16::generate_control(RefSystem *ref) {
 		// Sentry -- Fully autonomous
 		if (ref->data.robot_type == 7) {
 			data[5] = feedrate_bps_continuous * 45.24;
-			data[6] = flywheel_radps;
+			data[6] = 0;//flywheel_radps;
 			if (ref->data.curr_stage == 'C') {
 				no_path = false;
 				data[2] = SPINRATE_IDLE;
 			}
 			else {
-				no_path = true;
+				no_path = false;
 				data[2] = 0;
 			}
 

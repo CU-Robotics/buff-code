@@ -419,7 +419,11 @@ void Device_Manager::read_sensors() {
 		prev_ref_read_micros = micros();
 		ref.read_serial();
 		controller_manager.team_color = ref.data.team_color;
-		controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
+		if (ref.data.robot_id != 1 and ref.data.robot_id != 101){
+			controller_manager.projectile_speed = ref.data.robot_1_speed_lim - 0.5;
+		}else{
+			controller_manager.projectile_speed = ref.data.robot_42_speed_lim - 0.5;
+		}
 		controller_manager.power_buffer = ref.data.power_buffer;
 	}
 	//Serial.print("1st");
@@ -545,11 +549,11 @@ void Device_Manager::step_controllers(float dt) {
 		yaw_autonomy_d = -0.0;
 	} else if (ref.data.robot_type == 5) {
 		ysc_gain = -1.0; // 0.8
-		ypc_gain = -350.0; //-150
+		ypc_gain = -300.0; //-150
 		ppc_gain = 0.0; //50
 
 		pitch_autonomy_p = 75;
-		yaw_autonomy_p = -80;
+		yaw_autonomy_p = -50;
 		yaw_autonomy_d = -0.0;
 	} else if (ref.data.robot_type == 7) {
 		ysc_gain = -1.0; // 0.8
@@ -649,7 +653,7 @@ void Device_Manager::step_controllers(float dt) {
 	}
 
 	// Don't use odom positionintegration on robots without the hardware for it
-	if (ref.data.robot_type == 1 || ref.data.robot_type == 5) {
+	if (ref.data.robot_type == 1 || ref.data.robot_type == 5 || ref.data.robot_type == 3) {
 		controller_manager.enc_odm_pos[0] = 0;
 		controller_manager.enc_odm_pos[1] = 0;
 	}
