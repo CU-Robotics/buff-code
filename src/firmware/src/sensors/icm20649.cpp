@@ -6,7 +6,7 @@ ICM20649::ICM20649() {
 }
 
 // ICM20649::ICM20649_lower() {
-//     icm20649.begin_I2C(CHASSIS_IMU_ADDR);
+//     icm20649.begin_I2C(CHASSIS_IMU_ADDR) ;
 //     init();
     
 // }
